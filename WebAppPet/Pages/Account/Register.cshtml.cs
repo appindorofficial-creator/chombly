@@ -2,7 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -12,23 +14,25 @@ public class RegisterModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly IStringLocalizer<SharedResource> _L;
 
-    public RegisterModel(AppDbContext db, AuthService auth)
+    public RegisterModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
+        _L = L;
     }
 
     [BindProperty, Required, MaxLength(100)]
     public string FullName { get; set; } = string.Empty;
 
-    [BindProperty, Required, EmailAddress]
+    [BindProperty, Required, EmailAddress, MaxLength(150)]
     public string Email { get; set; } = string.Empty;
 
-    [BindProperty]
+    [BindProperty, MaxLength(10)]
     public string? Phone { get; set; }
 
-    [BindProperty]
+    [BindProperty, MaxLength(120)]
     public string City { get; set; } = string.Empty;
 
     [BindProperty, Required, MinLength(6)]
@@ -40,15 +44,38 @@ public class RegisterModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (await _db.Users.AnyAsync(u => u.Email == Email))
+        FullName = (FullName ?? "").Trim();
+        Email = (Email ?? "").Trim().ToLowerInvariant();
+        Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone.Trim();
+        City = (City ?? "").Trim();
+
+        if (string.IsNullOrWhiteSpace(FullName))
         {
-            ErrorMessage = "Ese email ya está registrado.";
+            ErrorMessage = _L["Profile_Edit_NameRequired"].Value;
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(Email) || !new EmailAddressAttribute().IsValid(Email))
+        {
+            ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
             return Page();
         }
 
         if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm))
         {
-            ErrorMessage = "Teléfono inválido. Solo números (mín. 7 dígitos). Ej: 7045551234";
+            ErrorMessage = _L["Phone_Invalid"].Value;
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(Password) || Password.Length < 6)
+        {
+            ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
+            return Page();
+        }
+
+        if (await _db.Users.AnyAsync(u => u.Email == Email))
+        {
+            ErrorMessage = _L["Profile_Edit_EmailTaken"].Value;
             return Page();
         }
 

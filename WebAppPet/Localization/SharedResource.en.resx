@@ -162,8 +162,10 @@
   <data name="Profile_Edit_EmailInvalid" xml:space="preserve"><value>Invalid email.</value></data>
   <data name="Profile_Edit_EmailTaken" xml:space="preserve"><value>That email is already in use.</value></data>
   <data name="Profile_Edit_PasswordShort" xml:space="preserve"><value>Password must be at least 6 characters.</value></data>
-  <data name="Phone_Invalid" xml:space="preserve"><value>Invalid phone. Digits only (min. 7). E.g. 7045551234</value></data>
+  <data name="Phone_Invalid" xml:space="preserve"><value>Invalid phone. Digits only (7–10). E.g. 7045551234</value></data>
   <data name="Phone_Required" xml:space="preserve"><value>Phone is required.</value></data>
+  <data name="Validation_Required" xml:space="preserve"><value>This field is required.</value></data>
+  <data name="Common_EmailPlaceholder" xml:space="preserve"><value>name@email.com</value></data>
 
   <data name="Favorites_Title" xml:space="preserve"><value>Favorite businesses</value></data>
   <data name="Favorites_Empty" xml:space="preserve"><value>You don't have favorites yet. Save businesses from their profile.</value></data>

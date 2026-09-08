@@ -25,7 +25,7 @@ public static partial class PhoneValidator
             return false;
 
         var digits = new string(trimmed.Where(char.IsDigit).ToArray());
-        if (digits.Length is < 7 or > 15)
+        if (digits.Length is < 7 or > 10)
             return false;
 
         // No permitir que haya letras/símbolos raros ya cubierto; normalizar a E.164-ish

@@ -15,19 +15,24 @@
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
     }
-    <form method="post">
+    <form method="post" data-validate-i18n="1"
+          data-msg-required="@L["Validation_Required"]"
+          data-msg-email="@L["Profile_Edit_EmailInvalid"]"
+          data-msg-phone="@L["Phone_Invalid"]"
+          data-msg-password="@L["Profile_Edit_PasswordShort"]">
         <div class="form-group">
             <label>@L["Register_FullName"]</label>
             <input class="form-control" asp-for="FullName" required />
         </div>
         <div class="form-group">
             <label>@L["Common_Email"]</label>
-            <input class="form-control" asp-for="Email" type="email" required />
+            <input class="form-control" asp-for="Email" type="email" required maxlength="150"
+                   autocomplete="email" inputmode="email" placeholder="@L["Common_EmailPlaceholder"]" />
         </div>
         <div class="form-group">
             <label>@L["Common_Phone"]</label>
             <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
-                   maxlength="20" autocomplete="tel" placeholder="7045551234" />
+                   maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel" placeholder="7045551234" />
         </div>
         <div class="form-group">
             <label>@L["Common_City"]</label>

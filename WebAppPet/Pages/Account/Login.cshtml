@@ -31,12 +31,16 @@
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
     }
-    <form method="post" id="loginForm">
+    <form method="post" id="loginForm" data-validate-i18n="1"
+          data-msg-required="@L["Validation_Required"]"
+          data-msg-email="@L["Profile_Edit_EmailInvalid"]"
+          data-msg-password="@L["Profile_Edit_PasswordShort"]">
         <input type="hidden" asp-for="ReturnUrl" />
         <input type="hidden" asp-for="Culture" id="cultureInput" />
         <div class="form-group">
             <label>@L["Common_Email"]</label>
-            <input class="form-control" asp-for="Email" type="email" required autocomplete="username" />
+            <input class="form-control" asp-for="Email" type="email" required autocomplete="username"
+                   placeholder="@L["Common_EmailPlaceholder"]" />
         </div>
         <div class="form-group">
             <label>@L["Common_Password"]</label>

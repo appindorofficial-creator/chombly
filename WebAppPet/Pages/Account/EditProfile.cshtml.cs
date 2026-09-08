@@ -28,7 +28,7 @@ public class EditProfileModel : PageModel
     [BindProperty, Required, EmailAddress, MaxLength(150)]
     public string Email { get; set; } = string.Empty;
 
-    [BindProperty, MaxLength(30)]
+    [BindProperty, MaxLength(10)]
     public string? Phone { get; set; }
 
     [BindProperty, MaxLength(120)]

@@ -1,33 +1,29 @@
 ﻿// Chombly site helpers
 (function () {
   function sanitizePhone(value) {
-    // Solo dígitos, espacio, +, -, (, ), .
-    return String(value || '').replace(/[^\d+\s\-().]/g, '');
+    // Solo dígitos, máx. 10 (número local)
+    return String(value || '').replace(/\D/g, '').slice(0, 10);
   }
 
   function bindPhoneInputs(root) {
     (root || document).querySelectorAll('input[data-phone], input[name="Phone"], input#Phone').forEach(function (el) {
       if (el.dataset.phoneBound === '1') return;
       el.dataset.phoneBound = '1';
-      el.setAttribute('inputmode', 'tel');
+      el.setAttribute('inputmode', 'numeric');
       el.setAttribute('autocomplete', 'tel');
-      el.setAttribute('maxlength', '20');
+      el.setAttribute('maxlength', '10');
+      el.setAttribute('pattern', '[0-9]{7,10}');
       el.addEventListener('input', function () {
-        var start = el.selectionStart;
         var before = el.value;
         var cleaned = sanitizePhone(before);
-        if (cleaned !== before) {
-          el.value = cleaned;
-          try { el.setSelectionRange(Math.max(0, start - (before.length - cleaned.length)), Math.max(0, start - (before.length - cleaned.length))); } catch (_) { }
-        }
+        if (cleaned !== before) el.value = cleaned;
       });
       el.addEventListener('paste', function (e) {
         e.preventDefault();
         var text = (e.clipboardData || window.clipboardData).getData('text');
-        var cleaned = sanitizePhone(text);
         var start = el.selectionStart || 0;
         var end = el.selectionEnd || 0;
-        el.value = el.value.slice(0, start) + cleaned + el.value.slice(end);
+        el.value = sanitizePhone(el.value.slice(0, start) + text + el.value.slice(end));
       });
     });
   }
@@ -272,14 +268,87 @@
     }
   }
 
+  function bindLocalizedValidation(root) {
+    (root || document).querySelectorAll('form[data-validate-i18n]').forEach(function (form) {
+      if (form.dataset.validateBound === '1') return;
+      form.dataset.validateBound = '1';
+      form.setAttribute('novalidate', 'novalidate');
+
+      var msgs = {
+        required: form.getAttribute('data-msg-required') || '',
+        email: form.getAttribute('data-msg-email') || '',
+        phone: form.getAttribute('data-msg-phone') || '',
+        password: form.getAttribute('data-msg-password') || ''
+      };
+
+      function apply(el) {
+        if (!el || !el.setCustomValidity) return;
+        el.setCustomValidity('');
+        if (el.disabled) return;
+
+        var raw = el.value == null ? '' : String(el.value);
+        var v = raw.trim();
+        var type = (el.getAttribute('type') || '').toLowerCase();
+        var name = (el.name || '').toLowerCase();
+        var isPhone = el.getAttribute('data-phone') === '1' || name === 'phone';
+
+        if (el.required && !v) {
+          el.setCustomValidity(msgs.required);
+          return;
+        }
+        if (!v) return;
+
+        if (type === 'email' || name === 'email') {
+          var emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+          if (!emailOk) el.setCustomValidity(msgs.email);
+          return;
+        }
+
+        if (isPhone) {
+          var digits = v.replace(/\D/g, '');
+          if (digits.length < 7 || digits.length > 10) {
+            el.setCustomValidity(msgs.phone);
+          }
+          return;
+        }
+
+        if (type === 'password') {
+          var min = el.minLength > 0 ? el.minLength : 0;
+          if (min && v.length < min) el.setCustomValidity(msgs.password);
+        }
+      }
+
+      function validateAll() {
+        form.querySelectorAll('input, select, textarea').forEach(apply);
+      }
+
+      form.addEventListener('input', function (e) {
+        if (e.target) apply(e.target);
+      }, true);
+      form.addEventListener('change', function (e) {
+        if (e.target) apply(e.target);
+      }, true);
+      form.addEventListener('submit', function (e) {
+        validateAll();
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          e.stopPropagation();
+          form.reportValidity();
+        }
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
+    bindLocalizedValidation(document);
     restoreFlowScroll();
     bindConfirmForms(document);
     bindAcceptTerms(document);
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;
+  window.ChomblyBindLocalizedValidation = bindLocalizedValidation;
   window.ChomblyConfirm = openConfirm;
   window.ChomblyBindConfirmForms = bindConfirmForms;
   window.ChomblyBindAcceptTerms = bindAcceptTerms;
