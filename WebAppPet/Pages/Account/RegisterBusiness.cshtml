@@ -1,0 +1,341 @@
+@page
+@model WebAppPet.Pages.Account.RegisterBusinessModel
+@using System.Globalization
+@{
+    ViewData["Title"] = L["Biz_ImBusiness"].Value;
+    ViewData["HideNav"] = true;
+    var inv = CultureInfo.InvariantCulture;
+}
+@if (Model.Step is >= 1 and <= 4)
+{
+    ViewData["LangCompact"] = true;
+    <div class="page-header">
+        <button type="button" class="back-btn" id="biz-back-btn" style="border:none;background:transparent;cursor:pointer">←</button>
+        <h1>@string.Format(L["Biz_StepOf"].Value, Model.Step)</h1>
+        <partial name="_LanguageSwitch" />
+    </div>
+    <div class="biz-progress"><div class="biz-progress-bar" style="width:@Model.WizardProgress%"></div></div>
+}
+else if (Model.Step != 7)
+{
+    ViewData["LangCompact"] = true;
+    <div class="page-header">
+        @if (Model.Step > 0)
+        {
+            <button type="button" class="back-btn" id="biz-back-btn" style="border:none;background:transparent;cursor:pointer">←</button>
+        }
+        else
+        {
+            <a class="back-btn" asp-page="/Account/Profile">←</a>
+        }
+        <h1>@(Model.Step == 0 ? L["Biz_Join"].Value : Model.Step == 5 ? L["Biz_Services"].Value : Model.Step == 6 ? (User.Identity?.IsAuthenticated == true ? L["Biz_ConfirmAccount"].Value : L["Biz_CreateAccount"].Value) : L["Biz_Business"].Value)</h1>
+        <partial name="_LanguageSwitch" />
+    </div>
+}
+
+<main class="app-main no-nav">
+    @if (Model.Step == 7)
+    {
+        <div class="biz-success">
+            <div class="biz-success-check">✓</div>
+            <h2>@L["Biz_WelcomeTitle"]</h2>
+            <p class="muted">@string.Format(L["Biz_ProfileCreated"].Value, Model.BusinessName)</p>
+            <div class="card card-pad" style="text-align:left;margin:16px 0">
+                <strong>@L["Biz_CompleteProfile"]</strong>
+                <p class="muted small" style="margin:6px 0 0">@L["Biz_CompleteHint"]</p>
+            </div>
+            <a class="btn btn-primary btn-block" asp-page="/Groomer/Dashboard">@L["Biz_GoDashboard"]</a>
+            <a class="btn btn-outline btn-block" asp-page="/Groomer/Verification" style="margin-top:10px">@L["Biz_CompleteVerification"]</a>
+            <a class="link-btn" asp-page="/Groomer/Dashboard" style="display:block;text-align:center;margin-top:12px">@L["Biz_CompleteLater"]</a>
+        </div>
+    }
+    else
+    {
+        ViewData["ExcludeStep"] = Model.Step;
+        <form method="post" id="biz-reg-form" novalidate action="@Url.Page("/Account/RegisterBusiness")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Step" id="biz-step" value="@Model.Step" />
+            <input type="hidden" name="nav" id="biz-nav" value="next" />
+            @await Html.PartialAsync("_BizRegHiddens")
+
+            @if (Model.Step == 0)
+            {
+                <h2 style="margin:0 0 8px">@L["Biz_HowTitle"]</h2>
+                <p class="muted small">@L["Biz_HowSub"]</p>
+                <label class="biz-type-card @(Model.ProviderKindKey != "independent" ? "active" : "")">
+                    <input type="radio" name="ProviderKindKey" value="business" @(Model.ProviderKindKey != "independent" ? "checked" : "") />
+                    <span class="biz-type-ico">🏪</span>
+                    <span>
+                        <strong>@L["Biz_TypeBusinessTitle"]</strong>
+                        <small class="muted">@L["Biz_TypeBusinessDesc"]</small>
+                    </span>
+                </label>
+                <label class="biz-type-card @(Model.ProviderKindKey == "independent" ? "active" : "")">
+                    <input type="radio" name="ProviderKindKey" value="independent" @(Model.ProviderKindKey == "independent" ? "checked" : "") />
+                    <span class="biz-type-ico">🦮</span>
+                    <span>
+                        <strong>@L["Biz_TypeIndependentTitle"]</strong>
+                        <small class="muted">@L["Biz_TypeIndependentDesc"]</small>
+                    </span>
+                </label>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="muted small" style="text-align:center;margin-top:16px">@L["Biz_ContinueCurrentAccount"]</p>
+                }
+                else
+                {
+                    <p class="muted small" style="text-align:center;margin-top:16px">
+                        @L["Biz_HaveAccount"] <a asp-page="/Account/Login" style="color:var(--brand);font-weight:700">@L["Biz_SignIn"]</a>
+                    </p>
+                }
+            }
+            else if (Model.Step == 1)
+            {
+                <h3 class="section-title" style="margin-top:0">@L["Biz_BasicInfo"]</h3>
+                <div class="form-group"><label>@L["Biz_YourFullName"]</label><input class="form-control" name="FullName" value="@Model.FullName" /></div>
+                <div class="form-group"><label>@L["Biz_BusinessName"]</label><input class="form-control" name="BusinessName" value="@Model.BusinessName" /></div>
+                <div class="form-group"><label>@L["Common_Phone"]</label><input class="form-control" name="Phone" value="@Model.Phone" type="tel" inputmode="numeric" data-phone="1" maxlength="20" autocomplete="tel" placeholder="7045551234" /></div>
+                <div class="form-group"><label>@L["Common_Email"]</label><input class="form-control" name="Email" type="email" value="@Model.Email" /></div>
+                <div class="form-group">
+                    <label>@L["Common_City"]</label>
+                    <input class="form-control" name="City" id="City" value="@Model.City"
+                           data-places="city" data-places-fill="city"
+                           data-places-lat="#Latitude" data-places-lng="#Longitude"
+                           placeholder="@L["Biz_SearchCity"]" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label>@L["Common_Address"]</label>
+                    <input class="form-control" name="Address" id="Address" value="@Model.Address"
+                           data-places="address" data-places-fill="address"
+                           data-places-city="#City" data-places-lat="#Latitude" data-places-lng="#Longitude"
+                           placeholder="@L["Biz_SearchAddress"]" autocomplete="off" />
+                </div>
+                <input type="hidden" name="Latitude" id="Latitude" value="@Model.Latitude.ToString(inv)" data-places-fill="lat" />
+                <input type="hidden" name="Longitude" id="Longitude" value="@Model.Longitude.ToString(inv)" data-places-fill="lng" />
+                <p class="muted small">@L["Biz_MapsTip"]</p>
+            }
+            else if (Model.Step == 2)
+            {
+                <h3 class="section-title" style="margin-top:0">@L["Biz_ServiceType"]</h3>
+                <div class="biz-cat-grid">
+                    @foreach (var c in Model.Categories)
+                    {
+                        var on = Model.CategoryId == c.Id || (Model.CategoryId == 0 && c == Model.Categories.First());
+                        <label class="biz-cat-card @(on ? "active" : "")">
+                            <input type="radio" name="CategoryId" value="@c.Id" @(on ? "checked" : "") />
+                            <img src="/images/categories/cat-@(c.Slug).png" alt="" />
+                            <strong>@c.DisplayName()</strong>
+                        </label>
+                    }
+                </div>
+                <h3 class="section-title">@L["Biz_HowWork"]</h3>
+                @foreach (var (key, labelKey) in new[] { ("local", "Biz_WorkLocal"), ("domicilio", "Biz_WorkHome"), ("ambas", "Biz_WorkBoth") })
+                {
+                    <label class="radio-card" style="margin-bottom:8px">
+                        <input type="radio" name="WorkModeKey" value="@key" @(Model.WorkModeKey == key ? "checked" : "") />
+                        <div class="inner"><strong>@L[labelKey]</strong></div>
+                    </label>
+                }
+            }
+            else if (Model.Step == 3)
+            {
+                <h3 class="section-title" style="margin-top:0">@L["Biz_HoursTitle"]</h3>
+                <p class="muted small">@L["Biz_HoursHint"]</p>
+                @for (var i = 0; i < Model.Week.Count; i++)
+                {
+                    <div class="card card-pad" style="margin-bottom:8px">
+                        <input type="hidden" name="Week[@i].DayOfWeek" value="@Model.Week[i].DayOfWeek" />
+                        <input type="hidden" name="Week[@i].Label" value="@Model.Week[i].Label" />
+                        <label class="toggle-row" style="cursor:pointer;margin-bottom:8px">
+                            <strong>@Model.Week[i].Label</strong>
+                            <span>
+                                @* Checkbox before hidden: ASP.NET Core binds FirstValue; hidden-first always yields false. *@
+                                <input type="checkbox" name="Week[@i].IsOpen" value="true" @(Model.Week[i].IsOpen ? "checked" : "") />
+                                <input type="hidden" name="Week[@i].IsOpen" value="false" />
+                                @L["Biz_Open"]
+                            </span>
+                        </label>
+                        <div style="display:flex;gap:10px">
+                            <div class="form-group" style="flex:1;margin:0">
+                                <label class="small muted">@L["Biz_Opens"]</label>
+                                <input class="form-control" type="time" name="Week[@i].OpenTime" value="@Model.Week[i].OpenTime" />
+                            </div>
+                            <div class="form-group" style="flex:1;margin:0">
+                                <label class="small muted">@L["Biz_Closes"]</label>
+                                <input class="form-control" type="time" name="Week[@i].CloseTime" value="@Model.Week[i].CloseTime" />
+                            </div>
+                        </div>
+                    </div>
+                }
+                <h3 class="section-title">@L["Biz_ServiceArea"]</h3>
+                <div class="when-row" style="flex-wrap:wrap">
+                    @foreach (var miles in new[] { 5, 10, 20, 0 })
+                    {
+                        var label = miles == 0 ? L["Biz_WholeCity"].Value : $"{miles} mi";
+                        <label class="when-chip @(Model.ServiceAreaMiles == miles ? "active" : "")">
+                            <input type="radio" name="ServiceAreaMiles" value="@miles" @(Model.ServiceAreaMiles == miles ? "checked" : "") />
+                            @label
+                        </label>
+                    }
+                </div>
+            }
+            else if (Model.Step == 4)
+            {
+                <h3 class="section-title" style="margin-top:0">@L["Biz_PhotosTitle"]</h3>
+                <p class="muted small">@L["Biz_PhotosHint"]</p>
+                <div class="form-group"><label>@L["Biz_LogoUrl"]</label><input class="form-control" name="LogoUrl" value="@Model.LogoUrl" placeholder="https://…" /></div>
+                <div class="form-group"><label>@L["Biz_CoverUrl"]</label><input class="form-control" name="CoverUrl" value="@Model.CoverUrl" placeholder="https://…" /></div>
+                <div class="form-group">
+                    <label>@L["Biz_Description"]</label>
+                    <textarea class="form-control" name="About" rows="5" maxlength="300" placeholder="@L["Biz_DescriptionPh"]">@Model.About</textarea>
+                    <p class="muted small">@L["Biz_DescriptionMax"]</p>
+                </div>
+            }
+            else if (Model.Step == 5)
+            {
+                <h3 class="section-title" style="margin-top:0">@L["Biz_ServicesInitial"]</h3>
+                <p class="muted small">@L["Biz_ServicesHint"]</p>
+                @for (var i = 0; i < Model.ServiceNames.Count; i++)
+                {
+                    <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end">
+                        <div class="form-group" style="flex:2;margin:0">
+                            <label class="small muted">@L["Biz_Service"]</label>
+                            <input class="form-control" name="ServiceNames[@i]" value="@Model.ServiceNames[i]" />
+                        </div>
+                        <div class="form-group" style="flex:1;margin:0">
+                            <label class="small muted">@L["Biz_FromPrice"]</label>
+                            <input class="form-control" type="number" step="0.01" name="ServicePrices[@i]" value="@Model.ServicePrices[i].ToString(inv)" />
+                        </div>
+                    </div>
+                }
+                <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end;opacity:.85">
+                    <div class="form-group" style="flex:2;margin:0">
+                        <label class="small muted">@L["Biz_AddAnother"]</label>
+                        <input class="form-control" name="ServiceNames[@Model.ServiceNames.Count]" placeholder="@L["Biz_ServiceNamePh"]" />
+                    </div>
+                    <div class="form-group" style="flex:1;margin:0">
+                        <label class="small muted">@L["Biz_FromPrice"]</label>
+                        <input class="form-control" type="number" step="0.01" name="ServicePrices[@Model.ServiceNames.Count]" value="0" />
+                    </div>
+                </div>
+            }
+            else if (Model.Step == 6)
+            {
+                ViewData["TermsChecked"] = Model.AcceptTerms;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    <h3 class="section-title" style="margin-top:0">@L["Biz_ConfirmAccount"]</h3>
+                    <p class="muted small">@L["Biz_ContinueCurrentAccount"]</p>
+                    <p class="muted small">@L["Common_Email"]: <strong>@Model.Email</strong></p>
+                }
+                else
+                {
+                    <h3 class="section-title" style="margin-top:0">@L["Biz_CreateAccount"]</h3>
+                    <p class="muted small">@L["Common_Email"]: <strong>@Model.Email</strong></p>
+                    <div class="form-group"><label>@L["Common_Password"]</label><input class="form-control" name="Password" type="password" minlength="6" value="" /></div>
+                    <div class="form-group"><label>@L["Register_ConfirmPassword"]</label><input class="form-control" name="ConfirmPassword" type="password" minlength="6" value="" /></div>
+                }
+                <partial name="_AcceptTerms" />
+                <img src="~/images/chombly-monkey.png" alt="" style="display:block;width:100px;margin:20px auto 0;opacity:.9" />
+            }
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger" id="biz-error" style="margin-top:12px">@Model.ErrorMessage</div>
+            }
+
+            <button class="btn btn-primary btn-block" type="button" id="biz-continue" style="margin-top:16px;position:relative;z-index:20">
+                @(Model.Step == 6 ? L["Biz_CreateProfile"].Value : L["Common_Continue"].Value)
+            </button>
+        </form>
+    }
+</main>
+
+@section Scripts {
+    <style>
+        .pac-container { z-index: 10000 !important; }
+        #biz-continue, #biz-back-btn { position: relative; z-index: 20; pointer-events: auto !important; }
+    </style>
+    @if (Model.Step == 1)
+    {
+        <partial name="_GooglePlaces" />
+    }
+    <script>
+    (function () {
+        var form = document.getElementById('biz-reg-form');
+        if (!form) return;
+
+        function clearPac() {
+            document.querySelectorAll('.pac-container').forEach(function (el) { el.remove(); });
+        }
+
+        function go(nav) {
+            clearPac();
+            var navInput = document.getElementById('biz-nav');
+            if (navInput) navInput.value = nav;
+            var btn = document.getElementById('biz-continue');
+            if (btn && nav === 'next') {
+                btn.disabled = true;
+                btn.textContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Biz_Loading"].Value));
+            }
+            // submit nativo (más fiable en iOS que form.submit() a veces)
+            if (typeof form.requestSubmit === 'function') {
+                // requestSubmit needs a submitter; use hidden submit
+                var tmp = document.createElement('input');
+                tmp.type = 'submit';
+                tmp.style.display = 'none';
+                form.appendChild(tmp);
+                form.requestSubmit(tmp);
+            } else {
+                HTMLFormElement.prototype.submit.call(form);
+            }
+        }
+
+        var cont = document.getElementById('biz-continue');
+        if (cont) {
+            cont.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                go('next');
+            }, true);
+        }
+
+        var back = document.getElementById('biz-back-btn');
+        if (back) {
+            back.addEventListener('click', function (e) {
+                e.preventDefault();
+                go('back');
+            }, true);
+        }
+
+        document.querySelectorAll('.biz-type-card, .biz-cat-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                var input = card.querySelector('input[type=radio]');
+                if (!input) return;
+                input.checked = true;
+                var group = card.classList.contains('biz-type-card')
+                    ? document.querySelectorAll('.biz-type-card')
+                    : document.querySelectorAll('.biz-cat-card');
+                group.forEach(function (c) { c.classList.toggle('active', c === card); });
+            });
+        });
+
+        // Service-area chips: inputs are display:none; toggle checked + .active like type/category cards
+        document.querySelectorAll('.when-chip').forEach(function (chip) {
+            chip.addEventListener('click', function (e) {
+                e.preventDefault();
+                var input = chip.querySelector('input[type=radio]');
+                if (!input) return;
+                input.checked = true;
+                var row = chip.closest('.when-row') || chip.parentElement;
+                (row ? row.querySelectorAll('.when-chip') : [chip]).forEach(function (c) {
+                    c.classList.toggle('active', c === chip);
+                });
+            });
+        });
+
+        var err = document.getElementById('biz-error');
+        if (err) err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    })();
+    </script>
+}

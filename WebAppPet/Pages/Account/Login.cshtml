@@ -1,0 +1,81 @@
+@page
+@model WebAppPet.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = L["Login_Title"].Value;
+    ViewData["HideNav"] = true;
+    var isEn = string.Equals(Model.Culture, "en", StringComparison.OrdinalIgnoreCase);
+}
+<div class="page-header">
+    <a class="back-btn" href="@(Model.BackPage)">←</a>
+    <h1>@L["Login_Title"]</h1>
+</div>
+<main class="app-main no-nav">
+    <section class="lang-picker" aria-label="@L["Login_SelectLanguage"]">
+        <p class="lang-picker-label">@L["Login_SelectLanguage"]</p>
+        <p class="muted small lang-picker-hint">@L["Common_LanguageHint"]</p>
+        <div class="lang-cards">
+            <button type="button" class="lang-card @(isEn ? "" : "active")" data-lang="es" id="langEs">
+                <span class="lang-flag" aria-hidden="true">🇪🇸</span>
+                <strong>Español</strong>
+                <span class="muted small">Spanish</span>
+            </button>
+            <button type="button" class="lang-card @(isEn ? "active" : "")" data-lang="en" id="langEn">
+                <span class="lang-flag" aria-hidden="true">🇺🇸</span>
+                <strong>English</strong>
+                <span class="muted small">Inglés</span>
+            </button>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+    <form method="post" id="loginForm">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" asp-for="Culture" id="cultureInput" />
+        <div class="form-group">
+            <label>@L["Common_Email"]</label>
+            <input class="form-control" asp-for="Email" type="email" required autocomplete="username" />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_Password"]</label>
+            <input class="form-control" asp-for="Password" type="password" required autocomplete="current-password" />
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">@L["Login_Submit"]</button>
+    </form>
+    <p class="muted small" style="text-align:center;margin-top:16px">
+        @L["Login_NoAccount"] <a asp-page="/Account/Register" style="color:var(--brand);font-weight:700">@L["Login_Register"]</a>
+    </p>
+    <p class="muted small" style="text-align:center;margin-top:12px">
+        <a asp-page="/Account/RegisterBusiness" style="color:var(--brand);font-weight:700">@L["Login_ImBusiness"]</a>
+        ·
+        <a asp-page="/Welcome" style="color:var(--brand);font-weight:700">@L["Login_Welcome"]</a>
+    </p>
+</main>
+
+@section Scripts {
+<script>
+(function () {
+  var input = document.getElementById('cultureInput');
+  var cards = document.querySelectorAll('.lang-card');
+  function select(lang) {
+    if (input) input.value = lang;
+    cards.forEach(function (c) {
+      c.classList.toggle('active', c.getAttribute('data-lang') === lang);
+    });
+    // Aplica idioma de inmediato (antes del login)
+    var url = '/Account/SetLanguage?culture=' + encodeURIComponent(lang)
+      + '&returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = url;
+  }
+  cards.forEach(function (c) {
+    c.addEventListener('click', function () {
+      var lang = c.getAttribute('data-lang');
+      if (lang === (input && input.value)) return;
+      select(lang);
+    });
+  });
+})();
+</script>
+}

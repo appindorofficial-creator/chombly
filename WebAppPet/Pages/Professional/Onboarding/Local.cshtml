@@ -1,0 +1,81 @@
+@page
+@model WebAppPet.Pages.Professional.Onboarding.LocalModel
+@using WebAppPet.Localization
+@{
+    ViewData["Title"] = Model.IsBehavior
+        ? CatalogLocalizer.Loc("Onboarding conducta", "Behavior onboarding")
+        : CatalogLocalizer.Loc("Onboarding local", "Local onboarding");
+    ViewData["GroomerTab"] = "onboarding";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
+    <div class="page-header" style="padding:0;margin-bottom:12px">
+        <a class="back-btn" asp-page="/Professional/Onboarding">←</a>
+        <h1>@(Model.IsBehavior
+            ? CatalogLocalizer.Loc("Conducta", "Behavior")
+            : CatalogLocalizer.Loc("Veterinario local (US)", "Local veterinarian (US)"))</h1>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-warn">@Model.Error</div>
+    }
+
+    <form method="post" enctype="multipart/form-data" class="card card-pad">
+        <input type="hidden" asp-for="Track" />
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Nombre legal", "Legal name")</label>
+            <input class="form-control" asp-for="LegalName" required />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Clínica / práctica", "Clinic / practice")</label>
+            <input class="form-control" asp-for="ClinicOrPracticeName" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Nº de licencia", "License number")</label>
+            <input class="form-control" asp-for="LicenseNumber" />
+        </div>
+        <div class="form-group">
+            <label>@(Model.IsBehavior
+                ? CatalogLocalizer.Loc("Jurisdicción / estado", "Jurisdiction / state")
+                : CatalogLocalizer.Loc("Estado US (ej. NC)", "US state (e.g. NC)"))</label>
+            <input class="form-control" asp-for="LicenseJurisdiction" required maxlength="8" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Vencimiento licencia", "License expiry")</label>
+            <input class="form-control" type="date" asp-for="LicenseExpiry" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Idiomas", "Languages")</label>
+            <input class="form-control" asp-for="Languages" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Especialidades", "Specialties")</label>
+            <input class="form-control" asp-for="Specialties" />
+        </div>
+        @if (!Model.IsBehavior)
+        {
+            <label class="check-row">
+                <input type="checkbox" asp-for="HasPhysicalClinic" />
+                <span>@CatalogLocalizer.Loc("Tengo clínica física", "I have a physical clinic")</span>
+            </label>
+            <label class="check-row">
+                <input type="checkbox" asp-for="VcprCapable" />
+                <span>@CatalogLocalizer.Loc("Puedo establecer / mantener VCPR", "I can establish / maintain VCPR")</span>
+            </label>
+        }
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Nota de documentos", "Documents note")</label>
+            <textarea class="form-control" asp-for="DocumentsNote" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Subir documento (opcional)", "Upload document (optional)")</label>
+            <input class="form-control" type="file" asp-for="DocumentUpload" accept=".pdf,.jpg,.jpeg,.png" />
+        </div>
+        <button class="btn btn-outline btn-block" type="submit" asp-page-handler="Draft">@CatalogLocalizer.Loc("Guardar borrador", "Save draft")</button>
+        <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Submit" style="margin-top:8px">@CatalogLocalizer.Loc("Enviar a revisión", "Submit for review")</button>
+    </form>
+</main>

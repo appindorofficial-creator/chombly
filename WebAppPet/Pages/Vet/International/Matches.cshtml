@@ -1,0 +1,54 @@
+@page
+@model WebAppPet.Pages.Vet.International.MatchesModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Coincidencias", "Matches");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Resultados de coincidencia", "Match results")</h1>
+        <p class="muted small">
+            @if (!string.IsNullOrEmpty(Model.Consultation?.PreferredCountry))
+            {
+                <text>@Model.Consultation.PreferredCountry · </text>
+            }
+            @if (!string.IsNullOrEmpty(Model.Consultation?.PreferredBreed))
+            {
+                <text>@Model.Consultation.PreferredBreed</text>
+            }
+        </p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <p class="muted small" style="margin-bottom:12px">
+        <a asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Ajustar preferencias", "Adjust preferences")</a>
+        ·
+        <a asp-page="/Vet/International/Countries" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("País", "Country")</a>
+        ·
+        <a asp-page="/Vet/International/BreedMatch" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Raza", "Breed")</a>
+    </p>
+
+    @if (Model.Matches.Count == 0)
+    {
+        <p class="muted">@CatalogLocalizer.Loc("No hay profesionales internacionales disponibles.", "No international professionals available.")</p>
+    }
+    else
+    {
+        @foreach (var m in Model.Matches)
+        {
+            <form method="post" asp-page-handler="Select" class="card card-pad" style="margin-bottom:10px">
+                <input type="hidden" name="consultationId" value="@Model.ConsultationId" />
+                <input type="hidden" name="providerId" value="@m.Provider.Id" />
+                <strong>@m.Provider.BusinessName</strong>
+                <span class="muted small" style="display:block">@m.Why</span>
+                @if (m.VerifiedBreeds.Count > 0)
+                {
+                    <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Razas verificadas:", "Verified breeds:") @string.Join(", ", m.VerifiedBreeds)</span>
+                }
+                <button type="submit" class="btn btn-outline btn-block" style="margin-top:10px">
+                    @CatalogLocalizer.Loc("Ver perfil y continuar", "View profile & continue")
+                </button>
+            </form>
+        }
+    }
+</main>

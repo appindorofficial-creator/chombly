@@ -1,0 +1,52 @@
+@page "{id:int}"
+@model WebAppPet.Pages.Vet.Virtual.SummaryModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Resumen", "Summary");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Appointments/Index">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Resumen y seguimiento", "Summary & follow-up")</h1>
+        <p class="muted small">#@Model.Id</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success">@Model.Message</div>
+    }
+
+    <div class="card card-pad" style="margin-bottom:14px">
+        <strong>@(Model.Consultation?.Provider?.BusinessName)</strong>
+        <p class="muted small">
+            @Model.Consultation?.Pet?.Name ·
+            @(Model.Consultation?.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : "—")
+        </p>
+        @if (Model.CatalogItem != null)
+        {
+            <p><strong>@ServiceCatalogService.DisplayName(Model.CatalogItem)</strong> · $@Model.Consultation!.PriceCharged.ToString("0.##")</p>
+            <p class="muted small">@ServiceCatalogService.DisplayScope(Model.CatalogItem)</p>
+        }
+        <p class="muted small">
+            @CatalogLocalizer.Loc(
+                "No mezclamos orientación internacional con diagnóstico local en este resumen.",
+                "We do not mix international guidance with local diagnosis in this summary.")
+        </p>
+        <p class="badge">@CatalogLocalizer.Loc("Sala de video: disponible pronto", "Video room: coming soon")</p>
+    </div>
+
+    <form method="post" asp-page-handler="Save" class="stack" style="gap:12px">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <h2 class="section-title">@CatalogLocalizer.Loc("Notas / seguimiento", "Notes / follow-up")</h2>
+        <textarea class="input" asp-for="ClinicalNotes" rows="4" placeholder="@CatalogLocalizer.Loc("Notas para el historial…", "Notes for the record…")"></textarea>
+        <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Guardar en historial", "Save to history")</button>
+    </form>
+
+    <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap">
+        @if (Model.Consultation?.AppointmentId is int aid)
+        {
+            <a class="btn btn-outline" asp-page="/Appointments/Details" asp-route-id="@aid">@CatalogLocalizer.Loc("Ver cita", "View appointment")</a>
+        }
+        <a class="btn btn-outline" asp-page="/Vet/Index">@CatalogLocalizer.Loc("Volver a Veterinaria", "Back to Veterinary")</a>
+    </div>
+</main>

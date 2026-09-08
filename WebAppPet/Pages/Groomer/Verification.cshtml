@@ -1,0 +1,89 @@
+@page
+@model WebAppPet.Pages.Groomer.VerificationModel
+@{
+    ViewData["Title"] = "Verificación";
+    ViewData["GroomerTab"] = "dashboard";
+    var g = Model.Profile!;
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+    <h2 style="margin:0 0 6px">Verificación del negocio</h2>
+    <p class="muted small">@Model.DoneCount de @Model.TotalCount pasos · acelera la publicación</p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    <div class="card card-pad" style="margin-bottom:14px">
+        <div class="verify-row">
+            <div>
+                <strong>Información del negocio</strong>
+                <div class="muted small">Nombre, ciudad y categoría</div>
+            </div>
+            <span class="badge badge-green">Listo</span>
+        </div>
+        <div class="verify-row">
+            <div>
+                <strong>Identidad</strong>
+                <div class="muted small">Cuenta y datos de contacto</div>
+            </div>
+            @if (g.VerifiedIdentity)
+            {
+                <span class="badge badge-green">Listo</span>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Mark"><input type="hidden" name="item" value="identity" /><button class="btn btn-outline btn-sm" type="submit">Marcar</button></form>
+            }
+        </div>
+        <div class="verify-row">
+            <div>
+                <strong>Licencias</strong>
+                <div class="muted small">Permisos locales / profesionales</div>
+            </div>
+            @if (g.VerifiedLicense)
+            {
+                <span class="badge badge-green">Listo</span>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Mark"><input type="hidden" name="item" value="license" /><button class="btn btn-outline btn-sm" type="submit">Marcar</button></form>
+            }
+        </div>
+        <div class="verify-row">
+            <div>
+                <strong>Seguro</strong>
+                <div class="muted small">Cobertura de responsabilidad</div>
+            </div>
+            @if (g.VerifiedInsurance)
+            {
+                <span class="badge badge-green">Listo</span>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Mark"><input type="hidden" name="item" value="insurance" /><button class="btn btn-outline btn-sm" type="submit">Marcar</button></form>
+            }
+        </div>
+        <div class="verify-row">
+            <div>
+                <strong>Cuenta bancaria</strong>
+                <div class="muted small">Para recibir pagos</div>
+            </div>
+            @if (g.VerifiedBank)
+            {
+                <span class="badge badge-green">Listo</span>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Mark"><input type="hidden" name="item" value="bank" /><button class="btn btn-outline btn-sm" type="submit">Marcar</button></form>
+            }
+        </div>
+    </div>
+
+    <a class="btn btn-primary btn-block" asp-page="./ScheduleCall">Agendar llamada con Chombly</a>
+    <a class="btn btn-outline btn-block" asp-page="./Dashboard" style="margin-top:10px">Volver al panel</a>
+</main>

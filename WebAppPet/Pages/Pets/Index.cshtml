@@ -1,0 +1,54 @@
+@page
+@model WebAppPet.Pages.Pets.IndexModel
+@{
+    ViewData["Title"] = L["Pets_Title"].Value;
+}
+<header class="topbar">
+    <partial name="_Brand" />
+    <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
+</header>
+
+<main class="app-main">
+    <h1 class="page-title">@L["Pets_Title"]</h1>
+
+    @if (Model.Pets.Any())
+    {
+        @foreach (var p in Model.Pets)
+        {
+            <div class="pet-card">
+                <img class="pet-avatar" src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                <div class="pet-info">
+                    <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                    <div class="muted small">@PetSpecies.Label(p.Species) · @CatalogLocalizer.Text(p.Breed) · @Model.SizeLabel(p.Size) · @p.AgeYears @L["Pets_Years"]</div>
+                    <div class="muted small">@CatalogLocalizer.Text(p.Temperament)</div>
+                    @if (p.IsSenior || p.IsAnxious || p.HasSpecialNeeds)
+                    {
+                        <div class="chip-row" style="margin:6px 0 0">
+                            @if (p.IsSenior) { <span class="badge badge-orange">@L["Pets_Senior"]</span> }
+                            @if (p.IsAnxious) { <span class="badge badge-orange">@L["Pets_Anxious"]</span> }
+                            @if (p.HasSpecialNeeds) { <span class="badge badge-orange">@L["Pets_SpecialNeeds"]</span> }
+                        </div>
+                    }
+                </div>
+                <div class="pet-actions">
+                    <a class="icon-btn" asp-page="./Care" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Control", "Care")">💚</a>
+                    <a class="icon-btn" asp-page="./Reminders" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Recordatorios", "Reminders")">⏰</a>
+                    <a class="icon-btn" asp-page="./History" asp-route-id="@p.Id" title="@L["Appt_History"]">📋</a>
+                    <form method="post" asp-page-handler="Delete" onsubmit="return confirm('@string.Format(L["Pets_DeleteConfirm"].Value, p.Name)')">
+                        <input type="hidden" name="id" value="@p.Id" />
+                        <button type="submit" class="icon-btn" title="@L["Common_Delete"]">🗑️</button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-chombly">
+            <img src="~/images/chombly-empty-pets.png" alt="" class="empty-illu" />
+            <h2>@L["Pets_EmptyTitle"]</h2>
+            <p>@L["Pets_EmptySub"]</p>
+            <a class="btn btn-primary btn-block" asp-page="./Create">+ @L["Pets_Add"]</a>
+        </div>
+    }
+</main>

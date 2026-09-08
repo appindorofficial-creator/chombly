@@ -1,0 +1,43 @@
+@page
+@model WebAppPet.Pages.Professional.OnboardingModel
+@using WebAppPet.Localization
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding");
+    ViewData["GroomerTab"] = "onboarding";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
+    <h1 class="page-title">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
+    <p class="muted small">@CatalogLocalizer.Loc("Elige tu trayectoria: local (EE.UU.), internacional o conducta.", "Choose your track: local (US), international, or behavior.")</p>
+
+    <div class="vet-modality-grid">
+        <a class="vet-modality-card" asp-page="/Professional/Onboarding/Local">
+            <div class="vet-modality-btn">
+                <span class="vet-modality-icon">🇺🇸</span>
+                <strong>@CatalogLocalizer.Loc("Veterinario local", "Local veterinarian")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("Licencia estatal, clínica y VCPR.", "State license, clinic, and VCPR.")</span>
+            </div>
+        </a>
+        <a class="vet-modality-card" asp-page="/Professional/Onboarding/International">
+            <div class="vet-modality-btn">
+                <span class="vet-modality-icon">🌍</span>
+                <strong>@CatalogLocalizer.Loc("Asesor internacional", "International advisor")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("País, idiomas y expertise de raza. Sin licencia US.", "Country, languages, breed expertise. No US license claim.")</span>
+            </div>
+        </a>
+        <a class="vet-modality-card" asp-page="/Professional/Onboarding/Local" asp-route-track="behavior">
+            <div class="vet-modality-btn">
+                <span class="vet-modality-icon">🧠</span>
+                <strong>@CatalogLocalizer.Loc("Especialista en conducta", "Behavior specialist")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("Entrenamiento / consultoría conductual.", "Training / behavior consulting.")</span>
+            </div>
+        </a>
+    </div>
+
+    <p style="margin-top:16px">
+        <a class="btn btn-outline btn-block" asp-page="/Professional/Onboarding/Status">@CatalogLocalizer.Loc("Ver estado de solicitud", "View application status")</a>
+    </p>
+</main>

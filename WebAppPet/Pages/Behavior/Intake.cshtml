@@ -1,0 +1,82 @@
+@page
+@model WebAppPet.Pages.Behavior.IntakeModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Care/Services">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Problema, frecuencia y contexto", "Problem, frequency, and context")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    @if (Model.Pets.Count == 0)
+    {
+        <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
+        <a class="btn btn-primary" asp-page="/Pets/Create">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+    }
+    else
+    {
+        <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px">
+            <input type="hidden" asp-for="CaseId" />
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Mascota", "Pet")</h2>
+                @foreach (var p in Model.Pets)
+                {
+                    <label class="radio-card">
+                        <input type="radio" name="PetId" value="@p.Id" checked="@(Model.PetId == p.Id)" />
+                        <span><strong>@p.Name</strong> <span class="muted small">@p.Breed</span></span>
+                    </label>
+                }
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Problema principal", "Main problem")</h2>
+                <select class="input" asp-for="ProblemType">
+                    <option value="">@CatalogLocalizer.Loc("Selecciona…", "Select…")</option>
+                    @foreach (var p in IntakeModel.Problems)
+                    {
+                        <option value="@p">@CatalogLocalizer.Text(p)</option>
+                    }
+                </select>
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Frecuencia", "Frequency")</h2>
+                <div class="filter-bar filter-bar-wrap">
+                    @foreach (var f in IntakeModel.Frequencies)
+                    {
+                        <label class="chip @(Model.Frequency == f ? "active" : "")">
+                            <input type="radio" name="Frequency" value="@f" checked="@(Model.Frequency == f)" /> @CatalogLocalizer.Text(f)
+                        </label>
+                    }
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Contexto del hogar", "Home context")</h2>
+                <textarea class="input" asp-for="ContextNotes" rows="3" placeholder="@CatalogLocalizer.Loc("Notas del hogar, rutina…", "Home notes, routine…")"></textarea>
+                <label class="muted small" style="display:block;margin-top:8px">@CatalogLocalizer.Loc("Video corto (opcional)", "Short video (optional)")</label>
+                <input class="input" type="file" asp-for="Video" accept="video/mp4,video/webm,video/quicktime,image/*" />
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("¿Hay signos clínicos?", "Any clinical signs?")</h2>
+                <p class="muted small">@CatalogLocalizer.Loc("Si marcas alguna, te llevamos a Veterinaria.", "If you check any, we route you to Veterinary.")</p>
+                <label class="check-row"><input type="checkbox" asp-for="SuddenAggression" /> <span>@CatalogLocalizer.Loc("Agresión súbita sin gatillo claro", "Sudden aggression without clear trigger")</span></label>
+                <label class="check-row"><input type="checkbox" asp-for="SeizureLike" /> <span>@CatalogLocalizer.Loc("Episodios tipo convulsión", "Seizure-like episodes")</span></label>
+                <label class="check-row"><input type="checkbox" asp-for="PainSuspected" /> <span>@CatalogLocalizer.Loc("Sospecha de dolor", "Suspected pain")</span></label>
+                <label class="check-row"><input type="checkbox" asp-for="SelfHarm" /> <span>@CatalogLocalizer.Loc("Autolesión grave", "Severe self-harm")</span></label>
+            </section>
+
+            <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+        </form>
+    }
+</main>

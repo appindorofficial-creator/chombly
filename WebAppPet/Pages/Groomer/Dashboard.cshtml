@@ -1,0 +1,106 @@
+@page
+@model WebAppPet.Pages.Groomer.DashboardModel
+@{
+    ViewData["Title"] = "Panel groomer";
+    ViewData["GroomerTab"] = "dashboard";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+    <a class="icon-btn" asp-page="/Account/Notifications">🔔</a>
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+
+    @if (Model.JustRegistered || Model.Profile?.PublishStatus == BusinessPublishStatus.PendingReview)
+    {
+        <div class="card card-pad" style="margin-bottom:14px;background:var(--brand-soft)">
+            <strong>Completa tu verificación</strong>
+            <p class="muted small" style="margin:6px 0 10px">Licencias, seguro y banco ayudan a publicar más rápido.</p>
+            <a class="btn btn-primary btn-block" asp-page="./Verification">Ver checklist</a>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Flash))
+    {
+        <div class="alert alert-info">@Model.Flash</div>
+    }
+
+    @if (Model.Profile != null)
+    {
+        <div class="card card-pad" style="margin-bottom:14px">
+            <h3 style="margin:0 0 6px">Estado de publicación</h3>
+            @switch (Model.Profile.PublishStatus)
+            {
+                case BusinessPublishStatus.Approved:
+                    <p class="muted small" style="margin:0">✓ Publicado — los clientes ya pueden encontrarte.</p>
+                    break;
+                case BusinessPublishStatus.PendingReview:
+                    <p class="muted small" style="margin:0">⏳ En revisión — completa agenda y perfil mientras esperas.</p>
+                    break;
+                case BusinessPublishStatus.Rejected:
+                    <p class="muted small" style="margin:0">No aprobado. Mejora tu perfil y vuelve a enviar.</p>
+                    <form method="post" asp-page-handler="Resubmit" style="margin-top:8px">
+                        <button class="btn btn-primary btn-block" type="submit">Reenviar a revisión</button>
+                    </form>
+                    break;
+                default:
+                    <p class="muted small" style="margin:0">Borrador — termina tu configuración.</p>
+                    break;
+            }
+            <div class="muted small" style="margin-top:8px">
+                Agenda: @Model.OpenWeekDays días abiertos/semana · Servicios: @Model.ServiceCount
+                · <a asp-page="./Availability">Editar agenda</a>
+                · <a asp-page="./Business">Editar negocio</a>
+            </div>
+        </div>
+    }
+
+    <h2 style="margin:0 0 4px">Hola, @Model.Profile?.User.FullName</h2>
+    <p class="muted small" style="margin:0 0 16px">
+        @Model.Profile?.BusinessName
+        @if (Model.Profile?.Category != null)
+        {
+            <span>· @Model.Profile.Category.Emoji @Model.Profile.Category.Name</span>
+        }
+    </p>
+
+    <div class="promo-banner" style="margin-top:0">
+        <div style="flex:1">
+            <span class="small" style="opacity:.85">Ingresos de hoy</span>
+            <strong style="font-size:1.6rem">$@Model.TodayIncome.ToString("0.00")</strong>
+            <span class="small">@Model.TodayCompleted citas completadas</span>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div class="card card-pad" style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:900;color:var(--purple)">@Model.UpcomingCount</div>
+            <div class="muted small">Próximas citas</div>
+        </div>
+        <a class="card card-pad" style="text-align:center" asp-page="./Appointments" asp-route-tab="requests">
+            <div style="font-size:1.6rem;font-weight:900;color:var(--purple)">@Model.PendingCount</div>
+            <div class="muted small">Nuevas solicitudes</div>
+        </a>
+    </div>
+
+    <h3 class="section-title">Agenda próxima</h3>
+    @if (!Model.Upcoming.Any())
+    {
+        <div class="empty">No hay citas próximas.</div>
+    }
+    @foreach (var a in Model.Upcoming)
+    {
+        <div class="appt-card">
+            <div class="row">
+                <img src="@PetSpecies.PhotoOrDefault(a.Pet.PhotoUrl, a.Pet.Species)" alt="@a.Pet.Name" style="border-radius:50%" />
+                <div style="flex:1">
+                    <strong>@a.Pet.Name · @a.Service.Name</strong>
+                    <div class="muted small">@a.Client.FullName</div>
+                    <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM · h:mm tt")</div>
+                </div>
+                <span class="badge @(a.Status == AppointmentStatus.Confirmed ? "badge-green" : "badge-orange")">
+                    @(a.Status == AppointmentStatus.Confirmed ? "Confirmada" : "Pendiente")
+                </span>
+            </div>
+        </div>
+    }
+</main>

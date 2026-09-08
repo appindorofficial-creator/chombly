@@ -1,0 +1,151 @@
+@page
+@model WebAppPet.Pages.Groomer.BusinessModel
+@{
+    ViewData["Title"] = "Mi negocio";
+    ViewData["GroomerTab"] = "business";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+
+    <h2 style="margin:0 0 8px">Mi negocio</h2>
+    <p class="muted small">Hotel, vet, grooming, daycare… todo se configura aquí y se lee desde la BD.</p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    <form method="post" asp-page-handler="Save">
+        <div class="form-group">
+            <label>Nombre comercial</label>
+            <input class="form-control" asp-for="BusinessName" required />
+        </div>
+        <div class="form-group">
+            <label>Categoría</label>
+            <select class="form-control" asp-for="CategoryId">
+                <option value="">— Selecciona —</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id">@c.Emoji @c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Dirección</label>
+            <input class="form-control" asp-for="Address" id="Address" data-places="address" data-places-fill="address"
+                   data-places-city="#City" data-places-lat="#Latitude" data-places-lng="#Longitude"
+                   placeholder="Busca la dirección…" />
+        </div>
+        <div class="form-group">
+            <label>Ciudad</label>
+            <input class="form-control" asp-for="City" id="City" data-places="city" data-places-fill="city"
+                   data-places-lat="#Latitude" data-places-lng="#Longitude"
+                   placeholder="Busca la ciudad…" />
+        </div>
+        <div style="display:flex;gap:10px">
+            <div class="form-group" style="flex:1">
+                <label>Latitud</label>
+                <input class="form-control" asp-for="Latitude" id="Latitude" data-places-fill="lat" step="any" readonly />
+            </div>
+            <div class="form-group" style="flex:1">
+                <label>Longitud</label>
+                <input class="form-control" asp-for="Longitude" id="Longitude" data-places-fill="lng" step="any" readonly />
+            </div>
+        </div>
+        <p class="muted small">Ubicación se completa al elegir una sugerencia de Google Maps.</p>
+        <div class="form-group">
+            <label>@L["Common_Phone"]</label>
+            <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
+                   maxlength="20" autocomplete="tel" placeholder="7045551234" />
+        </div>
+        <div class="form-group">
+            <label>Imagen (URL)</label>
+            <input class="form-control" asp-for="ImageUrl" placeholder="/images/..." />
+        </div>
+        <div class="form-group">
+            <label>Sobre el negocio</label>
+            <textarea class="form-control" asp-for="About" rows="3"></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+            <div class="form-group" style="flex:1">
+                <label>Precio desde</label>
+                <input class="form-control" asp-for="StartingPrice" step="0.01" />
+            </div>
+            <div class="form-group" style="flex:1">
+                <label>Unidad</label>
+                <input class="form-control" asp-for="PriceUnit" placeholder="/ noche" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Especies (CSV)</label>
+            <input class="form-control" asp-for="AcceptedSpecies" />
+        </div>
+        <div class="toggle-row"><span>Mascotas senior</span><input asp-for="AcceptsSeniorPets" type="checkbox" /></div>
+        <div class="toggle-row"><span>Mascotas ansiosas</span><input asp-for="AcceptsAnxiousPets" type="checkbox" /></div>
+        <div class="toggle-row"><span>Destacado</span><input asp-for="IsFeatured" type="checkbox" /></div>
+        <div class="toggle-row"><span>Activo / visible</span><input asp-for="IsActive" type="checkbox" /></div>
+        <button class="btn btn-primary btn-block" type="submit" style="margin-top:12px">Guardar negocio</button>
+    </form>
+
+    <h3 class="section-title">Servicios</h3>
+    @foreach (var s in Model.Services)
+    {
+        <div class="card card-pad" style="margin-bottom:8px">
+            <strong>@s.Name</strong>
+            <div class="muted small">Desde $@s.PriceSmall · @s.BillingUnit</div>
+        </div>
+    }
+    <form method="post" asp-page-handler="AddService" class="card card-pad" style="margin-bottom:16px">
+        <div class="form-group"><label>Nuevo servicio</label><input class="form-control" asp-for="NewServiceName" /></div>
+        <div style="display:flex;gap:10px">
+            <div class="form-group" style="flex:1"><label>Precio base</label><input class="form-control" asp-for="NewServicePrice" step="0.01" /></div>
+            <div class="form-group" style="flex:1">
+                <label>Unidad</label>
+                <select class="form-control" asp-for="NewServiceUnit">
+                    <option value="sesion">sesión</option>
+                    <option value="noche">noche</option>
+                    <option value="dia">día</option>
+                    <option value="visita">visita</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-outline btn-block" type="submit">Agregar servicio</button>
+    </form>
+
+    <h3 class="section-title">Amenities</h3>
+    <div class="amenity-grid">
+        @foreach (var a in Model.Amenities)
+        {
+            <div class="amenity-item"><span>@a.Icon</span><span>@a.Label</span></div>
+        }
+    </div>
+    <form method="post" asp-page-handler="AddAmenity" style="margin-bottom:16px">
+        <div style="display:flex;gap:8px">
+            <input class="form-control" asp-for="NewAmenityIcon" style="width:70px" placeholder="🎥" />
+            <input class="form-control" asp-for="NewAmenityLabel" placeholder="Cámaras 24/7" />
+            <button class="btn btn-outline" type="submit">+</button>
+        </div>
+    </form>
+
+    <h3 class="section-title">Extras</h3>
+    @foreach (var e in Model.Extras)
+    {
+        <div class="card card-pad" style="margin-bottom:8px;display:flex;justify-content:space-between">
+            <strong>@e.Name</strong><span class="price">+$@e.Price.ToString("0")</span>
+        </div>
+    }
+    <form method="post" asp-page-handler="AddExtra">
+        <div style="display:flex;gap:8px">
+            <input class="form-control" asp-for="NewExtraName" placeholder="Baño adicional" />
+            <input class="form-control" asp-for="NewExtraPrice" style="width:100px" step="0.01" />
+            <button class="btn btn-outline" type="submit">+</button>
+        </div>
+    </form>
+</main>
+
+@section Scripts {
+    <partial name="_GooglePlaces" />
+}

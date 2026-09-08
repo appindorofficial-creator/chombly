@@ -1,0 +1,22 @@
+@using Microsoft.Extensions.Options
+@using WebAppPet.Services
+@inject IOptions<GoogleMapsOptions> MapsOpt
+@{
+    var maps = MapsOpt.Value;
+    var key = maps.BrowserApiKey ?? "";
+}
+@if (!string.IsNullOrWhiteSpace(key))
+{
+    <script>
+        window.CHOMBLY_MAPS = {
+            defaultLat: @maps.DefaultLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            defaultLng: @maps.DefaultLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        };
+    </script>
+    <script src="~/js/google-places.js" asp-append-version="true"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=@key&libraries=places&callback=initChomblyPlaces" async defer></script>
+}
+else
+{
+    <script>console.warn('GoogleMaps:BrowserApiKey no configurada');</script>
+}

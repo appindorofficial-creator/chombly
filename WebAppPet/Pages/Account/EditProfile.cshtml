@@ -1,0 +1,59 @@
+@page
+@model WebAppPet.Pages.Account.EditProfileModel
+@{
+    ViewData["Title"] = L["Profile_Edit"].Value;
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Account/Profile">←</a>
+    <h1>@L["Profile_Edit"]</h1>
+</div>
+<main class="app-main no-nav">
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success">@Model.SuccessMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <div class="form-group">
+            <label>@L["Register_FullName"]</label>
+            <input class="form-control" asp-for="FullName" required maxlength="100" autocomplete="name" />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_Email"]</label>
+            <input class="form-control" asp-for="Email" type="email" required maxlength="150" autocomplete="email" />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_Phone"]</label>
+            <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
+                   maxlength="20" autocomplete="tel" placeholder="7045551234" />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_City"]</label>
+            <input class="form-control" asp-for="City" data-places="city" data-places-fill="city"
+                   placeholder="@L["Home_LocationPlaceholder"]" autocomplete="address-level2" />
+        </div>
+
+        <h3 class="section-title" style="margin-top:8px">@L["Profile_Edit_ChangePassword"]</h3>
+        <p class="muted small" style="margin-top:-6px">@L["Profile_Edit_PasswordOptional"]</p>
+        <div class="form-group">
+            <label>@L["Profile_Edit_NewPassword"]</label>
+            <input class="form-control" asp-for="NewPassword" type="password" minlength="6" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+            <label>@L["Register_ConfirmPassword"]</label>
+            <input class="form-control" asp-for="ConfirmPassword" type="password" minlength="6" autocomplete="new-password" />
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
+        <a class="btn btn-outline btn-block" asp-page="/Account/Profile" style="margin-top:10px">@L["Common_Cancel"]</a>
+    </form>
+</main>
+
+@section Scripts {
+    <partial name="_GooglePlaces" />
+}

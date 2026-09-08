@@ -1,0 +1,322 @@
+@page
+@model WebAppPet.Pages.Daycare.IndexModel
+@{
+    ViewData["Title"] = L["Daycare_Title"].Value;
+}
+<div class="page-header hotel-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <div class="hotel-header-text">
+        <h1>@L["Daycare_Title"]</h1>
+        <p class="muted small">@L["Book_AllInOne"]</p>
+    </div>
+    <img src="~/images/categories/cat-daycare.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
+</div>
+
+<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="get" id="daycare-filter-form">
+        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
+
+        <h3 class="section-title" style="margin-top:0">1. ¿Cuándo necesitas el servicio?</h3>
+        <div class="when-row">
+            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
+                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
+                Hoy
+            </label>
+            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
+                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
+                Mañana
+            </label>
+            <label class="when-chip @(Model.When == "fecha" ? "active" : "")">
+                <input type="radio" name="When" value="fecha" @(Model.When == "fecha" ? "checked" : "") onchange="this.form.submit()" />
+                Elegir fecha
+            </label>
+        </div>
+        @if (Model.When == "fecha")
+        {
+            <div class="form-group">
+                <input class="form-control" type="date" name="Date" value="@Model.Date" onchange="this.form.submit()" />
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="Date" value="@Model.Date" />
+        }
+
+        <h3 class="section-title">2. Horario</h3>
+        <div class="filter-bar" style="flex-direction:column;align-items:stretch">
+            @foreach (var s in WebAppPet.Pages.Daycare.IndexModel.ScheduleOptions)
+            {
+                var on = Model.Schedule == s.Key;
+                <label class="radio-card" style="margin-bottom:8px">
+                    <input type="radio" name="Schedule" value="@s.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <div class="inner">
+                        <strong>@CatalogLocalizer.Text(s.Label)</strong>
+                        <div class="muted small">@CatalogLocalizer.Text(s.Hint)</div>
+                    </div>
+                </label>
+            }
+        </div>
+        <p class="muted small" style="margin-top:-4px">Horario típico del negocio: 7:00 AM – 7:00 PM</p>
+        @if (Model.Schedule == "personalizado")
+        {
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                <div class="form-group" style="margin:0">
+                    <label class="small muted">Entrada</label>
+                    <input class="form-control" type="time" name="CustomStart" value="@Model.CustomStart" onchange="this.form.submit()" />
+                </div>
+                <div class="form-group" style="margin:0">
+                    <label class="small muted">Salida</label>
+                    <input class="form-control" type="time" name="CustomEnd" value="@Model.CustomEnd" onchange="this.form.submit()" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="CustomStart" value="@Model.CustomStart" />
+            <input type="hidden" name="CustomEnd" value="@Model.CustomEnd" />
+        }
+
+        <h3 class="section-title">3. Selecciona tu mascota</h3>
+        @if (!Model.Pets.Any())
+        {
+            <div class="alert alert-info">
+                Agrega una mascota para continuar.
+                <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">+ Agregar mascota</a>
+            </div>
+        }
+        else
+        {
+            @foreach (var p in Model.Pets)
+            {
+                var on = p.Id == Model.PetId;
+                <label class="radio-card">
+                    <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <div class="inner">
+                        <div class="pet-select" style="border:none;padding:0;flex:1">
+                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                            <div>
+                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                                <div class="muted small">@p.Breed · @p.AgeYears años</div>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            }
+            <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
+        }
+
+        <h3 class="section-title">4. Preferencias <span class="muted small">(opcional)</span></h3>
+        <div class="filter-bar">
+            @foreach (var pref in WebAppPet.Pages.Daycare.IndexModel.PrefOptions)
+            {
+                var on = Model.Prefs.Contains(pref.Key);
+                <label class="chip filter-check @(on ? "active" : "")">
+                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    @(on ? "✓ " : "")@CatalogLocalizer.Text(pref.Label)
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title">5. Daycares disponibles cerca de ti</h3>
+        @if (!Model.Results.Any())
+        {
+            <div class="empty">No hay daycares con esos filtros en la base de datos.</div>
+        }
+        @foreach (var item in Model.Results)
+        {
+            var d = item.Daycare;
+            var selected = Model.GroomerId == d.Id;
+            <div class="hotel-card @(selected ? "selected" : "")">
+                @if (item.AvailableToday)
+                {
+                    <span class="badge badge-green hotel-reco">Disponible hoy</span>
+                }
+                <div class="hotel-card-main">
+                    <img src="@(d.ImageUrl ?? "/images/categories/cat-daycare.png")" alt="@d.BusinessName" />
+                    <div class="info">
+                        <h3>@d.BusinessName</h3>
+                        <div class="meta-row">
+                            @if (d.ReviewCount > 0)
+                            {
+                                <span class="stars">★ @d.Rating.ToString("0.0")</span>
+                                <span class="muted small">(@d.ReviewCount)</span>
+                            }
+                            @if (!string.IsNullOrEmpty(item.DistanceLabel))
+                            {
+                                <span class="muted small">@item.DistanceLabel</span>
+                            }
+                        </div>
+                        @if (item.Features.Any())
+                        {
+                            <div class="hotel-feats">
+                                @foreach (var f in item.Features)
+                                {
+                                    <span>@CatalogLocalizer.Text(f)</span>
+                                }
+                            </div>
+                        }
+                        <div class="price">$@item.StartingPrice.ToString("0") <span class="muted small">@item.PriceUnitLabel</span></div>
+                    </div>
+                </div>
+                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
+                   asp-page="./Index"
+                   asp-route-When="@Model.When"
+                   asp-route-Date="@Model.Date"
+                   asp-route-Schedule="@Model.Schedule"
+                   asp-route-CustomStart="@Model.CustomStart"
+                   asp-route-CustomEnd="@Model.CustomEnd"
+                   asp-route-PetId="@Model.PetId"
+                   asp-route-groomerId="@d.Id"
+                   asp-route-Notes="@Model.Notes"
+                   asp-route-More="@Model.More">
+                    @(selected ? "Seleccionado ✓" : "Elegir daycare")
+                </a>
+            </div>
+        }
+        @if (Model.HasMore)
+        {
+            <a class="link-btn" style="display:block;text-align:center;margin:8px 0 16px"
+               asp-page="./Index"
+               asp-route-When="@Model.When"
+               asp-route-Date="@Model.Date"
+               asp-route-Schedule="@Model.Schedule"
+               asp-route-PetId="@Model.PetId"
+               asp-route-groomerId="@Model.GroomerId"
+               asp-route-More="true">Ver más daycares</a>
+        }
+    </form>
+
+    @if (Model.SelectedDaycare != null && Model.SelectedService != null)
+    {
+        <div class="card card-pad" style="margin-bottom:14px">
+            <h3 class="section-title" style="margin-top:0">6. Resumen</h3>
+            <p><strong>@Model.SelectedDaycare.BusinessName</strong></p>
+            <p>@Model.DateLabel</p>
+            <p class="muted small">@Model.ScheduleLabel</p>
+            @if (Model.SelectedPet != null)
+            {
+                <p class="muted small">Mascota: @Model.SelectedPet.Name</p>
+            }
+            <div class="summary-total" style="margin-top:8px">
+                <span>Total estimado</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+        </div>
+
+        <form method="get" style="margin-bottom:8px">
+            <input type="hidden" name="When" value="@Model.When" />
+            <input type="hidden" name="Date" value="@Model.Date" />
+            <input type="hidden" name="Schedule" value="@Model.Schedule" />
+            <input type="hidden" name="CustomStart" value="@Model.CustomStart" />
+            <input type="hidden" name="CustomEnd" value="@Model.CustomEnd" />
+            <input type="hidden" name="PetId" value="@Model.PetId" />
+            <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+            <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
+            @foreach (var p in Model.Prefs)
+            {
+                <input type="hidden" name="Prefs" value="@p" />
+            }
+
+            @if (Model.Extras.Any())
+            {
+                <h3 class="section-title">7. Extras <span class="muted small">(opcional)</span></h3>
+                @foreach (var e in Model.Extras)
+                {
+                    var on = Model.ExtraIds.Contains(e.Id);
+                    <label class="toggle-row" style="cursor:pointer">
+                        <span>@e.Name <span class="price">+$@e.Price.ToString("0")</span></span>
+                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    </label>
+                }
+            }
+
+            <h3 class="section-title">8. Notas para el daycare <span class="muted small">(opcional)</span></h3>
+            <textarea class="form-control" name="Notes" rows="3" maxlength="200"
+                      placeholder="Alergias, comportamiento, medicación…"
+                      onchange="this.form.submit()">@Model.Notes</textarea>
+            <p class="muted small">Máx. 200 caracteres</p>
+        </form>
+    }
+
+    <div class="trust-bar">
+        <div><span>🔒</span><small>Pago seguro</small></div>
+        <div><span>⚡</span><small>Menos clics</small></div>
+        <div><span>✓</span><small>Todo en una pantalla</small></div>
+        <div><span>💳</span><small>Tarjetas guardadas</small></div>
+    </div>
+</main>
+
+@if (Model.SelectedDaycare != null && Model.SelectedService != null)
+{
+    ViewData["PromoCode"] = Model.PromoCode;
+    ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
+    ViewData["PromoDiscount"] = Model.DiscountAmount;
+    ViewData["PromoError"] = Model.PromoError;
+    ViewData["TermsStep"] = "10. ";
+    ViewData["TermsChecked"] = Model.AcceptTerms;
+    <aside class="hotel-summary">
+        <div class="hotel-summary-inner">
+            <h3>Confirmar reserva</h3>
+            <div class="summary-hotel">
+                <img src="@(Model.SelectedDaycare.ImageUrl ?? "/images/categories/cat-daycare.png")" alt="" />
+                <div>
+                    <strong>@Model.SelectedDaycare.BusinessName</strong>
+                    <div class="muted small">@Model.DateLabel · @Model.ScheduleLabel</div>
+                </div>
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+
+            <form method="post">
+                <input type="hidden" name="When" value="@Model.When" />
+                <input type="hidden" name="Date" value="@Model.Date" />
+                <input type="hidden" name="Schedule" value="@Model.Schedule" />
+                <input type="hidden" name="CustomStart" value="@Model.CustomStart" />
+                <input type="hidden" name="CustomEnd" value="@Model.CustomEnd" />
+                <input type="hidden" name="PetId" value="@Model.PetId" />
+                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
+                <input type="hidden" name="Notes" value="@Model.Notes" />
+                @foreach (var p in Model.Prefs)
+                {
+                    <input type="hidden" name="Prefs" value="@p" />
+                }
+                @foreach (var id in Model.ExtraIds)
+                {
+                    <input type="hidden" name="ExtraIds" value="@id" />
+                }
+
+                <partial name="_PromoCode" />
+
+                <h4 class="summary-sub">9. Método de pago</h4>
+                @if (Model.DefaultPayment != null)
+                {
+                    <div class="pay-row">
+                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
+                        <a asp-page="/Account/PaymentMethods">Cambiar</a>
+                    </div>
+                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods" style="margin-bottom:10px">+ Agregar método de pago</a>
+                }
+
+                <partial name="_AcceptTerms" />
+
+                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book" style="margin-top:10px"
+                        aria-describedby="AcceptTerms-error">
+                    Confirmar reserva · $@Model.Estimate.ToString("0")
+                </button>
+                <p class="muted small" style="text-align:center;margin-top:8px">Pago seguro y encriptado</p>
+            </form>
+        </div>
+    </aside>
+}

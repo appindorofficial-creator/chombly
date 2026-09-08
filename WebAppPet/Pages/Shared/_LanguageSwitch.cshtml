@@ -1,0 +1,20 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Localization
+@{
+    var feature = Context.Features.Get<IRequestCultureFeature>();
+    var culture = feature?.RequestCulture.UICulture.TwoLetterISOLanguageName ?? "es";
+    var isEn = culture.StartsWith("en", StringComparison.OrdinalIgnoreCase);
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var compact = ViewData["LangCompact"] as bool? == true;
+}
+<div class="lang-switch @(compact ? "lang-switch-compact" : "")" role="group" aria-label="Language">
+    <a class="lang-opt @(!isEn ? "active" : "")"
+       asp-page="/Account/SetLanguage"
+       asp-route-culture="es"
+       asp-route-returnUrl="@returnUrl">ES</a>
+    <span class="lang-sep" aria-hidden="true"></span>
+    <a class="lang-opt @(isEn ? "active" : "")"
+       asp-page="/Account/SetLanguage"
+       asp-route-culture="en"
+       asp-route-returnUrl="@returnUrl">EN</a>
+</div>

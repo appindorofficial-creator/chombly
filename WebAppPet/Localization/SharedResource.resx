@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Nav -->
+  <data name="Nav_Home" xml:space="preserve"><value>Inicio</value></data>
+  <data name="Nav_Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Nav_Appointments" xml:space="preserve"><value>Citas</value></data>
+  <data name="Nav_Pets" xml:space="preserve"><value>Mascotas</value></data>
+  <data name="Nav_Profile" xml:space="preserve"><value>Perfil</value></data>
+
+  <!-- Common -->
+  <data name="Common_Continue" xml:space="preserve"><value>Continuar</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Atrás</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Editar</value></data>
+  <data name="Common_Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>Cargando…</value></data>
+  <data name="Common_Yes" xml:space="preserve"><value>Sí</value></data>
+  <data name="Common_No" xml:space="preserve"><value>No</value></data>
+  <data name="Common_Or" xml:space="preserve"><value>o</value></data>
+  <data name="Common_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Common_Password" xml:space="preserve"><value>Contraseña</value></data>
+  <data name="Common_Phone" xml:space="preserve"><value>Teléfono</value></data>
+  <data name="Common_Name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Common_Address" xml:space="preserve"><value>Dirección</value></data>
+  <data name="Common_City" xml:space="preserve"><value>Ciudad</value></data>
+  <data name="Common_Next" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="Common_Previous" xml:space="preserve"><value>Anterior</value></data>
+  <data name="Common_Submit" xml:space="preserve"><value>Enviar</value></data>
+  <data name="Common_Confirm" xml:space="preserve"><value>Confirmar</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Common_SeeAll" xml:space="preserve"><value>Ver todo</value></data>
+  <data name="Common_Book" xml:space="preserve"><value>Reservar</value></data>
+  <data name="Common_From" xml:space="preserve"><value>Desde</value></data>
+  <data name="Common_To" xml:space="preserve"><value>Hasta</value></data>
+  <data name="Common_Date" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Common_Time" xml:space="preserve"><value>Hora</value></data>
+  <data name="Common_Notes" xml:space="preserve"><value>Notas</value></data>
+  <data name="Common_Price" xml:space="preserve"><value>Precio</value></data>
+  <data name="Common_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Common_Status" xml:space="preserve"><value>Estado</value></data>
+  <data name="Common_Language" xml:space="preserve"><value>Idioma</value></data>
+  <data name="Common_ChooseLanguage" xml:space="preserve"><value>Elige tu idioma</value></data>
+  <data name="Common_LanguageHint" xml:space="preserve"><value>Puedes cambiarlo cuando quieras</value></data>
+
+  <!-- Login -->
+  <data name="Login_Title" xml:space="preserve"><value>Iniciar sesión</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Entrar</value></data>
+  <data name="Login_NoAccount" xml:space="preserve"><value>¿No tienes cuenta?</value></data>
+  <data name="Login_Register" xml:space="preserve"><value>Regístrate</value></data>
+  <data name="Login_ImBusiness" xml:space="preserve"><value>Soy un negocio</value></data>
+  <data name="Login_Welcome" xml:space="preserve"><value>Presentación</value></data>
+  <data name="Login_Error" xml:space="preserve"><value>Email o contraseña incorrectos.</value></data>
+  <data name="Login_SelectLanguage" xml:space="preserve"><value>Selecciona idioma</value></data>
+
+  <!-- Register -->
+  <data name="Register_Title" xml:space="preserve"><value>Crear cuenta</value></data>
+  <data name="Register_Submit" xml:space="preserve"><value>Crear cuenta</value></data>
+  <data name="Register_HaveAccount" xml:space="preserve"><value>¿Ya tienes cuenta?</value></data>
+  <data name="Register_Login" xml:space="preserve"><value>Inicia sesión</value></data>
+  <data name="Register_FullName" xml:space="preserve"><value>Nombre completo</value></data>
+  <data name="Register_ConfirmPassword" xml:space="preserve"><value>Confirmar contraseña</value></data>
+
+  <!-- Welcome -->
+  <data name="Welcome_Title" xml:space="preserve"><value>Bienvenido a Chombly</value></data>
+  <data name="Welcome_Subtitle" xml:space="preserve"><value>Todo lo que tu mascota necesita, en un solo lugar.</value></data>
+  <data name="Welcome_GetStarted" xml:space="preserve"><value>Empezar</value></data>
+  <data name="Welcome_Login" xml:space="preserve"><value>Ya tengo cuenta</value></data>
+  <data name="Welcome_Business" xml:space="preserve"><value>Soy un negocio</value></data>
+
+  <!-- Home -->
+  <data name="Home_Greeting" xml:space="preserve"><value>Hola</value></data>
+  <data name="Home_HeroTitle" xml:space="preserve"><value>El mejor cuidado para tu mascota</value></data>
+  <data name="Home_HeroSubtitle" xml:space="preserve"><value>Grooming, hotel, vet, daycare y más</value></data>
+  <data name="Home_SearchPlaceholder" xml:space="preserve"><value>Buscar servicios cerca de ti</value></data>
+  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Ubicación (Google Maps)</value></data>
+  <data name="Home_Categories" xml:space="preserve"><value>Categorías</value></data>
+  <data name="Home_EmptyCategories" xml:space="preserve"><value>No hay categorías en la base de datos.</value></data>
+  <data name="Home_WhatPet" xml:space="preserve"><value>¿Qué mascota tienes?</value></data>
+  <data name="Home_OtherPet" xml:space="preserve"><value>¿Cuál es tu mascota?</value></data>
+  <data name="Home_OtherPetPlaceholder" xml:space="preserve"><value>Ej. hámster, tortuga, iguana…</value></data>
+  <data name="Home_OtherPetRequired" xml:space="preserve"><value>Indica qué mascota tienes</value></data>
+  <data name="Home_Popular" xml:space="preserve"><value>Servicios populares</value></data>
+  <data name="Home_Featured" xml:space="preserve"><value>Destacados</value></data>
+  <data name="Home_EmptyFeatured" xml:space="preserve"><value>Aún no hay negocios destacados.</value></data>
+  <data name="Home_Nearby" xml:space="preserve"><value>Cerca de ti</value></data>
+  <data name="Home_Promo" xml:space="preserve"><value>Usa el código CHOMBLY10 y ahorra en tu primera reserva</value></data>
+  <data name="Home_PromoTitle" xml:space="preserve"><value>10% de descuento en tu primera cita</value></data>
+  <data name="Home_PromoCode" xml:space="preserve"><value>Código</value></data>
+  <data name="Promo_Label" xml:space="preserve"><value>Código promocional</value></data>
+  <data name="Promo_Placeholder" xml:space="preserve"><value>Ej. CHOMBLY10</value></data>
+  <data name="Promo_Apply" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="Promo_Applied" xml:space="preserve"><value>Descuento aplicado</value></data>
+  <data name="Promo_Subtotal" xml:space="preserve"><value>Subtotal</value></data>
+  <data name="Promo_DiscountLine" xml:space="preserve"><value>Descuento {0}</value></data>
+  <data name="Promo_ErrInvalid" xml:space="preserve"><value>El código promocional no es válido.</value></data>
+  <data name="Promo_ErrNotFirst" xml:space="preserve"><value>CHOMBLY10 solo aplica a tu primera reserva.</value></data>
+  <data name="Promo_ErrLogin" xml:space="preserve"><value>Inicia sesión para usar un código promocional.</value></data>
+  <data name="Home_BizCta" xml:space="preserve"><value>¿Tienes un hotel, clínica o daycare?</value></data>
+  <data name="Home_BizCtaSub" xml:space="preserve"><value>Publícalo en Chombly y recibe reservas.</value></data>
+  <data name="Home_SeeWelcome" xml:space="preserve"><value>Ver presentación</value></data>
+  <data name="Home_FromPrice" xml:space="preserve"><value>Desde</value></data>
+
+  <data name="Profile_GuestTitle" xml:space="preserve"><value>Tu perfil Chombly</value></data>
+  <data name="Profile_GuestSub" xml:space="preserve"><value>Gestiona mascotas, citas y tu negocio desde aquí.</value></data>
+  <data name="Profile_Explore" xml:space="preserve"><value>Explorar servicios</value></data>
+  <data name="Profile_Messages" xml:space="preserve"><value>Mensajes</value></data>
+  <data name="Profile_Favorites" xml:space="preserve"><value>Favoritos</value></data>
+  <data name="Profile_Payments" xml:space="preserve"><value>Métodos de pago</value></data>
+  <data name="Profile_AdminApprovals" xml:space="preserve"><value>Aprobar negocios</value></data>
+  <data name="Profile_WelcomeLink" xml:space="preserve"><value>Presentación Chombly</value></data>
+
+  <data name="Appt_History" xml:space="preserve"><value>Historial</value></data>
+  <data name="Appt_EmptyTitle" xml:space="preserve"><value>Aún no tienes citas</value></data>
+  <data name="Appt_EmptySub" xml:space="preserve"><value>Agenda el mejor cuidado para tu mascota.</value></data>
+  <data name="Appt_BookNew" xml:space="preserve"><value>Agendar nueva cita</value></data>
+  <data name="Appt_HowTitle" xml:space="preserve"><value>¿Cómo funciona?</value></data>
+  <data name="Appt_HowSearch" xml:space="preserve"><value>Busca</value></data>
+  <data name="Appt_HowSearchDesc" xml:space="preserve"><value>Encuentra negocios cerca de ti y revisa sus servicios.</value></data>
+  <data name="Appt_HowBook" xml:space="preserve"><value>Agenda</value></data>
+  <data name="Appt_HowBookDesc" xml:space="preserve"><value>Elige fecha, hora y el servicio que tu mascota necesita.</value></data>
+  <data name="Appt_HowEnjoy" xml:space="preserve"><value>Disfruta</value></data>
+  <data name="Appt_HowEnjoyDesc" xml:space="preserve"><value>El profesional se encargará de consentir a tu mascota.</value></data>
+
+  <data name="Pets_AddShort" xml:space="preserve"><value>Agregar</value></data>
+  <data name="Pets_Years" xml:space="preserve"><value>años</value></data>
+  <data name="Pets_EmptyTitle" xml:space="preserve"><value>Aún no tienes mascotas</value></data>
+  <data name="Pets_EmptySub" xml:space="preserve"><value>Agrega perros, gatos, conejos u otras mascotas para agendar servicios.</value></data>
+  <data name="Pets_Anxious" xml:space="preserve"><value>Ansioso</value></data>
+  <data name="Pets_SpecialNeeds" xml:space="preserve"><value>Necesidades especiales</value></data>
+  <data name="Pets_DeleteConfirm" xml:space="preserve"><value>¿Eliminar a {0}?</value></data>
+
+  <data name="Search_Businesses" xml:space="preserve"><value>Buscar negocios</value></data>
+  <data name="Search_CityMaps" xml:space="preserve"><value>Ciudad (Maps)</value></data>
+  <data name="Search_Go" xml:space="preserve"><value>Ir</value></data>
+  <data name="Search_ServicesTitle" xml:space="preserve"><value>Buscar servicios</value></data>
+
+  <data name="Welcome_Slogan" xml:space="preserve"><value>Cuidado para perros, gatos, conejos y más</value></data>
+  <data name="Welcome_Hero" xml:space="preserve"><value>El mejor cuidado para tu mascota</value></data>
+  <data name="Welcome_HeroSub" xml:space="preserve"><value>Hotel, vet, daycare, walkers y trainers cerca de ti.</value></data>
+  <data name="Welcome_Explore" xml:space="preserve"><value>Explorar servicios</value></data>
+  <data name="Welcome_BackHome" xml:space="preserve"><value>← Volver al inicio</value></data>
+
+  <!-- Profile -->
+  <data name="Profile_Title" xml:space="preserve"><value>Perfil</value></data>
+  <data name="Profile_Logout" xml:space="preserve"><value>Cerrar sesión</value></data>
+  <data name="Profile_Notifications" xml:space="preserve"><value>Notificaciones</value></data>
+  <data name="Profile_MyPets" xml:space="preserve"><value>Mis mascotas</value></data>
+  <data name="Profile_MyAppointments" xml:space="preserve"><value>Mis citas</value></data>
+  <data name="Profile_BusinessPanel" xml:space="preserve"><value>Panel de negocio</value></data>
+  <data name="Profile_BecomeBusiness" xml:space="preserve"><value>Soy un negocio</value></data>
+  <data name="Profile_Language" xml:space="preserve"><value>Idioma de la app</value></data>
+  <data name="Profile_Edit" xml:space="preserve"><value>Editar perfil</value></data>
+  <data name="Profile_Edit_ChangePassword" xml:space="preserve"><value>Cambiar contraseña</value></data>
+  <data name="Profile_Edit_PasswordOptional" xml:space="preserve"><value>Déjalo vacío si no quieres cambiarla.</value></data>
+  <data name="Profile_Edit_NewPassword" xml:space="preserve"><value>Nueva contraseña</value></data>
+  <data name="Profile_Edit_Saved" xml:space="preserve"><value>Perfil actualizado.</value></data>
+  <data name="Profile_Edit_NameRequired" xml:space="preserve"><value>El nombre es obligatorio.</value></data>
+  <data name="Profile_Edit_EmailInvalid" xml:space="preserve"><value>Email no válido.</value></data>
+  <data name="Profile_Edit_EmailTaken" xml:space="preserve"><value>Ese email ya está en uso.</value></data>
+  <data name="Profile_Edit_PasswordShort" xml:space="preserve"><value>La contraseña debe tener al menos 6 caracteres.</value></data>
+  <data name="Phone_Invalid" xml:space="preserve"><value>Teléfono inválido. Solo números (mín. 7 dígitos). Ej: 7045551234</value></data>
+  <data name="Phone_Required" xml:space="preserve"><value>El teléfono es obligatorio.</value></data>
+
+  <!-- Favorites -->
+  <data name="Favorites_Title" xml:space="preserve"><value>Groomers favoritos</value></data>
+  <data name="Favorites_Empty" xml:space="preserve"><value>Aún no tienes favoritos. Guarda groomers desde su perfil.</value></data>
+
+  <!-- Pets -->
+  <data name="Pets_Title" xml:space="preserve"><value>Mis mascotas</value></data>
+  <data name="Pets_Add" xml:space="preserve"><value>Agregar mascota</value></data>
+  <data name="Pets_Empty" xml:space="preserve"><value>Aún no tienes mascotas registradas.</value></data>
+  <data name="Pets_Species" xml:space="preserve"><value>Especie</value></data>
+  <data name="Pets_Breed" xml:space="preserve"><value>Raza</value></data>
+  <data name="Pets_Age" xml:space="preserve"><value>Edad</value></data>
+  <data name="Pets_Weight" xml:space="preserve"><value>Peso</value></data>
+  <data name="Pets_Photo" xml:space="preserve"><value>Foto</value></data>
+  <data name="Pets_PhotoHint" xml:space="preserve"><value>Toma una foto o elige de la galería (máx. 5 MB).</value></data>
+  <data name="Pets_PhotoChoose" xml:space="preserve"><value>Elegir foto</value></data>
+  <data name="Pets_PhotoOrUrl" xml:space="preserve"><value>O pegar URL</value></data>
+  <data name="Pets_PhotoInvalid" xml:space="preserve"><value>La imagen debe ser JPG, PNG, WebP o GIF de máximo 5 MB.</value></data>
+  <data name="Pets_Size" xml:space="preserve"><value>Tamaño</value></data>
+  <data name="Pets_Temperament" xml:space="preserve"><value>Temperamento</value></data>
+  <data name="Pets_TemperamentDefault" xml:space="preserve"><value>Amigable</value></data>
+  <data name="Pets_BreedDefault" xml:space="preserve"><value>Mestizo / mixto</value></data>
+  <data name="Pets_Senior" xml:space="preserve"><value>Senior</value></data>
+  <data name="Pets_NameRequired" xml:space="preserve"><value>El nombre es obligatorio</value></data>
+  <data name="Pets_SpeciesRequired" xml:space="preserve"><value>Elige el tipo de mascota</value></data>
+  <data name="Pets_SpeciesInvalid" xml:space="preserve"><value>Elige un tipo de mascota válido.</value></data>
+  <data name="Pets_OtherType" xml:space="preserve"><value>¿Cuál es tu mascota?</value></data>
+  <data name="Pets_OtherTypePlaceholder" xml:space="preserve"><value>Ej. hámster, tortuga, iguana…</value></data>
+  <data name="Pets_OtherTypeRequired" xml:space="preserve"><value>Indica qué mascota tienes</value></data>
+  <data name="Pets_AgeRange" xml:space="preserve"><value>La edad debe estar entre 0 y 40 años.</value></data>
+
+  <!-- Appointments -->
+  <data name="Appt_Title" xml:space="preserve"><value>Mis citas</value></data>
+  <data name="Appt_Empty" xml:space="preserve"><value>No tienes citas todavía.</value></data>
+  <data name="Appt_Upcoming" xml:space="preserve"><value>Próximas</value></data>
+  <data name="Appt_Past" xml:space="preserve"><value>Anteriores</value></data>
+  <data name="Appt_Book" xml:space="preserve"><value>Reservar cita</value></data>
+  <data name="Appt_Status_Pending" xml:space="preserve"><value>Pendiente</value></data>
+  <data name="Appt_Status_Confirmed" xml:space="preserve"><value>Confirmada</value></data>
+  <data name="Appt_Status_Cancelled" xml:space="preserve"><value>Cancelada</value></data>
+  <data name="Appt_Status_Completed" xml:space="preserve"><value>Completada</value></data>
+
+  <!-- Groomers / Search -->
+  <data name="Search_Title" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Search_Placeholder" xml:space="preserve"><value>Nombre, ciudad o servicio</value></data>
+  <data name="Search_NoResults" xml:space="preserve"><value>No encontramos resultados.</value></data>
+  <data name="Search_Filters" xml:space="preserve"><value>Filtros</value></data>
+  <data name="Search_AllCategories" xml:space="preserve"><value>Todos</value></data>
+
+  <!-- Booking -->
+  <data name="Book_SelectPet" xml:space="preserve"><value>Elige tu mascota</value></data>
+  <data name="Book_SelectService" xml:space="preserve"><value>Elige un servicio</value></data>
+  <data name="Book_SelectDate" xml:space="preserve"><value>Elige fecha</value></data>
+  <data name="Book_SelectTime" xml:space="preserve"><value>Elige hora</value></data>
+  <data name="Book_CheckIn" xml:space="preserve"><value>Check-in</value></data>
+  <data name="Book_CheckOut" xml:space="preserve"><value>Check-out</value></data>
+  <data name="Book_ConfirmTitle" xml:space="preserve"><value>Confirmar reserva</value></data>
+  <data name="Book_Success" xml:space="preserve"><value>¡Reserva creada!</value></data>
+  <data name="Book_Nights" xml:space="preserve"><value>noches</value></data>
+  <data name="Book_Day" xml:space="preserve"><value>día</value></data>
+  <data name="Book_Days" xml:space="preserve"><value>días</value></data>
+
+  <!-- Hotel / flows -->
+  <data name="Hotel_Title" xml:space="preserve"><value>Hotel para mascotas</value></data>
+  <data name="Vet_Title" xml:space="preserve"><value>Veterinaria</value></data>
+  <data name="Vet_EmptyFilters" xml:space="preserve"><value>No hay clínicas veterinarias en la base de datos con esos filtros.</value></data>
+  <data name="Vet_EmptyNone" xml:space="preserve"><value>Aún no hay clínicas veterinarias publicadas.</value></data>
+  <data name="Vet_EmptyHint" xml:space="preserve"><value>Elige una clínica para reservar, o deja una solicitud</value></data>
+  <data name="Vet_ClearFilters" xml:space="preserve"><value>Quitar filtros</value></data>
+  <data name="Vet_SeeAllSearch" xml:space="preserve"><value>Ver todos en Buscar</value></data>
+  <data name="Vet_LeaveRequest" xml:space="preserve"><value>Avisar / Dejar solicitud</value></data>
+  <data name="Vet_RequestSuccess" xml:space="preserve"><value>Recibimos tu solicitud. Te avisaremos cuando haya clínicas disponibles.</value></data>
+  <data name="Vet_RequestLogin" xml:space="preserve"><value>Inicia sesión para dejar una solicitud.</value></data>
+  <data name="Vet_ChooseCareType" xml:space="preserve"><value>Elige el tipo de atención</value></data>
+  <data name="Vet_MediaInvalid" xml:space="preserve"><value>Archivo no válido (foto ≤5MB o video corto ≤25MB).</value></data>
+  <data name="Vet_EmergencyTitle" xml:space="preserve"><value>Emergencia</value></data>
+  <data name="Vet_CallNow" xml:space="preserve"><value>Llamar ahora</value></data>
+  <data name="Vet_Directions" xml:space="preserve"><value>Ver ruta</value></data>
+  <data name="Daycare_Title" xml:space="preserve"><value>Guardería</value></data>
+  <data name="Walkers_Title" xml:space="preserve"><value>Paseadores</value></data>
+  <data name="Trainers_Title" xml:space="preserve"><value>Entrenadores</value></data>
+  <data name="Grooming_Title" xml:space="preserve"><value>Grooming</value></data>
+
+  <!-- Business register -->
+  <data name="Biz_Title" xml:space="preserve"><value>Alta de negocio</value></data>
+  <data name="Biz_ImBusiness" xml:space="preserve"><value>Soy un negocio</value></data>
+  <data name="Biz_TypeBusiness" xml:space="preserve"><value>Negocio / local</value></data>
+  <data name="Biz_TypeIndependent" xml:space="preserve"><value>Independiente</value></data>
+  <data name="Biz_HowTitle" xml:space="preserve"><value>¿Cómo quieres usar Chombly?</value></data>
+  <data name="Biz_HowSub" xml:space="preserve"><value>Elige el perfil que mejor te describe.</value></data>
+  <data name="Biz_TypeBusinessTitle" xml:space="preserve"><value>Soy un negocio</value></data>
+  <data name="Biz_TypeBusinessDesc" xml:space="preserve"><value>Hotel, clínica, salón, guardería…</value></data>
+  <data name="Biz_TypeIndependentTitle" xml:space="preserve"><value>Soy proveedor independiente</value></data>
+  <data name="Biz_TypeIndependentDesc" xml:space="preserve"><value>Paseador, entrenador, cuidador…</value></data>
+  <data name="Biz_HaveAccount" xml:space="preserve"><value>¿Ya tienes cuenta?</value></data>
+  <data name="Biz_SignIn" xml:space="preserve"><value>Inicia sesión</value></data>
+  <data name="Biz_ContinueCurrentAccount" xml:space="preserve"><value>Continuarás con tu cuenta actual</value></data>
+  <data name="Biz_ConfirmAccount" xml:space="preserve"><value>Confirmar cuenta</value></data>
+  <data name="Biz_ServiceType" xml:space="preserve"><value>Tipo de servicio</value></data>
+  <data name="Biz_HowWork" xml:space="preserve"><value>¿Cómo trabajas?</value></data>
+  <data name="Biz_WorkLocal" xml:space="preserve"><value>Tengo un local</value></data>
+  <data name="Biz_WorkHome" xml:space="preserve"><value>Voy al domicilio del cliente</value></data>
+  <data name="Biz_WorkBoth" xml:space="preserve"><value>Ambas opciones</value></data>
+  <data name="Biz_YourFullName" xml:space="preserve"><value>Tu nombre completo</value></data>
+  <data name="Biz_BusinessName" xml:space="preserve"><value>Nombre del negocio</value></data>
+  <data name="Biz_SearchCity" xml:space="preserve"><value>Busca tu ciudad en Google Maps…</value></data>
+  <data name="Biz_SearchAddress" xml:space="preserve"><value>Busca la dirección en Google Maps…</value></data>
+  <data name="Biz_MapsTip" xml:space="preserve"><value>Tip: elige una sugerencia de Google para ubicar mejor tu negocio.</value></data>
+  <data name="Biz_HoursTitle" xml:space="preserve"><value>Horarios</value></data>
+  <data name="Biz_HoursHint" xml:space="preserve"><value>Define tu agenda semanal. Luego puedes cerrar días sueltos.</value></data>
+  <data name="Biz_Open" xml:space="preserve"><value>Abierto</value></data>
+  <data name="Biz_Opens" xml:space="preserve"><value>Abre</value></data>
+  <data name="Biz_Closes" xml:space="preserve"><value>Cierra</value></data>
+  <data name="Biz_ServiceArea" xml:space="preserve"><value>Área de servicio</value></data>
+  <data name="Biz_WholeCity" xml:space="preserve"><value>Toda la ciudad</value></data>
+  <data name="Biz_PhotosTitle" xml:space="preserve"><value>Fotos y descripción</value></data>
+  <data name="Biz_PhotosHint" xml:space="preserve"><value>Por ahora pega URLs de imagen (luego subiremos archivos).</value></data>
+  <data name="Biz_LogoUrl" xml:space="preserve"><value>Logo (URL)</value></data>
+  <data name="Biz_CoverUrl" xml:space="preserve"><value>Foto de portada (URL)</value></data>
+  <data name="Biz_Description" xml:space="preserve"><value>Descripción</value></data>
+  <data name="Biz_DescriptionPh" xml:space="preserve"><value>Cuéntales a tus clientes qué ofreces…</value></data>
+  <data name="Biz_DescriptionMax" xml:space="preserve"><value>Máx. 300 caracteres (mín. 20)</value></data>
+  <data name="Biz_ServicesInitial" xml:space="preserve"><value>Servicios y precios iniciales</value></data>
+  <data name="Biz_ServicesHint" xml:space="preserve"><value>Puedes editarlos después en el panel.</value></data>
+  <data name="Biz_Service" xml:space="preserve"><value>Servicio</value></data>
+  <data name="Biz_FromPrice" xml:space="preserve"><value>Desde $</value></data>
+  <data name="Biz_AddAnother" xml:space="preserve"><value>Agregar otro</value></data>
+  <data name="Biz_ServiceNamePh" xml:space="preserve"><value>Nombre del servicio</value></data>
+  <data name="Biz_AcceptTerms" xml:space="preserve"><value>Acepto los Términos y Condiciones y la política de privacidad</value></data>
+  <data name="Legal_PageTitle" xml:space="preserve"><value>Términos y privacidad</value></data>
+  <data name="Legal_TermsConditions" xml:space="preserve"><value>Términos y Condiciones</value></data>
+  <data name="Legal_AcceptPrefix" xml:space="preserve"><value>Acepto los </value></data>
+  <data name="Legal_Terms" xml:space="preserve"><value>Términos</value></data>
+  <data name="Legal_TermsSep" xml:space="preserve"><value>, </value></data>
+  <data name="Legal_Conditions" xml:space="preserve"><value>Condiciones</value></data>
+  <data name="Legal_AndPrivacy" xml:space="preserve"><value> y </value></data>
+  <data name="Legal_PrivacyPolicy" xml:space="preserve"><value>política de privacidad</value></data>
+  <data name="Biz_WelcomeTitle" xml:space="preserve"><value>¡Bienvenido a Chombly!</value></data>
+  <data name="Biz_ProfileCreated" xml:space="preserve"><value>Tu perfil de {0} fue creado.</value></data>
+  <data name="Biz_CompleteProfile" xml:space="preserve"><value>Completa tu perfil</value></data>
+  <data name="Biz_CompleteHint" xml:space="preserve"><value>2 de 6 pasos listos · Verifica licencias, seguro y cuenta bancaria para publicar más rápido.</value></data>
+  <data name="Biz_GoDashboard" xml:space="preserve"><value>Ir a mi panel</value></data>
+  <data name="Biz_CompleteVerification" xml:space="preserve"><value>Completar verificación</value></data>
+  <data name="Biz_CompleteLater" xml:space="preserve"><value>Completar después</value></data>
+  <data name="Biz_Loading" xml:space="preserve"><value>Cargando…</value></data>
+  <data name="Biz_ErrChooseType" xml:space="preserve"><value>Elige cómo quieres usar Chombly.</value></data>
+  <data name="Biz_ErrBasicRequired" xml:space="preserve"><value>Completa nombre, negocio, email y ciudad.</value></data>
+  <data name="Biz_ErrNoCategories" xml:space="preserve"><value>No hay categorías disponibles. Intenta más tarde.</value></data>
+  <data name="Biz_ErrOpenDay" xml:space="preserve"><value>Abre al menos un día en tu horario.</value></data>
+  <data name="Biz_ErrDescription" xml:space="preserve"><value>Escribe una descripción de al menos 20 caracteres.</value></data>
+  <data name="Biz_ErrServicePrice" xml:space="preserve"><value>Agrega al menos un servicio con precio mayor a 0.</value></data>
+  <data name="Biz_ErrPasswordMatch" xml:space="preserve"><value>Las contraseñas no coinciden.</value></data>
+  <data name="Biz_ErrAcceptTerms" xml:space="preserve"><value>Debes aceptar los Términos y Condiciones.</value></data>
+  <data name="Biz_ErrInvalidSession" xml:space="preserve"><value>Sesión inválida. Vuelve a iniciar sesión.</value></data>
+  <data name="Biz_ErrAlreadyBusiness" xml:space="preserve"><value>Ya tienes un perfil de negocio. Ve al panel.</value></data>
+  <data name="Biz_ErrEmailTaken" xml:space="preserve"><value>Ese email ya está registrado. Usa otro.</value></data>
+  <data name="Biz_ErrEmailTakenLogin" xml:space="preserve"><value>Ese email ya está registrado. Inicia sesión o usa otro.</value></data>
+  <data name="Biz_ErrInvalidCategory" xml:space="preserve"><value>Categoría inválida.</value></data>
+  <data name="Day_Sunday" xml:space="preserve"><value>Domingo</value></data>
+  <data name="Day_Monday" xml:space="preserve"><value>Lunes</value></data>
+  <data name="Day_Tuesday" xml:space="preserve"><value>Martes</value></data>
+  <data name="Day_Wednesday" xml:space="preserve"><value>Miércoles</value></data>
+  <data name="Day_Thursday" xml:space="preserve"><value>Jueves</value></data>
+  <data name="Day_Friday" xml:space="preserve"><value>Viernes</value></data>
+  <data name="Day_Saturday" xml:space="preserve"><value>Sábado</value></data>
+  <data name="Biz_BasicInfo" xml:space="preserve"><value>Datos básicos</value></data>
+  <data name="Biz_Category" xml:space="preserve"><value>Categoría</value></data>
+  <data name="Biz_Hours" xml:space="preserve"><value>Horario</value></data>
+  <data name="Biz_Photos" xml:space="preserve"><value>Fotos y descripción</value></data>
+  <data name="Biz_Services" xml:space="preserve"><value>Servicios y precios</value></data>
+  <data name="Biz_Account" xml:space="preserve"><value>Cuenta y términos</value></data>
+  <data name="Biz_Success" xml:space="preserve"><value>¡Solicitud enviada!</value></data>
+  <data name="Biz_PendingReview" xml:space="preserve"><value>Tu negocio está en revisión. Te avisaremos por email.</value></data>
+
+  <!-- Groomer panel -->
+  <data name="Groomer_Dashboard" xml:space="preserve"><value>Panel</value></data>
+  <data name="Groomer_Business" xml:space="preserve"><value>Mi negocio</value></data>
+  <data name="Groomer_Services" xml:space="preserve"><value>Servicios</value></data>
+  <data name="Groomer_Schedule" xml:space="preserve"><value>Horario</value></data>
+  <data name="Groomer_Bookings" xml:space="preserve"><value>Reservas</value></data>
+  <data name="Groomer_Verification" xml:space="preserve"><value>Verificación</value></data>
+
+  <!-- Admin -->
+  <data name="Admin_Approvals" xml:space="preserve"><value>Aprobaciones</value></data>
+  <data name="Admin_Approve" xml:space="preserve"><value>Aprobar</value></data>
+  <data name="Admin_Reject" xml:space="preserve"><value>Rechazar</value></data>
+
+  <!-- Days -->
+  <data name="Day_Mon" xml:space="preserve"><value>Lun</value></data>
+  <data name="Day_Tue" xml:space="preserve"><value>Mar</value></data>
+  <data name="Day_Wed" xml:space="preserve"><value>Mié</value></data>
+  <data name="Day_Thu" xml:space="preserve"><value>Jue</value></data>
+  <data name="Day_Fri" xml:space="preserve"><value>Vie</value></data>
+  <data name="Day_Sat" xml:space="preserve"><value>Sáb</value></data>
+  <data name="Day_Sun" xml:space="preserve"><value>Dom</value></data>
+
+  <data name="Search_Pet" xml:space="preserve"><value>Mascota</value></data>
+  <data name="Search_AllPets" xml:space="preserve"><value>Todas</value></data>
+  <data name="Search_AvailableToday" xml:space="preserve"><value>Disponible hoy</value></data>
+  <data name="Search_NotAvailableToday" xml:space="preserve"><value>No disponible hoy</value></data>
+  <data name="Search_Results" xml:space="preserve"><value>{0} resultados</value></data>
+  <data name="Search_Empty" xml:space="preserve"><value>No hay negocios con estos filtros.</value></data>
+  <data name="Search_EnableLocation" xml:space="preserve"><value>Activa ubicación para ver distancias.</value></data>
+  <data name="Search_UseMyLocation" xml:space="preserve"><value>Usar mi ubicación</value></data>
+  <data name="Search_LocationFail" xml:space="preserve"><value>No se pudo obtener la ubicación.</value></data>
+
+  <data name="Book_WhenNeeded" xml:space="preserve"><value>¿Cuándo necesitas el servicio?</value></data>
+  <data name="Book_Today" xml:space="preserve"><value>Hoy</value></data>
+  <data name="Book_Tomorrow" xml:space="preserve"><value>Mañana</value></data>
+  <data name="Book_PickDates" xml:space="preserve"><value>Elegir fechas</value></data>
+  <data name="Book_AllInOne" xml:space="preserve"><value>Todo en un solo lugar</value></data>
+  <data name="Biz_StepOf" xml:space="preserve"><value>Paso {0} de 4</value></data>
+  <data name="Biz_Join" xml:space="preserve"><value>Únete a Chombly</value></data>
+  <data name="Biz_CreateAccount" xml:space="preserve"><value>Crea tu cuenta</value></data>
+  <data name="Biz_CreateProfile" xml:space="preserve"><value>Crear perfil</value></data>
+  <data name="Biz_Business" xml:space="preserve"><value>Negocio</value></data>
+  <data name="Size_Small" xml:space="preserve"><value>Pequeño</value></data>
+  <data name="Size_Medium" xml:space="preserve"><value>Mediano</value></data>
+  <data name="Size_Large" xml:space="preserve"><value>Grande</value></data>
+  <data name="Size_Giant" xml:space="preserve"><value>Gigante</value></data>
+
+  <data name="Pay_Title" xml:space="preserve"><value>Métodos de pago</value></data>
+  <data name="Pay_Add" xml:space="preserve"><value>Añadir método de pago</value></data>
+  <data name="Pay_CardNumber" xml:space="preserve"><value>Número de tarjeta</value></data>
+  <data name="Pay_Expiry" xml:space="preserve"><value>Vencimiento (MM/AA)</value></data>
+  <data name="Pay_ExpiryPlaceholder" xml:space="preserve"><value>MM/AA</value></data>
+  <data name="Pay_Cvv" xml:space="preserve"><value>CVV</value></data>
+  <data name="Pay_Holder" xml:space="preserve"><value>Nombre en la tarjeta</value></data>
+  <data name="Pay_MakeDefault" xml:space="preserve"><value>Guardar como predeterminada</value></data>
+  <data name="Pay_Default" xml:space="preserve"><value>Predeterminada</value></data>
+  <data name="Pay_Expires" xml:space="preserve"><value>vence</value></data>
+  <data name="Pay_BrandUnknown" xml:space="preserve"><value>Tarjeta</value></data>
+  <data name="Pay_Delete" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="Pay_DeleteConfirm" xml:space="preserve"><value>¿Eliminar esta tarjeta?</value></data>
+  <data name="Pay_Disclaimer" xml:space="preserve"><value>Pago simulado: solo se guarda la marca y los últimos 4 dígitos. El número debe tener un formato válido (algoritmo de Luhn). La verificación real del cargo requiere un proveedor de pagos más adelante.</value></data>
+  <data name="Pay_ErrGeneric" xml:space="preserve"><value>Revisa los datos de la tarjeta.</value></data>
+  <data name="Pay_ErrCardRequired" xml:space="preserve"><value>El número de tarjeta es obligatorio.</value></data>
+  <data name="Pay_ErrCardInvalid" xml:space="preserve"><value>El número de tarjeta debe tener entre 13 y 19 dígitos.</value></data>
+  <data name="Pay_ErrCardLuhn" xml:space="preserve"><value>El número de tarjeta no es válido (no pasa la verificación de formato).</value></data>
+  <data name="Pay_ErrExpiryRequired" xml:space="preserve"><value>La fecha de vencimiento es obligatoria.</value></data>
+  <data name="Pay_ErrExpiryFormat" xml:space="preserve"><value>Usa el formato MM/AA para el vencimiento.</value></data>
+  <data name="Pay_ErrExpiryMonth" xml:space="preserve"><value>El mes de vencimiento debe estar entre 01 y 12.</value></data>
+  <data name="Pay_ErrExpiryExpired" xml:space="preserve"><value>La tarjeta está vencida.</value></data>
+  <data name="Pay_ErrCvvRequired" xml:space="preserve"><value>El CVV es obligatorio.</value></data>
+  <data name="Pay_ErrCvvInvalid" xml:space="preserve"><value>El CVV debe tener 3 dígitos (4 para Amex).</value></data>
+  <data name="Pay_ErrHolderRequired" xml:space="preserve"><value>El nombre en la tarjeta es obligatorio.</value></data>
+  <data name="Pay_ErrHolderInvalid" xml:space="preserve"><value>El nombre solo puede contener letras y espacios (mín. 2 caracteres).</value></data>
+</root>

@@ -1,0 +1,89 @@
+@page
+@model WebAppPet.Pages.Vet.International.ConsentModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Aceptación", "Consent");
+    var price = Model.UsingCare ? 0m : (Model.CatalogItem?.Price ?? 30m);
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/International/PurchaseOption" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Antes del pago", "Before payment")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Casillas vacías · sin tarjeta todavía", "Empty checkboxes · no card yet")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <div class="card card-pad" style="margin-bottom:14px">
+        <strong>@(Model.Provider?.BusinessName)</strong>
+        <p class="muted small">
+            @CatalogLocalizer.Loc("Licencia", "License") @(Model.Provider?.LicenseCountry)
+            · @CatalogLocalizer.Loc("Mascota en", "Pet in") @Model.Consultation?.PetUsState
+        </p>
+        <p>
+            @if (Model.UsingCare)
+            {
+                <span class="price-tag">@CatalogLocalizer.Loc("Incluida en Care · $0", "Included in Care · $0")</span>
+            }
+            else
+            {
+                <span class="price-tag">$@price.ToString("0.##")</span>
+                <span class="muted small">@CatalogLocalizer.Loc("pago único", "one-time")</span>
+            }
+        </p>
+        <p class="muted small">@ServiceCatalogService.DisplayScope(Model.CatalogItem!)</p>
+    </div>
+
+    <form method="post" class="stack" style="gap:12px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <input type="hidden" asp-for="CareBenefit" />
+
+        <section>
+            <h2 class="section-title">@CatalogLocalizer.Loc("Horario", "Schedule")</h2>
+            <div class="filter-bar filter-bar-wrap">
+                <label class="chip"><input type="radio" name="When" value="hoy" checked="@(Model.When == "hoy")" /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
+                <label class="chip"><input type="radio" name="When" value="mañana" checked="@(Model.When == "mañana")" /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
+            </div>
+            <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
+                @foreach (var t in Model.TimeSlots)
+                {
+                    <label class="chip"><input type="radio" name="Slot" value="@t" checked="@(Model.Slot == t)" /> @t</label>
+                }
+            </div>
+        </section>
+
+        <section class="vet-consent">
+            <h2 class="section-title">@CatalogLocalizer.Loc("Consentimientos", "Consents")</h2>
+            <label class="check-row">
+                <input type="checkbox" asp-for="AcceptTerms" />
+                <span>
+                    <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank">@L["Legal_TermsConditions"]</a>
+                    ·
+                    <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="privacy" target="_blank">@L["Legal_PrivacyPolicy"]</a>
+                </span>
+            </label>
+            <label class="check-row">
+                <input type="checkbox" asp-for="AcceptScope" />
+                <span>@CatalogLocalizer.Loc("Orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.", "International guidance: no U.S. Rx, not emergency, does not replace local vet.")</span>
+            </label>
+            <label class="check-row">
+                <input type="checkbox" asp-for="AcceptMedia" />
+                <span>@CatalogLocalizer.Loc("Uso de fotos/video para esta consulta (opcional).", "Use of photos/video for this consult (optional).")</span>
+            </label>
+        </section>
+
+        <button type="submit" class="btn btn-primary btn-block">
+            @if (Model.UsingCare)
+            {
+                @CatalogLocalizer.Loc("Aceptar y continuar al pago", "Accept and continue to payment")
+            }
+            else
+            {
+                @CatalogLocalizer.Loc($"Aceptar y continuar · Pagar ${price:0.##}", $"Accept and continue · Pay ${price:0.##}")
+            }
+        </button>
+    </form>
+</main>

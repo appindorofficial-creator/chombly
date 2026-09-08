@@ -1,0 +1,47 @@
+@{
+    var code = ViewData["PromoCode"] as string ?? "";
+    var subtotal = ViewData["PromoSubtotal"] as decimal? ?? 0m;
+    var discount = ViewData["PromoDiscount"] as decimal? ?? 0m;
+    var error = ViewData["PromoError"] as string;
+    var showTotals = ViewData["PromoShowTotals"] as bool? != false;
+    var inputName = ViewData["PromoInputName"] as string ?? "PromoCode";
+    var applyHandler = ViewData["PromoApplyHandler"] as string;
+}
+<div class="promo-code-block">
+    <label class="promo-code-label" for="promo-code-input">@L["Promo_Label"]</label>
+    <div class="promo-code-row">
+        <input id="promo-code-input" class="form-control" type="text" name="@inputName"
+               value="@code" maxlength="40" autocomplete="off"
+               placeholder="@L["Promo_Placeholder"]"
+               aria-describedby="@(string.IsNullOrEmpty(error) ? null : "promo-code-error")" />
+        @if (!string.IsNullOrEmpty(applyHandler))
+        {
+            <button class="btn btn-outline promo-apply-btn" type="submit" name="handler" value="@applyHandler">@L["Promo_Apply"]</button>
+        }
+        else
+        {
+            <button class="btn btn-outline promo-apply-btn" type="submit" asp-page-handler="ApplyPromo">@L["Promo_Apply"]</button>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <p id="promo-code-error" class="field-error" role="alert">@error</p>
+    }
+    else if (discount > 0 && !string.IsNullOrEmpty(code))
+    {
+        <p class="promo-applied muted small">@L["Promo_Applied"]</p>
+    }
+    @if (showTotals && discount > 0)
+    {
+        <div class="promo-discount-lines">
+            <div class="promo-line">
+                <span>@L["Promo_Subtotal"]</span>
+                <span>$@subtotal.ToString("0.00")</span>
+            </div>
+            <div class="promo-line promo-discount">
+                <span>@string.Format(L["Promo_DiscountLine"].Value, code.Trim().ToUpperInvariant())</span>
+                <span>−$@discount.ToString("0.00")</span>
+            </div>
+        </div>
+    }
+</div>

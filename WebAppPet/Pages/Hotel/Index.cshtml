@@ -1,0 +1,266 @@
+@page
+@model WebAppPet.Pages.Hotel.IndexModel
+@{
+    ViewData["Title"] = L["Hotel_Title"].Value;
+}
+<div class="page-header hotel-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <div class="hotel-header-text">
+        <h1>@L["Hotel_Title"]</h1>
+        <p class="muted small">@L["Book_AllInOne"]</p>
+    </div>
+    <img src="~/images/categories/cat-hotel.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
+</div>
+
+<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="get" id="hotel-filter-form">
+        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="more" value="@(Model.More ? "true" : "false")" />
+
+        <h3 class="section-title" style="margin-top:0">@L["Book_WhenNeeded"]</h3>
+        <div class="when-row">
+            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
+                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
+                @L["Book_Today"]
+            </label>
+            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
+                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
+                @L["Book_Tomorrow"]
+            </label>
+            <label class="when-chip @(Model.When == "fechas" ? "active" : "")">
+                <input type="radio" name="When" value="fechas" @(Model.When == "fechas" ? "checked" : "") onchange="this.form.submit()" />
+                @L["Book_PickDates"]
+            </label>
+        </div>
+
+        @if (Model.When == "fechas")
+        {
+            <div class="date-row">
+                <div class="form-group" style="flex:1;margin:0">
+                    <label class="muted small">Check-in</label>
+                    <input class="form-control" type="date" name="CheckIn" value="@Model.CheckIn" onchange="this.form.submit()" />
+                </div>
+                <div class="form-group" style="flex:1;margin:0">
+                    <label class="muted small">Check-out</label>
+                    <input class="form-control" type="date" name="CheckOut" value="@Model.CheckOut" onchange="this.form.submit()" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="CheckIn" value="@Model.CheckIn" />
+            <input type="hidden" name="CheckOut" value="@Model.CheckOut" />
+            <p class="muted small">@Model.CheckIn → @Model.CheckOut · @Model.Nights noche(s)</p>
+        }
+
+        <h3 class="section-title">¿Cuántas mascotas?</h3>
+        <div class="pet-count-row">
+            <div class="stepper">
+                <a class="stepper-btn" href="?When=@Model.When&CheckIn=@Model.CheckIn&CheckOut=@Model.CheckOut&PetCount=@(Math.Max(1, Model.PetCount-1))&PetId=@Model.PetId&groomerId=@Model.GroomerId@string.Concat(Model.Filters.Select(f => "&Filters=" + Uri.EscapeDataString(f)))">−</a>
+                <strong>@Model.PetCount</strong>
+                <a class="stepper-btn" href="?When=@Model.When&CheckIn=@Model.CheckIn&CheckOut=@Model.CheckOut&PetCount=@(Math.Min(6, Model.PetCount+1))&PetId=@Model.PetId&groomerId=@Model.GroomerId@string.Concat(Model.Filters.Select(f => "&Filters=" + Uri.EscapeDataString(f)))">+</a>
+            </div>
+            @if (Model.Pets.Any())
+            {
+                <select class="form-control pet-select-inline" name="PetId" onchange="this.form.submit()">
+                    @foreach (var p in Model.Pets)
+                    {
+                        if (p.Id == Model.PetId)
+                        {
+                            <option value="@p.Id" selected>@PetSpecies.Emoji(p.Species) @p.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@p.Id">@PetSpecies.Emoji(p.Species) @p.Name</option>
+                        }
+                    }
+                </select>
+            }
+            else
+            {
+                <a class="btn btn-outline btn-sm" asp-page="/Pets/Create">+ Mascota</a>
+            }
+        </div>
+        <input type="hidden" name="PetCount" value="@Model.PetCount" />
+
+        @if (Model.AllFilterLabels.Any())
+        {
+            <h3 class="section-title">Filtros <span class="muted small">(opcional)</span></h3>
+            <div class="filter-bar">
+                @foreach (var f in Model.AllFilterLabels.Take(6))
+                {
+                    var on = Model.Filters.Any(x => x.Equals(f, StringComparison.OrdinalIgnoreCase));
+                    <label class="chip filter-check @(on ? "active" : "")">
+                        <input type="checkbox" name="Filters" value="@f" @(on ? "checked" : "") onchange="this.form.submit()" />
+                        @(on ? "✓ " : "")@CatalogLocalizer.Text(f)
+                    </label>
+                }
+            </div>
+        }
+
+        <h3 class="section-title">Resultados</h3>
+        @if (!Model.Results.Any())
+        {
+            <div class="empty">No hay hoteles con esos filtros en la base de datos.</div>
+        }
+        @foreach (var item in Model.Results)
+        {
+            var h = item.Hotel;
+            var selected = Model.GroomerId == h.Id;
+            <div class="hotel-card @(selected ? "selected" : "")">
+                @if (item.Recommended)
+                {
+                    <span class="badge badge-green hotel-reco">Recomendado</span>
+                }
+                <div class="hotel-card-main">
+                    <img src="@(h.ImageUrl ?? "/images/pet-other.svg")" alt="@h.BusinessName" />
+                    <div class="info">
+                        <h3>@h.BusinessName</h3>
+                        <div class="meta-row">
+                            @if (h.ReviewCount > 0)
+                            {
+                                <span class="stars">★ @h.Rating.ToString("0.0")</span>
+                                <span class="muted small">(@h.ReviewCount)</span>
+                            }
+                            @if (!string.IsNullOrEmpty(item.DistanceLabel))
+                            {
+                                <span class="muted small">@item.DistanceLabel</span>
+                            }
+                        </div>
+                        <div class="price">@L["Home_FromPrice"] $@item.StartingNight.ToString("0") @CatalogLocalizer.Text("/ noche")</div>
+                        <div class="hotel-feats">
+                            @foreach (var feat in item.Features)
+                            {
+                                <span>@CatalogLocalizer.Text(feat)</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
+                   asp-page="./Index"
+                   asp-route-When="@Model.When"
+                   asp-route-CheckIn="@Model.CheckIn"
+                   asp-route-CheckOut="@Model.CheckOut"
+                   asp-route-PetCount="@Model.PetCount"
+                   asp-route-PetId="@Model.PetId"
+                   asp-route-groomerId="@h.Id"
+                   asp-route-Notes="@Model.Notes"
+                   asp-route-more="@Model.More">
+                    @(selected ? "Seleccionado ✓" : "Reservar")
+                </a>
+            </div>
+        }
+
+        @if (!Model.More && Model.Results.Count >= 3)
+        {
+            <button type="submit" class="link-btn" name="more" value="true" style="display:block;margin:8px auto 16px">Ver más opciones ▾</button>
+        }
+
+        @if (Model.Extras.Any())
+        {
+            <h3 class="section-title">Extras <span class="muted small">(opcional)</span></h3>
+            <div class="extras-grid">
+                @foreach (var e in Model.Extras)
+                {
+                    var on = Model.ExtraIds.Contains(e.Id);
+                    <label class="extra-chip @(on ? "active" : "")">
+                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                        @CatalogLocalizer.Text(e.Name)
+                        <span class="muted small">+$@e.Price.ToString("0")</span>
+                    </label>
+                }
+            </div>
+        }
+
+        <h3 class="section-title">Notas</h3>
+        <div class="form-group">
+            <textarea class="form-control" name="Notes" rows="3" maxlength="200"
+                      placeholder="¿Hay algo que debamos saber?">@Model.Notes</textarea>
+            <div class="muted small" style="text-align:right">@(Model.Notes?.Length ?? 0)/200</div>
+        </div>
+    </form>
+
+    <div class="trust-bar">
+        <div><span>🔒</span><small>Reservas seguras</small></div>
+        <div><span>✓</span><small>Proveedores verificados</small></div>
+        <div><span>💬</span><small>Soporte 24/7</small></div>
+        <div><span>🌿</span><small>Para tu tranquilidad</small></div>
+    </div>
+</main>
+
+@if (Model.SelectedHotel != null)
+{
+    ViewData["PromoCode"] = Model.PromoCode;
+    ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
+    ViewData["PromoDiscount"] = Model.DiscountAmount;
+    ViewData["PromoError"] = Model.PromoError;
+    ViewData["TermsChecked"] = Model.AcceptTerms;
+    <aside class="hotel-summary">
+        <div class="hotel-summary-inner">
+            <h3>Resumen</h3>
+            <div class="summary-hotel">
+                <img src="@(Model.SelectedHotel.ImageUrl ?? "/images/pet-other.svg")" alt="" />
+                <div>
+                    <strong>@Model.SelectedHotel.BusinessName</strong>
+                    <div class="muted small">@Model.SelectedHotel.City</div>
+                </div>
+            </div>
+            <div class="summary-lines">
+                <div><span>Fechas</span><strong>@Model.CheckIn → @Model.CheckOut</strong></div>
+                <div><span>Noches</span><strong>@Model.Nights</strong></div>
+                <div><span>Mascota</span><strong>@(Model.SelectedPet != null ? $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}" : "—") × @Model.PetCount</strong></div>
+                <div><span>Extras</span><strong>@Model.ExtraIds.Count seleccionados</strong></div>
+            </div>
+            <div class="summary-total">
+                <span>Total estimado</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+            <p class="summary-note">Precio final puede variar según impuestos y extras seleccionados.</p>
+
+            <form method="post">
+                <input type="hidden" name="When" value="@Model.When" />
+                <input type="hidden" name="CheckIn" value="@Model.CheckIn" />
+                <input type="hidden" name="CheckOut" value="@Model.CheckOut" />
+                <input type="hidden" name="PetCount" value="@Model.PetCount" />
+                <input type="hidden" name="PetId" value="@Model.PetId" />
+                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
+                <input type="hidden" name="Notes" value="@Model.Notes" />
+                @foreach (var f in Model.Filters)
+                {
+                    <input type="hidden" name="Filters" value="@f" />
+                }
+                @foreach (var id in Model.ExtraIds)
+                {
+                    <input type="hidden" name="ExtraIds" value="@id" />
+                }
+
+                <partial name="_PromoCode" />
+
+                <h4 class="summary-sub">Pago</h4>
+                @if (Model.DefaultPayment != null)
+                {
+                    <div class="pay-row">
+                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
+                        <a asp-page="/Account/PaymentMethods">Cambiar</a>
+                    </div>
+                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods">Agregar método de pago</a>
+                }
+
+                <partial name="_AcceptTerms" />
+                <a class="legal-link small" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" style="display:block;margin:4px 0 12px">@L["Legal_TermsConditions"] — @CatalogLocalizer.Loc("Ver aquí", "View here")</a>
+
+                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book"
+                        aria-describedby="AcceptTerms-error">🔒 Reservar ahora — Pago seguro</button>
+            </form>
+        </div>
+    </aside>
+}

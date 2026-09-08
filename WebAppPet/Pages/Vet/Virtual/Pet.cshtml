@@ -1,0 +1,71 @@
+@page
+@model WebAppPet.Pages.Vet.Virtual.PetModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Index">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Confirmamos dónde está la mascota en cada consulta", "We confirm where the pet is for every consult")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    @if (Model.Pets.Count == 0)
+    {
+        <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
+        <a class="btn btn-primary" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+    }
+    else
+    {
+        <form method="post" enctype="multipart/form-data" class="stack" style="gap:16px">
+            <input type="hidden" asp-for="ConsultationId" />
+            <input type="hidden" asp-for="Next" />
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Selecciona tu mascota", "Select your pet")</h2>
+                <div class="stack" style="gap:8px">
+                    @foreach (var p in Model.Pets)
+                    {
+                        <label class="radio-card @(Model.PetId == p.Id ? "is-selected" : "")">
+                            <input type="radio" name="PetId" value="@p.Id" checked="@(Model.PetId == p.Id)" />
+                            <span>
+                                <strong>@p.Name</strong>
+                                <span class="muted small">@p.Species · @p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "yrs")</span>
+                            </span>
+                        </label>
+                    }
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Estado actual (EE.UU.)", "Current U.S. state")</h2>
+                <select class="input" asp-for="PetUsState">
+                    @foreach (var s in PetModel.UsStates)
+                    {
+                        <option value="@s.Code">@s.Name</option>
+                    }
+                </select>
+                <p class="muted small">@CatalogLocalizer.Loc("Esto no es el país del veterinario internacional.", "This is not the international vet's country.")</p>
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Síntomas o motivo", "Symptoms or reason")</h2>
+                <textarea class="input" asp-for="Symptoms" rows="3" placeholder="@CatalogLocalizer.Loc("Describe brevemente…", "Briefly describe…")"></textarea>
+            </section>
+
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Fotos o video corto (opcional)", "Photos or short video (optional)")</h2>
+                <input class="input" type="file" asp-for="Media1" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                <input class="input" type="file" asp-for="Media2" accept="image/*,video/mp4,video/webm,video/quicktime" style="margin-top:8px" />
+            </section>
+
+            <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+        </form>
+    }
+</main>

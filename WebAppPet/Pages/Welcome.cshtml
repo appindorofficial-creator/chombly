@@ -1,0 +1,34 @@
+@page "/Welcome"
+@model WebAppPet.Pages.WelcomeModel
+@{
+    ViewData["Title"] = "Chombly";
+    ViewData["HideNav"] = true;
+    Layout = "_Layout";
+}
+<div class="splash">
+    <div class="splash-lang">
+        <partial name="_LanguageSwitch" />
+    </div>
+    <div class="splash-hero">
+        <div class="splash-logo">
+            <img src="~/images/chombly-monkey.png" alt="Chombly" class="splash-mascot" />
+            <div>
+                <span class="splash-name">Chombly</span>
+                <span class="splash-tag">Pet Care App</span>
+            </div>
+        </div>
+        <p class="splash-slogan">@L["Welcome_Slogan"]</p>
+        <img src="~/images/hero-dog.png" alt="Chombly pet care" class="splash-photo" />
+    </div>
+    <div class="splash-actions">
+        <h2>@L["Welcome_Hero"]</h2>
+        <p>@L["Welcome_HeroSub"]</p>
+        <a class="btn btn-primary btn-block" asp-page="/Index">@L["Welcome_Explore"]</a>
+        @if (User.Identity?.IsAuthenticated != true)
+        {
+            <a class="btn btn-outline btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Index">@L["Login_Title"]</a>
+        }
+        <a class="btn btn-outline btn-block" asp-page="/Account/RegisterBusiness" style="margin-top:8px">@L["Welcome_Business"]</a>
+        <a class="link-btn" asp-page="/Index" style="display:block;text-align:center;margin-top:14px;color:#fff;opacity:.9">@L["Welcome_BackHome"]</a>
+    </div>
+</div>

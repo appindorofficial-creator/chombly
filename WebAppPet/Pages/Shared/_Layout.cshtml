@@ -1,0 +1,57 @@
+﻿@using System.Security.Claims
+@using Microsoft.AspNetCore.Localization
+@{
+    var uiCulture = Context.Features.Get<IRequestCultureFeature>()?.RequestCulture.UICulture.TwoLetterISOLanguageName ?? "es";
+}
+<!DOCTYPE html>
+<html lang="@uiCulture">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>@ViewData["Title"] - Chombly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" href="~/images/chombly-icon.png" />
+</head>
+@{
+    var hideNav = ViewData["HideNav"] as bool? == true;
+    var path = Context.Request.Path.Value ?? "";
+    bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase);
+}
+<body>
+<div class="app-shell">
+    @RenderBody()
+
+    @if (!hideNav)
+    {
+        <nav class="bottom-nav">
+            <a asp-page="/Index" class="@(IsActive("/Index") || path == "/" ? "active" : "")">
+                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
+                @L["Nav_Home"]
+            </a>
+            <a asp-page="/Groomers/Index" class="@(IsActive("/Groomers") ? "active" : "")">
+                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm8.7 13.3-3.2-3.2a8 8 0 1 0-1.4 1.4l3.2 3.2 1.4-1.4z"/></svg></span>
+                @L["Nav_Search"]
+            </a>
+            <a asp-page="/Appointments/Index" class="@(IsActive("/Appointments") ? "active" : "")">
+                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg></span>
+                @L["Nav_Appointments"]
+            </a>
+            <a asp-page="/Pets/Index" class="@(IsActive("/Pets") ? "active" : "")">
+                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm10 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM5 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm14 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM12 21c-3.5 0-6-2.2-6-5.2C6 13 9 11 12 11s6 2 6 4.8C18 18.8 15.5 21 12 21z"/></svg></span>
+                @L["Nav_Pets"]
+            </a>
+            <a asp-page="/Account/Profile" class="@(IsActive("/Account/Profile") || IsActive("/Account/Notifications") ? "active" : "")">
+                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></span>
+                @L["Nav_Profile"]
+            </a>
+        </nav>
+    }
+</div>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

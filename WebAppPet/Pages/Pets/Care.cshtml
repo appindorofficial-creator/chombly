@@ -1,0 +1,89 @@
+@page "{id:int}"
+@model WebAppPet.Pages.Pets.CareModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc($"Control de {Model.Pet?.Name}", $"Care for {Model.Pet?.Name}");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Pets/Index">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc($"Control de {Model.Pet?.Name}", $"Care for {Model.Pet?.Name}")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Historial, plan y próximas tareas", "History, plan, and upcoming tasks")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="card card-pad" style="margin-bottom:14px">
+        <strong>@Model.Pet?.Name</strong>
+        <p class="muted small mb-0">@Model.Pet?.Species · @Model.Pet?.Breed · @Model.Pet?.AgeYears @CatalogLocalizer.Loc("años", "yrs")</p>
+    </div>
+
+    <div class="card card-pad @(Model.Subscription != null ? "vet-vcpr-ok" : "vet-vcpr-missing")" style="margin-bottom:14px">
+        @if (Model.Subscription != null)
+        {
+            <strong>Chombly Care</strong>
+            <p class="muted small mb-0">
+                @CatalogLocalizer.Loc("Consulta rápida restante:", "Quick consult left:")
+                <strong>@Model.RemainingConsults</strong>
+                · @CatalogLocalizer.Loc("Renueva", "Renews") @AppTimeZones.FormatDate(Model.Subscription.CurrentPeriodEnd)
+            </p>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+                <a class="btn btn-primary btn-sm" asp-page="/Vet/Index">@CatalogLocalizer.Loc("Hablar con mi equipo virtual", "Talk to my virtual team")</a>
+                <a class="btn btn-outline btn-sm" asp-page="/Plans/ChomblyCare">@CatalogLocalizer.Loc("Gestionar plan", "Manage plan")</a>
+            </div>
+        }
+        else
+        {
+            <strong>@CatalogLocalizer.Loc("Sin Chombly Care", "No Chombly Care")</strong>
+            <p class="muted small">@CatalogLocalizer.Loc("Plan de orientación y bienestar con 1 consulta rápida al mes.", "Guidance & wellness plan with 1 quick consult per month.")</p>
+            <a class="btn btn-primary btn-sm" asp-page="/Plans/ChomblyCare" style="margin-top:8px">@CatalogLocalizer.Loc("Activar membresía", "Activate membership")</a>
+        }
+    </div>
+
+    <section style="margin-bottom:16px">
+        <h2 class="section-title">@CatalogLocalizer.Loc("Próximas citas", "Upcoming appointments")</h2>
+        @if (Model.Upcoming.Count == 0)
+        {
+            <p class="muted small">@CatalogLocalizer.Loc("No hay citas próximas.", "No upcoming appointments.")</p>
+        }
+        else
+        {
+            @foreach (var a in Model.Upcoming)
+            {
+                <a class="card card-pad" asp-page="/Appointments/Details" asp-route-id="@a.Id" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
+                    <strong>@a.Groomer.BusinessName</strong>
+                    <span class="muted small" style="display:block">@AppTimeZones.FormatShort(a.ScheduledAt) · @a.Service.Name</span>
+                </a>
+            }
+        }
+    </section>
+
+    <section style="margin-bottom:16px">
+        <h2 class="section-title">@CatalogLocalizer.Loc("Consultas recientes", "Recent consults")</h2>
+        @if (Model.RecentConsults.Count == 0)
+        {
+            <p class="muted small">@CatalogLocalizer.Loc("Aún no hay consultas en el historial.", "No consults in history yet.")</p>
+        }
+        else
+        {
+            @foreach (var c in Model.RecentConsults)
+            {
+                <a class="card card-pad" asp-page="/Vet/Virtual/Summary" asp-route-id="@c.Id" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
+                    <strong>@(c.Provider?.BusinessName ?? "—")</strong>
+                    <span class="muted small" style="display:block">
+                        @c.Status · @(c.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : AppTimeZones.FormatShort(c.UpdatedAt))
+                        @if (c.UsesCareBenefit) { <text>· Care</text> }
+                    </span>
+                </a>
+            }
+        }
+    </section>
+
+    <a class="btn btn-primary btn-block" asp-page="/Pets/Reminders" asp-route-id="@Model.Id" style="margin-bottom:8px">
+        @CatalogLocalizer.Loc("Recordatorios (vacunas / medicinas)", "Reminders (vaccines / meds)")
+    </a>
+    <form method="post" asp-page-handler="Remind">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <button type="submit" class="btn btn-outline btn-block">
+            @CatalogLocalizer.Loc("Crear aviso rápido de vacunas/chequeo", "Create quick vaccine/checkup notice")
+        </button>
+    </form>
+</main>

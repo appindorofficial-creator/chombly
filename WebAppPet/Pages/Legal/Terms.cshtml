@@ -1,0 +1,94 @@
+@page "/Legal/Terms"
+@model WebAppPet.Pages.Legal.TermsModel
+@{
+    ViewData["Title"] = L["Legal_PageTitle"].Value;
+    var isEn = CatalogLocalizer.IsEnglish();
+}
+<div class="page-header">
+    <a class="back-btn" href="javascript:history.back()">←</a>
+    <h1>@L["Legal_PageTitle"]</h1>
+</div>
+<main class="app-main">
+    <nav class="legal-toc card card-pad" aria-label="@L["Legal_PageTitle"]">
+        <a class="legal-link" href="#terms">@L["Legal_TermsConditions"]</a>
+        <span class="muted">·</span>
+        <a class="legal-link" href="#privacy">@L["Legal_PrivacyPolicy"]</a>
+    </nav>
+
+    @if (isEn)
+    {
+        <article id="terms" class="card card-pad legal-doc">
+            <h2>Terms &amp; Conditions</h2>
+            <p class="muted small">Last updated: July 2026 · Chombly pet-care marketplace</p>
+            <h3>1. Nature of the service</h3>
+            <p>Chombly connects pet owners with independent businesses and professionals (groomers, daycare, hotels, walkers, trainers, veterinary clinics, and similar). Chombly is a marketplace platform; it does not itself provide pet-care services unless expressly stated.</p>
+            <h3>2. Bookings</h3>
+            <p>When you request a booking, you ask a provider to confirm a service at the date, time, pet, and price shown. Providers may accept, decline, or propose changes. A booking is binding only after the provider confirms it in the app.</p>
+            <h3>3. Payments</h3>
+            <p>Payment methods in Chombly are <strong>simulated for demonstration</strong>. Card details are validated for format only; no real charges are processed until a payment provider is integrated. Prices shown are estimates set by each business.</p>
+            <h3>4. Cancellations &amp; changes</h3>
+            <p>Cancellation and refund rules may vary by provider. Review the booking details and any cancellation policy shown before confirming. Contact the business through Chombly chat when you need to reschedule.</p>
+            <h3>5. Liability</h3>
+            <p>Providers are responsible for the quality and safety of their services. Chombly is not liable for incidents during care, lost belongings, or disputes between users and businesses, except where required by applicable law. Use the platform responsibly and keep your pet’s health information up to date.</p>
+            <h3>6. Accounts</h3>
+            <p>You must provide accurate information. You are responsible for activity under your account. Businesses must comply with local licensing and animal-welfare rules that apply to their category.</p>
+            <h3>7. Contact</h3>
+            <p>Questions about these terms: <a class="legal-link" href="mailto:legal@chombly.app">legal@chombly.app</a>.</p>
+        </article>
+
+        <article id="privacy" class="card card-pad legal-doc" style="margin-top:16px">
+            <h2>Privacy policy</h2>
+            <p class="muted small">Last updated: July 2026 · Chombly</p>
+            <h3>1. Data we collect</h3>
+            <p>We may collect account data (name, email), pet profiles, booking details, messages, approximate location you choose to share, and simulated payment metadata (brand and last four digits only).</p>
+            <h3>2. How we use it</h3>
+            <p>We use this information to operate bookings, notify you about appointments, show relevant providers, improve the product, and communicate about your account. We do not sell your personal data.</p>
+            <h3>3. Sharing</h3>
+            <p>Booking information is shared with the business you select so they can fulfill the service. We may share data when required by law or to protect users’ safety.</p>
+            <h3>4. Retention &amp; security</h3>
+            <p>We keep data as long as your account is active or as needed for legal obligations. We apply reasonable technical measures; no system is perfectly secure.</p>
+            <h3>5. Your choices</h3>
+            <p>You may update profile and pet data in the app, or request account deletion by contacting us. You can change language and notification preferences in settings.</p>
+            <h3>6. Contact</h3>
+            <p>Privacy requests: <a class="legal-link" href="mailto:privacy@chombly.app">privacy@chombly.app</a>.</p>
+        </article>
+    }
+    else
+    {
+        <article id="terms" class="card card-pad legal-doc">
+            <h2>Términos y Condiciones</h2>
+            <p class="muted small">Última actualización: julio 2026 · Marketplace de cuidado de mascotas Chombly</p>
+            <h3>1. Naturaleza del servicio</h3>
+            <p>Chombly conecta a dueños de mascotas con negocios y profesionales independientes (groomers, guarderías, hoteles, paseadores, entrenadores, clínicas veterinarias y similares). Chombly es una plataforma de marketplace; no presta el servicio de cuidado salvo que se indique expresamente.</p>
+            <h3>2. Reservas</h3>
+            <p>Al solicitar una reserva, pides al proveedor que confirme un servicio en la fecha, hora, mascota y precio mostrados. El proveedor puede aceptar, rechazar o proponer cambios. La reserva es vinculante solo cuando el negocio la confirma en la app.</p>
+            <h3>3. Pagos</h3>
+            <p>Los métodos de pago en Chombly están <strong>simulados con fines de demostración</strong>. Los datos de tarjeta se validan solo por formato; no se procesan cargos reales hasta integrar un proveedor de pagos. Los precios son estimaciones definidas por cada negocio.</p>
+            <h3>4. Cancelaciones y cambios</h3>
+            <p>Las reglas de cancelación y reembolso pueden variar según el proveedor. Revisa los detalles de la reserva y cualquier política de cancelación antes de confirmar. Usa el chat de Chombly para reprogramar con el negocio.</p>
+            <h3>5. Responsabilidad</h3>
+            <p>Los proveedores son responsables de la calidad y seguridad de sus servicios. Chombly no responde por incidentes durante el cuidado, objetos perdidos o disputas entre usuarios y negocios, salvo lo que exija la ley aplicable. Usa la plataforma de forma responsable y mantén actualizada la información de salud de tu mascota.</p>
+            <h3>6. Cuentas</h3>
+            <p>Debes proporcionar información veraz. Eres responsable de la actividad de tu cuenta. Los negocios deben cumplir las licencias y normas de bienestar animal aplicables a su categoría.</p>
+            <h3>7. Contacto</h3>
+            <p>Consultas sobre estos términos: <a class="legal-link" href="mailto:legal@chombly.app">legal@chombly.app</a>.</p>
+        </article>
+
+        <article id="privacy" class="card card-pad legal-doc" style="margin-top:16px">
+            <h2>Política de privacidad</h2>
+            <p class="muted small">Última actualización: julio 2026 · Chombly</p>
+            <h3>1. Datos que recopilamos</h3>
+            <p>Podemos recopilar datos de cuenta (nombre, correo), perfiles de mascotas, detalles de reservas, mensajes, ubicación aproximada que elijas compartir y metadatos de pago simulados (marca y últimos cuatro dígitos).</p>
+            <h3>2. Uso de la información</h3>
+            <p>Usamos estos datos para operar reservas, avisarte de citas, mostrar proveedores relevantes, mejorar el producto y comunicarnos sobre tu cuenta. No vendemos tus datos personales.</p>
+            <h3>3. Compartición</h3>
+            <p>La información de la reserva se comparte con el negocio que elijas para prestar el servicio. Podemos compartir datos cuando lo exija la ley o para proteger la seguridad de los usuarios.</p>
+            <h3>4. Conservación y seguridad</h3>
+            <p>Conservamos los datos mientras tu cuenta esté activa o según obligaciones legales. Aplicamos medidas técnicas razonables; ningún sistema es totalmente seguro.</p>
+            <h3>5. Tus opciones</h3>
+            <p>Puedes actualizar perfil y mascotas en la app, o solicitar la eliminación de la cuenta contactándonos. Puedes cambiar idioma y preferencias de notificación en ajustes.</p>
+            <h3>6. Contacto</h3>
+            <p>Solicitudes de privacidad: <a class="legal-link" href="mailto:privacy@chombly.app">privacy@chombly.app</a>.</p>
+        </article>
+    }
+</main>

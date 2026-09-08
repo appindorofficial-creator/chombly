@@ -1,0 +1,79 @@
+@page
+@model WebAppPet.Pages.Groomer.AppointmentsModel
+@{
+    ViewData["Title"] = "Citas";
+    ViewData["GroomerTab"] = "appointments";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+    <a class="icon-btn" asp-page="/Account/Notifications">🔔</a>
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+
+    <div class="tabs">
+        <a class="@(Model.Tab == "requests" ? "active" : "")" asp-page="./Appointments" asp-route-tab="requests">Solicitudes</a>
+        <a class="@(Model.Tab == "upcoming" ? "active" : "")" asp-page="./Appointments" asp-route-tab="upcoming">Próximas</a>
+        <a class="@(Model.Tab == "history" ? "active" : "")" asp-page="./Appointments" asp-route-tab="history">Historial</a>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty">No hay citas en esta sección.</div>
+    }
+
+    @foreach (var a in Model.Items)
+    {
+        <div class="appt-card">
+            <div class="row" style="margin-bottom:10px">
+                <img src="@PetSpecies.PhotoOrDefault(a.Pet.PhotoUrl, a.Pet.Species)" alt="@a.Pet.Name" style="border-radius:50%" />
+                <div style="flex:1">
+                    <strong>@a.Pet.Name · @a.Service.Name</strong>
+                    <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM yyyy · h:mm tt")</div>
+                    <span class="price">$@a.TotalPrice.ToString("0.00")</span>
+                </div>
+                <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
+            </div>
+
+            <div class="card-pad" style="background:var(--purple-soft);border-radius:12px;padding:10px 12px;margin-bottom:10px">
+                <strong class="small">Cliente y mascota</strong>
+                <div class="muted small">👤 @a.Client.FullName · 📞 @(a.Client.Phone ?? "sin teléfono")</div>
+                <div class="muted small">@PetSpecies.Emoji(a.Pet.Species) @a.Pet.Species · @a.Pet.Breed · @a.Pet.AgeYears años · @a.Pet.Temperament</div>
+                @if (a.Pet.IsAnxious || a.Pet.IsSenior || a.Pet.HasSpecialNeeds)
+                {
+                    <div class="muted small">
+                        ⚠️ @(a.Pet.IsSenior ? "Senior. " : "")@(a.Pet.IsAnxious ? "Ansioso. " : "")@(a.Pet.HasSpecialNeeds ? "Necesidades especiales." : "")
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(a.Notes))
+                {
+                    <div class="muted small">📝 @a.Notes</div>
+                }
+            </div>
+
+            @if (a.Status == AppointmentStatus.Pending)
+            {
+                <div style="display:flex;gap:8px">
+                    <form method="post" asp-page-handler="Reject" style="flex:1">
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <input type="hidden" name="tab" value="@Model.Tab" />
+                        <button class="btn btn-block btn-sm" type="submit" style="background:#fee2e2;color:#991b1b">Rechazar</button>
+                    </form>
+                    <form method="post" asp-page-handler="Accept" style="flex:1">
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <input type="hidden" name="tab" value="@Model.Tab" />
+                        <button class="btn btn-primary btn-block btn-sm" type="submit">Aceptar</button>
+                    </form>
+                </div>
+            }
+            else if (a.Status == AppointmentStatus.Confirmed)
+            {
+                <form method="post" asp-page-handler="Complete">
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <input type="hidden" name="tab" value="@Model.Tab" />
+                    <button class="btn btn-primary btn-block btn-sm" type="submit">Marcar como completada</button>
+                </form>
+            }
+        </div>
+    }
+</main>

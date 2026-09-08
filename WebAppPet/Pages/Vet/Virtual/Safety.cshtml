@@ -1,0 +1,43 @@
+@page
+@model WebAppPet.Pages.Vet.Virtual.SafetyModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Seguridad y VCPR", "Safety & VCPR");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Virtual/Pet" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Seguridad y VCPR", "Safety & VCPR")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Cuestionario de banderas rojas", "Red-flag screening questionnaire")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="card card-pad @(Model.HasVcpr ? "vet-vcpr-ok" : "vet-vcpr-missing")" style="margin-bottom:16px">
+        @if (Model.HasVcpr)
+        {
+            <strong>@CatalogLocalizer.Loc("VCPR activa registrada", "Active VCPR on file")</strong>
+            <p class="muted small mb-0">@CatalogLocalizer.Loc("Hay evidencia de revisión presencial en este estado (últimos 12 meses).", "There is evidence of an in-person exam in this state (last 12 months).")</p>
+        }
+        else
+        {
+            <strong>@CatalogLocalizer.Loc("Sin VCPR verificable", "No verifiable VCPR")</strong>
+            <p class="muted small mb-0">@CatalogLocalizer.Loc("En NC la telemedicina clínica local requiere relación veterinario-cliente-paciente previa presencial.", "In NC, local clinical telemedicine requires a prior in-person VCPR.")</p>
+        }
+    </div>
+
+    <form method="post" class="stack" style="gap:12px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <h2 class="section-title">@CatalogLocalizer.Loc("¿Presenta alguno de estos signos?", "Does your pet show any of these?")</h2>
+
+        <label class="check-row"><input type="checkbox" asp-for="BreathingTrouble" /> <span>@CatalogLocalizer.Loc("Dificultad para respirar", "Breathing trouble")</span></label>
+        <label class="check-row"><input type="checkbox" asp-for="Seizures" /> <span>@CatalogLocalizer.Loc("Convulsiones", "Seizures")</span></label>
+        <label class="check-row"><input type="checkbox" asp-for="Unconscious" /> <span>@CatalogLocalizer.Loc("Inconsciente o colapso", "Unconscious or collapsed")</span></label>
+        <label class="check-row"><input type="checkbox" asp-for="SevereBleeding" /> <span>@CatalogLocalizer.Loc("Sangrado severo", "Severe bleeding")</span></label>
+        <label class="check-row"><input type="checkbox" asp-for="ToxinIngestion" /> <span>@CatalogLocalizer.Loc("Ingesta de tóxico / veneno", "Toxin / poison ingestion")</span></label>
+        <label class="check-row"><input type="checkbox" asp-for="ExtremePain" /> <span>@CatalogLocalizer.Loc("Dolor extremo", "Extreme pain")</span></label>
+        <label class="check-row"><input type="checkbox" asp-for="CannotUrinate" /> <span>@CatalogLocalizer.Loc("No puede orinar", "Cannot urinate")</span></label>
+
+        <textarea class="input" asp-for="SafetyNotes" rows="2" placeholder="@CatalogLocalizer.Loc("Notas adicionales (opcional)", "Additional notes (optional)")"></textarea>
+
+        <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Buscar veterinario", "Find a veterinarian")</button>
+    </form>
+</main>

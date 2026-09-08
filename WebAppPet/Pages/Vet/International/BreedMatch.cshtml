@@ -1,0 +1,38 @@
+@page
+@model WebAppPet.Pages.Vet.International.BreedMatchModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Experiencia con la raza", "Breed experience");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Experiencia con la raza", "Breed experience")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Verificada en el perfil — no por nacionalidad", "Verified on the profile — not by nationality")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" class="stack" style="gap:12px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <label>
+            <span class="section-title">@CatalogLocalizer.Loc("Raza", "Breed")</span>
+            <input class="input" asp-for="Breed" list="breed-list" placeholder="@CatalogLocalizer.Loc("Ej. Pastor alemán", "e.g. German Shepherd")" />
+            <datalist id="breed-list">
+                @foreach (var b in Model.SuggestedBreeds)
+                {
+                    <option value="@b"></option>
+                }
+            </datalist>
+        </label>
+        <p class="muted small">
+            @CatalogLocalizer.Loc(
+                "El origen de la raza es contexto cultural; la coincidencia usa especialidad verificada.",
+                "Breed origin is cultural context; matching uses verified specialty.")
+        </p>
+        <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Buscar coincidencias", "Find matches")</button>
+    </form>
+</main>

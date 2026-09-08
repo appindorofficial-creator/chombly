@@ -1,0 +1,49 @@
+@page
+@model WebAppPet.Pages.Admin.ApprovalsModel
+@{
+    ViewData["Title"] = "Aprobar negocios";
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <h1>Aprobaciones</h1>
+</div>
+<main class="app-main no-nav">
+    <p class="muted small">Negocios en revisión. Al aprobar aparecen en Hotel, Vet, Daycare, etc.</p>
+    <p class="muted small" style="margin-bottom:12px">
+        <a asp-page="/Admin/ProfessionalApprovals">Onboarding profesional</a> ·
+        <a asp-page="/Admin/Payouts">Payouts</a>
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    @if (!Model.Pending.Any())
+    {
+        <div class="empty">No hay solicitudes pendientes.</div>
+    }
+
+    @foreach (var g in Model.Pending)
+    {
+        <div class="card card-pad" style="margin-bottom:12px">
+            <h3 style="margin:0 0 4px">@(g.Category?.Emoji) @g.BusinessName</h3>
+            <p class="muted small" style="margin:0">@g.User.FullName · @g.User.Email · @g.Phone</p>
+            <p class="muted small">@g.Address · @g.City</p>
+            <p class="muted small">@(g.Latitude), @(g.Longitude)</p>
+            <p class="muted small">Servicios: @g.Services.Count · Días abiertos/sem: @g.WeeklyHours.Count(h => h.IsOpen)</p>
+            <p style="margin:8px 0">@g.About</p>
+            <div style="display:flex;gap:8px">
+                <form method="post" asp-page-handler="Approve" style="flex:1">
+                    <input type="hidden" name="id" value="@g.Id" />
+                    <button class="btn btn-primary btn-block" type="submit">Aprobar</button>
+                </form>
+                <form method="post" asp-page-handler="Reject" style="flex:1">
+                    <input type="hidden" name="id" value="@g.Id" />
+                    <button class="btn btn-outline btn-block" type="submit">Rechazar</button>
+                </form>
+            </div>
+        </div>
+    }
+</main>

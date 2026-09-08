@@ -1,0 +1,54 @@
+@page
+@model WebAppPet.Pages.Vet.International.PurchaseOptionModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Elige cómo pagar", "Choose how to pay");
+    var once = Model.IntlItem?.Price ?? 30m;
+    var care = Model.CareItem?.Price ?? 14.99m;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/International/Matches" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Elección de compra", "Purchase choice")</h1>
+        <p class="muted small">@(Model.Provider?.BusinessName)</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="card card-pad" style="margin-bottom:14px">
+        <strong>@(Model.Provider?.BusinessName)</strong>
+        <p class="muted small mb-0">
+            @CatalogLocalizer.Loc("País", "Country") @(Model.Provider?.LicenseCountry)
+            · @Model.Provider?.SpokenLanguages
+        </p>
+    </div>
+
+    <form method="post" asp-page-handler="PayOnce" style="margin-bottom:12px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <button type="submit" class="vet-modality-btn" style="width:100%">
+            <strong>@CatalogLocalizer.Loc("Consulta única", "One-time consult")</strong>
+            <span class="price-tag">$@once.ToString("0.##")</span>
+            <span class="muted small">@CatalogLocalizer.Loc("30 min · sin renovación", "30 min · no renewal")</span>
+        </button>
+    </form>
+
+    <form method="post" asp-page-handler="Care">
+        <input type="hidden" asp-for="ConsultationId" />
+        <button type="submit" class="vet-modality-btn" style="width:100%">
+            <strong>Chombly Care</strong>
+            <span class="price-tag">$@care.ToString("0.00")@CatalogLocalizer.Loc("/mes", "/mo")</span>
+            <span class="muted small">
+                @if (Model.HasCareBenefit)
+                {
+                    @CatalogLocalizer.Loc("Usar consulta rápida incluida este ciclo", "Use included quick consult this cycle")
+                }
+                else
+                {
+                    @CatalogLocalizer.Loc("Renovación mensual · 1 consulta rápida / ciclo", "Monthly renewal · 1 quick consult / cycle")
+                }
+            </span>
+        </button>
+    </form>
+
+    <p class="muted small" style="margin-top:14px">
+        @CatalogLocalizer.Loc("Conservamos profesional, horario y mascota en el siguiente paso.", "We keep provider, schedule, and pet for the next step.")
+    </p>
+</main>

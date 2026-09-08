@@ -1,0 +1,26 @@
+@page
+@model WebAppPet.Pages.Account.NotificationsModel
+@{
+    ViewData["Title"] = "Notificaciones";
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Account/Profile">←</a>
+    <h1>Notificaciones</h1>
+</div>
+<main class="app-main">
+    @if (!Model.Items.Any())
+    {
+        <div class="empty">No tienes notificaciones.</div>
+    }
+    else
+    {
+        @foreach (var n in Model.Items)
+        {
+            <div class="notif-item @(n.IsRead ? "" : "unread")">
+                <strong>@n.Title</strong>
+                <p class="muted small" style="margin:6px 0 0">@n.Message</p>
+                <p class="muted small" style="margin:6px 0 0">@AppTimeZones.FormatShort(n.CreatedAt)</p>
+            </div>
+        }
+    }
+</main>

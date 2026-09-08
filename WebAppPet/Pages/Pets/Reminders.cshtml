@@ -1,0 +1,90 @@
+@page "{id:int}"
+@model WebAppPet.Pages.Pets.RemindersModel
+@using WebAppPet.Localization
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc($"Recordatorios · {Model.Pet?.Name}", $"Reminders · {Model.Pet?.Name}");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Pets/Care" asp-route-id="@Model.Id">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Recordatorios", "Reminders")</h1>
+        <p class="muted small">@Model.Pet?.Name · @CatalogLocalizer.Loc("vacunas, medicinas, horas silenciosas", "vaccines, meds, quiet hours")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    <section style="margin-bottom:16px">
+        <h2 class="section-title">@CatalogLocalizer.Loc("Activos", "Active")</h2>
+        @if (Model.Schedules.Count == 0)
+        {
+            <p class="muted small">@CatalogLocalizer.Loc("No hay recordatorios activos.", "No active reminders.")</p>
+        }
+        else
+        {
+            @foreach (var s in Model.Schedules)
+            {
+                <div class="card card-pad" style="margin-bottom:8px">
+                    <strong>@s.Title</strong>
+                    <span class="badge badge-green" style="margin-left:6px">@s.Type</span>
+                    <span class="muted small" style="display:block">
+                        @CatalogLocalizer.Loc("Próximo", "Next"): @AppTimeZones.FormatShort(s.NextDueUtc)
+                        @if (s.FrequencyDays is int d) { <text>· @CatalogLocalizer.Loc($"cada {d} días", $"every {d} days")</text> }
+                    </span>
+                    @if (s.QuietHoursStartLocal is TimeSpan qs && s.QuietHoursEndLocal is TimeSpan qe)
+                    {
+                        <span class="muted small" style="display:block">
+                            @CatalogLocalizer.Loc("Horas silenciosas", "Quiet hours"): @qs.ToString(@"hh\:mm")–@qe.ToString(@"hh\:mm")
+                        </span>
+                    }
+                    <form method="post" asp-page-handler="Deactivate" style="margin-top:8px">
+                        <input type="hidden" name="Id" value="@Model.Id" />
+                        <input type="hidden" name="scheduleId" value="@s.Id" />
+                        <button class="btn btn-outline btn-sm" type="submit">@CatalogLocalizer.Loc("Desactivar", "Deactivate")</button>
+                    </form>
+                </div>
+            }
+        }
+    </section>
+
+    <section class="card card-pad care-hero">
+        <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Nuevo recordatorio", "New reminder")</h2>
+        <form method="post" asp-page-handler="Create">
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Tipo", "Type")</label>
+                <select class="form-control" asp-for="Type" asp-items="Html.GetEnumSelectList<WebAppPet.Models.ReminderType>()"></select>
+            </div>
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Título", "Title")</label>
+                <input class="form-control" asp-for="Title" placeholder="@CatalogLocalizer.Loc("Vacuna antirrábica", "Rabies vaccine")" />
+            </div>
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Notas", "Notes")</label>
+                <input class="form-control" asp-for="Notes" />
+            </div>
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Cada (días)", "Every (days)")</label>
+                <input class="form-control" type="number" asp-for="FrequencyDays" min="1" />
+            </div>
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Próxima fecha", "Next due date")</label>
+                <input class="form-control" type="date" asp-for="NextDueLocal" />
+            </div>
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Inicio horas silenciosas", "Quiet hours start")</label>
+                <input class="form-control" type="time" asp-for="QuietStart" />
+            </div>
+            <div class="form-group">
+                <label>@CatalogLocalizer.Loc("Fin horas silenciosas", "Quiet hours end")</label>
+                <input class="form-control" type="time" asp-for="QuietEnd" />
+            </div>
+            <p class="muted small">@CatalogLocalizer.Loc("Si el recordatorio cae en horas silenciosas, se pospone hasta el fin de esa ventana (zona America/New_York).", "If due during quiet hours, delivery is deferred until that window ends (America/New_York).")</p>
+            <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Crear", "Create")</button>
+        </form>
+    </section>
+</main>

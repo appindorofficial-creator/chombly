@@ -1,0 +1,72 @@
+@page
+@model WebAppPet.Pages.Admin.ProfessionalApprovalsModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = "Aprobaciones profesionales";
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Admin/Approvals">←</a>
+    <h1>Onboarding profesional</h1>
+</div>
+<main class="app-main no-nav">
+    <p class="muted small">Solicitudes Local / Internacional / Conducta.</p>
+    <p class="muted small" style="margin-bottom:12px">
+        <a asp-page="/Admin/Approvals">Negocios</a> ·
+        <a asp-page="/Admin/Payouts">Payouts</a>
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-warn">@Model.Error</div>
+    }
+
+    @if (!Model.Pending.Any())
+    {
+        <div class="empty">No hay solicitudes pendientes.</div>
+    }
+
+    @foreach (var a in Model.Pending)
+    {
+        <div class="card card-pad" style="margin-bottom:12px">
+            <h3 style="margin:0 0 4px">@a.LegalName</h3>
+            <p class="muted small" style="margin:0">@(a.User?.Email) · @a.Track · @a.Status</p>
+            <p class="muted small">@a.ClinicOrPracticeName · @a.LicenseJurisdiction · @a.LicenseNumber</p>
+            @if (!string.IsNullOrWhiteSpace(a.Languages))
+            {
+                <p class="muted small">Idiomas: @a.Languages</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.BreedExpertiseCsv))
+            {
+                <p class="muted small">Razas: @a.BreedExpertiseCsv</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.DocumentsNote))
+            {
+                <p class="muted small">Docs: @a.DocumentsNote</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.UploadPath))
+            {
+                <p class="muted small"><a href="@a.UploadPath" target="_blank">Ver archivo</a></p>
+            }
+            @if (a.SubmittedUtc is DateTime sub)
+            {
+                <p class="muted small">Enviado: @AppTimeZones.FormatShort(sub)</p>
+            }
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <form method="post" asp-page-handler="Approve" style="flex:1;min-width:120px">
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <button class="btn btn-primary btn-block" type="submit">Aprobar</button>
+                </form>
+                <form method="post" asp-page-handler="Reject" style="flex:1;min-width:160px">
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <input class="form-control" name="RejectNotes" placeholder="Notas de rechazo" style="margin-bottom:6px" />
+                    <button class="btn btn-outline btn-block" type="submit">Rechazar</button>
+                </form>
+            </div>
+        </div>
+    }
+</main>

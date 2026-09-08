@@ -1,0 +1,83 @@
+@page "{id:int}"
+@model WebAppPet.Pages.Appointments.DetailsModel
+@{
+    ViewData["Title"] = "Detalle de cita";
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="./Index">←</a>
+    <h1>Detalle de cita</h1>
+</div>
+<main class="app-main no-nav">
+@if (Model.Appointment == null)
+{
+    <div class="empty">Cita no encontrada.</div>
+}
+else
+{
+    var a = Model.Appointment;
+    <div class="card" style="margin-bottom:14px">
+        <img src="@(a.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" style="width:100%;height:160px;object-fit:cover" />
+        <div class="card-pad">
+            <h2 style="margin:0 0 6px">@a.Groomer.BusinessName</h2>
+            <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
+            <p class="muted small" style="margin-top:8px">📍 @a.Groomer.Address</p>
+        </div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:14px">
+        <p><strong>@(CatalogLocalizer.Loc("Servicio", "Service")):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
+        @if (a.Nights > 0 && a.EndAt.HasValue)
+        {
+            <p><strong>Check-in:</strong> @a.ScheduledAt.ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>Check-out:</strong> @a.EndAt.Value.ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>Noches:</strong> @a.Nights</p>
+        }
+        else
+        {
+            <p><strong>Fecha:</strong> @a.ScheduledAt.ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>Hora:</strong> @a.ScheduledAt.ToString("h:mm tt")</p>
+        }
+        <p><strong>Mascota:</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@a.Pet.Species · @a.Pet.Breed)</p>
+        @if (a.Extras.Any())
+        {
+            <p><strong>Extras:</strong> @string.Join(", ", a.Extras.Select(e => $"{e.Name} (+${e.Price:0})"))</p>
+        }
+        @if (a.DiscountAmount > 0 && !string.IsNullOrEmpty(a.PromoCode))
+        {
+            <p class="promo-line promo-discount">
+                <strong>@string.Format(L["Promo_DiscountLine"].Value, a.PromoCode)</strong>
+                <span class="price">−$@a.DiscountAmount.ToString("0.00")</span>
+            </p>
+        }
+        <p><strong>Total:</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
+        @if (!string.IsNullOrWhiteSpace(a.Notes))
+        {
+            <p><strong>Notas:</strong> @a.Notes</p>
+        }
+    </div>
+
+    <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@Url.Page("/Appointments/Details", new { id = a.Id })">Mensaje al negocio</a>
+    @if (!string.IsNullOrEmpty(a.Groomer.Phone))
+    {
+        <a class="btn btn-outline btn-block" href="tel:@a.Groomer.Phone" style="margin-top:10px">Contactar</a>
+    }
+
+    @if (a.Status is AppointmentStatus.Pending or AppointmentStatus.Confirmed)
+    {
+        var cancelTitle = CatalogLocalizer.Loc("Cancelar reserva", "Cancel booking");
+        var cancelMsg = CatalogLocalizer.Loc("¿Cancelar esta reserva?", "Cancel this booking?");
+        var cancelKeep = CatalogLocalizer.Loc("No, mantener", "No, keep");
+        var cancelOk = CatalogLocalizer.Loc("Sí, cancelar", "Yes, cancel");
+        <form method="post" asp-page-handler="Cancel" style="margin-top:10px"
+              data-confirm
+              data-confirm-title="@cancelTitle"
+              data-confirm-message="@cancelMsg"
+              data-confirm-cancel="@cancelKeep"
+              data-confirm-ok="@cancelOk">
+            <input type="hidden" name="id" value="@a.Id" />
+            <button class="btn btn-outline btn-block" type="submit" style="color:var(--danger);border-color:var(--danger)">@cancelTitle</button>
+        </form>
+    }
+}
+</main>

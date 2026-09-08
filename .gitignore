@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.zip
+appsettings.Development.json
+WebAppPet/wwwroot/uploads/pets/*
+!WebAppPet/wwwroot/uploads/pets/.gitignore

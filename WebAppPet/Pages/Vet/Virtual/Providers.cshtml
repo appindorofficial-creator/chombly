@@ -1,0 +1,66 @@
+@page
+@model WebAppPet.Pages.Vet.Virtual.ProvidersModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Veterinario local", "Local veterinarian");
+    var price = Model.CatalogItem?.Price ?? 70m;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Virtual/Service" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Veterinario local", "Local veterinarian")</h1>
+        <p class="muted small">$@price.ToString("0.##") · 30 min · @Model.Consultation?.PetUsState</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" class="stack" style="gap:14px">
+        <input type="hidden" asp-for="ConsultationId" />
+
+        <section>
+            <h2 class="section-title">@CatalogLocalizer.Loc("¿Cuándo?", "When?")</h2>
+            <div class="filter-bar filter-bar-wrap">
+                <label class="chip @(Model.When == "hoy" ? "active" : "")"><input type="radio" name="When" value="hoy" checked="@(Model.When == "hoy")" /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
+                <label class="chip @(Model.When == "mañana" ? "active" : "")"><input type="radio" name="When" value="mañana" checked="@(Model.When == "mañana")" /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
+            </div>
+            <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
+                @foreach (var t in Model.TimeSlots)
+                {
+                    <label class="chip @(Model.Slot == t ? "active" : "")"><input type="radio" name="Slot" value="@t" checked="@(Model.Slot == t)" /> @t</label>
+                }
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">@CatalogLocalizer.Loc("Profesionales autorizados", "Authorized professionals")</h2>
+            @if (Model.Providers.Count == 0)
+            {
+                <p class="muted">@CatalogLocalizer.Loc("No hay veterinarios locales verificados para este estado.", "No verified local vets for this state.")</p>
+            }
+            else
+            {
+                <div class="stack" style="gap:10px">
+                    @foreach (var p in Model.Providers)
+                    {
+                        var lic = p.Licenses.FirstOrDefault(l => l.IsUsState);
+                        <label class="radio-card @(Model.ProviderId == p.Id ? "is-selected" : "")">
+                            <input type="radio" name="ProviderId" value="@p.Id" checked="@(Model.ProviderId == p.Id)" />
+                            <span>
+                                <strong>@p.BusinessName</strong>
+                                <span class="muted small" style="display:block">★ @p.Rating.ToString("0.0") · @p.City</span>
+                                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Licencia", "License") @lic?.Jurisdiction @lic?.LicenseNumber</span>
+                            </span>
+                        </label>
+                    }
+                </div>
+            }
+        </section>
+
+        <button type="submit" class="btn btn-primary btn-block" disabled="@(Model.Providers.Count == 0)">
+            @CatalogLocalizer.Loc("Reservar consulta", "Book consultation")
+        </button>
+    </form>
+</main>

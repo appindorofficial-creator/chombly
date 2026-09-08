@@ -1,0 +1,50 @@
+@page
+@model WebAppPet.Pages.Vet.Virtual.ServiceModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Servicio y precio", "Service & price");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Servicio y precio", "Service & price")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("El alcance importa más que el precio", "Scope matters more than price")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    @if (Model.HasCare && Model.CareRemaining > 0)
+    {
+        <form method="post" asp-page-handler="UseCare" style="margin-bottom:14px">
+            <input type="hidden" asp-for="ConsultationId" />
+            <button type="submit" class="btn btn-primary btn-block">
+                @CatalogLocalizer.Loc($"Usar consulta rápida de Care ({Model.CareRemaining} restante)", $"Use Care quick consult ({Model.CareRemaining} left)")
+            </button>
+        </form>
+    }
+
+    <form method="post" class="stack" style="gap:12px">
+        <input type="hidden" asp-for="ConsultationId" />
+        @foreach (var item in Model.Items)
+        {
+            var isCare = item.Code == ServiceCatalogCodes.ChomblyCare;
+            <label class="radio-card @(Model.ServiceCode == item.Code ? "is-selected" : "")">
+                <input type="radio" name="ServiceCode" value="@item.Code" checked="@(Model.ServiceCode == item.Code)" />
+                <span>
+                    <strong>@ServiceCatalogService.DisplayName(item)</strong>
+                    <span class="price-tag">$@item.Price.ToString("0.##")@(isCare ? CatalogLocalizer.Loc("/mes", "/mo") : CatalogLocalizer.Loc(" / 30 min", " / 30 min"))</span>
+                    <span class="muted small" style="display:block;margin-top:4px">@ServiceCatalogService.DisplayScope(item)</span>
+                    @if (isCare)
+                    {
+                        <span class="badge" style="margin-top:6px">@(Model.HasCare ? CatalogLocalizer.Loc("Gestionar plan", "Manage plan") : CatalogLocalizer.Loc("Activar membresía", "Activate membership"))</span>
+                    }
+                </span>
+            </label>
+        }
+        <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+    </form>
+</main>

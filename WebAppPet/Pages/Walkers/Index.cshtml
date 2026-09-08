@@ -1,0 +1,285 @@
+@page
+@model WebAppPet.Pages.Walkers.IndexModel
+@{
+    ViewData["Title"] = L["Walkers_Title"].Value;
+}
+<div class="page-header hotel-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <div class="hotel-header-text">
+        <h1>@L["Walkers_Title"]</h1>
+        <p class="muted small">@L["Book_AllInOne"]</p>
+    </div>
+    <img src="~/images/categories/cat-walkers.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
+</div>
+
+<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="get" id="walkers-filter-form">
+        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
+
+        <h3 class="section-title" style="margin-top:0">1. ¿Cuándo necesitas el paseo?</h3>
+        <div class="when-row">
+            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
+                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
+                Hoy
+            </label>
+            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
+                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
+                Mañana
+            </label>
+            <label class="when-chip @(Model.When == "fecha" ? "active" : "")">
+                <input type="radio" name="When" value="fecha" @(Model.When == "fecha" ? "checked" : "") onchange="this.form.submit()" />
+                Elegir fecha
+            </label>
+        </div>
+        @if (Model.When == "fecha")
+        {
+            <div class="form-group">
+                <input class="form-control" type="date" name="Date" value="@Model.Date" onchange="this.form.submit()" />
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="Date" value="@Model.Date" />
+        }
+
+        <h3 class="section-title">2. ¿A qué hora?</h3>
+        <div class="when-row">
+            @foreach (var t in WebAppPet.Pages.Walkers.IndexModel.TimeOptions)
+            {
+                <label class="when-chip @(Model.Slot == t.Key ? "active" : "")">
+                    <input type="radio" name="Slot" value="@t.Key" @(Model.Slot == t.Key ? "checked" : "") onchange="this.form.submit()" />
+                    @CatalogLocalizer.Text(t.Label)
+                </label>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(Model.SuggestedTime))
+        {
+            <p class="muted small">Hora sugerida: @Model.SuggestedTime</p>
+        }
+
+        <h3 class="section-title">3. ¿Cuánto tiempo?</h3>
+        <div class="when-row">
+            @foreach (var d in WebAppPet.Pages.Walkers.IndexModel.DurationOptions)
+            {
+                <label class="when-chip @(Model.Duration == d ? "active" : "")">
+                    <input type="radio" name="Duration" value="@d" @(Model.Duration == d ? "checked" : "") onchange="this.form.submit()" />
+                    @d min
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title">4. Selecciona tu mascota</h3>
+        @if (!Model.Pets.Any())
+        {
+            <div class="alert alert-info">
+                Agrega una mascota para continuar.
+                <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">+ Agregar mascota</a>
+            </div>
+        }
+        else
+        {
+            @foreach (var p in Model.Pets)
+            {
+                var on = p.Id == Model.PetId;
+                <label class="radio-card">
+                    <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <div class="inner">
+                        <div class="pet-select" style="border:none;padding:0;flex:1">
+                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                            <div>
+                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                                <div class="muted small">@p.Breed · @p.AgeYears años</div>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            }
+            <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
+        }
+
+        <h3 class="section-title">5. Preferencias <span class="muted small">(opcional)</span></h3>
+        <div class="filter-bar">
+            @foreach (var pref in WebAppPet.Pages.Walkers.IndexModel.PrefOptions)
+            {
+                var on = Model.Prefs.Contains(pref.Key);
+                <label class="chip filter-check @(on ? "active" : "")">
+                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    @(on ? "✓ " : "")@CatalogLocalizer.Text(pref.Label)
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title" id="walkers-results">@CatalogLocalizer.Loc("6. Paseadores disponibles cerca de ti", "6. Walkers available near you")</h3>
+        @if (!Model.Results.Any())
+        {
+            <div class="empty">@CatalogLocalizer.Loc("No hay paseadores con esos filtros en la base de datos.", "No walkers match these filters.")</div>
+        }
+        @foreach (var item in Model.Results)
+        {
+            var w = item.Walker;
+            var selected = Model.GroomerId == w.Id;
+            <div class="hotel-card @(selected ? "selected" : "")">
+                @if (item.AvailableToday)
+                {
+                    <span class="badge badge-green hotel-reco">Disponible hoy</span>
+                }
+                <div class="hotel-card-main">
+                    <img src="@(w.ImageUrl ?? "/images/categories/cat-walkers.png")" alt="@w.BusinessName" />
+                    <div class="info">
+                        <h3>@w.BusinessName</h3>
+                        <div class="meta-row">
+                            @if (w.ReviewCount > 0)
+                            {
+                                <span class="stars">★ @w.Rating.ToString("0.0")</span>
+                                <span class="muted small">(@w.ReviewCount)</span>
+                            }
+                            @if (!string.IsNullOrEmpty(item.DistanceLabel))
+                            {
+                                <span class="muted small">@item.DistanceLabel</span>
+                            }
+                        </div>
+                        <div class="price">$@item.Price.ToString("0") <span class="muted small">/ @Model.DisplayDuration min</span></div>
+                    </div>
+                </div>
+                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
+                   asp-page="./Index"
+                   asp-route-When="@Model.When"
+                   asp-route-Date="@Model.Date"
+                   asp-route-Slot="@Model.Slot"
+                   asp-route-Duration="@Model.Duration"
+                   asp-route-PetId="@Model.PetId"
+                   asp-route-groomerId="@w.Id"
+                   asp-route-Notes="@Model.Notes"
+                   asp-route-More="@Model.More">
+                    @(selected ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓") : CatalogLocalizer.Loc("Elegir paseador", "Choose walker"))
+                </a>
+            </div>
+        }
+        @if (Model.HasMore)
+        {
+            <a class="link-btn" style="display:block;text-align:center;margin:8px 0 16px"
+               asp-page="./Index"
+               asp-route-When="@Model.When"
+               asp-route-Date="@Model.Date"
+               asp-route-Slot="@Model.Slot"
+               asp-route-Duration="@Model.Duration"
+               asp-route-PetId="@Model.PetId"
+               asp-route-groomerId="@Model.GroomerId"
+               asp-route-More="true">@CatalogLocalizer.Loc("Ver más paseadores", "See more walkers")</a>
+        }
+    </form>
+
+    @if (Model.SelectedWalker != null && Model.SelectedService != null)
+    {
+        <div class="card card-pad" style="margin-bottom:14px">
+            <h3 class="section-title" style="margin-top:0">7. Resumen</h3>
+            <p><strong>@Model.SelectedWalker.BusinessName</strong></p>
+            <p>@(Model.DateLabel ?? "—") · @(Model.TimeLabel ?? "—") · @(Model.HasDuration ? $"{Model.Duration} min" : "—")</p>
+            @if (Model.SelectedPet != null)
+            {
+                <p class="muted small">Mascota: @Model.SelectedPet.Name</p>
+            }
+            <div class="summary-total" style="margin-top:8px">
+                <span>Total estimado</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+        </div>
+
+        <form method="get" style="margin-bottom:8px">
+            <input type="hidden" name="When" value="@Model.When" />
+            <input type="hidden" name="Date" value="@Model.Date" />
+            <input type="hidden" name="Slot" value="@Model.Slot" />
+            <input type="hidden" name="Duration" value="@Model.Duration" />
+            <input type="hidden" name="PetId" value="@Model.PetId" />
+            <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+            <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
+            @foreach (var p in Model.Prefs)
+            {
+                <input type="hidden" name="Prefs" value="@p" />
+            }
+
+            <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para el paseador", "8. Notes for the walker") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
+            <textarea class="form-control" name="Notes" rows="3" maxlength="200"
+                      placeholder="Comportamiento, llaves, correa especial…"
+                      onchange="this.form.submit()">@Model.Notes</textarea>
+            <p class="muted small">Máx. 200 caracteres</p>
+        </form>
+    }
+
+    <div class="trust-bar">
+        <div><span>🔒</span><small>Pago seguro</small></div>
+        <div><span>⚡</span><small>Menos clics</small></div>
+        <div><span>✓</span><small>Todo en una pantalla</small></div>
+        <div><span>📸</span><small>Actualizaciones</small></div>
+    </div>
+</main>
+
+@if (Model.SelectedWalker != null && Model.SelectedService != null)
+{
+    ViewData["PromoCode"] = Model.PromoCode;
+    ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
+    ViewData["PromoDiscount"] = Model.DiscountAmount;
+    ViewData["PromoError"] = Model.PromoError;
+    ViewData["TermsStep"] = "10. ";
+    ViewData["TermsChecked"] = Model.AcceptTerms;
+    <aside class="hotel-summary">
+        <div class="hotel-summary-inner">
+            <h3>Confirmar paseo</h3>
+            <div class="summary-hotel">
+                <img src="@(Model.SelectedWalker.ImageUrl ?? "/images/categories/cat-walkers.png")" alt="" />
+                <div>
+                    <strong>@Model.SelectedWalker.BusinessName</strong>
+                    <div class="muted small">@(Model.DateLabel ?? "—") · @(Model.TimeLabel ?? "—") · @(Model.HasDuration ? $"{Model.Duration} min" : "—")</div>
+                </div>
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+
+            <form method="post">
+                <input type="hidden" name="When" value="@Model.When" />
+                <input type="hidden" name="Date" value="@Model.Date" />
+                <input type="hidden" name="Slot" value="@Model.Slot" />
+                <input type="hidden" name="Duration" value="@Model.Duration" />
+                <input type="hidden" name="PetId" value="@Model.PetId" />
+                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
+                <input type="hidden" name="Notes" value="@Model.Notes" />
+                @foreach (var p in Model.Prefs)
+                {
+                    <input type="hidden" name="Prefs" value="@p" />
+                }
+
+                <partial name="_PromoCode" />
+
+                <h4 class="summary-sub">9. Método de pago</h4>
+                @if (Model.DefaultPayment != null)
+                {
+                    <div class="pay-row">
+                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
+                        <a asp-page="/Account/PaymentMethods">Cambiar</a>
+                    </div>
+                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods" style="margin-bottom:10px">+ Agregar método de pago</a>
+                }
+
+                <partial name="_AcceptTerms" />
+
+                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book" style="margin-top:10px"
+                        aria-describedby="AcceptTerms-error">
+                    Confirmar paseo · $@Model.Estimate.ToString("0")
+                </button>
+                <p class="muted small" style="text-align:center;margin-top:8px">Pago seguro y encriptado</p>
+            </form>
+        </div>
+    </aside>
+}

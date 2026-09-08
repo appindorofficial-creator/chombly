@@ -1,0 +1,79 @@
+@page
+@model WebAppPet.Pages.Groomer.AvailabilityModel
+@{
+    ViewData["Title"] = "Disponibilidad";
+    ViewData["GroomerTab"] = "availability";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+
+    <h2 style="margin:0 0 8px">Disponibilidad</h2>
+    <p class="muted small">Define tu horario semanal. La agenda de citas se genera a partir de él.</p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    <h3 class="section-title">Horario semanal</h3>
+    <form method="post" asp-page-handler="SaveWeek">
+        @for (var i = 0; i < Model.WeekEdit.Count; i++)
+        {
+            <div class="card card-pad" style="margin-bottom:8px">
+                <input type="hidden" name="WeekEdit[@i].DayOfWeek" value="@Model.WeekEdit[i].DayOfWeek" />
+                <input type="hidden" name="WeekEdit[@i].Label" value="@Model.WeekEdit[i].Label" />
+                <label class="toggle-row" style="cursor:pointer;margin-bottom:8px">
+                    <strong>@Model.WeekEdit[i].Label</strong>
+                    <span>
+                        <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
+                        <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true" @(Model.WeekEdit[i].IsOpen ? "checked" : "") />
+                        Abierto
+                    </span>
+                </label>
+                <div style="display:flex;gap:10px">
+                    <div class="form-group" style="flex:1;margin:0">
+                        <label class="small muted">Abre</label>
+                        <input class="form-control" type="time" name="WeekEdit[@i].OpenTime" value="@Model.WeekEdit[i].OpenTime" />
+                    </div>
+                    <div class="form-group" style="flex:1;margin:0">
+                        <label class="small muted">Cierra</label>
+                        <input class="form-control" type="time" name="WeekEdit[@i].CloseTime" value="@Model.WeekEdit[i].CloseTime" />
+                    </div>
+                </div>
+            </div>
+        }
+        <button class="btn btn-primary btn-block" type="submit" style="margin-bottom:10px">Guardar horario y regenerar 60 días</button>
+    </form>
+
+    <form method="post" asp-page-handler="Regenerate" style="margin-bottom:18px">
+        <button class="btn btn-outline btn-block" type="submit">Solo regenerar agenda (sin cambiar horario)</button>
+    </form>
+
+    <h3 class="section-title">Próximos 30 días</h3>
+    <p class="muted small">Toca para abrir/cerrar un día concreto (vacaciones, lleno, etc.).</p>
+    @if (!Model.Days.Any())
+    {
+        <div class="empty">Aún no hay días. Guarda el horario semanal primero.</div>
+    }
+    else
+    {
+        @foreach (var d in Model.Days)
+        {
+            <div class="card card-pad" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <strong>@d.Day.ToString("ddd d MMM")</strong>
+                    <div class="muted small">@(d.Note ?? "")</div>
+                </div>
+                <form method="post" asp-page-handler="Toggle">
+                    <input type="hidden" name="id" value="@d.Id" />
+                    <button type="submit" class="badge @(d.IsAvailable ? "badge-green" : "badge-gray")" style="border:none;cursor:pointer">
+                        @(d.IsAvailable ? "Disponible" : "Cerrado")
+                    </button>
+                </form>
+            </div>
+        }
+    }
+</main>

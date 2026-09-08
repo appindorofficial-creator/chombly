@@ -1,0 +1,72 @@
+@page
+@model WebAppPet.Pages.Professional.Onboarding.InternationalModel
+@using WebAppPet.Localization
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Onboarding internacional", "International onboarding");
+    ViewData["GroomerTab"] = "onboarding";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
+    <div class="page-header" style="padding:0;margin-bottom:12px">
+        <a class="back-btn" asp-page="/Professional/Onboarding">←</a>
+        <h1>@CatalogLocalizer.Loc("Asesor internacional", "International advisor")</h1>
+    </div>
+    <p class="muted small">@CatalogLocalizer.Loc("No afirmas licencia veterinaria de EE.UU. Orientación por país / raza.", "You are not claiming a US veterinary license. Country / breed guidance.")</p>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-warn">@Model.Error</div>
+    }
+
+    <form method="post" enctype="multipart/form-data" class="card card-pad">
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Nombre legal", "Legal name")</label>
+            <input class="form-control" asp-for="LegalName" required />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Práctica / clínica", "Practice / clinic")</label>
+            <input class="form-control" asp-for="ClinicOrPracticeName" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("País (ISO, ej. CO, SV, MX)", "Country (ISO, e.g. CO, SV, MX)")</label>
+            <input class="form-control" asp-for="LicenseJurisdiction" required maxlength="8" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Nº credencial / licencia local", "Local credential / license #")</label>
+            <input class="form-control" asp-for="LicenseNumber" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Vencimiento", "Expiry")</label>
+            <input class="form-control" type="date" asp-for="LicenseExpiry" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Idiomas (coma)", "Languages (comma)")</label>
+            <input class="form-control" asp-for="Languages" required />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Especialidades", "Specialties")</label>
+            <input class="form-control" asp-for="Specialties" />
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Expertise de razas (CSV)", "Breed expertise (CSV)")</label>
+            <input class="form-control" asp-for="BreedExpertiseCsv" placeholder="French Bulldog, Chihuahua" />
+        </div>
+        <label class="check-row">
+            <input type="checkbox" asp-for="AcceptsInternationalClients" />
+            <span>@CatalogLocalizer.Loc("Acepto clientes internacionales", "I accept international clients")</span>
+        </label>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Nota de documentos", "Documents note")</label>
+            <textarea class="form-control" asp-for="DocumentsNote" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label>@CatalogLocalizer.Loc("Subir documento (opcional)", "Upload document (optional)")</label>
+            <input class="form-control" type="file" asp-for="DocumentUpload" accept=".pdf,.jpg,.jpeg,.png" />
+        </div>
+        <button class="btn btn-outline btn-block" type="submit" asp-page-handler="Draft">@CatalogLocalizer.Loc("Guardar borrador", "Save draft")</button>
+        <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Submit" style="margin-top:8px">@CatalogLocalizer.Loc("Enviar a revisión", "Submit for review")</button>
+    </form>
+</main>

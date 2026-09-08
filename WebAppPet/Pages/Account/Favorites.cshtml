@@ -1,0 +1,28 @@
+@page
+@model WebAppPet.Pages.Account.FavoritesModel
+@{
+    ViewData["Title"] = L["Favorites_Title"].Value;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Account/Profile">←</a>
+    <h1>@L["Favorites_Title"]</h1>
+</div>
+<main class="app-main">
+    @if (!Model.Groomers.Any())
+    {
+        <div class="empty">@L["Favorites_Empty"]</div>
+    }
+    @foreach (var g in Model.Groomers)
+    {
+        <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
+            <img src="@g.ImageUrl" alt="@g.BusinessName" />
+            <div class="info">
+                <h3>@g.BusinessName</h3>
+                <div class="meta-row">
+                    <span class="stars">★ @g.Rating.ToString("0.0")</span>
+                    <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")</span>
+                </div>
+            </div>
+        </a>
+    }
+</main>

@@ -1,0 +1,274 @@
+@page
+@model WebAppPet.Pages.Trainers.IndexModel
+@{
+    ViewData["Title"] = L["Trainers_Title"].Value;
+}
+<div class="page-header hotel-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <div class="hotel-header-text">
+        <h1>@L["Trainers_Title"]</h1>
+        <p class="muted small">@L["Book_AllInOne"]</p>
+    </div>
+    <img src="~/images/categories/cat-trainers.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
+</div>
+
+<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="get" id="trainers-filter-form">
+        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
+
+        <h3 class="section-title" style="margin-top:0">1. ¿Qué tipo de entrenamiento necesitas?</h3>
+        <div class="filter-bar filter-bar-wrap">
+            @foreach (var n in WebAppPet.Pages.Trainers.IndexModel.TrainingTypes)
+            {
+                <label class="chip @(Model.Need == n.Key ? "active" : "")">
+                    <input type="radio" name="Need" value="@n.Key" @(Model.Need == n.Key ? "checked" : "")
+                           onchange="this.form.submit()" style="display:none" />
+                    @CatalogLocalizer.Text(n.Label)
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title">2. ¿Dónde prefieres las clases?</h3>
+        <div class="filter-bar" style="flex-direction:column;align-items:stretch">
+            @foreach (var p in WebAppPet.Pages.Trainers.IndexModel.PlaceOptions)
+            {
+                var on = Model.Place == p.Key;
+                <label class="radio-card" style="margin-bottom:8px">
+                    <input type="radio" name="Place" value="@p.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <div class="inner"><strong>@CatalogLocalizer.Text(p.Label)</strong></div>
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title">3. ¿Cuántas sesiones?</h3>
+        <div class="filter-bar" style="flex-direction:column;align-items:stretch">
+            @foreach (var pkg in WebAppPet.Pages.Trainers.IndexModel.PackageOptions)
+            {
+                var on = Model.Sessions == pkg.Sessions;
+                <label class="radio-card" style="margin-bottom:8px">
+                    <input type="radio" name="Sessions" value="@pkg.Sessions" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <div class="inner">
+                        <strong>@CatalogLocalizer.Text(pkg.Label)</strong>
+                        @if (!string.IsNullOrEmpty(pkg.Badge))
+                        {
+                            <div class="muted small" style="color:var(--brand)">@CatalogLocalizer.Text(pkg.Badge) — @CatalogLocalizer.Loc("mejores resultados", "best results")</div>
+                        }
+                    </div>
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title">4. Selecciona tu mascota</h3>
+        @if (!Model.Pets.Any())
+        {
+            <div class="alert alert-info">
+                Agrega una mascota para continuar.
+                <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">+ Agregar mascota</a>
+            </div>
+        }
+        else
+        {
+            @foreach (var p in Model.Pets)
+            {
+                var on = p.Id == Model.PetId;
+                <label class="radio-card">
+                    <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <div class="inner">
+                        <div class="pet-select" style="border:none;padding:0;flex:1">
+                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                            <div>
+                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                                <div class="muted small">@p.Breed · @p.AgeYears años</div>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            }
+            <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
+        }
+
+        <h3 class="section-title">5. Preferencias <span class="muted small">(opcional)</span></h3>
+        <div class="filter-bar filter-bar-wrap">
+            @foreach (var pref in WebAppPet.Pages.Trainers.IndexModel.PrefOptions)
+            {
+                var on = Model.Prefs.Contains(pref.Key);
+                <label class="chip filter-check @(on ? "active" : "")">
+                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    @(on ? "✓ " : "")@CatalogLocalizer.Text(pref.Label)
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title" id="trainers-results">@CatalogLocalizer.Loc("6. Entrenadores disponibles cerca de ti", "6. Trainers available near you")</h3>
+        @if (!Model.Results.Any())
+        {
+            <div class="empty">@CatalogLocalizer.Loc("No hay entrenadores con esos filtros en la base de datos.", "No trainers match these filters.")</div>
+        }
+        @foreach (var item in Model.Results)
+        {
+            var t = item.Trainer;
+            var selected = Model.GroomerId == t.Id;
+            <div class="hotel-card @(selected ? "selected" : "")">
+                @if (item.AvailableToday)
+                {
+                    <span class="badge badge-green hotel-reco">@item.AvailabilityLabel</span>
+                }
+                <div class="hotel-card-main">
+                    <img src="@(t.ImageUrl ?? "/images/categories/cat-trainers.png")" alt="@t.BusinessName" />
+                    <div class="info">
+                        <h3>@t.BusinessName</h3>
+                        <div class="meta-row">
+                            @if (t.ReviewCount > 0)
+                            {
+                                <span class="stars">★ @t.Rating.ToString("0.0")</span>
+                                <span class="muted small">(@t.ReviewCount)</span>
+                            }
+                            @if (!string.IsNullOrEmpty(item.DistanceLabel))
+                            {
+                                <span class="muted small">@item.DistanceLabel</span>
+                            }
+                        </div>
+                        <div class="muted small">@item.AvailabilityLabel</div>
+                        <div class="price">Desde $@item.UnitPrice.ToString("0") <span class="muted small">/ sesión</span></div>
+                    </div>
+                </div>
+                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
+                   asp-page="./Index"
+                   asp-route-Need="@Model.Need"
+                   asp-route-Place="@Model.Place"
+                   asp-route-Sessions="@Model.Sessions"
+                   asp-route-PetId="@Model.PetId"
+                   asp-route-groomerId="@t.Id"
+                   asp-route-Notes="@Model.Notes"
+                   asp-route-More="@Model.More">
+                    @(selected ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓") : CatalogLocalizer.Loc("Elegir entrenador", "Choose trainer"))
+                </a>
+            </div>
+        }
+        @if (Model.HasMore)
+        {
+            <a class="link-btn" style="display:block;text-align:center;margin:8px 0 16px"
+               asp-page="./Index"
+               asp-route-Need="@Model.Need"
+               asp-route-Place="@Model.Place"
+               asp-route-Sessions="@Model.Sessions"
+               asp-route-PetId="@Model.PetId"
+               asp-route-groomerId="@Model.GroomerId"
+               asp-route-More="true">@CatalogLocalizer.Loc("Ver más entrenadores", "See more trainers")</a>
+        }
+    </form>
+
+    @if (Model.SelectedTrainer != null && Model.SelectedService != null)
+    {
+        <div class="card card-pad" style="margin-bottom:14px">
+            <h3 class="section-title" style="margin-top:0">7. Resumen</h3>
+            <p><strong>@Model.SelectedTrainer.BusinessName</strong> — @Model.NeedLabel — @Model.PackageLabel</p>
+            <p class="muted small">@Model.DateLabel</p>
+            <p class="muted small">@Model.PlaceLabel · 1 sesión / semana</p>
+            @if (Model.SelectedPet != null)
+            {
+                <p class="muted small">Mascota: @Model.SelectedPet.Name</p>
+            }
+            <div class="summary-total" style="margin-top:8px">
+                <span>Total estimado</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+            <p class="muted small">$@Model.UnitPrice.ToString("0") × @Model.Sessions sesiones</p>
+        </div>
+
+        <form method="get" style="margin-bottom:8px">
+            <input type="hidden" name="Need" value="@Model.Need" />
+            <input type="hidden" name="Place" value="@Model.Place" />
+            <input type="hidden" name="Sessions" value="@Model.Sessions" />
+            <input type="hidden" name="PetId" value="@Model.PetId" />
+            <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+            <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
+            @foreach (var p in Model.Prefs)
+            {
+                <input type="hidden" name="Prefs" value="@p" />
+            }
+
+            <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para el entrenador", "8. Notes for the trainer") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
+            <textarea class="form-control" name="Notes" rows="3" maxlength="200"
+                      placeholder="Objetivos, problemas de conducta, experiencia previa…"
+                      onchange="this.form.submit()">@Model.Notes</textarea>
+            <p class="muted small">Máx. 200 caracteres</p>
+        </form>
+    }
+
+    <div class="trust-bar">
+        <div><span>🔒</span><small>Pago seguro</small></div>
+        <div><span>⚡</span><small>Menos clics</small></div>
+        <div><span>✓</span><small>Todo en una pantalla</small></div>
+        <div><span>🎓</span><small>@CatalogLocalizer.Loc("Entrenadores verificados", "Verified trainers")</small></div>
+    </div>
+</main>
+
+@if (Model.SelectedTrainer != null && Model.SelectedService != null)
+{
+    ViewData["PromoCode"] = Model.PromoCode;
+    ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
+    ViewData["PromoDiscount"] = Model.DiscountAmount;
+    ViewData["PromoError"] = Model.PromoError;
+    ViewData["TermsStep"] = "10. ";
+    ViewData["TermsChecked"] = Model.AcceptTerms;
+    <aside class="hotel-summary">
+        <div class="hotel-summary-inner">
+            <h3>Confirmar reserva</h3>
+            <div class="summary-hotel">
+                <img src="@(Model.SelectedTrainer.ImageUrl ?? "/images/categories/cat-trainers.png")" alt="" />
+                <div>
+                    <strong>@Model.SelectedTrainer.BusinessName</strong>
+                    <div class="muted small">@Model.NeedLabel · @Model.PackageLabel</div>
+                </div>
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <strong>$@Model.Estimate.ToString("0")</strong>
+            </div>
+
+            <form method="post">
+                <input type="hidden" name="Need" value="@Model.Need" />
+                <input type="hidden" name="Place" value="@Model.Place" />
+                <input type="hidden" name="Sessions" value="@Model.Sessions" />
+                <input type="hidden" name="PetId" value="@Model.PetId" />
+                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
+                <input type="hidden" name="Notes" value="@Model.Notes" />
+                @foreach (var p in Model.Prefs)
+                {
+                    <input type="hidden" name="Prefs" value="@p" />
+                }
+
+                <partial name="_PromoCode" />
+
+                <h4 class="summary-sub">9. Método de pago</h4>
+                @if (Model.DefaultPayment != null)
+                {
+                    <div class="pay-row">
+                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
+                        <a asp-page="/Account/PaymentMethods">Cambiar</a>
+                    </div>
+                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods" style="margin-bottom:10px">+ Agregar método de pago</a>
+                }
+
+                <partial name="_AcceptTerms" />
+
+                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book" style="margin-top:10px"
+                        aria-describedby="AcceptTerms-error">
+                    Confirmar reserva · $@Model.Estimate.ToString("0")
+                </button>
+                <p class="muted small" style="text-align:center;margin-top:8px">Pago seguro y encriptado</p>
+            </form>
+        </div>
+    </aside>
+}

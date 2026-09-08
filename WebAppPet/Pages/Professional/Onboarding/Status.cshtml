@@ -1,0 +1,53 @@
+@page
+@model WebAppPet.Pages.Professional.Onboarding.StatusModel
+@using WebAppPet.Localization
+@using WebAppPet.Models
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Estado de onboarding", "Onboarding status");
+    ViewData["GroomerTab"] = "onboarding";
+    var a = Model.Application;
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
+    <h1 class="page-title">@CatalogLocalizer.Loc("Estado de solicitud", "Application status")</h1>
+
+    @if (a is null)
+    {
+        <div class="empty">@CatalogLocalizer.Loc("Aún no hay solicitud.", "No application yet.")</div>
+        <a class="btn btn-primary btn-block" asp-page="/Professional/Onboarding">@CatalogLocalizer.Loc("Empezar", "Start")</a>
+    }
+    else
+    {
+        <div class="card card-pad @(a.Status == ProfessionalOnboardingStatus.Approved ? "vet-vcpr-ok" : a.Status == ProfessionalOnboardingStatus.Rejected ? "vet-vcpr-missing" : "")">
+            <strong>@a.Status</strong>
+            <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Trayectoria", "Track"): @a.Track</span>
+            <span class="muted small" style="display:block">@a.LegalName · @a.ClinicOrPracticeName</span>
+            <span class="muted small" style="display:block">@a.LicenseJurisdiction · @a.LicenseNumber</span>
+            @if (a.SubmittedUtc is DateTime sub)
+            {
+                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Enviado", "Submitted"): @AppTimeZones.FormatShort(sub)</span>
+            }
+            @if (a.ReviewedUtc is DateTime rev)
+            {
+                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Revisado", "Reviewed"): @AppTimeZones.FormatShort(rev)</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.ReviewerNotes))
+            {
+                <p style="margin:10px 0 0">@a.ReviewerNotes</p>
+            }
+        </div>
+
+        @if (a.Status is ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected)
+        {
+            <a class="btn btn-primary btn-block" style="margin-top:12px" asp-page="/Professional/Onboarding">@CatalogLocalizer.Loc("Continuar / editar", "Continue / edit")</a>
+        }
+        else if (a.Status == ProfessionalOnboardingStatus.Approved)
+        {
+            <a class="btn btn-outline btn-block" style="margin-top:12px" asp-page="/Professional/Payouts">@CatalogLocalizer.Loc("Ver mis pagos", "View my payouts")</a>
+        }
+    }
+</main>

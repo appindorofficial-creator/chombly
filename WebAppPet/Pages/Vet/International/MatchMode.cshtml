@@ -1,0 +1,44 @@
+@page
+@model WebAppPet.Pages.Vet.International.MatchModeModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Cómo buscar", "How to search");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/International/Home" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Estrategia de coincidencia", "Match strategy")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("País, raza o mejor combinación", "Country, breed, or best combination")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrWhiteSpace(Model.PetBreed))
+    {
+        <p class="muted small">@CatalogLocalizer.Loc("Raza en perfil:", "Breed on profile:") <strong>@Model.PetBreed</strong></p>
+    }
+
+    <form method="post" class="stack" style="gap:12px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <label class="radio-card">
+            <input type="radio" name="Mode" value="@IntlMatchMode.Best" checked="@(Model.Mode == IntlMatchMode.Best)" />
+            <span>
+                <strong>@CatalogLocalizer.Loc("Mejor combinación", "Best match")</strong>
+                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("País, idioma, raza y disponibilidad", "Country, language, breed, and availability")</span>
+            </span>
+        </label>
+        <label class="radio-card">
+            <input type="radio" name="Mode" value="@IntlMatchMode.Country" checked="@(Model.Mode == IntlMatchMode.Country)" />
+            <span>
+                <strong>@CatalogLocalizer.Loc("Por país", "By country")</strong>
+                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Elige un mercado Disponible o únete a la lista de espera", "Pick an Available market or join the waitlist")</span>
+            </span>
+        </label>
+        <label class="radio-card">
+            <input type="radio" name="Mode" value="@IntlMatchMode.Breed" checked="@(Model.Mode == IntlMatchMode.Breed)" />
+            <span>
+                <strong>@CatalogLocalizer.Loc("Por experiencia con la raza", "By breed experience")</strong>
+                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("No se deduce de la nacionalidad", "Not inferred from nationality")</span>
+            </span>
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+    </form>
+</main>

@@ -1,0 +1,20 @@
+@{
+    var current = (string?)ViewData["GroomerTab"] ?? "";
+    var cat = ViewData["ProviderCategory"] as string;
+}
+<div class="provider-banner">
+    <strong>Panel del negocio</strong>
+    @if (!string.IsNullOrEmpty(cat))
+    {
+        <span class="badge badge-purple">@cat</span>
+    }
+</div>
+<div class="tabs tabs-wrap" style="margin-bottom:16px">
+    <a class="@(current == "dashboard" ? "active" : "")" asp-page="/Groomer/Dashboard">Inicio</a>
+    <a class="@(current == "appointments" ? "active" : "")" asp-page="/Groomer/Appointments">Reservas</a>
+    <a class="@(current == "availability" ? "active" : "")" asp-page="/Groomer/Availability">Agenda</a>
+    <a class="@(current == "business" ? "active" : "")" asp-page="/Groomer/Business">Negocio</a>
+    <a class="@(current == "analytics" ? "active" : "")" asp-page="/Groomer/Analytics">Analíticas</a>
+    <a class="@(current == "onboarding" ? "active" : "")" asp-page="/Professional/Onboarding">Onboarding</a>
+    <a class="@(current == "payouts" ? "active" : "")" asp-page="/Professional/Payouts">Mis pagos</a>
+</div>

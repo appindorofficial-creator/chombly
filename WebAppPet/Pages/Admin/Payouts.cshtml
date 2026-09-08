@@ -1,0 +1,56 @@
+@page
+@model WebAppPet.Pages.Admin.PayoutsModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = "Payouts proveedores";
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Admin/Approvals">←</a>
+    <h1>Payouts</h1>
+</div>
+<main class="app-main no-nav">
+    <p class="muted small">Pagos simulados a proveedores (sin Stripe Connect real).</p>
+    <p class="muted small" style="margin-bottom:12px">
+        <a asp-page="/Admin/Approvals">Aprobaciones negocio</a> ·
+        <a asp-page="/Admin/ProfessionalApprovals">Onboarding profesional</a>
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    <h2 class="section-title">Pendientes</h2>
+    @if (!Model.Pending.Any())
+    {
+        <div class="empty">No hay payouts pendientes.</div>
+    }
+    @foreach (var p in Model.Pending)
+    {
+        <div class="card card-pad" style="margin-bottom:10px">
+            <strong>@(p.ProviderUser?.FullName ?? $"User #{p.ProviderUserId}")</strong>
+            <span class="muted small" style="display:block">
+                @AppTimeZones.FormatDate(p.PeriodStart) – @AppTimeZones.FormatDate(p.PeriodEnd)
+                · @p.ConsultationCount ítems · Net $@p.NetAmountUsd.ToString("0.00")
+            </span>
+            <form method="post" asp-page-handler="MarkPaid" style="margin-top:8px">
+                <input type="hidden" name="id" value="@p.Id" />
+                <button class="btn btn-primary btn-block" type="submit">Marcar pagado (simulado)</button>
+            </form>
+        </div>
+    }
+
+    <h2 class="section-title" style="margin-top:20px">Recientes</h2>
+    @foreach (var p in Model.Recent.Where(x => x.Status != WebAppPet.Models.ProviderPayoutStatus.Pending))
+    {
+        <div class="card card-pad" style="margin-bottom:8px">
+            <strong>@p.Status</strong> · @(p.ProviderUser?.FullName ?? $"#{p.ProviderUserId}")
+            <span class="muted small" style="display:block">
+                Net $@p.NetAmountUsd.ToString("0.00")
+                @if (p.PaidUtc is DateTime paid) { <text>· @AppTimeZones.FormatShort(paid)</text> }
+                @if (!string.IsNullOrEmpty(p.ExternalReference)) { <text>· @p.ExternalReference</text> }
+            </span>
+        </div>
+    }
+</main>

@@ -1,0 +1,63 @@
+@model WebAppPet.Pages.Account.RegisterBusinessModel
+@using System.Globalization
+@{
+    // Prefer explicit int; `as int?` can miss some boxed ViewData values and leak step-3 fields as hiddens.
+    var exclude = ViewData["ExcludeStep"] is int ex ? ex : Model.Step;
+    var m = Model;
+    var inv = CultureInfo.InvariantCulture;
+}
+@if (exclude != 0)
+{
+    <input type="hidden" name="ProviderKindKey" value="@m.ProviderKindKey" />
+}
+@if (exclude != 1)
+{
+    <input type="hidden" name="FullName" value="@m.FullName" />
+    <input type="hidden" name="BusinessName" value="@m.BusinessName" />
+    <input type="hidden" name="Phone" value="@m.Phone" />
+    <input type="hidden" name="Email" value="@m.Email" />
+    <input type="hidden" name="City" value="@m.City" />
+    <input type="hidden" name="Address" value="@m.Address" />
+    <input type="hidden" name="Latitude" value="@m.Latitude.ToString(inv)" />
+    <input type="hidden" name="Longitude" value="@m.Longitude.ToString(inv)" />
+}
+@if (exclude != 2)
+{
+    <input type="hidden" name="CategoryId" value="@m.CategoryId" />
+    <input type="hidden" name="WorkModeKey" value="@m.WorkModeKey" />
+}
+@if (exclude != 3)
+{
+    <input type="hidden" name="ServiceAreaMiles" value="@m.ServiceAreaMiles" />
+    @for (var i = 0; i < m.Week.Count; i++)
+    {
+        <input type="hidden" name="Week[@i].DayOfWeek" value="@m.Week[i].DayOfWeek" />
+        <input type="hidden" name="Week[@i].Label" value="@m.Week[i].Label" />
+        <input type="hidden" name="Week[@i].IsOpen" value="@(m.Week[i].IsOpen ? "true" : "false")" />
+        <input type="hidden" name="Week[@i].OpenTime" value="@m.Week[i].OpenTime" />
+        <input type="hidden" name="Week[@i].CloseTime" value="@m.Week[i].CloseTime" />
+    }
+}
+@if (exclude != 4)
+{
+    <input type="hidden" name="About" value="@m.About" />
+    <input type="hidden" name="LogoUrl" value="@m.LogoUrl" />
+    <input type="hidden" name="CoverUrl" value="@m.CoverUrl" />
+}
+@if (exclude != 5)
+{
+    @for (var i = 0; i < m.ServiceNames.Count; i++)
+    {
+        <input type="hidden" name="ServiceNames[@i]" value="@m.ServiceNames[i]" />
+        <input type="hidden" name="ServicePrices[@i]" value="@m.ServicePrices[i].ToString(inv)" />
+    }
+}
+@if (exclude != 6)
+{
+    <input type="hidden" name="Password" value="@m.Password" />
+    <input type="hidden" name="ConfirmPassword" value="@m.ConfirmPassword" />
+    @if (m.AcceptTerms)
+    {
+        <input type="hidden" name="AcceptTerms" value="true" />
+    }
+}

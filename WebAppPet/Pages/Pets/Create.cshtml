@@ -1,0 +1,163 @@
+@page
+@model WebAppPet.Pages.Pets.CreateModel
+@{
+    ViewData["Title"] = L["Pets_Add"].Value;
+    ViewData["HideNav"] = true;
+    var hint = PetSpecies.BreedHint(Model.Species);
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="./Index">←</a>
+    <h1>@L["Pets_Add"]</h1>
+</div>
+<main class="app-main no-nav">
+    <form method="post" id="pet-create-form" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <div class="form-group">
+            <label>@L["Pets_Species"]</label>
+            <div class="species-grid">
+                @foreach (var sp in Model.SpeciesOptions)
+                {
+                    <label class="species-opt @(Model.Species == sp.Value ? "selected" : "")">
+                        <input type="radio" asp-for="Species" value="@sp.Value" />
+                        <span class="species-emoji">@sp.Emoji</span>
+                        <span class="species-label">@PetSpecies.DisplayLabel(sp.Value)</span>
+                    </label>
+                }
+            </div>
+            <span asp-validation-for="Species" class="field-error"></span>
+        </div>
+
+        <div class="form-group" id="other-type-group" @(Model.Species == PetSpecies.Other ? null : "hidden")>
+            <label asp-for="CustomType">@L["Pets_OtherType"]</label>
+            <input class="form-control" asp-for="CustomType" maxlength="80"
+                   id="custom-type-input" placeholder="@L["Pets_OtherTypePlaceholder"]" />
+            <span asp-validation-for="CustomType" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label>@L["Common_Name"]</label>
+            <input class="form-control" asp-for="Name" required maxlength="80" />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </div>
+
+        <div class="form-group" id="breed-group" @(Model.Species == PetSpecies.Other ? "hidden" : null)>
+            <label>@L["Pets_Breed"]</label>
+            <input class="form-control" asp-for="Breed" maxlength="80" id="breed-input" placeholder="@hint" />
+        </div>
+
+        <div class="form-group">
+            <label>@L["Pets_Age"]</label>
+            <input class="form-control" asp-for="AgeYears" type="number" min="0" max="40" />
+            <span asp-validation-for="AgeYears" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label>@L["Pets_Size"]</label>
+            <div class="size-grid">
+                @foreach (var opt in Model.SizeOptions)
+                {
+                    <label>
+                        <input type="radio" asp-for="Size" value="@opt.Value" />
+                        <div class="size-opt"><span class="emoji">@opt.Emoji</span>@opt.Label</div>
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>@L["Pets_Temperament"]</label>
+            <input class="form-control" asp-for="Temperament" placeholder="@L["Pets_TemperamentDefault"]" />
+        </div>
+
+        <div class="form-group pet-photo-field">
+            <label>@L["Pets_Photo"]</label>
+            <p class="field-hint">@L["Pets_PhotoHint"]</p>
+            <div class="pet-photo-upload">
+                <img id="photo-preview" class="pet-photo-preview" alt="" hidden />
+                <label class="pet-photo-pick btn btn-outline">
+                    @L["Pets_PhotoChoose"]
+                    <input type="file" asp-for="PhotoFile" id="photo-file" accept="image/*" capture="environment" />
+                </label>
+            </div>
+            <span asp-validation-for="PhotoFile" class="field-error"></span>
+            <details class="pet-photo-url-fallback">
+                <summary>@L["Pets_PhotoOrUrl"]</summary>
+                <input class="form-control" asp-for="PhotoUrl" placeholder="https://…" />
+            </details>
+        </div>
+
+        <div class="toggle-row">
+            <span>@L["Pets_Senior"]</span>
+            <input asp-for="IsSenior" type="checkbox" />
+        </div>
+        <div class="toggle-row">
+            <span>@L["Pets_Anxious"]</span>
+            <input asp-for="IsAnxious" type="checkbox" />
+        </div>
+        <div class="toggle-row">
+            <span>@L["Pets_SpecialNeeds"]</span>
+            <input asp-for="HasSpecialNeeds" type="checkbox" />
+        </div>
+
+        <div class="form-group" style="margin-top:14px">
+            <label>@L["Common_Notes"]</label>
+            <textarea class="form-control" asp-for="Notes" rows="3"></textarea>
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
+    </form>
+</main>
+
+<script>
+(() => {
+  const hints = {
+@foreach (var sp in Model.SpeciesOptions)
+{
+    @:    "@sp.Value": "@Html.Raw((CultureCookie.IsEnglish() ? sp.BreedHintEn : sp.BreedHint).Replace("\"", "\\\""))",
+}
+  };
+  const breed = document.getElementById('breed-input');
+  const breedGroup = document.getElementById('breed-group');
+  const otherGroup = document.getElementById('other-type-group');
+  const customType = document.getElementById('custom-type-input');
+  const otherValue = "@PetSpecies.Other";
+
+  function syncOther(species) {
+    const isOther = species === otherValue;
+    if (otherGroup) otherGroup.hidden = !isOther;
+    if (breedGroup) breedGroup.hidden = isOther;
+    if (!isOther && customType) customType.value = '';
+  }
+
+  document.querySelectorAll('input[name="Species"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.querySelectorAll('.species-opt').forEach(el => el.classList.remove('selected'));
+      r.closest('.species-opt')?.classList.add('selected');
+      if (breed) breed.placeholder = hints[r.value] || '';
+      syncOther(r.value);
+    });
+  });
+
+  const checked = document.querySelector('input[name="Species"]:checked');
+  syncOther(checked ? checked.value : '');
+
+  const fileInput = document.getElementById('photo-file');
+  const preview = document.getElementById('photo-preview');
+  let objectUrl = null;
+  fileInput?.addEventListener('change', () => {
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      objectUrl = null;
+    }
+    const f = fileInput.files && fileInput.files[0];
+    if (!f || !preview) {
+      if (preview) preview.hidden = true;
+      return;
+    }
+    objectUrl = URL.createObjectURL(f);
+    preview.src = objectUrl;
+    preview.hidden = false;
+  });
+})();
+</script>

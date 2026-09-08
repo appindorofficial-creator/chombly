@@ -1,0 +1,68 @@
+@page
+@model WebAppPet.Pages.Vet.International.CountriesModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Países", "Countries");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Catálogo de países", "Country catalog")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Solo Disponible permite reservar", "Only Available allows booking")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success">@Model.Message</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="get" class="stack" style="gap:8px;margin-bottom:14px">
+        <input type="hidden" name="consultationId" value="@Model.ConsultationId" />
+        <input class="input" name="q" value="@Model.Q" placeholder="@CatalogLocalizer.Loc("Buscar país…", "Search country…")" />
+        <button type="submit" class="btn btn-outline btn-block">@L["Common_Search"]</button>
+    </form>
+
+    <form method="post" asp-page-handler="Select" class="stack" style="gap:10px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <input type="hidden" name="Q" value="@Model.Q" />
+        @foreach (var c in Model.Countries)
+        {
+            <label class="radio-card">
+                <input type="radio" name="SelectedIso" value="@c.Iso2" />
+                <span>
+                    <strong>@CountryCatalogService.DisplayName(c)</strong>
+                    <span class="badge @(c.Status == CountryMarketStatus.Available ? "badge-purple" : "badge-orange")" style="margin-left:6px">
+                        @CountryCatalogService.StatusLabel(c.Status)
+                    </span>
+                    <span class="muted small" style="display:block">@c.Iso2 · @c.PrimaryLanguage</span>
+                </span>
+            </label>
+        }
+        <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+    </form>
+
+    <form method="post" asp-page-handler="Waitlist" class="card card-pad" style="margin-top:16px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <input type="hidden" name="Q" value="@Model.Q" />
+        <h2 class="section-title">@CatalogLocalizer.Loc("Lista de espera", "Waitlist")</h2>
+        <p class="muted small">@CatalogLocalizer.Loc("Si el país está Próximamente, déjanos tu email.", "If the country is Coming soon, leave your email.")</p>
+        <select class="input" name="SelectedIso" style="margin-bottom:8px">
+            <option value="">@CatalogLocalizer.Loc("País…", "Country…")</option>
+            @foreach (var c in Model.Countries.Where(x => x.Status != CountryMarketStatus.Available))
+            {
+                <option value="@c.Iso2">@CountryCatalogService.DisplayName(c)</option>
+            }
+        </select>
+        <input class="input" asp-for="WaitlistEmail" type="email" placeholder="email@example.com" style="margin-bottom:8px" />
+        <label class="check-row">
+            <input type="checkbox" asp-for="WaitlistConsent" />
+            <span>@CatalogLocalizer.Loc("Acepto recibir aviso cuando el país esté disponible.", "I agree to be notified when the country is available.")</span>
+        </label>
+        <button type="submit" class="btn btn-outline btn-block" style="margin-top:10px">@CatalogLocalizer.Loc("Unirme a la lista", "Join waitlist")</button>
+    </form>
+</main>

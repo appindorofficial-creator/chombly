@@ -1,0 +1,41 @@
+@page "{id:int}"
+@model WebAppPet.Pages.Pets.HistoryModel
+@{
+    ViewData["Title"] = "Historial";
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="./Index">←</a>
+    <h1>Historial de @(Model.Pet?.Name ?? "mascota")</h1>
+</div>
+<main class="app-main no-nav">
+    @if (Model.Pet != null)
+    {
+        <div class="pet-select" style="margin-bottom:16px">
+            <img src="@PetSpecies.PhotoOrDefault(Model.Pet.PhotoUrl, Model.Pet.Species)" alt="@Model.Pet.Name" />
+            <div>
+                <strong>@PetSpecies.Emoji(Model.Pet.Species) @Model.Pet.Name</strong>
+                <div class="muted small">@Model.Pet.Species · @Model.Pet.Breed · @Model.Pet.AgeYears años</div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty">Sin servicios registrados todavía.</div>
+    }
+    @foreach (var a in Model.Items)
+    {
+        <div class="appt-card">
+            <div class="row">
+                <img src="@a.Groomer.ImageUrl" alt="@a.Groomer.BusinessName" />
+                <div style="flex:1">
+                    <strong>@a.Service.Name</strong>
+                    <div class="muted small">@a.Groomer.BusinessName</div>
+                    <div class="muted small">@a.ScheduledAt.ToString("d MMM yyyy")</div>
+                </div>
+                <span class="price">$@a.TotalPrice.ToString("0")</span>
+            </div>
+        </div>
+    }
+</main>

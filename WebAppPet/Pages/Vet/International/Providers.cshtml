@@ -1,0 +1,87 @@
+@page
+@model WebAppPet.Pages.Vet.International.ProvidersModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Orientación internacional", "International guidance");
+    var price = Model.CatalogItem?.Price ?? 30m;
+}
+<div class="page-header">
+    <a class="back-btn" href="javascript:history.back()">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Orientación internacional", "International guidance")</h1>
+        <p class="muted small">
+            @if (Model.UsingCareBenefit)
+            {
+                @CatalogLocalizer.Loc("Incluida en Chombly Care", "Included with Chombly Care")
+            }
+            else
+            {
+                <text>$@price.ToString("0.##") · 30 min</text>
+            }
+        </p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="alert alert-warn" role="status">
+        @CatalogLocalizer.Loc(
+            "No emite recetas de EE.UU. Ni sustituye emergencia ni consulta clínica local.",
+            "Does not issue U.S. prescriptions. Does not replace emergencies or local clinical care.")
+    </div>
+    @if (Model.UsingCareBenefit)
+    {
+        <div class="alert alert-success" style="margin-bottom:14px">
+            @CatalogLocalizer.Loc("Usarás tu consulta rápida incluida de este ciclo.", "You will use your included quick consult for this cycle.")
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" id="intl-form" class="stack" style="gap:14px">
+        <input type="hidden" asp-for="ConsultationId" />
+        <input type="hidden" asp-for="CareBenefit" />
+
+        <section>
+            <h2 class="section-title">@CatalogLocalizer.Loc("¿Cuándo?", "When?")</h2>
+            <div class="filter-bar filter-bar-wrap">
+                <label class="chip @(Model.When == "hoy" ? "active" : "")"><input type="radio" name="When" value="hoy" checked="@(Model.When == "hoy")" /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
+                <label class="chip @(Model.When == "mañana" ? "active" : "")"><input type="radio" name="When" value="mañana" checked="@(Model.When == "mañana")" /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
+            </div>
+            <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
+                @foreach (var t in Model.TimeSlots)
+                {
+                    <label class="chip @(Model.Slot == t ? "active" : "")"><input type="radio" name="Slot" value="@t" checked="@(Model.Slot == t)" /> @t</label>
+                }
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">@CatalogLocalizer.Loc("Profesionales", "Professionals")</h2>
+            @if (Model.Providers.Count == 0)
+            {
+                <p class="muted">@CatalogLocalizer.Loc("Aún no hay orientadores internacionales.", "No international advisors yet.")</p>
+            }
+            else
+            {
+                <div class="stack" style="gap:10px">
+                    @foreach (var p in Model.Providers)
+                    {
+                        <label class="radio-card @(Model.ProviderId == p.Id ? "is-selected" : "")">
+                            <input type="radio" name="ProviderId" value="@p.Id" checked="@(Model.ProviderId == p.Id)" />
+                            <span>
+                                <strong>@p.BusinessName</strong>
+                                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("País", "Country") @p.LicenseCountry · @p.SpokenLanguages</span>
+                                <span class="muted small" style="display:block">★ @p.Rating.ToString("0.0") · @p.City</span>
+                            </span>
+                        </label>
+                    }
+                </div>
+            }
+        </section>
+
+        <button type="submit" class="btn btn-primary btn-block" disabled="@(Model.Providers.Count == 0)">
+            @CatalogLocalizer.Loc("Reservar orientación", "Book guidance")
+        </button>
+    </form>
+</main>

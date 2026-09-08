@@ -1,0 +1,48 @@
+@page
+@model WebAppPet.Pages.Vet.International.HomeModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Veterinario como en casa", "Your vet, like at home");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Index">←</a>
+    <div>
+        <h1 class="intl-hero-title">@CatalogLocalizer.Loc("El veterinario que mejor conoce a tu mascota", "The vet who knows your pet best")</h1>
+        <p class="muted">@CatalogLocalizer.Loc("Como en casa, estés donde estés.", "Like at home, wherever you are.")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="intl-hero card card-pad">
+        <p class="intl-hero-lead">
+            @CatalogLocalizer.Loc(
+                "Tu veterinario habla tu idioma y entiende tu contexto.",
+                "Your vet speaks your language and understands your context.")
+        </p>
+        <div class="intl-pillars">
+            <div class="intl-pillar">
+                <strong>@CatalogLocalizer.Loc("Contexto", "Context")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("País, idioma y productos", "Country, language, and products")</span>
+            </div>
+            <div class="intl-pillar">
+                <strong>@CatalogLocalizer.Loc("Experiencia", "Experience")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("Raza verificada, no nacionalidad", "Verified breed — not nationality")</span>
+            </div>
+            <div class="intl-pillar">
+                <strong>@CatalogLocalizer.Loc("Acceso", "Access")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("Horario, historial y ruta local", "Schedule, history, and local path")</span>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" asp-page-handler="Find" style="margin-top:16px">
+        @if (Model.ConsultationId is int cid)
+        {
+            <input type="hidden" name="ConsultationId" value="@cid" />
+        }
+        <button type="submit" class="btn btn-primary btn-block btn-lg">
+            @CatalogLocalizer.Loc("Encontrar mi veterinario", "Find my veterinarian")
+        </button>
+    </form>
+    <p class="muted small center" style="margin-top:10px">
+        @CatalogLocalizer.Loc("Orientación · no emergencia · no receta de EE.UU.", "Guidance · not emergency · no U.S. prescription")
+    </p>
+</main>

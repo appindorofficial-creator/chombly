@@ -1,0 +1,102 @@
+@page
+@model WebAppPet.Pages.Plans.ChomblyCareModel
+@{
+    ViewData["Title"] = "Chombly Care";
+    var price = Model.CatalogItem?.Price ?? 14.99m;
+}
+<div class="page-header">
+    <a class="back-btn" href="javascript:history.back()">←</a>
+    <div>
+        <h1>Chombly Care</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Plan de orientación y bienestar — no es un seguro", "Guidance & wellness plan — not insurance")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success">@Model.SuccessMessage</div>
+    }
+
+    <div class="card card-pad care-hero" style="margin-bottom:16px">
+        <p class="price-tag" style="font-size:1.6rem;margin:0">$@price.ToString("0.00")<span class="muted" style="font-size:1rem">@CatalogLocalizer.Loc("/mes", "/mo")</span></p>
+        <p style="margin-top:10px">
+            @CatalogLocalizer.Loc(
+                "1 consulta rápida de orientación internacional por ciclo (hasta 15 min, sin acumulación), recordatorios e historial.",
+                "1 quick international guidance consult per cycle (up to 15 min, no rollover), reminders and history.")
+        </p>
+        <ul class="muted small" style="padding-left:18px;margin:8px 0 0">
+            <li>@CatalogLocalizer.Loc("No incluye consulta local ($70), urgencias ni medicamentos.", "Does not include local consults ($70), emergencies, or medication.")</li>
+            <li>@CatalogLocalizer.Loc("No emite recetas de EE.UU.", "Does not issue U.S. prescriptions.")</li>
+            <li>@CatalogLocalizer.Loc("Renovación automática hasta cancelar.", "Auto-renews until you cancel.")</li>
+        </ul>
+    </div>
+
+    @if (Model.Subscription != null)
+    {
+        <div class="card card-pad vet-vcpr-ok" style="margin-bottom:16px">
+            <strong>@CatalogLocalizer.Loc("Membresía activa", "Membership active")</strong>
+            <p class="muted small mb-0">
+                @CatalogLocalizer.Loc("Consultas rápidas restantes este ciclo:", "Quick consults left this cycle:")
+                <strong>@Model.RemainingConsults</strong>
+                · @CatalogLocalizer.Loc("Renueva", "Renews") @AppTimeZones.FormatDate(Model.Subscription.CurrentPeriodEnd)
+            </p>
+            @if (Model.Subscription.CancelAtPeriodEnd)
+            {
+                <p class="muted small" style="margin-top:6px">@CatalogLocalizer.Loc("Se cancelará al final del ciclo.", "Will cancel at period end.")</p>
+            }
+        </div>
+
+        @if (Model.RemainingConsults > 0 && Model.ConsultationId is int cid)
+        {
+            <a class="btn btn-primary btn-block" asp-page="/Vet/International/Home" asp-route-consultationId="@cid">
+                @CatalogLocalizer.Loc("Usar consulta rápida incluida", "Use included quick consult")
+            </a>
+        }
+        else if (Model.RemainingConsults > 0)
+        {
+            <a class="btn btn-primary btn-block" asp-page="/Vet/Index">
+                @CatalogLocalizer.Loc("Reservar consulta rápida", "Book quick consult")
+            </a>
+        }
+
+        @if (!Model.Subscription.CancelAtPeriodEnd)
+        {
+            <form method="post" asp-page-handler="Cancel" style="margin-top:12px">
+                <button type="submit" class="btn btn-outline btn-block">@CatalogLocalizer.Loc("Cancelar al final del ciclo", "Cancel at period end")</button>
+            </form>
+        }
+    }
+    else
+    {
+        <form method="post" asp-page-handler="Activate" class="stack" style="gap:12px">
+            @if (Model.ConsultationId is int)
+            {
+                <input type="hidden" asp-for="ConsultationId" />
+            }
+            <label class="check-row">
+                <input type="checkbox" asp-for="AcceptTerms" />
+                <span>
+                    @CatalogLocalizer.Loc("Acepto los", "I accept the")
+                    <a class="legal-link" asp-page="/Legal/Terms" target="_blank" rel="noopener">@L["Legal_TermsConditions"]</a>
+                    @CatalogLocalizer.Loc("y entiendo que no es un seguro médico.", "and understand this is not pet insurance.")
+                </span>
+            </label>
+            <label class="check-row">
+                <input type="checkbox" asp-for="AcceptRenewal" />
+                <span>
+                    @CatalogLocalizer.Loc(
+                        $"Autorizo el cobro simulado de ${price:0.00}/mes con renovación automática hasta cancelar.",
+                        $"I authorize the simulated ${price:0.00}/mo charge with auto-renewal until I cancel.")
+                </span>
+            </label>
+            <button type="submit" class="btn btn-primary btn-block">
+                @CatalogLocalizer.Loc($"Suscribirme por ${price:0.00}/mes", $"Subscribe for ${price:0.00}/mo")
+            </button>
+            <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>
+        </form>
+    }
+</main>

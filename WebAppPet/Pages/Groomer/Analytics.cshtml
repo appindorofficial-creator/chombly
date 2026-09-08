@@ -1,0 +1,58 @@
+@page
+@model WebAppPet.Pages.Groomer.AnalyticsModel
+@{
+    ViewData["Title"] = "Analíticas";
+    ViewData["GroomerTab"] = "analytics";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+    <a class="icon-btn" asp-page="/Account/Notifications">🔔</a>
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+
+    <h2 style="margin:0 0 16px">Analíticas · @DateTime.Today.ToString("MMMM yyyy")</h2>
+
+    <div class="promo-banner" style="margin-top:0">
+        <div style="flex:1">
+            <span class="small" style="opacity:.85">Ingresos del mes</span>
+            <strong style="font-size:1.6rem">$@Model.MonthIncome.ToString("0.00")</strong>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="card card-pad" style="text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--purple)">@Model.Completed</div>
+            <div class="muted small">Citas completadas</div>
+        </div>
+        <div class="card card-pad" style="text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--purple)">@Model.NewRequests</div>
+            <div class="muted small">Nuevas solicitudes</div>
+        </div>
+        <div class="card card-pad" style="text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--purple)">@Model.UniqueClients</div>
+            <div class="muted small">Clientes atendidos</div>
+        </div>
+        <div class="card card-pad" style="text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:@(Model.Cancelled > 0 ? "#dc2626" : "var(--purple)")">@Model.Cancelled</div>
+            <div class="muted small">Cancelaciones</div>
+        </div>
+    </div>
+
+    <h3 class="section-title">Servicios más solicitados</h3>
+    @foreach (var s in Model.TopServices)
+    {
+        <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-weight:700;font-size:.88rem;margin-bottom:4px">
+                <span>@s.Name</span><span class="muted">@s.Count</span>
+            </div>
+            <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">
+                <div style="width:@(s.Percent)%;height:100%;background:var(--purple)"></div>
+            </div>
+        </div>
+    }
+    @if (!Model.TopServices.Any())
+    {
+        <div class="empty">Aún no hay datos suficientes.</div>
+    }
+</main>

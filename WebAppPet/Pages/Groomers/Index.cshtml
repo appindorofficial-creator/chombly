@@ -1,0 +1,164 @@
+@page
+@model WebAppPet.Pages.Groomers.IndexModel
+@{
+    var catName = Model.ActiveCategory?.DisplayName();
+    ViewData["Title"] = catName ?? L["Search_Title"].Value;
+    var title = Model.ActiveCategory != null
+        ? $"{Model.ActiveCategory.Emoji} {catName}"
+        : L["Search_ServicesTitle"].Value;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <h1>@title</h1>
+</div>
+<main class="app-main">
+    @if (Model.ActiveCategory != null)
+    {
+        <p class="muted small" style="margin-top:-8px">@Model.ActiveCategory.DisplaySubtitle()</p>
+    }
+
+    <form method="get" class="search-box" style="flex-wrap:wrap">
+        <input class="form-control" name="q" value="@Model.Q" placeholder="@L["Search_Businesses"]" style="flex:1;min-width:140px" />
+        <input class="form-control" name="city" value="@Model.City" data-places="city" data-places-fill="city"
+               placeholder="@L["Search_CityMaps"]" style="flex:1;min-width:140px" autocomplete="off" />
+        <input type="hidden" name="category" value="@Model.Category" />
+        <input type="hidden" name="species" value="@Model.Species" />
+        <input type="hidden" name="customType" value="@Model.CustomType" />
+        <input type="hidden" name="service" value="@Model.Service" />
+        <button class="btn btn-primary" type="submit">@L["Search_Go"]</button>
+    </form>
+
+    <div class="filter-bar">
+        <a class="chip @(string.IsNullOrEmpty(Model.Category) ? "active" : "")"
+           asp-page="./Index" asp-route-q="@Model.Q" asp-route-species="@Model.Species" asp-route-customType="@Model.CustomType" asp-route-city="@Model.City">@L["Search_AllCategories"]</a>
+        @foreach (var c in Model.Categories)
+        {
+            var listPage = c.Slug switch
+            {
+                "hotel" => "/Hotel/Index",
+                "vet" => "/Vet",
+                "daycare" => "/Daycare/Index",
+                "walkers" => "/Walkers/Index",
+                "trainers" => "/Trainers/Index",
+                _ => "./Index"
+            };
+            <a class="chip @(Model.Category == c.Slug ? "active" : "")"
+               asp-page="@listPage"
+               asp-route-category="@(c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug)"
+               asp-route-q="@Model.Q"
+               asp-route-species="@Model.Species"
+               asp-route-customType="@Model.CustomType"
+               asp-route-city="@Model.City">@c.Emoji @c.DisplayName()</a>
+        }
+    </div>
+
+    <div class="filter-bar">
+        <span class="filter-label">@L["Search_Pet"]</span>
+        <a class="chip @(string.IsNullOrEmpty(Model.Species) ? "active" : "")"
+           asp-page="./Index" asp-route-category="@Model.Category" asp-route-q="@Model.Q" asp-route-city="@Model.City">@L["Search_AllPets"]</a>
+        @foreach (var sp in PetSpecies.All.Take(5))
+        {
+            <a class="chip @(Model.Species == sp.Value ? "active" : "")"
+               asp-page="./Index"
+               asp-route-category="@Model.Category"
+               asp-route-species="@sp.Value"
+               asp-route-q="@Model.Q"
+               asp-route-city="@Model.City">@sp.Emoji @(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</a>
+        }
+        @if (string.Equals(Model.Species, PetSpecies.Other, StringComparison.OrdinalIgnoreCase))
+        {
+            var otherLabel = string.IsNullOrWhiteSpace(Model.CustomType)
+                ? PetSpecies.DisplayLabel(PetSpecies.Other)
+                : Model.CustomType;
+            <span class="chip active">🐾 @otherLabel</span>
+        }
+        <a class="chip @(Model.AvailableToday ? "active" : "")"
+           asp-page="./Index"
+           asp-route-category="@Model.Category"
+           asp-route-species="@Model.Species"
+           asp-route-customType="@Model.CustomType"
+           asp-route-availableToday="true"
+           asp-route-q="@Model.Q"
+           asp-route-city="@Model.City">@L["Search_AvailableToday"]</a>
+    </div>
+
+    @if (!Model.HasUserLocation)
+    {
+        <p class="muted small" id="loc-hint">@L["Search_EnableLocation"] <button type="button" class="link-btn" id="btn-loc">@L["Search_UseMyLocation"]</button></p>
+    }
+
+    <p class="results-count">@string.Format(L["Search_Results"].Value, Model.Results.Count)</p>
+
+    @foreach (var item in Model.Results)
+    {
+        var g = item.Business;
+        <a class="groomer-card" asp-page="./Details" asp-route-id="@g.Id" asp-route-service="@Model.Service">
+            <img src="@(g.ImageUrl ?? "/images/pet-other.svg")" alt="@g.BusinessName" />
+            <div class="info">
+                <h3>@g.BusinessName</h3>
+                <div class="meta-row">
+                    @if (g.Category != null)
+                    {
+                        <span class="badge badge-purple">@g.Category.DisplayName()</span>
+                    }
+                    @if (g.ReviewCount > 0)
+                    {
+                        <span class="stars">★ @g.Rating.ToString("0.0")</span>
+                        <span>(@g.ReviewCount)</span>
+                    }
+                </div>
+                <div class="meta-row species-row">
+                    @foreach (var s in g.AcceptedSpeciesList.Take(4))
+                    {
+                        <span class="species-mini" title="@PetSpecies.Label(s)">@PetSpecies.Emoji(s)</span>
+                    }
+                </div>
+                <div class="meta-row meta-price">
+                    <span>@(item.DistanceLabel ?? (string.IsNullOrEmpty(g.City) ? g.Address : g.City))</span>
+                    @if (g.StartingPrice > 0)
+                    {
+                        <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
+                    }
+                </div>
+                @if (item.AvailableToday)
+                {
+                    <span class="badge badge-green">@L["Search_AvailableToday"]</span>
+                }
+                else
+                {
+                    <span class="badge badge-gray">@L["Search_NotAvailableToday"]</span>
+                }
+            </div>
+        </a>
+    }
+
+    @if (!Model.Results.Any())
+    {
+        <div class="empty">@L["Search_Empty"]</div>
+    }
+</main>
+
+@section Scripts {
+<script>
+(function () {
+  const btn = document.getElementById('btn-loc');
+  if (!btn || !navigator.geolocation) return;
+  const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+  const failMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Search_LocationFail"].Value));
+  btn.addEventListener('click', () => {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const body = new URLSearchParams();
+      body.set('lat', pos.coords.latitude);
+      body.set('lng', pos.coords.longitude);
+      await fetch('/Account/Location', {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': token || '', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+      });
+      location.reload();
+    }, () => alert(failMsg));
+  });
+})();
+</script>
+<partial name="_GooglePlaces" />
+}

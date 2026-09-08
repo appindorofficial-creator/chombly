@@ -1,0 +1,254 @@
+﻿@page
+@model WebAppPet.Pages.IndexModel
+@{
+    ViewData["Title"] = L["Nav_Home"].Value;
+    string PopularIcon(string name)
+    {
+        var n = name.ToLowerInvariant();
+        if (n.Contains("baño") || n.Contains("bano") || n.Contains("cepill") || n.Contains("bath"))
+            return "/images/icons/svc-bath.png";
+        if (n.Contains("deshedd") || n.Contains("muda") || n.Contains("pelo"))
+            return "/images/icons/svc-deshedding.png";
+        if (n.Contains("corte") || n.Contains("clip") || n.Contains("estilo") || n.Contains("cut"))
+            return "/images/icons/svc-cut.png";
+        if (n.Contains("consulta") || n.Contains("vacun") || n.Contains("vet"))
+            return "/images/categories/cat-vet.png";
+        if (n.Contains("noche") || n.Contains("hotel") || n.Contains("board"))
+            return "/images/categories/cat-hotel.png";
+        if (n.Contains("día") || n.Contains("dia") || n.Contains("daycare"))
+            return "/images/categories/cat-daycare.png";
+        if (n.Contains("paseo") || n.Contains("walk"))
+            return "/images/categories/cat-walkers.png";
+        if (n.Contains("entren") || n.Contains("cachorr") || n.Contains("obedien") || n.Contains("train"))
+            return "/images/categories/cat-trainers.png";
+        return "/images/icons/svc-grooming.png";
+    }
+}
+<header class="topbar">
+    <partial name="_Brand" />
+    <div class="topbar-right">
+        @{ ViewData["LangCompact"] = true; }
+        <partial name="_LanguageSwitch" />
+        <a class="icon-btn" asp-page="/Account/Notifications" title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
+            <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
+        </a>
+    </div>
+</header>
+
+<main class="app-main">
+    <div class="hero-copy">
+        <h2>
+            @L["Home_HeroTitle"]
+            <img src="~/images/icons/ico-leaves.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
+        </h2>
+        <p class="muted small" style="margin:4px 0 0">@L["Home_HeroSubtitle"]</p>
+    </div>
+
+    <form method="get" asp-page="/Groomers/Index" class="search-box">
+        <input class="form-control" name="city" value="@Model.City" data-places="city" data-places-fill="city"
+               placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
+        <button class="btn btn-primary" type="submit">@L["Common_Search"]</button>
+    </form>
+
+    <h3 class="section-title">@L["Home_Categories"]</h3>
+    @if (Model.Categories.Any())
+    {
+        <div class="category-scroll">
+            @foreach (var c in Model.Categories)
+            {
+                var catPage = c.Slug switch
+                {
+                    "hotel" => "/Hotel/Index",
+                    "vet" => "/Vet",
+                    "daycare" => "/Daycare/Index",
+                    "walkers" => "/Walkers/Index",
+                    "trainers" => "/Trainers/Index",
+                    _ => "/Groomers/Index"
+                };
+                var catRoute = c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug;
+                var icon = $"/images/categories/cat-{c.Slug}.png";
+                <a class="category-chip category-chip-illus" asp-page="@catPage" asp-route-category="@catRoute">
+                    <span class="category-img-wrap">
+                        <img src="@icon" alt="@c.DisplayName()" class="category-img" />
+                    </span>
+                    <strong>@c.DisplayName()</strong>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty">@L["Home_EmptyCategories"]</div>
+    }
+
+    <h3 class="section-title">@L["Home_WhatPet"]</h3>
+    <div class="species-scroll" id="home-species-scroll">
+        @foreach (var sp in PetSpecies.All)
+        {
+            if (sp.Value == PetSpecies.Other)
+            {
+                <button type="button" class="species-chip" id="species-other-chip"
+                        data-species="@PetSpecies.Other"
+                        aria-expanded="false" aria-controls="other-species-panel">
+                    <span class="species-emoji">@sp.Emoji</span>
+                    <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
+                </button>
+            }
+            else
+            {
+                <a class="species-chip" asp-page="/Groomers/Index" asp-route-species="@sp.Value">
+                    <span class="species-emoji">@sp.Emoji</span>
+                    <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
+                </a>
+            }
+        }
+    </div>
+    <div id="other-species-panel" class="other-species-panel" hidden>
+        <form method="get" asp-page="/Groomers/Index" id="other-species-form" class="other-species-form">
+            <input type="hidden" name="species" value="@PetSpecies.Other" />
+            <label class="small" for="customType">@L["Home_OtherPet"]</label>
+            <div class="other-species-row">
+                <input class="form-control" id="customType" name="customType" maxlength="80"
+                       placeholder="@L["Home_OtherPetPlaceholder"]" autocomplete="off" />
+                <button class="btn btn-primary" type="submit">@L["Common_Search"]</button>
+            </div>
+            <p class="field-error" id="other-species-error" hidden>@L["Home_OtherPetRequired"]</p>
+        </form>
+    </div>
+
+    <a class="card card-pad" asp-page="/Care/Services" style="display:block;margin-bottom:16px;text-decoration:none;color:inherit">
+        <strong>@CatalogLocalizer.Loc("Cuidado continuo", "Ongoing care")</strong>
+        <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Veterinaria, Chombly Care y comportamiento", "Veterinary, Chombly Care, and behavior")</span>
+    </a>
+
+    <h3 class="section-title">@L["Home_Popular"]</h3>
+    <div class="services-scroll">
+        @foreach (var name in Model.PopularServices)
+        {
+            <a class="service-pill service-pill-rich" asp-page="/Groomers/Index" asp-route-service="@name">
+                <span class="service-img-wrap">
+                    <img src="@PopularIcon(name)" alt="" />
+                </span>
+                <span>@CatalogLocalizer.Text(name)</span>
+            </a>
+        }
+    </div>
+
+    <div class="promo-banner">
+        <img src="~/images/hero-dog.png" alt="" />
+        <div>
+            <strong>@L["Home_PromoTitle"]</strong>
+            <span class="small">@L["Home_PromoCode"] <code>CHOMBLY10</code></span>
+        </div>
+    </div>
+
+    <h3 class="section-title">@L["Home_Featured"]</h3>
+    @if (Model.Featured.Any())
+    {
+        @foreach (var g in Model.Featured)
+        {
+            <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
+                <img src="@(g.ImageUrl ?? "/images/categories/cat-grooming.png")" alt="@g.BusinessName" />
+                <div class="info">
+                    <h3>@g.BusinessName</h3>
+                    <div class="meta-row">
+                        @if (g.Category != null)
+                        {
+                            <span class="badge badge-purple">@g.Category.Emoji @g.Category.DisplayName()</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-purple">@Model.TypeLabel(g.Type)</span>
+                        }
+                        @if (g.ReviewCount > 0)
+                        {
+                            <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
+                            <span>(@g.ReviewCount)</span>
+                        }
+                    </div>
+                    <div class="meta-row">
+                        <span>@g.City</span>
+                        @if (g.StartingPrice > 0)
+                        {
+                            <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
+                        }
+                    </div>
+                </div>
+            </a>
+        }
+    }
+    else
+    {
+        <div class="empty">@L["Home_EmptyFeatured"]</div>
+    }
+
+    <div class="card card-pad" style="margin:20px 0 8px;text-align:center">
+        <strong>@L["Home_BizCta"]</strong>
+        <p class="muted small" style="margin:6px 0 12px">@L["Home_BizCtaSub"]</p>
+        <a class="btn btn-outline btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
+        <a class="link-btn" asp-page="/Welcome" style="display:block;margin-top:10px">@L["Home_SeeWelcome"]</a>
+    </div>
+</main>
+
+@section Scripts {
+<script>
+(function () {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const body = new URLSearchParams();
+      body.set('lat', pos.coords.latitude);
+      body.set('lng', pos.coords.longitude);
+      await fetch('/Account/Location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+        credentials: 'same-origin'
+      });
+    } catch (_) { }
+  });
+})();
+
+(function () {
+  const chip = document.getElementById('species-other-chip');
+  const panel = document.getElementById('other-species-panel');
+  const form = document.getElementById('other-species-form');
+  const input = document.getElementById('customType');
+  const err = document.getElementById('other-species-error');
+  if (!chip || !panel || !form || !input) return;
+
+  function showOther() {
+    chip.classList.add('selected');
+    chip.setAttribute('aria-expanded', 'true');
+    panel.hidden = false;
+    input.focus();
+  }
+
+  function hideOther() {
+    chip.classList.remove('selected');
+    chip.setAttribute('aria-expanded', 'false');
+    panel.hidden = true;
+    if (err) err.hidden = true;
+    input.value = '';
+  }
+
+  chip.addEventListener('click', () => {
+    if (panel.hidden) showOther();
+    else hideOther();
+  });
+
+  form.addEventListener('submit', (e) => {
+    const v = (input.value || '').trim();
+    if (!v) {
+      e.preventDefault();
+      if (err) err.hidden = false;
+      input.focus();
+      return;
+    }
+    input.value = v;
+    if (err) err.hidden = true;
+  });
+})();
+</script>
+<partial name="_GooglePlaces" />
+}

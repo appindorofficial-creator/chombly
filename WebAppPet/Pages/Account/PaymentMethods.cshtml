@@ -1,0 +1,225 @@
+@page
+@model WebAppPet.Pages.Account.PaymentMethodsModel
+@{
+    ViewData["Title"] = L["Pay_Title"].Value;
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="./Profile">←</a>
+    <h1>@L["Pay_Title"]</h1>
+</div>
+<main class="app-main no-nav">
+    @foreach (var m in Model.Items)
+    {
+        <div class="card card-pad" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <strong>@m.Brand •••• @m.Last4</strong>
+                <div class="muted small">@m.HolderName · @L["Pay_Expires"] @($"{m.ExpMonth:00}/{m.ExpYear % 100:00}")</div>
+                @if (m.IsDefault)
+                {
+                    <span class="badge badge-purple">@L["Pay_Default"]</span>
+                }
+            </div>
+            <form method="post" asp-page-handler="Delete" onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_DeleteConfirm"].Value)))">
+                <input type="hidden" name="id" value="@m.Id" />
+                <button class="icon-btn" type="submit" aria-label="@L["Pay_Delete"]">🗑️</button>
+            </form>
+        </div>
+    }
+
+    <h3 class="section-title">@L["Pay_Add"]</h3>
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" id="pay-server-error">@Model.ErrorMessage</div>
+    }
+    <div class="alert alert-danger" id="pay-client-error" hidden></div>
+    <form method="post" id="pay-form" novalidate>
+        <div class="form-group">
+            <label for="CardNumber">@L["Pay_CardNumber"]</label>
+            <input class="form-control" asp-for="CardNumber" id="CardNumber"
+                   inputmode="numeric" autocomplete="cc-number" maxlength="23"
+                   placeholder="ACCT-000003" data-pay-field="number" />
+            <span class="muted small" id="pay-brand" aria-live="polite"></span>
+        </div>
+        <div style="display:flex;gap:10px">
+            <div class="form-group" style="flex:1">
+                <label for="Expiry">@L["Pay_Expiry"]</label>
+                <input class="form-control" asp-for="Expiry" id="Expiry"
+                       inputmode="numeric" autocomplete="cc-exp" maxlength="5"
+                       placeholder="@L["Pay_ExpiryPlaceholder"]" data-pay-field="expiry" />
+            </div>
+            <div class="form-group" style="flex:1">
+                <label for="Cvv">@L["Pay_Cvv"]</label>
+                <input class="form-control" asp-for="Cvv" id="Cvv"
+                       inputmode="numeric" autocomplete="cc-csc" maxlength="4"
+                       placeholder="•••" type="password" data-pay-field="cvv" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="HolderName">@L["Pay_Holder"]</label>
+            <input class="form-control" asp-for="HolderName" id="HolderName"
+                   autocomplete="cc-name" maxlength="100" data-pay-field="holder" />
+        </div>
+        <div class="toggle-row" style="border:none">
+            <span>@L["Pay_MakeDefault"]</span>
+            <input asp-for="MakeDefault" type="checkbox" />
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
+        <p class="muted small" style="text-align:center;margin-top:10px">@L["Pay_Disclaimer"]</p>
+    </form>
+</main>
+
+<script>
+(function () {
+  var msgs = {
+    cardRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCardRequired"].Value)),
+    cardInvalid: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCardInvalid"].Value)),
+    cardLuhn: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCardLuhn"].Value)),
+    expiryRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryRequired"].Value)),
+    expiryFormat: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryFormat"].Value)),
+    expiryMonth: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryMonth"].Value)),
+    expiryExpired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryExpired"].Value)),
+    cvvRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCvvRequired"].Value)),
+    cvvInvalid: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCvvInvalid"].Value)),
+    holderRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrHolderRequired"].Value)),
+    holderInvalid: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrHolderInvalid"].Value))
+  };
+
+  function digitsOnly(s) { return String(s || '').replace(/\D/g, ''); }
+
+  function luhnOk(d) {
+    if (d.length < 13 || d.length > 19) return false;
+    var sum = 0, alt = false;
+    for (var i = d.length - 1; i >= 0; i--) {
+      var n = d.charCodeAt(i) - 48;
+      if (alt) { n *= 2; if (n > 9) n -= 9; }
+      sum += n;
+      alt = !alt;
+    }
+    return sum % 10 === 0;
+  }
+
+  function detectBrand(d) {
+    if (!d) return { name: '', cvvLen: 3 };
+    if (d.indexOf('34') === 0 || d.indexOf('37') === 0) return { name: 'Amex', cvvLen: 4 };
+    if (d.charAt(0) === '4') return { name: 'Visa', cvvLen: 3 };
+    var two = parseInt(d.slice(0, 2), 10);
+    if (two >= 51 && two <= 55) return { name: 'Mastercard', cvvLen: 3 };
+    var four = parseInt(d.slice(0, 4), 10);
+    if (four >= 2221 && four <= 2720) return { name: 'Mastercard', cvvLen: 3 };
+    if (d.indexOf('6011') === 0 || d.indexOf('65') === 0) return { name: 'Discover', cvvLen: 3 };
+    var three = parseInt(d.slice(0, 3), 10);
+    if (three >= 644 && three <= 649) return { name: 'Discover', cvvLen: 3 };
+    var six = parseInt(d.slice(0, 6), 10);
+    if (six >= 622126 && six <= 622925) return { name: 'Discover', cvvLen: 3 };
+    return { name: '', cvvLen: 3 };
+  }
+
+  function formatCard(digits) {
+    var brand = detectBrand(digits);
+    if (brand.name === 'Amex') {
+      // 4-6-5
+      return [digits.slice(0, 4), digits.slice(4, 10), digits.slice(10, 15)].filter(Boolean).join(' ');
+    }
+    return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+  }
+
+  function formatExpiry(digits) {
+    digits = digits.slice(0, 4);
+    if (digits.length <= 2) return digits;
+    return digits.slice(0, 2) + '/' + digits.slice(2);
+  }
+
+  function showError(msg) {
+    var el = document.getElementById('pay-client-error');
+    var server = document.getElementById('pay-server-error');
+    if (server) server.hidden = true;
+    if (!el) return;
+    if (!msg) { el.hidden = true; el.textContent = ''; return; }
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  function validateExpiry(raw) {
+    if (!raw || !String(raw).trim()) return msgs.expiryRequired;
+    var parts = String(raw).trim().split('/');
+    if (parts.length !== 2) return msgs.expiryFormat;
+    var month = parseInt(parts[0], 10);
+    var year = parseInt(parts[1], 10);
+    if (!month || month < 1 || month > 12) return msgs.expiryMonth;
+    if (isNaN(year)) return msgs.expiryFormat;
+    if (year < 100) year += 2000;
+    var lastDay = new Date(year, month, 0).getDate();
+    var end = new Date(year, month - 1, lastDay, 23, 59, 59);
+    if (new Date() > end) return msgs.expiryExpired;
+    return null;
+  }
+
+  function validateAll() {
+    var numEl = document.getElementById('CardNumber');
+    var expEl = document.getElementById('Expiry');
+    var cvvEl = document.getElementById('Cvv');
+    var holdEl = document.getElementById('HolderName');
+    var digits = digitsOnly(numEl && numEl.value);
+    if (!digits) return msgs.cardRequired;
+    if (digits.length < 13 || digits.length > 19) return msgs.cardInvalid;
+    if (!luhnOk(digits)) return msgs.cardLuhn;
+    var brand = detectBrand(digits);
+    var expErr = validateExpiry(expEl && expEl.value);
+    if (expErr) return expErr;
+    var cvv = digitsOnly(cvvEl && cvvEl.value);
+    if (!cvv) return msgs.cvvRequired;
+    if (cvv.length !== brand.cvvLen || cvv !== String(cvvEl.value || '').trim()) return msgs.cvvInvalid;
+    var holder = String(holdEl && holdEl.value || '').trim().replace(/\s+/g, ' ');
+    if (!holder) return msgs.holderRequired;
+    if (holder.length < 2 || !/^[\p{L}'\.\-]+(?: [\p{L}'\.\-]+)*$/u.test(holder)) return msgs.holderInvalid;
+    return null;
+  }
+
+  var num = document.getElementById('CardNumber');
+  var exp = document.getElementById('Expiry');
+  var cvv = document.getElementById('Cvv');
+  var holder = document.getElementById('HolderName');
+  var brandEl = document.getElementById('pay-brand');
+  var form = document.getElementById('pay-form');
+
+  if (num) {
+    num.addEventListener('input', function () {
+      var d = digitsOnly(num.value).slice(0, 19);
+      num.value = formatCard(d);
+      var b = detectBrand(d);
+      if (brandEl) brandEl.textContent = b.name || '';
+      if (cvv) cvv.maxLength = b.cvvLen;
+    });
+  }
+  if (exp) {
+    exp.addEventListener('input', function () {
+      exp.value = formatExpiry(digitsOnly(exp.value));
+    });
+  }
+  if (cvv) {
+    cvv.addEventListener('input', function () {
+      var max = parseInt(cvv.maxLength, 10) || 4;
+      cvv.value = digitsOnly(cvv.value).slice(0, max);
+    });
+  }
+  if (holder) {
+    holder.addEventListener('input', function () {
+      holder.value = holder.value.replace(/[^\p{L}\s'\.\-]/gu, '');
+    });
+  }
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      var err = validateAll();
+      if (err) {
+        e.preventDefault();
+        showError(err);
+        return false;
+      }
+      // Submit digits-only card number (spaces stripped)
+      if (num) num.value = digitsOnly(num.value);
+      showError(null);
+    });
+  }
+})();
+</script>

@@ -1,0 +1,52 @@
+@page
+@model WebAppPet.Pages.Groomer.ScheduleCallModel
+@{
+    ViewData["Title"] = "Agendar llamada";
+    ViewData["GroomerTab"] = "dashboard";
+}
+<header class="topbar">
+    <partial name="_Brand" />
+</header>
+<main class="app-main">
+    <partial name="_GroomerNav" />
+    <a class="back-btn" asp-page="./Verification" style="margin-bottom:8px;display:inline-block">←</a>
+    <h2 style="margin:0 0 6px">Agendar llamada</h2>
+    <p class="muted small">Un especialista te ayuda con verificación, seguro y cobros.</p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+        <a class="btn btn-primary btn-block" asp-page="./Dashboard">Ir al panel</a>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
+        <form method="post">
+            <h3 class="section-title">Día</h3>
+            <div class="when-row" style="flex-wrap:wrap">
+                @foreach (var d in Model.Days)
+                {
+                    var key = d.ToString("yyyy-MM-dd");
+                    <label class="when-chip @(Model.Day == key ? "active" : "")">
+                        <input type="radio" name="Day" value="@key" @(Model.Day == key ? "checked" : "") />
+                        @d.ToString("ddd d")
+                    </label>
+                }
+            </div>
+            <h3 class="section-title">Horario</h3>
+            <div class="slot-grid" style="margin-bottom:14px">
+                @foreach (var t in Model.Slots)
+                {
+                    <label>
+                        <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : "") />
+                        <div class="slot">@t</div>
+                    </label>
+                }
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">Confirmar llamada</button>
+        </form>
+    }
+</main>

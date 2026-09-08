@@ -1,0 +1,35 @@
+@page
+@model WebAppPet.Pages.Vet.Virtual.EligibilityModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Sin VCPR", "No VCPR");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@Model.ConsultationId">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Falta revisión presencial", "In-person exam needed")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("No podemos habilitar consulta clínica local con receta", "We cannot enable local clinical care with prescriptions")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="card card-pad" style="margin-bottom:16px">
+        <p>
+            @CatalogLocalizer.Loc(
+                "En Carolina del Norte, la telemedicina veterinaria local requiere una VCPR previa que no puede establecerse solo por medios electrónicos. Puedes ir a una clínica presencial o recibir orientación internacional (sin receta de EE.UU.).",
+                "In North Carolina, local veterinary telemedicine requires a prior VCPR that cannot be established by electronic means alone. You can visit a clinic in person or get international guidance (no U.S. prescription).")
+        </p>
+    </div>
+
+    <div class="stack" style="gap:12px">
+        <a class="btn btn-primary btn-block" asp-page="/Groomers/Index" asp-route-category="vet">
+            @CatalogLocalizer.Loc("Buscar clínica cercana", "Find a nearby clinic")
+        </a>
+        <a class="btn btn-outline btn-block" asp-page="/Vet/International/Home" asp-route-consultationId="@Model.ConsultationId">
+            @CatalogLocalizer.Loc("Orientación internacional ($30)", "International guidance ($30)")
+        </a>
+        <p class="muted small">
+            @CatalogLocalizer.Loc(
+                "Una visita de vacunas presencial puede activar VCPR para futuras consultas locales.",
+                "An in-person vaccine visit can activate a VCPR for future local consults.")
+        </p>
+    </div>
+</main>

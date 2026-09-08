@@ -1,0 +1,50 @@
+@page
+@model WebAppPet.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = L["Register_Title"].Value;
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Account/Login">←</a>
+    <h1>@L["Register_Title"]</h1>
+    @{ ViewData["LangCompact"] = true; }
+    <partial name="_LanguageSwitch" />
+</div>
+<main class="app-main no-nav">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+    <form method="post">
+        <div class="form-group">
+            <label>@L["Register_FullName"]</label>
+            <input class="form-control" asp-for="FullName" required />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_Email"]</label>
+            <input class="form-control" asp-for="Email" type="email" required />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_Phone"]</label>
+            <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
+                   maxlength="20" autocomplete="tel" placeholder="7045551234" />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_City"]</label>
+            <input class="form-control" asp-for="City" data-places="city" data-places-fill="city"
+                   placeholder="@L["Home_LocationPlaceholder"]" />
+        </div>
+        <div class="form-group">
+            <label>@L["Common_Password"]</label>
+            <input class="form-control" asp-for="Password" type="password" required minlength="6" />
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">@L["Register_Submit"]</button>
+    </form>
+    <p class="muted small" style="text-align:center;margin-top:16px">
+        @L["Register_HaveAccount"] <a asp-page="/Account/Login" style="color:var(--brand);font-weight:700">@L["Register_Login"]</a>
+    </p>
+</main>
+
+@section Scripts {
+    <partial name="_GooglePlaces" />
+}

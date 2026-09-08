@@ -1,0 +1,51 @@
+@page
+@model WebAppPet.Pages.Vet.IndexModel
+@{
+    ViewData["Title"] = L["Vet_Title"].Value;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Index">←</a>
+    <div>
+        <h1>@L["Vet_Title"]</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Elige el tipo de atención", "Choose the type of care")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <p class="muted" style="margin-bottom:16px">
+        @CatalogLocalizer.Loc(
+            "Chombly ofrece orientación y bienestar. La emergencia no pasa por reserva ni pago online.",
+            "Chombly offers guidance and wellness. Emergencies never go through online booking or payment.")
+    </p>
+
+    <p class="muted small" style="margin-bottom:12px">
+        <a asp-page="/Care/Services">@CatalogLocalizer.Loc("Ver todos los servicios de cuidado →", "See all care services →")</a>
+    </p>
+
+    <div class="vet-modality-grid">
+        <form method="post" asp-page-handler="StartVirtual" class="vet-modality-card">
+            <button type="submit" class="vet-modality-btn">
+                <span class="vet-modality-icon" aria-hidden="true">💻</span>
+                <strong>@CatalogLocalizer.Loc("Virtual", "Virtual")</strong>
+                <span class="muted small">@CatalogLocalizer.Loc("Orientación o teleconsulta con veterinario", "Guidance or teleconsult with a veterinarian")</span>
+            </button>
+        </form>
+
+        <a class="vet-modality-card vet-modality-btn" asp-page="/Vet/International/Home">
+            <span class="vet-modality-icon" aria-hidden="true">🌍</span>
+            <strong>@CatalogLocalizer.Loc("Veterinario como en casa", "Vet like at home")</strong>
+            <span class="muted small">@CatalogLocalizer.Loc("Orientación internacional por país e idioma", "International guidance by country & language")</span>
+        </a>
+
+        <a class="vet-modality-card vet-modality-btn" asp-page="/Groomers/Index" asp-route-category="vet">
+            <span class="vet-modality-icon" aria-hidden="true">🏥</span>
+            <strong>@CatalogLocalizer.Loc("Clínica presencial", "In-clinic visit")</strong>
+            <span class="muted small">@CatalogLocalizer.Loc("Buscar clínicas cerca de ti", "Find clinics near you")</span>
+        </a>
+
+        <a class="vet-modality-card vet-modality-btn vet-modality-emergency" asp-page="/Vet/Emergency">
+            <span class="vet-modality-icon" aria-hidden="true">🚨</span>
+            <strong>@CatalogLocalizer.Loc("Emergencia", "Emergency")</strong>
+            <span class="muted small">@CatalogLocalizer.Loc("Llamar y ruta a clínica 24/7 — sin cobro en la app", "Call and route to 24/7 clinic — no in-app charge")</span>
+        </a>
+    </div>
+</main>

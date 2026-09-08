@@ -1,0 +1,49 @@
+@page
+@model WebAppPet.Pages.Vet.EmergencyModel
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Emergencia", "Emergency");
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Vet/Index">←</a>
+    <div>
+        <h1>@CatalogLocalizer.Loc("Emergencia", "Emergency")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("No cobramos ni reservamos online. Busca atención inmediata.", "We do not charge or book online. Seek care now.")</p>
+    </div>
+</div>
+<main class="app-main hotel-flow">
+    <div class="alert alert-danger" role="alert">
+        @CatalogLocalizer.Loc(
+            "Si tu mascota está en peligro, llama ahora o ve a una clínica 24/7. La orientación virtual no sustituye una emergencia.",
+            "If your pet is in danger, call now or go to a 24/7 clinic. Virtual guidance does not replace an emergency.")
+    </div>
+
+    @if (Model.Clinics.Count == 0)
+    {
+        <p class="muted">@CatalogLocalizer.Loc("No hay clínicas 24/7 cargadas. Llama a tu servicio de urgencias local.", "No 24/7 clinics loaded. Call your local emergency service.")</p>
+        <a class="btn btn-primary btn-block" href="tel:911">@CatalogLocalizer.Loc("Llamar ahora", "Call now")</a>
+    }
+    else
+    {
+        <div class="stack" style="gap:12px">
+            @foreach (var c in Model.Clinics)
+            {
+                var maps = $"https://www.google.com/maps/dir/?api=1&destination={Uri.EscapeDataString(c.Latitude + "," + c.Longitude)}";
+                <article class="card card-pad">
+                    <strong>@c.BusinessName</strong>
+                    <p class="muted small mb-0">@c.Address · @c.City</p>
+                    @if (c.OffersEmergency24x7)
+                    {
+                        <span class="badge badge-warn">24/7</span>
+                    }
+                    <div class="row-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+                        @if (!string.IsNullOrWhiteSpace(c.Phone))
+                        {
+                            <a class="btn btn-primary" href="tel:@c.Phone">@CatalogLocalizer.Loc("Llamar ahora", "Call now")</a>
+                        }
+                        <a class="btn btn-outline" href="@maps" target="_blank" rel="noopener">@CatalogLocalizer.Loc("Ver ruta", "Get directions")</a>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</main>

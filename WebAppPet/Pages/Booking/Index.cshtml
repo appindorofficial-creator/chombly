@@ -1,0 +1,250 @@
+@page
+@model WebAppPet.Pages.Booking.IndexModel
+@{
+    ViewData["Title"] = "Reservar";
+    ViewData["HideNav"] = true;
+}
+<div class="page-header">
+    <a class="back-btn" asp-page="/Groomers/Details" asp-route-id="@Model.GroomerId" asp-route-service="@Model.Service">←</a>
+    <h1>Reserva</h1>
+</div>
+<main class="app-main no-nav">
+    @if (Model.Groomer != null)
+    {
+        <div class="card card-pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:center">
+            <img src="@(Model.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:cover" />
+            <div>
+                <strong>@Model.Groomer.BusinessName</strong>
+                <div class="muted small">
+                    @(Model.Groomer.Category?.Emoji) @(Model.Groomer.Category?.Name ?? "Servicio")
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="booking-steps">
+        <span class="@(Model.Step >= 1 ? "on" : "")">1</span>
+        <span class="@(Model.Step >= 2 ? "on" : "")">2</span>
+        <span class="@(Model.Step >= 3 ? "on" : "")">3</span>
+        <span class="@(Model.Step >= 4 ? "on" : "")">4</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <input type="hidden" asp-for="GroomerId" />
+        <input type="hidden" asp-for="Step" />
+        <input type="hidden" asp-for="Service" />
+        @* Persist wizard state only when the current step is not editing that field.
+           Hidden + radio/checkbox with the same name posts both values; model binding
+           takes the first (hidden), so ServiceId/PetId stayed 0 and blocked Continuar. *@
+        @if (Model.Step != 1)
+        {
+            <input type="hidden" asp-for="ServiceId" />
+        }
+        @if (Model.Step != 3)
+        {
+            <input type="hidden" asp-for="PetId" />
+            <input type="hidden" asp-for="Notes" />
+        }
+        @if (Model.Step != 2)
+        {
+            <input type="hidden" asp-for="Date" />
+            <input type="hidden" asp-for="EndDate" />
+            <input type="hidden" asp-for="Time" />
+            @foreach (var id in Model.SelectedExtraIds)
+            {
+                <input type="hidden" name="SelectedExtraIds" value="@id" />
+            }
+        }
+        else
+        {
+            @* Step 2 only edits a subset of schedule fields depending on overnight vs day service. *@
+            @if (Model.IsOvernight)
+            {
+                <input type="hidden" asp-for="Time" />
+            }
+            else
+            {
+                <input type="hidden" asp-for="EndDate" />
+            }
+        }
+        @if (Model.Step != 4)
+        {
+            <input type="hidden" asp-for="PromoCode" />
+        }
+
+        @if (Model.Step == 1)
+        {
+            <h3 class="section-title" style="margin-top:0">Elige el servicio</h3>
+            @if (!Model.Services.Any())
+            {
+                <div class="empty">Este negocio aún no tiene servicios en la base de datos.</div>
+            }
+            @foreach (var s in Model.Services)
+            {
+                <label class="radio-card">
+                    <input type="radio" name="ServiceId" value="@s.Id" required @(Model.ServiceId == s.Id ? "checked" : "") />
+                    <div class="inner">
+                        <div>
+                            <strong>@CatalogLocalizer.Text(s.Name)</strong>
+                            <div class="muted small">@CatalogLocalizer.Text(s.Description)</div>
+                        </div>
+                        <span class="price">Desde $@s.PriceSmall.ToString("0")</span>
+                    </div>
+                </label>
+            }
+            <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next" @(Model.Services.Any() ? null : "disabled")>Continuar</button>
+        }
+        else if (Model.Step == 2)
+        {
+            @if (Model.IsOvernight)
+            {
+                <h3 class="section-title" style="margin-top:0">Check-in y check-out</h3>
+                <div class="form-group">
+                    <label>Check-in</label>
+                    <input class="form-control" type="date" name="Date" value="@Model.Date" required />
+                </div>
+                <div class="form-group">
+                    <label>Check-out</label>
+                    <input class="form-control" type="date" name="EndDate" value="@Model.EndDate" required />
+                </div>
+            }
+            else
+            {
+                <h3 class="section-title" style="margin-top:0">Fecha y hora</h3>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input class="form-control" type="date" name="Date" value="@Model.Date" required />
+                </div>
+                <div class="form-group">
+                    <label>Hora</label>
+                    <div class="slot-grid">
+                        @foreach (var t in Model.TimeSlots)
+                        {
+                            <label>
+                                <input type="radio" name="Time" value="@t" @(Model.Time == t ? "checked" : "") />
+                                <div class="slot">@t</div>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.Extras.Any())
+            {
+                <h3 class="section-title">Extras</h3>
+                @foreach (var e in Model.Extras)
+                {
+                    <label class="toggle-row" style="cursor:pointer">
+                        <span>@e.Name <span class="price">+$@e.Price.ToString("0")</span></span>
+                        <input type="checkbox" name="SelectedExtraIds" value="@e.Id"
+                               @(Model.SelectedExtraIds.Contains(e.Id) ? "checked" : "") />
+                    </label>
+                }
+            }
+
+            <div style="display:flex;gap:10px;margin-top:14px">
+                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">Atrás</button>
+                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next">Continuar</button>
+            </div>
+        }
+        else if (Model.Step == 3)
+        {
+            <h3 class="section-title" style="margin-top:0">¿Para qué mascota?</h3>
+            @if (Model.Groomer != null)
+            {
+                <p class="muted small" style="margin-top:-6px">Atiende:
+                    @string.Join(" · ", Model.Groomer.AcceptedSpeciesList.Select(s => $"{PetSpecies.Emoji(s)} {s}"))
+                </p>
+            }
+            @if (!Model.Pets.Any())
+            {
+                <div class="alert alert-info">Primero agrega una mascota.
+                    <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">Agregar mascota</a>
+                </div>
+            }
+            @foreach (var p in Model.Pets)
+            {
+                var ok = Model.Groomer?.AcceptsSpecies(p.Species) != false;
+                <label class="radio-card @(ok ? "" : "disabled")">
+                    <input type="radio" name="PetId" value="@p.Id" @(ok ? "required" : "disabled") @(Model.PetId == p.Id && ok ? "checked" : "") />
+                    <div class="inner">
+                        <div class="pet-select" style="border:none;padding:0;flex:1">
+                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                            <div>
+                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                                <div class="muted small">@p.Species · @p.Breed · @p.AgeYears años</div>
+                                @if (!ok)
+                                {
+                                    <div class="field-error">No atienden @p.Species</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            }
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea class="form-control" name="Notes" rows="3">@Model.Notes</textarea>
+            </div>
+            <div style="display:flex;gap:10px">
+                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">Atrás</button>
+                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next" @(Model.Pets.Any() ? null : "disabled")>Continuar</button>
+            </div>
+        }
+        else if (Model.Step == 4)
+        {
+            ViewData["PromoCode"] = Model.PromoCode;
+            ViewData["PromoSubtotal"] = Model.Subtotal;
+            ViewData["PromoDiscount"] = Model.DiscountAmount;
+            ViewData["PromoError"] = Model.PromoError;
+            ViewData["PromoApplyHandler"] = "ApplyPromo";
+            <h3 class="section-title" style="margin-top:0">Confirmar reserva</h3>
+            <div class="card card-pad">
+                <p><strong>Servicio:</strong> @Model.SelectedService?.Name</p>
+                @if (Model.IsOvernight)
+                {
+                    <p><strong>Check-in:</strong> @Model.Date</p>
+                    <p><strong>Check-out:</strong> @Model.EndDate</p>
+                    <p><strong>Noches:</strong> @Model.Nights</p>
+                }
+                else
+                {
+                    <p><strong>Fecha:</strong> @Model.Date · @Model.Time</p>
+                }
+                <p><strong>Mascota:</strong> @PetSpecies.Emoji(Model.SelectedPet?.Species) @Model.SelectedPet?.Name</p>
+                @if (Model.SelectedExtras.Any())
+                {
+                    <p><strong>Extras:</strong></p>
+                    <ul style="margin:0 0 8px;padding-left:18px">
+                        @foreach (var e in Model.SelectedExtras)
+                        {
+                            <li>@e.Name (+$@e.Price.ToString("0.00"))</li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <partial name="_PromoCode" />
+
+            <div class="card card-pad" style="margin-top:12px">
+                @if (Model.DiscountAmount > 0)
+                {
+                    <p class="muted small" style="margin:0 0 4px">
+                        <span style="text-decoration:line-through">$@Model.Subtotal.ToString("0.00")</span>
+                    </p>
+                }
+                <p style="margin:0"><strong>Total:</strong> <span class="price">$@Model.EstimatedTotal.ToString("0.00")</span></p>
+                <p class="muted small">Anticipo estimado: $@Model.Deposit.ToString("0.00")</p>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:14px">
+                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">Atrás</button>
+                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Confirm">Enviar reserva</button>
+            </div>
+        }
+    </form>
+</main>

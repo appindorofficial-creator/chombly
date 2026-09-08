@@ -1,0 +1,31 @@
+@{
+    var stepPrefix = ViewData["TermsStep"] as string;
+    var isChecked = ViewData["TermsChecked"] as bool? == true;
+    var errMsg = L["Biz_ErrAcceptTerms"].Value;
+    string? modelErr = null;
+    if (ViewData.ModelState.TryGetValue("AcceptTerms", out var st) && st.Errors.Count > 0)
+        modelErr = st.Errors[0].ErrorMessage;
+    else if (ViewData["TermsError"] is string te && !string.IsNullOrWhiteSpace(te))
+        modelErr = te;
+    var showError = !string.IsNullOrWhiteSpace(modelErr);
+    if (showError) errMsg = modelErr!;
+}
+<div class="terms-block" data-terms-block>
+    <label class="terms-row" for="AcceptTerms">
+        <input type="checkbox" id="AcceptTerms" name="AcceptTerms" value="true"
+               @(isChecked ? "checked" : null)
+               data-terms-checkbox
+               aria-describedby="AcceptTerms-error" />
+        <span>
+            @if (!string.IsNullOrEmpty(stepPrefix))
+            {
+                @stepPrefix
+            }
+            @L["Legal_AcceptPrefix"]<a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_Terms"]</a>@L["Legal_TermsSep"]<a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_Conditions"]</a>@L["Legal_AndPrivacy"]<a class="legal-link" asp-page="/Legal/Terms" asp-fragment="privacy" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_PrivacyPolicy"]</a>
+        </span>
+    </label>
+    <p id="AcceptTerms-error" class="field-error terms-error" data-terms-error
+       data-terms-message="@errMsg"
+       role="alert"
+       @(showError ? null : "hidden")>@errMsg</p>
+</div>
