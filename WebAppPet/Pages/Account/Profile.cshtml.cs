@@ -21,7 +21,12 @@ public class ProfileModel : PageModel
 
     public async Task OnGetAsync()
     {
-        if (_auth.CurrentUserId is int id)
-            UserEntity = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+        if (_auth.CurrentUserId is not int id)
+            return;
+
+        UserEntity = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        // Cookie de sesión apunta a un usuario que ya no existe en esta BD.
+        if (UserEntity is null && _auth.IsAuthenticated)
+            await _auth.SignOutAsync();
     }
 }

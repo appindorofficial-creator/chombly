@@ -117,6 +117,11 @@ app.UseRouting();
 app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Entrada pública: invitados ven la presentación; usuarios logueados van al marketplace.
+app.MapGet("/", (HttpContext ctx) =>
+    Results.Redirect(ctx.User.Identity?.IsAuthenticated == true ? "/Index" : "/Welcome"));
+
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
 

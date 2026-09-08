@@ -27,8 +27,12 @@
         @if (User.Identity?.IsAuthenticated != true)
         {
             <a class="btn btn-outline btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Index">@L["Login_Title"]</a>
+            <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:8px">@L["Register_Title"]</a>
         }
         <a class="btn btn-outline btn-block" asp-page="/Account/RegisterBusiness" style="margin-top:8px">@L["Welcome_Business"]</a>
-        <a class="link-btn" asp-page="/Index" style="display:block;text-align:center;margin-top:14px">@L["Welcome_BackHome"]</a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="link-btn" asp-page="/Index" style="display:block;text-align:center;margin-top:14px">@L["Welcome_BackHome"]</a>
+        }
     </div>
 </div>
