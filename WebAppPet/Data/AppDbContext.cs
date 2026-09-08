@@ -263,23 +263,24 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.ClientId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Restrict (not SetNull): SQL Server forbids multiple cascade paths via Users→Pets / Users→Groomers.
         modelBuilder.Entity<Consultation>()
             .HasOne(c => c.Pet)
             .WithMany()
             .HasForeignKey(c => c.PetId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Consultation>()
             .HasOne(c => c.Provider)
             .WithMany()
             .HasForeignKey(c => c.ProviderId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Consultation>()
             .HasOne(c => c.Appointment)
             .WithMany()
             .HasForeignKey(c => c.AppointmentId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ConsentRecord>()
             .HasOne(c => c.User)
@@ -319,19 +320,19 @@ public class AppDbContext : DbContext
             .HasOne(b => b.Pet)
             .WithMany()
             .HasForeignKey(b => b.PetId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<BehaviorCase>()
             .HasOne(b => b.Provider)
             .WithMany()
             .HasForeignKey(b => b.ProviderId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<BehaviorCase>()
             .HasOne(b => b.Appointment)
             .WithMany()
             .HasForeignKey(b => b.AppointmentId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<CountryCatalogEntry>()
             .HasIndex(c => c.Iso2)
@@ -384,7 +385,7 @@ public class AppDbContext : DbContext
             .HasOne(r => r.Pet)
             .WithMany()
             .HasForeignKey(r => r.PetId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ReminderDelivery>()
             .HasOne(d => d.ReminderSchedule)

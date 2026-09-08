@@ -448,6 +448,7 @@ public static class DbInitializer
             """
             IF OBJECT_ID(N'[Consultations]', N'U') IS NULL
             BEGIN
+                -- NO ACTION on FKs: SQL Server rejects SET NULL here (multiple cascade paths via Users→Pets and Users→Groomers).
                 CREATE TABLE [Consultations] (
                     [Id] int NOT NULL IDENTITY,
                     [ClientId] int NOT NULL,
@@ -458,6 +459,9 @@ public static class DbInitializer
                     [Status] int NOT NULL,
                     [PetUsState] nvarchar(8) NOT NULL,
                     [ContextCountry] nvarchar(8) NULL,
+                    [MatchMode] int NOT NULL CONSTRAINT DF_Consultations_MatchMode_Create DEFAULT(0),
+                    [PreferredCountry] nvarchar(2) NULL,
+                    [PreferredBreed] nvarchar(80) NULL,
                     [ServiceCatalogCode] nvarchar(40) NULL,
                     [Symptoms] nvarchar(500) NULL,
                     [SafetyAnswersJson] nvarchar(1000) NULL,
@@ -469,13 +473,14 @@ public static class DbInitializer
                     [ClinicalNotes] nvarchar(800) NULL,
                     [ResponsibleName] nvarchar(200) NULL,
                     [PriceCharged] decimal(10,2) NOT NULL,
+                    [UsesCareBenefit] bit NOT NULL CONSTRAINT DF_Consultations_UsesCareBenefit_Create DEFAULT(0),
                     [CreatedAt] datetime2 NOT NULL,
                     [UpdatedAt] datetime2 NOT NULL,
                     CONSTRAINT [PK_Consultations] PRIMARY KEY ([Id]),
                     CONSTRAINT [FK_Consultations_Users] FOREIGN KEY ([ClientId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION,
-                    CONSTRAINT [FK_Consultations_Pets] FOREIGN KEY ([PetId]) REFERENCES [Pets] ([Id]) ON DELETE SET NULL,
-                    CONSTRAINT [FK_Consultations_Providers] FOREIGN KEY ([ProviderId]) REFERENCES [Groomers] ([Id]) ON DELETE SET NULL,
-                    CONSTRAINT [FK_Consultations_Appointments] FOREIGN KEY ([AppointmentId]) REFERENCES [Appointments] ([Id]) ON DELETE SET NULL
+                    CONSTRAINT [FK_Consultations_Pets] FOREIGN KEY ([PetId]) REFERENCES [Pets] ([Id]) ON DELETE NO ACTION,
+                    CONSTRAINT [FK_Consultations_Providers] FOREIGN KEY ([ProviderId]) REFERENCES [Groomers] ([Id]) ON DELETE NO ACTION,
+                    CONSTRAINT [FK_Consultations_Appointments] FOREIGN KEY ([AppointmentId]) REFERENCES [Appointments] ([Id]) ON DELETE NO ACTION
                 );
             END
             """,
@@ -574,9 +579,9 @@ public static class DbInitializer
                     [UpdatedAt] datetime2 NOT NULL,
                     CONSTRAINT [PK_BehaviorCases] PRIMARY KEY ([Id]),
                     CONSTRAINT [FK_BehaviorCases_Users] FOREIGN KEY ([ClientId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION,
-                    CONSTRAINT [FK_BehaviorCases_Pets] FOREIGN KEY ([PetId]) REFERENCES [Pets] ([Id]) ON DELETE SET NULL,
-                    CONSTRAINT [FK_BehaviorCases_Providers] FOREIGN KEY ([ProviderId]) REFERENCES [Groomers] ([Id]) ON DELETE SET NULL,
-                    CONSTRAINT [FK_BehaviorCases_Appointments] FOREIGN KEY ([AppointmentId]) REFERENCES [Appointments] ([Id]) ON DELETE SET NULL
+                    CONSTRAINT [FK_BehaviorCases_Pets] FOREIGN KEY ([PetId]) REFERENCES [Pets] ([Id]) ON DELETE NO ACTION,
+                    CONSTRAINT [FK_BehaviorCases_Providers] FOREIGN KEY ([ProviderId]) REFERENCES [Groomers] ([Id]) ON DELETE NO ACTION,
+                    CONSTRAINT [FK_BehaviorCases_Appointments] FOREIGN KEY ([AppointmentId]) REFERENCES [Appointments] ([Id]) ON DELETE NO ACTION
                 );
             END
             """,
@@ -733,8 +738,9 @@ public static class DbInitializer
                     [Channel] int NOT NULL,
                     [CreatedUtc] datetime2 NOT NULL,
                     CONSTRAINT [PK_ReminderSchedules] PRIMARY KEY ([Id]),
+                    -- Pet FK NO ACTION: CASCADE on User + SET NULL on Pet = multiple cascade paths via Users→Pets.
                     CONSTRAINT [FK_Reminders_Users] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE,
-                    CONSTRAINT [FK_Reminders_Pets] FOREIGN KEY ([PetId]) REFERENCES [Pets] ([Id]) ON DELETE SET NULL
+                    CONSTRAINT [FK_Reminders_Pets] FOREIGN KEY ([PetId]) REFERENCES [Pets] ([Id]) ON DELETE NO ACTION
                 );
             END
             """,
@@ -758,7 +764,11 @@ public static class DbInitializer
 
         foreach (var sql in creates)
         {
-            try { await db.Database.ExecuteSqlRawAsync(sql); } catch { /* ignore */ }
+            try { await db.Database.ExecuteSqlRawAsync(sql); }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[DbInitializer] Vet schema statement failed: {ex.Message}");
+            }
         }
     }
 

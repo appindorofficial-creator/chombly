@@ -48,6 +48,14 @@ public class IndexModel : PageModel
             var hasAppts = await _db.Appointments.AnyAsync(a => a.PetId == id);
             if (!hasAppts)
             {
+                // Clear optional FKs first (SQL Server uses NO ACTION — cannot SET NULL on delete).
+                await _db.Consultations.Where(c => c.PetId == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(c => c.PetId, (int?)null));
+                await _db.BehaviorCases.Where(b => b.PetId == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(b => b.PetId, (int?)null));
+                await _db.ReminderSchedules.Where(r => r.PetId == id)
+                    .ExecuteDeleteAsync();
+
                 _db.Pets.Remove(pet);
                 await _db.SaveChangesAsync();
             }
