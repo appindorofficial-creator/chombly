@@ -25,12 +25,16 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string Tab { get; set; } = "upcoming";
 
+    public bool IsGuest { get; set; }
     public List<Appointment> Items { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is not int userId)
-            return RedirectToPage("/Account/Login");
+        {
+            IsGuest = true;
+            return Page();
+        }
 
         var query = _db.Appointments
             .Include(a => a.Groomer)

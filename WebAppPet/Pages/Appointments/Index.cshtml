@@ -6,75 +6,91 @@
 <header class="topbar">
     <partial name="_Brand" />
     <div class="topbar-right">
-        <a class="btn btn-primary btn-sm" href="/Groomers">@L["Appt_Book"]</a>
-        <a class="icon-btn" asp-page="/Account/Notifications" title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
-            <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
-        </a>
+        @if (!Model.IsGuest)
+        {
+            <a class="btn btn-primary btn-sm" href="/Groomers">@L["Appt_Book"]</a>
+            <a class="icon-btn" asp-page="/Account/Notifications" title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
+                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
+            </a>
+        }
     </div>
 </header>
 
 <main class="app-main">
     <h1 class="page-title">@L["Appt_Title"]</h1>
 
-    <div class="tabs tabs-chombly">
-        <a class="@(Model.Tab == "upcoming" ? "active" : "")" asp-page="./Index" asp-route-tab="upcoming">
-            <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg>
-            @L["Appt_Upcoming"]
-        </a>
-        <a class="@(Model.Tab == "history" ? "active" : "")" asp-page="./Index" asp-route-tab="history">
-            <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 10.5V7h-2v7l5 3 1-1.7-4-2.8z"/></svg>
-            @L["Appt_History"]
-        </a>
-    </div>
-
-    @if (Model.Items.Any())
-    {
-        @foreach (var a in Model.Items)
-        {
-            <a class="appt-card" asp-page="./Details" asp-route-id="@a.Id">
-                <div class="row">
-                    <img src="@a.Groomer.ImageUrl" alt="@a.Groomer.BusinessName" />
-                    <div style="flex:1">
-                        <strong>@a.Groomer.BusinessName</strong>
-                        <div class="muted small">@CatalogLocalizer.Text(a.Service.Name) · @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species))</div>
-                        <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM · h:mm tt")</div>
-                        <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
-                    </div>
-                    <span class="price">$@a.TotalPrice.ToString("0")</span>
-                </div>
-            </a>
-        }
-    }
-    else
+    @if (Model.IsGuest)
     {
         <div class="empty-chombly">
             <img src="~/images/chombly-empty-appointments.png" alt="" class="empty-illu" />
-            <h2>@L["Appt_EmptyTitle"]</h2>
-            <p>@L["Appt_EmptySub"]</p>
-            <a class="btn btn-primary btn-block" href="/Groomers">
-                📅 @L["Appt_BookNew"]
+            <h2>@L["Appt_GuestTitle"]</h2>
+            <p>@L["Appt_GuestSub"]</p>
+            <a class="btn btn-primary btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Appointments">@L["Login_Title"]</a>
+            <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:10px">@L["Register_Title"]</a>
+        </div>
+    }
+    else
+    {
+        <div class="tabs tabs-chombly">
+            <a class="@(Model.Tab == "upcoming" ? "active" : "")" asp-page="./Index" asp-route-tab="upcoming">
+                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg>
+                @L["Appt_Upcoming"]
+            </a>
+            <a class="@(Model.Tab == "history" ? "active" : "")" asp-page="./Index" asp-route-tab="history">
+                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 10.5V7h-2v7l5 3 1-1.7-4-2.8z"/></svg>
+                @L["Appt_History"]
             </a>
         </div>
 
-        <section class="how-card">
-            <h3>@L["Appt_HowTitle"]</h3>
-            <div class="how-grid">
-                <div class="how-step">
-                    <div class="how-ico">🔍</div>
-                    <strong>@L["Appt_HowSearch"]</strong>
-                    <p>@L["Appt_HowSearchDesc"]</p>
-                </div>
-                <div class="how-step">
-                    <div class="how-ico">📅</div>
-                    <strong>@L["Appt_HowBook"]</strong>
-                    <p>@L["Appt_HowBookDesc"]</p>
-                </div>
-                <div class="how-step">
-                    <div class="how-ico">🐾</div>
-                    <strong>@L["Appt_HowEnjoy"]</strong>
-                    <p>@L["Appt_HowEnjoyDesc"]</p>
-                </div>
+        @if (Model.Items.Any())
+        {
+            @foreach (var a in Model.Items)
+            {
+                <a class="appt-card" asp-page="./Details" asp-route-id="@a.Id">
+                    <div class="row">
+                        <img src="@a.Groomer.ImageUrl" alt="@a.Groomer.BusinessName" />
+                        <div style="flex:1">
+                            <strong>@a.Groomer.BusinessName</strong>
+                            <div class="muted small">@CatalogLocalizer.Text(a.Service.Name) · @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species))</div>
+                            <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM · h:mm tt")</div>
+                            <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
+                        </div>
+                        <span class="price">$@a.TotalPrice.ToString("0")</span>
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <div class="empty-chombly">
+                <img src="~/images/chombly-empty-appointments.png" alt="" class="empty-illu" />
+                <h2>@L["Appt_EmptyTitle"]</h2>
+                <p>@L["Appt_EmptySub"]</p>
+                <a class="btn btn-primary btn-block" href="/Groomers">
+                    📅 @L["Appt_BookNew"]
+                </a>
             </div>
-        </section>
+
+            <section class="how-card">
+                <h3>@L["Appt_HowTitle"]</h3>
+                <div class="how-grid">
+                    <div class="how-step">
+                        <div class="how-ico">🔍</div>
+                        <strong>@L["Appt_HowSearch"]</strong>
+                        <p>@L["Appt_HowSearchDesc"]</p>
+                    </div>
+                    <div class="how-step">
+                        <div class="how-ico">📅</div>
+                        <strong>@L["Appt_HowBook"]</strong>
+                        <p>@L["Appt_HowBookDesc"]</p>
+                    </div>
+                    <div class="how-step">
+                        <div class="how-ico">🐾</div>
+                        <strong>@L["Appt_HowEnjoy"]</strong>
+                        <p>@L["Appt_HowEnjoyDesc"]</p>
+                    </div>
+                </div>
+            </section>
+        }
     }
 </main>

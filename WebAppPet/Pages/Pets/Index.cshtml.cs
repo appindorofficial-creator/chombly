@@ -22,12 +22,16 @@ public class IndexModel : PageModel
         _L = L;
     }
 
+    public bool IsGuest { get; set; }
     public List<Pet> Pets { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is not int userId)
-            return RedirectToPage("/Account/Login");
+        {
+            IsGuest = true;
+            return Page();
+        }
 
         Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
         return Page();
@@ -36,7 +40,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         if (_auth.CurrentUserId is not int userId)
-            return RedirectToPage("/Account/Login");
+            return RedirectToPage("/Account/Login", new { returnUrl = "/Pets" });
 
         var pet = await _db.Pets.FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
         if (pet != null)

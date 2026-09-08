@@ -5,13 +5,26 @@
 }
 <header class="topbar">
     <partial name="_Brand" />
-    <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
+    @if (!Model.IsGuest)
+    {
+        <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
+    }
 </header>
 
 <main class="app-main">
     <h1 class="page-title">@L["Pets_Title"]</h1>
 
-    @if (Model.Pets.Any())
+    @if (Model.IsGuest)
+    {
+        <div class="empty-chombly">
+            <img src="~/images/chombly-empty-pets.png" alt="" class="empty-illu" />
+            <h2>@L["Pets_GuestTitle"]</h2>
+            <p>@L["Pets_GuestSub"]</p>
+            <a class="btn btn-primary btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Pets">@L["Login_Title"]</a>
+            <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:10px">@L["Register_Title"]</a>
+        </div>
+    }
+    else if (Model.Pets.Any())
     {
         @foreach (var p in Model.Pets)
         {

@@ -119,6 +119,8 @@
   <data name="Appt_History" xml:space="preserve"><value>Historial</value></data>
   <data name="Appt_EmptyTitle" xml:space="preserve"><value>Aún no tienes citas</value></data>
   <data name="Appt_EmptySub" xml:space="preserve"><value>Agenda el mejor cuidado para tu mascota.</value></data>
+  <data name="Appt_GuestTitle" xml:space="preserve"><value>Inicia sesión para ver tus citas</value></data>
+  <data name="Appt_GuestSub" xml:space="preserve"><value>Con tu cuenta puedes agendar, seguir y gestionar reservas.</value></data>
   <data name="Appt_BookNew" xml:space="preserve"><value>Agendar nueva cita</value></data>
   <data name="Appt_HowTitle" xml:space="preserve"><value>¿Cómo funciona?</value></data>
   <data name="Appt_HowSearch" xml:space="preserve"><value>Busca</value></data>
@@ -132,6 +134,8 @@
   <data name="Pets_Years" xml:space="preserve"><value>años</value></data>
   <data name="Pets_EmptyTitle" xml:space="preserve"><value>Aún no tienes mascotas</value></data>
   <data name="Pets_EmptySub" xml:space="preserve"><value>Agrega perros, gatos, conejos u otras mascotas para agendar servicios.</value></data>
+  <data name="Pets_GuestTitle" xml:space="preserve"><value>Inicia sesión para ver tus mascotas</value></data>
+  <data name="Pets_GuestSub" xml:space="preserve"><value>Guarda el perfil de tus mascotas y agenda servicios más rápido.</value></data>
   <data name="Pets_Anxious" xml:space="preserve"><value>Ansioso</value></data>
   <data name="Pets_SpecialNeeds" xml:space="preserve"><value>Necesidades especiales</value></data>
   <data name="Pets_DeleteConfirm" xml:space="preserve"><value>¿Eliminar a {0}?</value></data>
