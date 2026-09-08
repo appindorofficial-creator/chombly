@@ -5,7 +5,7 @@
 }
 <header class="topbar">
     <partial name="_Brand" />
-    @if (!Model.IsGuest)
+    @if (!Model.IsGuest && Model.Pets.Any())
     {
         <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
     }
