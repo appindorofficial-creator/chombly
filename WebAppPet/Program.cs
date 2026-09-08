@@ -1,7 +1,9 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using WebAppPet.Data;
 using WebAppPet.Services;
 
@@ -13,7 +15,12 @@ builder.Logging.AddDebug();
 builder.Services.AddLocalization();
 builder.Services.AddRazorPages()
     .AddViewLocalization()
-    .AddDataAnnotationsLocalization();
+    .AddDataAnnotationsLocalization(options =>
+    {
+        options.DataAnnotationLocalizerProvider = (type, factory) =>
+            factory.Create(typeof(WebAppPet.Localization.SharedResource));
+    });
+builder.Services.AddSingleton<IConfigureOptions<MvcOptions>, WebAppPet.Localization.ConfigureMvcLocalization>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
 builder.Services.Configure<GoogleMapsOptions>(builder.Configuration.GetSection(GoogleMapsOptions.SectionName));

@@ -43,7 +43,7 @@ public class CreateModel : PageModel
     public string? Breed { get; set; }
 
     [BindProperty]
-    public int AgeYears { get; set; } = 1;
+    public int? AgeYears { get; set; } = 1;
 
     [BindProperty]
     public PetSize Size { get; set; } = PetSize.Medium;
@@ -89,6 +89,9 @@ public class CreateModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
+        // Drop framework English binder messages; we re-validate with SharedResource.
+        ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size));
+
         if (string.IsNullOrWhiteSpace(Name))
             ModelState.AddModelError(nameof(Name), _L["Pets_NameRequired"].Value);
 
@@ -99,7 +102,8 @@ public class CreateModel : PageModel
         else if (Species == PetSpecies.Other && string.IsNullOrWhiteSpace(CustomType))
             ModelState.AddModelError(nameof(CustomType), _L["Pets_OtherTypeRequired"].Value);
 
-        if (AgeYears < 0 || AgeYears > 40)
+        var age = AgeYears ?? 1;
+        if (AgeYears is null || age < 0 || age > 40)
             ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRange"].Value);
 
         var photoError = PetPhotoStorage.Validate(PhotoFile);
@@ -139,7 +143,7 @@ public class CreateModel : PageModel
             Name = Name.Trim(),
             Species = species,
             Breed = breed,
-            AgeYears = AgeYears,
+            AgeYears = age,
             Size = Size,
             Temperament = string.IsNullOrWhiteSpace(Temperament) ? temperamentDefault : Temperament.Trim(),
             PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species),
@@ -150,6 +154,15 @@ public class CreateModel : PageModel
         });
         await _db.SaveChangesAsync(cancellationToken);
         return RedirectToPage("./Index");
+    }
+
+    private void ClearFieldErrors(params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (ModelState.ContainsKey(key))
+                ModelState[key]!.Errors.Clear();
+        }
     }
 
     private void FillSizeOptions()
