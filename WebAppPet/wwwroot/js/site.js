@@ -278,7 +278,8 @@
         required: form.getAttribute('data-msg-required') || '',
         email: form.getAttribute('data-msg-email') || '',
         phone: form.getAttribute('data-msg-phone') || '',
-        password: form.getAttribute('data-msg-password') || ''
+        password: form.getAttribute('data-msg-password') || '',
+        passwordMismatch: form.getAttribute('data-msg-password-mismatch') || ''
       };
 
       function apply(el) {
@@ -314,7 +315,16 @@
 
         if (type === 'password') {
           var min = el.minLength > 0 ? el.minLength : 0;
-          if (min && v.length < min) el.setCustomValidity(msgs.password);
+          if (min && v.length < min) {
+            el.setCustomValidity(msgs.password);
+            return;
+          }
+          if (msgs.passwordMismatch && (name === 'confirmpassword' || name === 'confirm-password')) {
+            var newPwd = form.querySelector('[name="NewPassword"], #NewPassword');
+            if (newPwd && String(newPwd.value || '') !== raw) {
+              el.setCustomValidity(msgs.passwordMismatch);
+            }
+          }
         }
       }
 

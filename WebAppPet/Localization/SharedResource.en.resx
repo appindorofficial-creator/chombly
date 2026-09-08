@@ -162,6 +162,7 @@
   <data name="Profile_Edit_EmailInvalid" xml:space="preserve"><value>Invalid email.</value></data>
   <data name="Profile_Edit_EmailTaken" xml:space="preserve"><value>That email is already in use.</value></data>
   <data name="Profile_Edit_PasswordShort" xml:space="preserve"><value>Password must be at least 6 characters.</value></data>
+  <data name="Profile_Edit_PasswordMismatch" xml:space="preserve"><value>Passwords do not match.</value></data>
   <data name="Phone_Invalid" xml:space="preserve"><value>Invalid phone. Digits only (7–10). E.g. 7045551234</value></data>
   <data name="Phone_Required" xml:space="preserve"><value>Phone is required.</value></data>
   <data name="Validation_Required" xml:space="preserve"><value>This field is required.</value></data>
