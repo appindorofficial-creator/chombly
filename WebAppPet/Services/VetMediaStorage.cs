@@ -54,10 +54,7 @@ public static class VetMediaStorage
         if (ext == ".jpeg") ext = ".jpg";
 
         var safeName = $"{userId}_{Guid.NewGuid():N}{ext}";
-        var relativeDir = Path.Combine("uploads", "vet");
-        var absoluteDir = Path.Combine(env.WebRootPath, relativeDir);
-        Directory.CreateDirectory(absoluteDir);
-
+        var absoluteDir = UploadPaths.GetAbsoluteDir(env, "uploads", "vet");
         var absolutePath = Path.Combine(absoluteDir, safeName);
         var fullDir = Path.GetFullPath(absoluteDir);
         var fullFile = Path.GetFullPath(absolutePath);

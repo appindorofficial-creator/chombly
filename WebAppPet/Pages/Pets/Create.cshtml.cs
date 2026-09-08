@@ -9,6 +9,8 @@ using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Pets;
 
+[RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
+[RequestSizeLimit(10 * 1024 * 1024)]
 public class CreateModel : PageModel
 {
     private readonly AppDbContext _db;

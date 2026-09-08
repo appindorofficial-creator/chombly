@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace WebAppPet.Services;
 
-/// <summary>Guarda fotos de mascota bajo wwwroot/uploads/pets/ con validación de tipo y tamaño.</summary>
+/// <summary>Guarda fotos de mascota bajo uploads/pets/ con validación de tipo y tamaño.</summary>
 public static class PetPhotoStorage
 {
     public const long MaxBytes = 5 * 1024 * 1024;
@@ -14,7 +14,9 @@ public static class PetPhotoStorage
 
     private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "image/jpeg", "image/png", "image/webp", "image/gif", "image/jpg"
+        "image/jpeg", "image/png", "image/webp", "image/gif", "image/jpg",
+        // Algunos móviles envían esto al elegir de galería
+        "application/octet-stream", "image/*"
     };
 
     /// <summary>Returns localization key on failure, or null if OK / no file.</summary>
@@ -36,7 +38,10 @@ public static class PetPhotoStorage
             return "Pets_PhotoInvalid";
 
         var contentType = file.ContentType?.Trim() ?? "";
-        if (!string.IsNullOrEmpty(contentType) && !AllowedContentTypes.Contains(contentType))
+        // Extensión válida basta: en prod/móvil el Content-Type a veces viene vacío o genérico.
+        if (!string.IsNullOrEmpty(contentType) &&
+            !AllowedContentTypes.Contains(contentType) &&
+            !contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
             return "Pets_PhotoInvalid";
 
         return null;
@@ -53,11 +58,9 @@ public static class PetPhotoStorage
         if (ext == ".jpeg") ext = ".jpg";
 
         var safeName = $"{userId}_{Guid.NewGuid():N}{ext}";
-        var relativeDir = Path.Combine("uploads", "pets");
-        var absoluteDir = Path.Combine(env.WebRootPath, relativeDir);
-        Directory.CreateDirectory(absoluteDir);
-
+        var absoluteDir = UploadPaths.GetAbsoluteDir(env, "uploads", "pets");
         var absolutePath = Path.Combine(absoluteDir, safeName);
+
         // Ensure resolved path stays under uploads/pets (no traversal).
         var fullDir = Path.GetFullPath(absoluteDir);
         var fullFile = Path.GetFullPath(absolutePath);

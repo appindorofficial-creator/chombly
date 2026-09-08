@@ -113,6 +113,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// wwwroot + /uploads desde carpeta persistente (Azure %HOME%/data)
+UploadPaths.MapUploadStaticFiles(app);
+
 app.UseRouting();
 app.UseRequestLocalization();
 app.UseAuthentication();

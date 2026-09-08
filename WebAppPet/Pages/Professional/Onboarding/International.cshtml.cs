@@ -112,8 +112,7 @@ public class InternationalModel : PageModel
     private async Task<string?> SaveUploadAsync()
     {
         if (DocumentUpload is null || DocumentUpload.Length == 0) return null;
-        var dir = Path.Combine(_env.WebRootPath, "uploads", "professional");
-        Directory.CreateDirectory(dir);
+        var dir = UploadPaths.GetAbsoluteDir(_env, "uploads", "professional");
         var ext = Path.GetExtension(DocumentUpload.FileName);
         if (ext.Length > 10) ext = ".bin";
         var name = $"{_auth.CurrentUserId}_{Guid.NewGuid():N}{ext}";
