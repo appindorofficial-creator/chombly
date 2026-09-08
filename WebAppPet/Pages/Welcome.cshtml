@@ -22,7 +22,7 @@
     </div>
     <div class="splash-actions">
         <h2>@L["Welcome_Hero"]</h2>
-        <p>@L["Welcome_HeroSub"]</p>
+        <p>@string.Format(L["Welcome_HeroSub"].Value, L["Hotel_Title"].Value, L["Vet_Title"].Value, L["Daycare_Title"].Value, L["Walkers_Title"].Value, L["Trainers_Title"].Value)</p>
         <a class="btn btn-primary btn-block" asp-page="/Index">@L["Welcome_Explore"]</a>
         @if (User.Identity?.IsAuthenticated != true)
         {

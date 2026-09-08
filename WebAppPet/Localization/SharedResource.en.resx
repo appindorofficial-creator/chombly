@@ -165,7 +165,7 @@
 
   <data name="Welcome_Slogan" xml:space="preserve"><value>Care for dogs, cats, rabbits and more</value></data>
   <data name="Welcome_Hero" xml:space="preserve"><value>The best care for your pet</value></data>
-  <data name="Welcome_HeroSub" xml:space="preserve"><value>Hotel, vet, daycare, walkers and trainers near you.</value></data>
+  <data name="Welcome_HeroSub" xml:space="preserve"><value>{0}, {1}, {2}, {3} and {4} near you.</value></data>
   <data name="Welcome_Explore" xml:space="preserve"><value>Explore services</value></data>
   <data name="Welcome_BackHome" xml:space="preserve"><value>← Back to home</value></data>
 
