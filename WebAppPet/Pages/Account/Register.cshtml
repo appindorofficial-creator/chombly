@@ -41,7 +41,9 @@
         </div>
         <div class="form-group">
             <label>@L["Common_Password"]</label>
-            <input class="form-control" asp-for="Password" type="password" required minlength="6" />
+            <input class="form-control" asp-for="Password" type="password" required minlength="6"
+                   data-password-policy="1" autocomplete="new-password" />
+            <p class="muted small" style="margin:6px 0 0">@L["Profile_Edit_PasswordShort"]</p>
         </div>
         <button class="btn btn-primary btn-block" type="submit">@L["Register_Submit"]</button>
     </form>

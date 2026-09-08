@@ -35,7 +35,7 @@ public class RegisterModel : PageModel
     [BindProperty, MaxLength(120)]
     public string City { get; set; } = string.Empty;
 
-    [BindProperty, Required, MinLength(6)]
+    [BindProperty, Required, MinLength(PasswordPolicy.MinLength)]
     public string Password { get; set; } = string.Empty;
 
     public string? ErrorMessage { get; set; }
@@ -67,7 +67,7 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        if (string.IsNullOrWhiteSpace(Password) || Password.Length < 6)
+        if (string.IsNullOrWhiteSpace(Password) || !PasswordPolicy.IsValid(Password))
         {
             ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
             return Page();

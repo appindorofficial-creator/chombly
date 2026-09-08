@@ -251,7 +251,7 @@ public class RegisterBusinessModel : PageModel
             case 6:
                 if (!_auth.IsAuthenticated)
                 {
-                    if (string.IsNullOrWhiteSpace(Password) || Password.Length < 6)
+                    if (string.IsNullOrWhiteSpace(Password) || !PasswordPolicy.IsValid(Password))
                     {
                         ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
                         return false;

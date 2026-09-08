@@ -102,7 +102,7 @@ public class EditProfileModel : PageModel
         var changingPassword = !string.IsNullOrWhiteSpace(NewPassword) || !string.IsNullOrWhiteSpace(ConfirmPassword);
         if (changingPassword)
         {
-            if (string.IsNullOrWhiteSpace(NewPassword) || NewPassword.Length < 6)
+            if (string.IsNullOrWhiteSpace(NewPassword) || !PasswordPolicy.IsValid(NewPassword))
             {
                 ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
                 return Page();

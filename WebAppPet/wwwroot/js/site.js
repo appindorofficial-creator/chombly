@@ -315,17 +315,40 @@
 
         if (type === 'password') {
           var min = el.minLength > 0 ? el.minLength : 0;
-          if (min && v.length < min) {
+          var needsPolicy = el.getAttribute('data-password-policy') === '1';
+          if (needsPolicy) {
+            if (!isStrongPassword(raw)) {
+              el.setCustomValidity(msgs.password);
+              return;
+            }
+          } else if (min && v.length < min) {
             el.setCustomValidity(msgs.password);
             return;
           }
           if (msgs.passwordMismatch && (name === 'confirmpassword' || name === 'confirm-password')) {
-            var newPwd = form.querySelector('[name="NewPassword"], #NewPassword');
+            var newPwd = form.querySelector('[name="NewPassword"], #NewPassword, [name="Password"][data-password-policy]');
             if (newPwd && String(newPwd.value || '') !== raw) {
               el.setCustomValidity(msgs.passwordMismatch);
             }
           }
         }
+      }
+
+      function isStrongPassword(pwd) {
+        if (!pwd || pwd.length < 6) return false;
+        var onlyDigits = true;
+        var hasUpper = false;
+        var hasSpecial = false;
+        for (var i = 0; i < pwd.length; i++) {
+          var c = pwd.charAt(i);
+          var code = pwd.charCodeAt(i);
+          if (c < '0' || c > '9') onlyDigits = false;
+          if (code >= 65 && code <= 90) hasUpper = true;
+          if (!((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122))) {
+            hasSpecial = true;
+          }
+        }
+        return !onlyDigits && hasUpper && hasSpecial;
       }
 
       function validateAll() {
