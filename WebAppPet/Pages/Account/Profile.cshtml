@@ -43,11 +43,10 @@
                 <p class="muted small">📞 @Model.UserEntity.Phone</p>
             }
             <p class="muted small location">📍 @Model.UserEntity.City</p>
-            <a class="btn btn-outline btn-block" asp-page="/Account/EditProfile" style="margin-top:12px">@L["Profile_Edit"]</a>
+            <a class="btn btn-outline btn-block" asp-page="/Account/EditProfile" style="margin-top:12px">✏️ @L["Profile_Edit"]</a>
         </div>
 
         <div class="menu-list menu-chombly">
-            <a asp-page="/Account/EditProfile"><span class="menu-left"><span class="menu-ico">✏️</span> @L["Profile_Edit"]</span><span class="chev">›</span></a>
             @if (Model.UserEntity.Role == UserRole.Groomer)
             {
                 <a asp-page="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev">›</span></a>
