@@ -11,10 +11,16 @@ public static class DbInitializer
     public static async Task InitializeAsync(AppDbContext db)
     {
         await db.Database.EnsureCreatedAsync();
-        await EnsureMarketplaceSchemaAsync(db);
-        await EnsureVetEcosystemSchemaAsync(db);
+
+        // T-SQL ALTERs are SQL Server only (Azure / LocalDB upgrades).
+        if (db.Database.IsSqlServer())
+        {
+            await EnsureMarketplaceSchemaAsync(db);
+            await EnsureVetEcosystemSchemaAsync(db);
+            await BackfillAcceptedSpeciesAsync(db);
+        }
+
         await EnsureCategoriesAsync(db);
-        await BackfillAcceptedSpeciesAsync(db);
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
         await EnsureCountryCatalogSeedAsync(db);

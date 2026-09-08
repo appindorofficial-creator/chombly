@@ -182,12 +182,15 @@
         <div class="empty">@L["Home_EmptyFeatured"]</div>
     }
 
-    <div class="card card-pad" style="margin:20px 0 8px;text-align:center">
+    <div class="card card-pad home-biz-cta">
         <strong>@L["Home_BizCta"]</strong>
         <p class="muted small" style="margin:6px 0 12px">@L["Home_BizCtaSub"]</p>
         <a class="btn btn-outline btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
-        <a class="link-btn" asp-page="/Welcome" style="display:block;margin-top:10px">@L["Home_SeeWelcome"]</a>
+        <a class="btn btn-primary btn-block" asp-page="/Welcome" style="margin-top:10px">@L["Home_SeeWelcome"]</a>
     </div>
+    @* Reserva espacio real bajo el CTA para que la bottom-nav fija no intercepte el click *@
+    <div class="bottom-nav-clearance" aria-hidden="true"
+         style="height:calc(68px + env(safe-area-inset-bottom, 0px));pointer-events:none"></div>
 </main>
 
 @section Scripts {

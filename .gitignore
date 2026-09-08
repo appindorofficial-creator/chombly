@@ -5,5 +5,7 @@ obj/
 *.suo
 *.zip
 appsettings.Development.json
+*.local.db
+*.local.db-*
 WebAppPet/wwwroot/uploads/pets/*
 !WebAppPet/wwwroot/uploads/pets/.gitignore

@@ -58,7 +58,19 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    // Local Mac/Linux: SQLite (no LocalDB). Azure/Windows: SQL Server.
+    if (connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase)
+        && !connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase)
+        && !connectionString.Contains("Initial Catalog=", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
