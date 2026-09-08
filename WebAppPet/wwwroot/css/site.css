@@ -264,16 +264,26 @@ button, .btn { font-family: inherit; cursor: pointer; }
     linear-gradient(180deg, #2E7D32 0%, #1B5E20 55%, #145218 100%);
   color: #fff; text-align: center;
 }
+.splash-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 16px 0;
+}
 .splash-hero {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: flex-end;
-  padding: 24px 24px 0; position: relative;
+  padding: 16px 24px 0; position: relative;
 }
 .splash-mascot {
-  width: 56px !important; height: 56px !important;
-  border-radius: 14px !important; object-fit: contain !important;
+  width: 48px !important; height: 48px !important;
+  border-radius: 12px !important; object-fit: contain !important;
   box-shadow: none !important; max-height: none !important;
   background: #fff;
+  flex-shrink: 0;
 }
 .splash-photo {
   width: min(320px, 90%) !important;
@@ -283,14 +293,24 @@ button, .btn { font-family: inherit; cursor: pointer; }
   max-height: 42vh !important;
 }
 .splash-logo {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 10px; text-align: left;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 0; flex: 1; text-align: left;
+}
+.splash-brand {
+  min-width: 0;
 }
 .splash-name {
-  display: block; font-size: 1.8rem; font-weight: 800; letter-spacing: -.02em;
+  display: block;
+  font-size: clamp(1.35rem, 6.2vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .splash-tag {
-  display: block; font-size: .85rem; font-weight: 600; color: var(--brand-light);
+  display: block; font-size: .8rem; font-weight: 600; color: var(--brand-light);
 }
 .splash-slogan {
   margin: 0 0 16px;
@@ -1618,10 +1638,13 @@ input[type=radio]:checked + .size-opt {
   transform: translateY(-1px);
 }
 .splash-lang {
-  position: absolute;
-  top: 16px;
-  right: 16px;
+  position: static;
+  flex-shrink: 0;
   z-index: 5;
+}
+.splash-lang .lang-switch {
+  background: #fff;
+  border-color: rgba(255, 255, 255, .55);
 }
 .splash { position: relative; }
 .page-header .lang-switch {

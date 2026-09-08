@@ -3,20 +3,23 @@
 @{
     ViewData["Title"] = "Chombly";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
     Layout = "_Layout";
 }
 <div class="splash">
-    <div class="splash-lang">
-        <partial name="_LanguageSwitch" />
-    </div>
-    <div class="splash-hero">
+    <div class="splash-top">
         <div class="splash-logo">
             <img src="~/images/chombly-monkey.png" alt="Chombly" class="splash-mascot" />
-            <div>
+            <div class="splash-brand">
                 <span class="splash-name">Chombly</span>
                 <span class="splash-tag">Pet Care App</span>
             </div>
         </div>
+        <div class="splash-lang">
+            <partial name="_LanguageSwitch" />
+        </div>
+    </div>
+    <div class="splash-hero">
         <p class="splash-slogan">@L["Welcome_Slogan"]</p>
         <img src="~/images/hero-dog.png" alt="Chombly pet care" class="splash-photo" />
     </div>
