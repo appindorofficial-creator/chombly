@@ -1,0 +1,13 @@
+@model (string? PhotoUrl, string? Species, string Alt, string? CssClass)
+@inject IWebHostEnvironment Env
+@{
+    var css = string.IsNullOrWhiteSpace(Model.CssClass) ? "pet-avatar" : Model.CssClass;
+    var src = PetPhotoStorage.ResolveDisplayUrl(Model.PhotoUrl, Model.Species, Env);
+    var fallback = PetSpecies.DefaultPhoto(Model.Species);
+}
+<img class="@css"
+     src="@src"
+     data-fallback="@fallback"
+     alt="@Model.Alt"
+     loading="lazy"
+     onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback;" />

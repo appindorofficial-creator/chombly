@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using WebAppPet.Models;
 
 namespace WebAppPet.Services;
 
@@ -73,5 +74,43 @@ public static class PetPhotoStorage
         }
 
         return "/uploads/pets/" + safeName;
+    }
+
+    /// <summary>
+    /// URL para mostrar. Si es un upload local que ya no existe (p.ej. borrado por zip deploy),
+    /// cae al placeholder de la especie.
+    /// </summary>
+    public static string ResolveDisplayUrl(string? photoUrl, string? species, IWebHostEnvironment env)
+    {
+        if (string.IsNullOrWhiteSpace(photoUrl))
+            return PetSpecies.DefaultPhoto(species);
+
+        var url = photoUrl.Trim();
+        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return url;
+
+        if (url.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var full = Path.GetFullPath(Path.Combine(UploadPaths.GetDataRoot(env), relative));
+            var root = Path.GetFullPath(Path.Combine(UploadPaths.GetDataRoot(env), "uploads"))
+                       + Path.DirectorySeparatorChar;
+            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(full))
+                return PetSpecies.DefaultPhoto(species);
+        }
+
+        return url;
+    }
+
+    public static bool IsMissingLocalUpload(string? photoUrl, IWebHostEnvironment env)
+    {
+        if (string.IsNullOrWhiteSpace(photoUrl)) return false;
+        var url = photoUrl.Trim();
+        if (!url.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return false;
+        var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var full = Path.GetFullPath(Path.Combine(UploadPaths.GetDataRoot(env), relative));
+        return !File.Exists(full);
     }
 }

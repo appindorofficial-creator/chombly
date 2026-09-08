@@ -29,7 +29,7 @@
         @foreach (var p in Model.Pets)
         {
             <div class="pet-card">
-                <img class="pet-avatar" src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
                 <div class="pet-info">
                     <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
                     <div class="muted small">@PetSpecies.Label(p.Species) · @CatalogLocalizer.Text(p.Breed) · @Model.SizeLabel(p.Size) · @p.AgeYears @L["Pets_Years"]</div>

@@ -14,12 +14,14 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
+    private readonly IWebHostEnvironment _env;
 
-    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L, IWebHostEnvironment env)
     {
         _db = db;
         _auth = auth;
         _L = L;
+        _env = env;
     }
 
     public bool IsGuest { get; set; }
@@ -34,6 +36,19 @@ public class IndexModel : PageModel
         }
 
         Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
+
+        // Fotos en /uploads perdidas tras deploys antiguos → volver al placeholder de especie.
+        var healed = false;
+        foreach (var pet in Pets)
+        {
+            if (!PetPhotoStorage.IsMissingLocalUpload(pet.PhotoUrl, _env))
+                continue;
+            pet.PhotoUrl = PetSpecies.DefaultPhoto(pet.Species);
+            healed = true;
+        }
+        if (healed)
+            await _db.SaveChangesAsync();
+
         return Page();
     }
 

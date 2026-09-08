@@ -12,7 +12,7 @@
     @if (Model.Pet != null)
     {
         <div class="pet-select" style="margin-bottom:16px">
-            <img src="@PetSpecies.PhotoOrDefault(Model.Pet.PhotoUrl, Model.Pet.Species)" alt="@Model.Pet.Name" />
+            <partial name="_PetAvatar" model="(Model.Pet.PhotoUrl, Model.Pet.Species, Model.Pet.Name, (string?)null)" />
             <div>
                 <strong>@PetSpecies.Emoji(Model.Pet.Species) @Model.Pet.Name</strong>
                 <div class="muted small">@Model.Pet.Species · @Model.Pet.Breed · @Model.Pet.AgeYears años</div>
