@@ -1,11 +1,11 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Groomers.DetailsModel
 @{
-    ViewData["Title"] = Model.Groomer?.BusinessName ?? CatalogLocalizer.Loc("Negocio", "Business");
+    ViewData["Title"] = Model.Groomer?.BusinessName ?? L["Detail_Business"].Value;
 }
 @if (Model.Groomer == null)
 {
-    <div class="empty">@CatalogLocalizer.Loc("Negocio no encontrado.", "Business not found.")</div>
+    <div class="empty">@L["Detail_NotFound"]</div>
 }
 else
 {
@@ -30,7 +30,7 @@ else
                 @if (g.ReviewCount > 0)
                 {
                     <span class="stars">★ @g.Rating.ToString("0.0")</span>
-                    <span>(@g.ReviewCount @CatalogLocalizer.Loc("reseñas", "reviews"))</span>
+                    <span>(@g.ReviewCount @L["Detail_Reviews"])</span>
                 }
                 @if (g.Category != null)
                 {
@@ -44,8 +44,8 @@ else
                 {
                     <span class="badge badge-purple">@PetSpecies.Emoji(s) @PetSpecies.Label(s)</span>
                 }
-                @if (g.AcceptsSeniorPets) { <span class="badge badge-green">@CatalogLocalizer.Loc("Mascotas senior", "Senior pets")</span> }
-                @if (g.AcceptsAnxiousPets) { <span class="badge badge-green">@CatalogLocalizer.Loc("Mascotas ansiosas", "Anxious pets")</span> }
+                @if (g.AcceptsSeniorPets) { <span class="badge badge-green">@L["Detail_SeniorPets"]</span> }
+                @if (g.AcceptsAnxiousPets) { <span class="badge badge-green">@L["Detail_AnxiousPets"]</span> }
             </div>
 
             @if (Model.Amenities.Any())
@@ -54,7 +54,7 @@ else
                     @foreach (var a in Model.Amenities)
                     {
                         <div class="amenity-item">
-                            <span class="amenity-ico">@a.Icon</span>
+                            <span class="amenity-ico">@Model.AmenityIcon(a.Icon)</span>
                             <span>@CatalogLocalizer.Text(a.Label)</span>
                         </div>
                     }
@@ -64,26 +64,26 @@ else
             <div class="quick-actions">
                 @if (!string.IsNullOrEmpty(g.Phone))
                 {
-                    <a href="tel:@g.Phone"><div class="circle">📞</div>@CatalogLocalizer.Loc("Llamar", "Call")</a>
+                    <a href="tel:@g.Phone"><div class="circle">📞</div>@L["Detail_Call"]</a>
                 }
-                <a asp-page="/Chat/Index" asp-route-groomerId="@g.Id" asp-route-returnUrl="@Url.Page("/Groomers/Details", new { id = g.Id })"><div class="circle">💬</div>@CatalogLocalizer.Loc("Mensaje", "Message")</a>
+                <a asp-page="/Chat/Index" asp-route-groomerId="@g.Id" asp-route-returnUrl="@Url.Page("/Groomers/Details", new { id = g.Id })"><div class="circle">💬</div>@L["Detail_Message"]</a>
                 @if (!string.IsNullOrEmpty(g.Address))
                 {
-                    <a href="https://maps.google.com/?q=@Uri.EscapeDataString(g.Address)" target="_blank" rel="noopener"><div class="circle">🗺️</div>@CatalogLocalizer.Loc("Mapa", "Map")</a>
+                    <a href="https://maps.google.com/?q=@Uri.EscapeDataString(g.Address)" target="_blank" rel="noopener"><div class="circle">🗺️</div>@L["Detail_Map"]</a>
                 }
                 @if (!string.IsNullOrEmpty(g.Website))
                 {
-                    <a href="@g.Website" target="_blank" rel="noopener"><div class="circle">🌐</div>Web</a>
+                    <a href="@g.Website" target="_blank" rel="noopener"><div class="circle">🌐</div>@L["Detail_Web"]</a>
                 }
             </div>
 
             @if (!string.IsNullOrWhiteSpace(g.About))
             {
-                <h3 class="section-title" style="margin-top:8px">@CatalogLocalizer.Loc("Sobre nosotros", "About us")</h3>
+                <h3 class="section-title" style="margin-top:8px">@L["Detail_About"]</h3>
                 <p class="muted" style="line-height:1.5">@CatalogLocalizer.Text(g.About)</p>
             }
 
-            <h3 class="section-title">@CatalogLocalizer.Loc("Servicios y precios", "Services & prices")</h3>
+            <h3 class="section-title">@L["Detail_ServicesPrices"]</h3>
             @if (Model.Services.Any())
             {
                 @foreach (var s in Model.Services)
@@ -103,12 +103,12 @@ else
             }
             else
             {
-                <div class="empty">@CatalogLocalizer.Loc("Sin servicios cargados.", "No services listed.")</div>
+                <div class="empty">@L["Detail_NoServices"]</div>
             }
 
             @if (Model.Extras.Any())
             {
-                <h3 class="section-title">@CatalogLocalizer.Loc("Extras disponibles", "Available extras")</h3>
+                <h3 class="section-title">@L["Detail_Extras"]</h3>
                 @foreach (var e in Model.Extras)
                 {
                     <div class="card card-pad" style="margin-bottom:8px;display:flex;justify-content:space-between">
@@ -126,30 +126,30 @@ else
 
             @if (Model.Photos.Any())
             {
-                <h3 class="section-title">@CatalogLocalizer.Loc("Antes y después", "Before & after")</h3>
+                <h3 class="section-title">@L["Detail_BeforeAfter"]</h3>
                 @foreach (var ph in Model.Photos)
                 {
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
                         <div>
-                            <img src="@ph.BeforeUrl" alt="@CatalogLocalizer.Loc("Antes", "Before")" style="border-radius:14px;aspect-ratio:1;object-fit:cover;width:100%" />
-                            <p class="muted small" style="text-align:center;margin:4px 0 0">@CatalogLocalizer.Loc("Antes", "Before")</p>
+                            <img src="@ph.BeforeUrl" alt="@L["Detail_Before"]" style="border-radius:14px;aspect-ratio:1;object-fit:cover;width:100%" />
+                            <p class="muted small" style="text-align:center;margin:4px 0 0">@L["Detail_Before"]</p>
                         </div>
                         <div>
-                            <img src="@ph.AfterUrl" alt="@CatalogLocalizer.Loc("Después", "After")" style="border-radius:14px;aspect-ratio:1;object-fit:cover;width:100%" />
-                            <p class="muted small" style="text-align:center;margin:4px 0 0">@CatalogLocalizer.Loc("Después", "After")</p>
+                            <img src="@ph.AfterUrl" alt="@L["Detail_After"]" style="border-radius:14px;aspect-ratio:1;object-fit:cover;width:100%" />
+                            <p class="muted small" style="text-align:center;margin:4px 0 0">@L["Detail_After"]</p>
                         </div>
                     </div>
                 }
             }
 
-            <h3 class="section-title">@CatalogLocalizer.Loc("Reseñas", "Reviews")</h3>
+            <h3 class="section-title">@L["Detail_ReviewsTitle"]</h3>
             @if (Model.Reviews.Any())
             {
                 <div class="card card-pad" style="margin-bottom:12px;display:flex;gap:16px;align-items:center">
                     <div style="text-align:center">
                         <div style="font-size:2rem;font-weight:900;color:var(--brand)">@g.Rating.ToString("0.0")</div>
                         <div class="stars">★★★★★</div>
-                        <div class="muted small">@g.ReviewCount @CatalogLocalizer.Loc("reseñas", "reviews")</div>
+                        <div class="muted small">@g.ReviewCount @L["Detail_Reviews"]</div>
                     </div>
                     <div style="flex:1">
                         @for (var star = 5; star >= 1; star--)
@@ -176,7 +176,7 @@ else
             }
             else
             {
-                <div class="empty">@CatalogLocalizer.Loc("Aún no hay reseñas.", "No reviews yet.")</div>
+                <div class="empty">@L["Detail_NoReviews"]</div>
             }
         </div>
     </div>

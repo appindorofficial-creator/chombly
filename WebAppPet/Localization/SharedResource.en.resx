@@ -100,6 +100,30 @@
   <data name="Home_BizCtaSub" xml:space="preserve"><value>List it on Chombly and get bookings.</value></data>
   <data name="Home_SeeWelcome" xml:space="preserve"><value>See welcome tour</value></data>
   <data name="Home_FromPrice" xml:space="preserve"><value>From</value></data>
+  <data name="Home_CareTitle" xml:space="preserve"><value>Ongoing care</value></data>
+  <data name="Home_CareSub" xml:space="preserve"><value>Veterinary, Chombly Care, and behavior</value></data>
+  <data name="Brand_Tagline" xml:space="preserve"><value>Pet Care App</value></data>
+  <data name="Type_Mobile" xml:space="preserve"><value>Mobile</value></data>
+  <data name="Type_InHome" xml:space="preserve"><value>In-home</value></data>
+  <data name="Type_Salon" xml:space="preserve"><value>Salon</value></data>
+  <data name="Detail_Business" xml:space="preserve"><value>Business</value></data>
+  <data name="Detail_NotFound" xml:space="preserve"><value>Business not found.</value></data>
+  <data name="Detail_Reviews" xml:space="preserve"><value>reviews</value></data>
+  <data name="Detail_SeniorPets" xml:space="preserve"><value>Senior pets</value></data>
+  <data name="Detail_AnxiousPets" xml:space="preserve"><value>Anxious pets</value></data>
+  <data name="Detail_Call" xml:space="preserve"><value>Call</value></data>
+  <data name="Detail_Message" xml:space="preserve"><value>Message</value></data>
+  <data name="Detail_Map" xml:space="preserve"><value>Map</value></data>
+  <data name="Detail_Web" xml:space="preserve"><value>Web</value></data>
+  <data name="Detail_About" xml:space="preserve"><value>About us</value></data>
+  <data name="Detail_ServicesPrices" xml:space="preserve"><value>Services &amp; prices</value></data>
+  <data name="Detail_NoServices" xml:space="preserve"><value>No services listed.</value></data>
+  <data name="Detail_Extras" xml:space="preserve"><value>Available extras</value></data>
+  <data name="Detail_BeforeAfter" xml:space="preserve"><value>Before &amp; after</value></data>
+  <data name="Detail_Before" xml:space="preserve"><value>Before</value></data>
+  <data name="Detail_After" xml:space="preserve"><value>After</value></data>
+  <data name="Detail_ReviewsTitle" xml:space="preserve"><value>Reviews</value></data>
+  <data name="Detail_NoReviews" xml:space="preserve"><value>No reviews yet.</value></data>
 
   <data name="Profile_GuestTitle" xml:space="preserve"><value>Your Chombly profile</value></data>
   <data name="Profile_GuestSub" xml:space="preserve"><value>Manage pets, bookings and your business here.</value></data>

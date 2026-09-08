@@ -95,4 +95,25 @@ public class DetailsModel : PageModel
         "visita" => "/ visita",
         _ => "/ sesión"
     });
+
+    /// <summary>Convierte iconos tipo slug (paw, stairs) a emoji para la UI.</summary>
+    public string AmenityIcon(string? icon)
+    {
+        if (string.IsNullOrWhiteSpace(icon)) return "✨";
+        var key = icon.Trim().ToLowerInvariant();
+        if (icon.Any(c => c > 127)) return icon; // ya es emoji / unicode
+        return key switch
+        {
+            "one" or "person" or "solo" or "walk" => "🚶",
+            "paw" or "dog" or "pet" => "🐾",
+            "stairs" or "nostairs" => "🪜",
+            "photo" or "camera" => "📷",
+            "cam" or "cctv" => "📹",
+            "yard" or "park" => "🌳",
+            "med" or "meds" or "pill" => "💊",
+            "transport" or "car" => "🚗",
+            "staff" or "24h" => "🕒",
+            _ => "✨"
+        };
+    }
 }

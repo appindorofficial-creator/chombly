@@ -106,6 +106,30 @@
   <data name="Home_BizCtaSub" xml:space="preserve"><value>Publícalo en Chombly y recibe reservas.</value></data>
   <data name="Home_SeeWelcome" xml:space="preserve"><value>Ver presentación</value></data>
   <data name="Home_FromPrice" xml:space="preserve"><value>Desde</value></data>
+  <data name="Home_CareTitle" xml:space="preserve"><value>Cuidado continuo</value></data>
+  <data name="Home_CareSub" xml:space="preserve"><value>Veterinaria, Chombly Care y comportamiento</value></data>
+  <data name="Brand_Tagline" xml:space="preserve"><value>Cuidado de mascotas</value></data>
+  <data name="Type_Mobile" xml:space="preserve"><value>Móvil</value></data>
+  <data name="Type_InHome" xml:space="preserve"><value>A domicilio</value></data>
+  <data name="Type_Salon" xml:space="preserve"><value>Salón</value></data>
+  <data name="Detail_Business" xml:space="preserve"><value>Negocio</value></data>
+  <data name="Detail_NotFound" xml:space="preserve"><value>Negocio no encontrado.</value></data>
+  <data name="Detail_Reviews" xml:space="preserve"><value>reseñas</value></data>
+  <data name="Detail_SeniorPets" xml:space="preserve"><value>Mascotas senior</value></data>
+  <data name="Detail_AnxiousPets" xml:space="preserve"><value>Mascotas ansiosas</value></data>
+  <data name="Detail_Call" xml:space="preserve"><value>Llamar</value></data>
+  <data name="Detail_Message" xml:space="preserve"><value>Mensaje</value></data>
+  <data name="Detail_Map" xml:space="preserve"><value>Mapa</value></data>
+  <data name="Detail_Web" xml:space="preserve"><value>Web</value></data>
+  <data name="Detail_About" xml:space="preserve"><value>Sobre nosotros</value></data>
+  <data name="Detail_ServicesPrices" xml:space="preserve"><value>Servicios y precios</value></data>
+  <data name="Detail_NoServices" xml:space="preserve"><value>Sin servicios cargados.</value></data>
+  <data name="Detail_Extras" xml:space="preserve"><value>Extras disponibles</value></data>
+  <data name="Detail_BeforeAfter" xml:space="preserve"><value>Antes y después</value></data>
+  <data name="Detail_Before" xml:space="preserve"><value>Antes</value></data>
+  <data name="Detail_After" xml:space="preserve"><value>Después</value></data>
+  <data name="Detail_ReviewsTitle" xml:space="preserve"><value>Reseñas</value></data>
+  <data name="Detail_NoReviews" xml:space="preserve"><value>Aún no hay reseñas.</value></data>
 
   <data name="Profile_GuestTitle" xml:space="preserve"><value>Tu perfil Chombly</value></data>
   <data name="Profile_GuestSub" xml:space="preserve"><value>Gestiona mascotas, citas y tu negocio desde aquí.</value></data>

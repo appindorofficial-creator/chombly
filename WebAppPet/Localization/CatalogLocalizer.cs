@@ -23,6 +23,9 @@ public static class CatalogLocalizer
         ["Consulta general"] = "General checkup",
         ["Chequeo general"] = "General checkup",
         ["Vacunas"] = "Vaccines",
+        ["Urgencias"] = "Emergencies",
+        ["Sesión de comportamiento"] = "Behavior session",
+        ["Orientación internacional 30 min"] = "International orientation 30 min",
         ["Noche estándar"] = "Standard night",
         ["Noche premium"] = "Premium night",
         ["Día completo"] = "Full day",
@@ -135,6 +138,8 @@ public static class CatalogLocalizer
         // Pet defaults / free-text stored in ES
         ["Amigable"] = "Friendly",
         ["Mestizo / mixto"] = "Mixed / mix",
+        ["Paseos individuales con foto del paseo. Acepta perros grandes. Sin escaleras."] =
+            "Individual walks with a walk photo. Accepts large dogs. No stairs.",
     };
 
     public static string Text(string? text)

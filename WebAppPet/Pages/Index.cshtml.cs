@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -9,8 +10,13 @@ namespace WebAppPet.Pages;
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
+    private readonly IStringLocalizer<SharedResource> _L;
 
-    public IndexModel(AppDbContext db) => _db = db;
+    public IndexModel(AppDbContext db, IStringLocalizer<SharedResource> L)
+    {
+        _db = db;
+        _L = L;
+    }
 
     public string City { get; set; } = string.Empty;
     public List<ServiceCategory> Categories { get; set; } = new();
@@ -54,6 +60,7 @@ public class IndexModel : PageModel
 
         if (PopularServices.Count == 0)
         {
+            // Claves en español (valor en BD); CatalogLocalizer.Text las traduce en UI.
             PopularServices = new List<string>
             {
                 "Baño y cepillado",
@@ -68,8 +75,8 @@ public class IndexModel : PageModel
 
     public string TypeLabel(GroomerType t) => t switch
     {
-        GroomerType.Mobile => CatalogLocalizer.Loc("Móvil", "Mobile"),
-        GroomerType.InHome => CatalogLocalizer.Loc("A domicilio", "In-home"),
-        _ => CatalogLocalizer.Loc("Salón", "Salon")
+        GroomerType.Mobile => _L["Type_Mobile"].Value,
+        GroomerType.InHome => _L["Type_InHome"].Value,
+        _ => _L["Type_Salon"].Value
     };
 }
