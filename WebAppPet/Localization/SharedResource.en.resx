@@ -228,6 +228,12 @@
   <data name="Pets_Size" xml:space="preserve"><value>Size</value></data>
   <data name="Pets_Temperament" xml:space="preserve"><value>Temperament</value></data>
   <data name="Pets_TemperamentDefault" xml:space="preserve"><value>Friendly</value></data>
+  <data name="Pets_TemperamentSelect" xml:space="preserve"><value>Choose temperament</value></data>
+  <data name="Pets_TemperamentRequired" xml:space="preserve"><value>Select a temperament</value></data>
+  <data name="Pets_BreedSelect" xml:space="preserve"><value>Choose breed</value></data>
+  <data name="Pets_BreedOther" xml:space="preserve"><value>Other breed</value></data>
+  <data name="Pets_BreedOtherPlaceholder" xml:space="preserve"><value>Enter the breed</value></data>
+  <data name="Pets_AnxiousHint" xml:space="preserve"><value>Mark if they need special handling when booking (different from temperament).</value></data>
   <data name="Pets_BreedDefault" xml:space="preserve"><value>Mixed / mix</value></data>
   <data name="Pets_Senior" xml:space="preserve"><value>Senior</value></data>
   <data name="Pets_NameRequired" xml:space="preserve"><value>Name is required</value></data>

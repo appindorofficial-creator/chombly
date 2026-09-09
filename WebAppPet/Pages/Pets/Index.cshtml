@@ -32,8 +32,8 @@
                 <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
                 <div class="pet-info">
                     <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                    <div class="muted small">@PetSpecies.Label(p.Species) · @CatalogLocalizer.Text(p.Breed) · @Model.SizeLabel(p.Size) · @p.AgeYears @L["Pets_Years"]</div>
-                    <div class="muted small">@CatalogLocalizer.Text(p.Temperament)</div>
+                    <div class="muted small">@PetSpecies.Label(p.Species) · @PetCatalog.DisplayBreed(p.Species, p.Breed) · @Model.SizeLabel(p.Size) · @p.AgeYears @L["Pets_Years"]</div>
+                    <div class="muted small">@PetCatalog.DisplayTemperament(p.Temperament)</div>
                     @if (p.IsSenior || p.IsAnxious || p.HasSpecialNeeds)
                     {
                         <div class="chip-row" style="margin:6px 0 0">

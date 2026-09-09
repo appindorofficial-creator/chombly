@@ -42,6 +42,10 @@ public class CreateModel : PageModel
     [BindProperty, MaxLength(80)]
     public string? Breed { get; set; }
 
+    /// <summary>When breed select is "other", free-text breed.</summary>
+    [BindProperty, MaxLength(80)]
+    public string? CustomBreed { get; set; }
+
     [BindProperty]
     public int? AgeYears { get; set; }
 
@@ -72,6 +76,8 @@ public class CreateModel : PageModel
     public IReadOnlyList<(string Value, string Label, string LabelEn, string Emoji, string BreedHint, string BreedHintEn)> SpeciesOptions =>
         PetSpecies.All;
 
+    public IReadOnlyList<(string Value, string LabelEn)> TemperamentOptions => PetCatalog.Temperaments;
+
     public List<(PetSize Value, string Label, string Emoji)> SizeOptions { get; private set; } = new();
 
     public IActionResult OnGet()
@@ -79,7 +85,7 @@ public class CreateModel : PageModel
         if (_auth.CurrentUserId is null)
             return RedirectToPage("/Account/Login");
         FillSizeOptions();
-        Temperament = _L["Pets_TemperamentDefault"].Value;
+        Species = PetSpecies.Dog;
         return Page();
     }
 
@@ -89,8 +95,7 @@ public class CreateModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        // Drop framework English binder messages; we re-validate with SharedResource.
-        ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size));
+        ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size), nameof(Temperament), nameof(Breed), nameof(CustomBreed));
 
         if (string.IsNullOrWhiteSpace(Name))
             ModelState.AddModelError(nameof(Name), _L["Pets_NameRequired"].Value);
@@ -108,26 +113,36 @@ public class CreateModel : PageModel
         else if (age < 0 || age > 40)
             ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRange"].Value);
 
+        if (string.IsNullOrWhiteSpace(Temperament)
+            || !PetCatalog.Temperaments.Any(t => t.Value.Equals(Temperament, StringComparison.OrdinalIgnoreCase)))
+            ModelState.AddModelError(nameof(Temperament), _L["Pets_TemperamentRequired"].Value);
+
         var photoError = PetPhotoStorage.Validate(PhotoFile);
         if (photoError is not null)
             ModelState.AddModelError(nameof(PhotoFile), _L[photoError].Value);
 
         if (!ModelState.IsValid) return Page();
 
-        // Guardar el valor canónico (ES) en BD; la UI traduce con PetSpecies.Label
         var species = Species.Trim();
         var breedDefault = _L["Pets_BreedDefault"].Value;
         string breed;
         if (species == PetSpecies.Other)
         {
-            // Custom animal name is required for "Otro"; store it as Breed for display.
             breed = CustomType!.Trim();
+        }
+        else if (string.Equals(Breed, PetCatalog.OtherBreed, StringComparison.OrdinalIgnoreCase))
+        {
+            breed = string.IsNullOrWhiteSpace(CustomBreed) ? breedDefault : CustomBreed.Trim();
+        }
+        else if (!string.IsNullOrWhiteSpace(Breed)
+                 && PetCatalog.BreedsFor(species).Any(b => b.Value.Equals(Breed, StringComparison.OrdinalIgnoreCase)))
+        {
+            breed = Breed.Trim();
         }
         else
         {
             breed = string.IsNullOrWhiteSpace(Breed) ? breedDefault : Breed.Trim();
         }
-        var temperamentDefault = _L["Pets_TemperamentDefault"].Value;
 
         string? photoUrl = null;
         if (PhotoFile is { Length: > 0 })
@@ -139,6 +154,9 @@ public class CreateModel : PageModel
             photoUrl = PhotoUrl.Trim();
         }
 
+        var temperament = PetCatalog.Temperaments
+            .First(t => t.Value.Equals(Temperament, StringComparison.OrdinalIgnoreCase)).Value;
+
         _db.Pets.Add(new Pet
         {
             OwnerId = userId,
@@ -147,7 +165,7 @@ public class CreateModel : PageModel
             Breed = breed,
             AgeYears = age!.Value,
             Size = Size,
-            Temperament = string.IsNullOrWhiteSpace(Temperament) ? temperamentDefault : Temperament.Trim(),
+            Temperament = temperament,
             PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species),
             IsSenior = IsSenior,
             IsAnxious = IsAnxious,

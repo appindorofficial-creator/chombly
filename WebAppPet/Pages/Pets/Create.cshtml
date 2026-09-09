@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = L["Pets_Add"].Value;
     ViewData["HideNav"] = true;
-    var hint = PetSpecies.BreedHint(Model.Species);
+    var en = CultureCookie.IsEnglish();
 }
 <div class="page-header">
     <a class="back-btn" asp-page="./Index">←</a>
@@ -44,8 +44,15 @@
         </div>
 
         <div class="form-group" id="breed-group" @(Model.Species == PetSpecies.Other ? "hidden" : null)>
-            <label>@L["Pets_Breed"]</label>
-            <input class="form-control" asp-for="Breed" maxlength="80" id="breed-input" placeholder="@hint" />
+            <label for="breed-select">@L["Pets_Breed"]</label>
+            <select class="form-control" id="breed-select" name="Breed"
+                    data-msg-required="@L["Pets_BreedSelect"]">
+                <option value="">@L["Pets_BreedSelect"]</option>
+            </select>
+            <input class="form-control" asp-for="CustomBreed" maxlength="80" id="custom-breed-input"
+                   placeholder="@L["Pets_BreedOtherPlaceholder"]" hidden style="margin-top:8px" />
+            <span asp-validation-for="Breed" class="field-error"></span>
+            <span asp-validation-for="CustomBreed" class="field-error"></span>
         </div>
 
         <div class="form-group">
@@ -70,8 +77,16 @@
         </div>
 
         <div class="form-group">
-            <label>@L["Pets_Temperament"]</label>
-            <input class="form-control" asp-for="Temperament" placeholder="@L["Pets_TemperamentDefault"]" />
+            <label for="temperament-select">@L["Pets_Temperament"]</label>
+            <select class="form-control" asp-for="Temperament" id="temperament-select" required
+                    data-msg-required="@L["Pets_TemperamentRequired"]">
+                <option value="">@L["Pets_TemperamentSelect"]</option>
+                @foreach (var t in Model.TemperamentOptions)
+                {
+                    <option value="@t.Value">@PetCatalog.Display(t.Value, t.LabelEn)</option>
+                }
+            </select>
+            <span asp-validation-for="Temperament" class="field-error"></span>
         </div>
 
         <div class="form-group pet-photo-field">
@@ -96,7 +111,10 @@
             <input asp-for="IsSenior" type="checkbox" />
         </div>
         <div class="toggle-row">
-            <span>@L["Pets_Anxious"]</span>
+            <span>
+                @L["Pets_Anxious"]
+                <span class="field-hint" style="display:block;font-weight:400;margin-top:2px">@L["Pets_AnxiousHint"]</span>
+            </span>
             <input asp-for="IsAnxious" type="checkbox" />
         </div>
         <div class="toggle-row">
@@ -115,30 +133,77 @@
 
 <script>
 (() => {
-  const hints = {
-@foreach (var sp in Model.SpeciesOptions)
+  const breedsBySpecies = {
+@foreach (var sp in Model.SpeciesOptions.Where(s => s.Value != PetSpecies.Other))
 {
-    @:    "@sp.Value": "@Html.Raw((CultureCookie.IsEnglish() ? sp.BreedHintEn : sp.BreedHint).Replace("\"", "\\\""))",
+    var list = PetCatalog.BreedsFor(sp.Value);
+    @:    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sp.Value)): [
+    foreach (var b in list)
+    {
+    @:      { value: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(b.Value)), label: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(PetCatalog.Display(b.Value, b.LabelEn))) },
+    }
+    @:    ],
 }
   };
-  const breed = document.getElementById('breed-input');
+  const otherBreedValue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(PetCatalog.OtherBreed));
+  const otherBreedLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pets_BreedOther"].Value));
+  const selectedBreed = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Breed ?? ""));
+  const breedSelect = document.getElementById('breed-select');
   const breedGroup = document.getElementById('breed-group');
+  const customBreed = document.getElementById('custom-breed-input');
   const otherGroup = document.getElementById('other-type-group');
   const customType = document.getElementById('custom-type-input');
   const otherValue = "@PetSpecies.Other";
+
+  function fillBreeds(species, keepValue) {
+    if (!breedSelect) return;
+    const list = breedsBySpecies[species] || [];
+    const current = keepValue || '';
+    breedSelect.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pets_BreedSelect"].Value));
+    breedSelect.appendChild(placeholder);
+    const seen = new Set();
+    list.forEach(function (b) {
+      const key = String(b.value || '').trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      const opt = document.createElement('option');
+      opt.value = b.value;
+      opt.textContent = b.label;
+      if (b.value === current) opt.selected = true;
+      breedSelect.appendChild(opt);
+    });
+    const otherOpt = document.createElement('option');
+    otherOpt.value = otherBreedValue;
+    otherOpt.textContent = otherBreedLabel;
+    if (current === otherBreedValue) otherOpt.selected = true;
+    breedSelect.appendChild(otherOpt);
+    syncCustomBreed();
+  }
+
+  function syncCustomBreed() {
+    if (!customBreed || !breedSelect) return;
+    const show = breedSelect.value === otherBreedValue;
+    customBreed.hidden = !show;
+    if (!show) customBreed.value = '';
+  }
 
   function syncOther(species) {
     const isOther = species === otherValue;
     if (otherGroup) otherGroup.hidden = !isOther;
     if (breedGroup) breedGroup.hidden = isOther;
     if (!isOther && customType) customType.value = '';
+    if (!isOther) fillBreeds(species, selectedBreed);
   }
+
+  breedSelect?.addEventListener('change', syncCustomBreed);
 
   document.querySelectorAll('input[name="Species"]').forEach(r => {
     r.addEventListener('change', () => {
       document.querySelectorAll('.species-opt').forEach(el => el.classList.remove('selected'));
       r.closest('.species-opt')?.classList.add('selected');
-      if (breed) breed.placeholder = hints[r.value] || '';
       syncOther(r.value);
     });
   });
