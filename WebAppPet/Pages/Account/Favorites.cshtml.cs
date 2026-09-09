@@ -27,7 +27,7 @@ public class FavoritesModel : PageModel
 
         Groomers = await _db.Favorites
             .Where(f => f.UserId == userId)
-            .Include(f => f.Groomer)
+            .Include(f => f.Groomer)!.ThenInclude(g => g.Category)
             .Select(f => f.Groomer)
             .ToListAsync();
 

@@ -147,34 +147,38 @@
     {
         @foreach (var g in Model.Featured)
         {
-            <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-                <img src="@(g.ImageUrl ?? "/images/categories/cat-grooming.png")" alt="@g.BusinessName" />
-                <div class="info">
-                    <h3>@g.BusinessName</h3>
-                    <div class="meta-row">
-                        @if (g.Category != null)
-                        {
-                            <span class="badge badge-purple">@g.Category.Emoji @g.Category.DisplayName()</span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-purple">@Model.TypeLabel(g.Type)</span>
-                        }
-                        @if (g.ReviewCount > 0)
-                        {
-                            <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
-                            <span>(@g.ReviewCount)</span>
-                        }
+            var isFav = Model.FavoriteIds.Contains(g.Id);
+            <div class="groomer-card-wrap">
+                <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
+                    <img src="@(g.ImageUrl ?? "/images/categories/cat-grooming.png")" alt="@g.BusinessName" />
+                    <div class="info">
+                        <h3>@g.BusinessName</h3>
+                        <div class="meta-row">
+                            @if (g.Category != null)
+                            {
+                                <span class="badge badge-purple">@g.Category.Emoji @g.Category.DisplayName()</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-purple">@Model.TypeLabel(g.Type)</span>
+                            }
+                            @if (g.ReviewCount > 0)
+                            {
+                                <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
+                                <span>(@g.ReviewCount)</span>
+                            }
+                        </div>
+                        <div class="meta-row">
+                            <span>@g.City</span>
+                            @if (g.StartingPrice > 0)
+                            {
+                                <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
+                            }
+                        </div>
                     </div>
-                    <div class="meta-row">
-                        <span>@g.City</span>
-                        @if (g.StartingPrice > 0)
-                        {
-                            <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
-                        }
-                    </div>
-                </div>
-            </a>
+                </a>
+                <partial name="_FavoriteHeart" model="(g.Id, isFav, (string?)null)" />
+            </div>
         }
     }
     else

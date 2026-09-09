@@ -209,6 +209,9 @@
 
   <data name="Favorites_Title" xml:space="preserve"><value>Favorite businesses</value></data>
   <data name="Favorites_Empty" xml:space="preserve"><value>You don't have favorites yet. Save businesses from their profile.</value></data>
+  <data name="Favorites_Add" xml:space="preserve"><value>Save to favorites</value></data>
+  <data name="Favorites_Remove" xml:space="preserve"><value>Remove from favorites</value></data>
+  <data name="Favorites_LoginRequired" xml:space="preserve"><value>Sign in to save favorites.</value></data>
 
   <data name="Pets_Title" xml:space="preserve"><value>My pets</value></data>
   <data name="Pets_Add" xml:space="preserve"><value>Add pet</value></data>

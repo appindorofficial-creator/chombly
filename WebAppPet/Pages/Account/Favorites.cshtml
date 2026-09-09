@@ -14,15 +14,23 @@
     }
     @foreach (var g in Model.Groomers)
     {
-        <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-            <img src="@g.ImageUrl" alt="@g.BusinessName" />
-            <div class="info">
-                <h3>@g.BusinessName</h3>
-                <div class="meta-row">
-                    <span class="stars">★ @g.Rating.ToString("0.0")</span>
-                    <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")</span>
+        var img = !string.IsNullOrWhiteSpace(g.ImageUrl)
+            ? g.ImageUrl!
+            : !string.IsNullOrWhiteSpace(g.Category?.Slug)
+                ? $"/images/categories/cat-{g.Category!.Slug}.png"
+                : "/images/pet-other.svg";
+        <div class="groomer-card-wrap">
+            <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
+                <img src="@img" alt="@g.BusinessName" onerror="this.onerror=null;this.src='/images/pet-other.svg';" />
+                <div class="info">
+                    <h3>@g.BusinessName</h3>
+                    <div class="meta-row">
+                        <span class="stars">★ @g.Rating.ToString("0.0")</span>
+                        <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")</span>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
+            <partial name="_FavoriteHeart" model="@((g.Id, true, "fav-remove-card"))" />
+        </div>
     }
 </main>

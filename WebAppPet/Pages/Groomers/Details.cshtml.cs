@@ -73,21 +73,6 @@ public class DetailsModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostToggleFavoriteAsync(int id)
-    {
-        if (_auth.CurrentUserId is not int userId)
-            return RedirectToPage("/Account/Login");
-
-        var fav = await _db.Favorites.FirstOrDefaultAsync(f => f.UserId == userId && f.GroomerId == id);
-        if (fav == null)
-            _db.Favorites.Add(new Favorite { UserId = userId, GroomerId = id });
-        else
-            _db.Favorites.Remove(fav);
-
-        await _db.SaveChangesAsync();
-        return RedirectToPage(new { id, service = Service });
-    }
-
     public string UnitLabel(string? billingUnit) => CatalogLocalizer.Text(billingUnit switch
     {
         "noche" => "/ noche",

@@ -92,44 +92,48 @@
     @foreach (var item in Model.Results)
     {
         var g = item.Business;
-        <a class="groomer-card" asp-page="./Details" asp-route-id="@g.Id" asp-route-service="@Model.Service">
-            <img src="@(g.ImageUrl ?? "/images/pet-other.svg")" alt="@g.BusinessName" />
-            <div class="info">
-                <h3>@g.BusinessName</h3>
-                <div class="meta-row">
-                    @if (g.Category != null)
+        var isFav = Model.FavoriteIds.Contains(g.Id);
+        <div class="groomer-card-wrap">
+            <a class="groomer-card" asp-page="./Details" asp-route-id="@g.Id" asp-route-service="@Model.Service">
+                <img src="@(g.ImageUrl ?? "/images/pet-other.svg")" alt="@g.BusinessName" />
+                <div class="info">
+                    <h3>@g.BusinessName</h3>
+                    <div class="meta-row">
+                        @if (g.Category != null)
+                        {
+                            <span class="badge badge-purple">@g.Category.DisplayName()</span>
+                        }
+                        @if (g.ReviewCount > 0)
+                        {
+                            <span class="stars">★ @g.Rating.ToString("0.0")</span>
+                            <span>(@g.ReviewCount)</span>
+                        }
+                    </div>
+                    <div class="meta-row species-row">
+                        @foreach (var s in g.AcceptedSpeciesList.Take(4))
+                        {
+                            <span class="species-mini" title="@PetSpecies.Label(s)">@PetSpecies.Emoji(s)</span>
+                        }
+                    </div>
+                    <div class="meta-row meta-price">
+                        <span>@(item.DistanceLabel ?? (string.IsNullOrEmpty(g.City) ? g.Address : g.City))</span>
+                        @if (g.StartingPrice > 0)
+                        {
+                            <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
+                        }
+                    </div>
+                    @if (item.AvailableToday)
                     {
-                        <span class="badge badge-purple">@g.Category.DisplayName()</span>
+                        <span class="badge badge-green">@L["Search_AvailableToday"]</span>
                     }
-                    @if (g.ReviewCount > 0)
+                    else
                     {
-                        <span class="stars">★ @g.Rating.ToString("0.0")</span>
-                        <span>(@g.ReviewCount)</span>
+                        <span class="badge badge-gray">@L["Search_NotAvailableToday"]</span>
                     }
                 </div>
-                <div class="meta-row species-row">
-                    @foreach (var s in g.AcceptedSpeciesList.Take(4))
-                    {
-                        <span class="species-mini" title="@PetSpecies.Label(s)">@PetSpecies.Emoji(s)</span>
-                    }
-                </div>
-                <div class="meta-row meta-price">
-                    <span>@(item.DistanceLabel ?? (string.IsNullOrEmpty(g.City) ? g.Address : g.City))</span>
-                    @if (g.StartingPrice > 0)
-                    {
-                        <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
-                    }
-                </div>
-                @if (item.AvailableToday)
-                {
-                    <span class="badge badge-green">@L["Search_AvailableToday"]</span>
-                }
-                else
-                {
-                    <span class="badge badge-gray">@L["Search_NotAvailableToday"]</span>
-                }
-            </div>
-        </a>
+            </a>
+            <partial name="_FavoriteHeart" model="(g.Id, isFav, (string?)null)" />
+        </div>
     }
 
     @if (!Model.Results.Any())

@@ -372,12 +372,69 @@
     });
   }
 
+  function bindFavoriteButtons(root) {
+    (root || document).querySelectorAll('[data-favorite-toggle]').forEach(function (btn) {
+      if (btn.dataset.chFavBound === '1') return;
+      btn.dataset.chFavBound = '1';
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (btn.classList.contains('is-busy')) return;
+
+        var groomerId = btn.getAttribute('data-groomer-id');
+        if (!groomerId) return;
+
+        btn.classList.add('is-busy');
+        var body = new URLSearchParams();
+        body.set('groomerId', groomerId);
+
+        fetch('/Account/ToggleFavorite?format=json', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: body,
+          credentials: 'same-origin'
+        }).then(function (res) {
+          if (res.status === 401) {
+            var next = '/Groomers/Details/' + encodeURIComponent(groomerId);
+            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(next);
+            return null;
+          }
+          if (!res.ok) throw new Error('fav');
+          return res.json();
+        }).then(function (data) {
+          if (!data || !data.ok) return;
+          var on = !!data.isFavorite;
+          btn.classList.toggle('is-on', on);
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          var label = on
+            ? (btn.getAttribute('data-label-remove') || 'Remove')
+            : (btn.getAttribute('data-label-add') || 'Save');
+          btn.setAttribute('aria-label', label);
+          btn.setAttribute('title', label);
+          if (btn.getAttribute('data-remove-card') === '1' && !on) {
+            var wrap = btn.closest('.groomer-card-wrap');
+            if (wrap) wrap.remove();
+          }
+        }).catch(function () {
+          /* keep previous state */
+        }).finally(function () {
+          btn.classList.remove('is-busy');
+        });
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
     bindLocalizedValidation(document);
     restoreFlowScroll();
     bindConfirmForms(document);
     bindAcceptTerms(document);
+    bindFavoriteButtons(document);
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;
@@ -385,4 +442,5 @@
   window.ChomblyConfirm = openConfirm;
   window.ChomblyBindConfirmForms = bindConfirmForms;
   window.ChomblyBindAcceptTerms = bindAcceptTerms;
+  window.ChomblyBindFavoriteButtons = bindFavoriteButtons;
 })();

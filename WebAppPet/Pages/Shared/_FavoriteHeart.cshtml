@@ -1,0 +1,19 @@
+@model (int GroomerId, bool IsFavorite, string? CssClass)
+@{
+    var css = string.IsNullOrWhiteSpace(Model.CssClass) ? "fav-btn" : $"fav-btn {Model.CssClass}";
+    var label = Model.IsFavorite ? L["Favorites_Remove"].Value : L["Favorites_Add"].Value;
+}
+<button type="button"
+        class="@css@(Model.IsFavorite ? " is-on" : "")"
+        data-favorite-toggle
+        data-groomer-id="@Model.GroomerId"
+        data-label-add="@L["Favorites_Add"]"
+        data-label-remove="@L["Favorites_Remove"]"
+        data-remove-card="@(Model.CssClass?.Contains("fav-remove-card") == true ? "1" : "0")"
+        aria-pressed="@(Model.IsFavorite ? "true" : "false")"
+        aria-label="@label"
+        title="@label">
+    <svg class="fav-ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+</button>

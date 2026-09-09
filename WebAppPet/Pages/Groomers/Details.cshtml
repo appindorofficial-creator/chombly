@@ -21,10 +21,7 @@ else
                title="@L["Search_Filters"]">
                 <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5h18l-7 8v5l-4 2v-7L3 5z"/></svg>
             </a>
-            <form method="post" asp-page-handler="ToggleFavorite" style="display:inline">
-                <input type="hidden" name="id" value="@g.Id" />
-                <button type="submit" class="icon-btn" title="@L["Profile_Favorites"]" aria-label="@L["Profile_Favorites"]">@(Model.IsFavorite ? "❤️" : "🤍")</button>
-            </form>
+            <partial name="_FavoriteHeart" model="(g.Id, Model.IsFavorite, (string?)null)" />
         </div>
     </div>
     <div class="detail-body">

@@ -54,6 +54,7 @@ public class IndexModel : PageModel
     public List<ServiceCategory> Categories { get; set; } = new();
     public List<BusinessCardVm> Results { get; set; } = new();
     public bool HasUserLocation { get; set; }
+    public HashSet<int> FavoriteIds { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -75,6 +76,12 @@ public class IndexModel : PageModel
                 userLng = user.Longitude;
                 HasUserLocation = true;
             }
+
+            FavoriteIds = (await _db.Favorites.AsNoTracking()
+                    .Where(f => f.UserId == uid)
+                    .Select(f => f.GroomerId)
+                    .ToListAsync())
+                .ToHashSet();
         }
 
         var query = _db.Groomers

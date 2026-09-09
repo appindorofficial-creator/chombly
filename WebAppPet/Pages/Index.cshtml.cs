@@ -4,17 +4,20 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
+using WebAppPet.Services;
 
 namespace WebAppPet.Pages;
 
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
+    private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public IndexModel(AppDbContext db, IStringLocalizer<SharedResource> L)
+    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
     {
         _db = db;
+        _auth = auth;
         _L = L;
     }
 
@@ -22,6 +25,7 @@ public class IndexModel : PageModel
     public List<ServiceCategory> Categories { get; set; } = new();
     public List<GroomerProfile> Featured { get; set; } = new();
     public List<string> PopularServices { get; set; } = new();
+    public HashSet<int> FavoriteIds { get; set; } = new();
 
     public async Task OnGetAsync(string? city)
     {
@@ -48,6 +52,15 @@ public class IndexModel : PageModel
                 .ThenBy(g => g.BusinessName)
                 .Take(6)
                 .ToListAsync();
+        }
+
+        if (_auth.CurrentUserId is int uid)
+        {
+            FavoriteIds = (await _db.Favorites.AsNoTracking()
+                    .Where(f => f.UserId == uid)
+                    .Select(f => f.GroomerId)
+                    .ToListAsync())
+                .ToHashSet();
         }
 
         PopularServices = await _db.Services
