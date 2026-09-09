@@ -18,12 +18,19 @@ public class NotificationsModel : PageModel
         _auth = auth;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    public string BackHref { get; private set; } = "/Account/Profile";
+
     public List<AppNotification> Items { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is not int userId)
-            return RedirectToPage("/Account/Login");
+            return RedirectToPage("/Account/Login", new { returnUrl = BuildLoginReturn() });
+
+        BackHref = ResolveBackHref();
 
         Items = await _db.Notifications
             .Where(n => n.UserId == userId)
@@ -35,5 +42,31 @@ public class NotificationsModel : PageModel
         await _db.SaveChangesAsync();
 
         return Page();
+    }
+
+    private string BuildLoginReturn()
+    {
+        var path = "/Account/Notifications";
+        if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+            path += "?returnUrl=" + Uri.EscapeDataString(ReturnUrl);
+        return path;
+    }
+
+    private string ResolveBackHref()
+    {
+        if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+            return ReturnUrl!;
+
+        var referer = Request.Headers.Referer.ToString();
+        if (Uri.TryCreate(referer, UriKind.Absolute, out var uri) &&
+            string.Equals(uri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase))
+        {
+            var path = uri.PathAndQuery;
+            if (!path.StartsWith("/Account/Notifications", StringComparison.OrdinalIgnoreCase) &&
+                Url.IsLocalUrl(path))
+                return path;
+        }
+
+        return Url.Page("/Account/Profile") ?? "/Account/Profile";
     }
 }

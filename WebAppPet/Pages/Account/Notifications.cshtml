@@ -1,16 +1,16 @@
 @page
 @model WebAppPet.Pages.Account.NotificationsModel
 @{
-    ViewData["Title"] = "Notificaciones";
+    ViewData["Title"] = L["Profile_Notifications"].Value;
 }
 <div class="page-header">
-    <a class="back-btn" asp-page="/Account/Profile">←</a>
-    <h1>Notificaciones</h1>
+    <a class="back-btn" href="@Model.BackHref">←</a>
+    <h1>@L["Profile_Notifications"]</h1>
 </div>
 <main class="app-main">
     @if (!Model.Items.Any())
     {
-        <div class="empty">No tienes notificaciones.</div>
+        <div class="empty">@CatalogLocalizer.Loc("No tienes notificaciones.", "You have no notifications.")</div>
     }
     else
     {
