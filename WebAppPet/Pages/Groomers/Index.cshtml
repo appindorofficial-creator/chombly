@@ -145,15 +145,49 @@
   if (!btn || !navigator.geolocation) return;
   const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
   const failMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Search_LocationFail"].Value));
+
+  function reverseCity(lat, lng) {
+    return new Promise(function (resolve) {
+      if (!(window.google && google.maps && google.maps.Geocoder)) {
+        resolve(null);
+        return;
+      }
+      try {
+        new google.maps.Geocoder().geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
+          if (status !== 'OK' || !results || !results[0]) {
+            resolve(null);
+            return;
+          }
+          var comps = results[0].address_components || [];
+          var city = '', state = '';
+          comps.forEach(function (c) {
+            var t = c.types || [];
+            if (t.indexOf('locality') >= 0) city = c.long_name;
+            if (t.indexOf('sublocality') >= 0 && !city) city = c.long_name;
+            if (t.indexOf('administrative_area_level_1') >= 0) state = c.short_name;
+          });
+          resolve([city, state].filter(Boolean).join(', ') || null);
+        });
+      } catch (_) {
+        resolve(null);
+      }
+    });
+  }
+
   btn.addEventListener('click', () => {
     navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const city = await reverseCity(lat, lng);
       const body = new URLSearchParams();
-      body.set('lat', pos.coords.latitude);
-      body.set('lng', pos.coords.longitude);
+      body.set('lat', String(lat));
+      body.set('lng', String(lng));
+      if (city) body.set('city', city);
       await fetch('/Account/Location', {
         method: 'POST',
         headers: { 'RequestVerificationToken': token || '', 'Content-Type': 'application/x-www-form-urlencoded' },
-        body
+        body,
+        credentials: 'same-origin'
       });
       location.reload();
     }, () => alert(failMsg));

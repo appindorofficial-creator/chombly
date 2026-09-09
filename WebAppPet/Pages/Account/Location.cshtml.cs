@@ -20,10 +20,13 @@ public class LocationModel : PageModel
     }
 
     /// <summary>
-    /// Guarda lat/lng del navegador. Usa string + InvariantCulture para evitar 400
-    /// por model binding cuando la cultura de la request es "es" (coma decimal).
+    /// Guarda lat/lng (y ciudad opcional) del navegador. Usa string + InvariantCulture
+    /// para evitar 400 por model binding cuando la cultura de la request es "es".
     /// </summary>
-    public async Task<IActionResult> OnPostAsync([FromForm] string? lat, [FromForm] string? lng)
+    public async Task<IActionResult> OnPostAsync(
+        [FromForm] string? lat,
+        [FromForm] string? lng,
+        [FromForm] string? city)
     {
         if (_auth.CurrentUserId is not int userId)
             return new JsonResult(new { ok = false, error = "login" }) { StatusCode = 401 };
@@ -39,16 +42,24 @@ public class LocationModel : PageModel
         user.Latitude = latitude;
         user.Longitude = longitude;
         user.LocationUpdatedAt = DateTime.UtcNow;
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            var trimmed = city.Trim();
+            if (trimmed.Length > 120) trimmed = trimmed[..120];
+            user.City = trimmed;
+        }
+
         await _db.SaveChangesAsync();
 
-        return new JsonResult(new { ok = true });
+        var state = GeoHelper.ResolveUsState(user.City, latitude, longitude);
+        return new JsonResult(new { ok = true, state, city = user.City });
     }
 
     private static bool TryParseCoord(string? value, out double result)
     {
         result = 0;
         if (string.IsNullOrWhiteSpace(value)) return false;
-        // JS siempre manda punto; aceptamos también coma por si la cultura del cliente interfiere.
         value = value.Trim().Replace(',', '.');
         return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }

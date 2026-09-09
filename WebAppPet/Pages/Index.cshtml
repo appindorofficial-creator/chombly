@@ -197,18 +197,67 @@
 <script>
 (function () {
   if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(async (pos) => {
+
+  function postLocation(lat, lng, city) {
+    var body = new URLSearchParams();
+    body.set('lat', String(lat));
+    body.set('lng', String(lng));
+    if (city) body.set('city', city);
+    return fetch('/Account/Location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body,
+      credentials: 'same-origin'
+    });
+  }
+
+  function reverseCity(lat, lng, done) {
+    if (!(window.google && google.maps && google.maps.Geocoder)) {
+      done(null);
+      return;
+    }
     try {
-      const body = new URLSearchParams();
-      body.set('lat', pos.coords.latitude);
-      body.set('lng', pos.coords.longitude);
-      await fetch('/Account/Location', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body,
-        credentials: 'same-origin'
+      var geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
+        if (status !== 'OK' || !results || !results[0]) {
+          done(null);
+          return;
+        }
+        var comps = results[0].address_components || [];
+        var city = '';
+        var state = '';
+        comps.forEach(function (c) {
+          var t = c.types || [];
+          if (t.indexOf('locality') >= 0) city = c.long_name;
+          if (t.indexOf('sublocality') >= 0 && !city) city = c.long_name;
+          if (t.indexOf('administrative_area_level_1') >= 0) state = c.short_name;
+        });
+        done([city, state].filter(Boolean).join(', ') || null);
       });
-    } catch (_) { }
+    } catch (_) {
+      done(null);
+    }
+  }
+
+  navigator.geolocation.getCurrentPosition(function (pos) {
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+    var send = function (city) {
+      postLocation(lat, lng, city).catch(function () { });
+    };
+    // Espera breve a que cargue Maps; si no, guarda solo coords.
+    var tries = 0;
+    (function waitMaps() {
+      if (window.google && google.maps && google.maps.Geocoder) {
+        reverseCity(lat, lng, send);
+        return;
+      }
+      if (++tries > 20) {
+        send(null);
+        return;
+      }
+      setTimeout(waitMaps, 250);
+    })();
   });
 })();
 

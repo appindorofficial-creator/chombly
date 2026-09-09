@@ -59,7 +59,23 @@
                         <option value="@s.Code">@s.Name</option>
                     }
                 </select>
-                <p class="field-hint" style="margin:8px 0 0">@CatalogLocalizer.Loc("Esto no es el país del veterinario internacional.", "This is not the international vet's country.")</p>
+                @if (Model.StateFromLocation)
+                {
+                    <p class="field-hint" style="margin:8px 0 0">
+                        @if (!string.IsNullOrEmpty(Model.UserCity))
+                        {
+                            @CatalogLocalizer.Loc($"Según tu ubicación ({Model.UserCity}). Puedes corregirlo.", $"Based on your location ({Model.UserCity}). You can correct it.")
+                        }
+                        else
+                        {
+                            @CatalogLocalizer.Loc("Según tu ubicación guardada. Puedes corregirlo.", "Based on your saved location. You can correct it.")
+                        }
+                    </p>
+                }
+                else
+                {
+                    <p class="field-hint" style="margin:8px 0 0">@CatalogLocalizer.Loc("Usa la ubicación de tu perfil cuando esté disponible. Esto no es el país del veterinario internacional.", "Uses your profile location when available. This is not the international vet's country.")</p>
+                }
             </div>
 
             <div class="form-group">

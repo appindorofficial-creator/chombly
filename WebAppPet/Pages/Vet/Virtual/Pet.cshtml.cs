@@ -50,6 +50,11 @@ public class PetModel : PageModel
     public List<Models.Pet> Pets { get; set; } = new();
     public string? ErrorMessage { get; set; }
 
+    /// <summary>True when the select was prefilled from the user's saved location.</summary>
+    public bool StateFromLocation { get; set; }
+
+    public string? UserCity { get; set; }
+
     public static readonly (string Code, string Name)[] UsStates =
     {
         ("NC", "North Carolina"), ("SC", "South Carolina"), ("VA", "Virginia"),
@@ -67,8 +72,32 @@ public class PetModel : PageModel
 
         Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId).OrderBy(p => p.Name).ToListAsync();
         PetId = Consultation.PetId ?? Pets.FirstOrDefault()?.Id ?? 0;
-        PetUsState = Consultation.PetUsState;
         Symptoms = Consultation.Symptoms;
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == _auth.CurrentUserId.Value);
+        UserCity = string.IsNullOrWhiteSpace(user?.City) ? null : user!.City.Trim();
+        var fromLocation = GeoHelper.ResolveUsState(user?.City, user?.Latitude, user?.Longitude);
+
+        // Antes de completar este paso, prioriza la ubicación guardada del usuario
+        // (las consultas nuevas aún pueden venir con NC por defecto).
+        if (Consultation.PetId is null && !string.IsNullOrWhiteSpace(fromLocation))
+        {
+            PetUsState = fromLocation;
+            StateFromLocation = true;
+            if (!string.Equals(Consultation.PetUsState, fromLocation, StringComparison.OrdinalIgnoreCase))
+            {
+                Consultation.PetUsState = fromLocation;
+                await _flow.TouchAsync(Consultation);
+            }
+        }
+        else
+        {
+            PetUsState = string.IsNullOrWhiteSpace(Consultation.PetUsState) ? (fromLocation ?? "NC") : Consultation.PetUsState;
+            StateFromLocation = !string.IsNullOrWhiteSpace(fromLocation) &&
+                                string.Equals(PetUsState, fromLocation, StringComparison.OrdinalIgnoreCase);
+        }
+
         return Page();
     }
 

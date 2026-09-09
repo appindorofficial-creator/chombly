@@ -30,12 +30,15 @@ public class ConsultationFlowService
         if (_auth.CurrentUserId is not int uid)
             throw new InvalidOperationException("Login required.");
 
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == uid, ct);
+        var state = GeoHelper.ResolveUsState(user?.City, user?.Latitude, user?.Longitude) ?? "NC";
+
         var c = new Consultation
         {
             ClientId = uid,
             Modality = VetModality.Virtual,
             Status = ConsultationStatus.Draft,
-            PetUsState = "NC",
+            PetUsState = state,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
