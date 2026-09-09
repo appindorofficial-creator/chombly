@@ -156,7 +156,10 @@
   <data name="Pets_GuestSub" xml:space="preserve"><value>Save your pets' profiles and book services faster.</value></data>
   <data name="Pets_Anxious" xml:space="preserve"><value>Anxious</value></data>
   <data name="Pets_SpecialNeeds" xml:space="preserve"><value>Special needs</value></data>
-  <data name="Pets_DeleteConfirm" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Pets_DeleteTitle" xml:space="preserve"><value>Delete pet</value></data>
+  <data name="Pets_DeleteConfirm" xml:space="preserve"><value>Delete {0}? This cannot be undone.</value></data>
+  <data name="Pets_DeleteCancel" xml:space="preserve"><value>No, keep</value></data>
+  <data name="Pets_DeleteOk" xml:space="preserve"><value>Yes, delete</value></data>
 
   <data name="Search_Businesses" xml:space="preserve"><value>Search businesses</value></data>
   <data name="Search_CityMaps" xml:space="preserve"><value>City (Maps)</value></data>

@@ -162,7 +162,10 @@
   <data name="Pets_GuestSub" xml:space="preserve"><value>Guarda el perfil de tus mascotas y agenda servicios más rápido.</value></data>
   <data name="Pets_Anxious" xml:space="preserve"><value>Ansioso</value></data>
   <data name="Pets_SpecialNeeds" xml:space="preserve"><value>Necesidades especiales</value></data>
-  <data name="Pets_DeleteConfirm" xml:space="preserve"><value>¿Eliminar a {0}?</value></data>
+  <data name="Pets_DeleteTitle" xml:space="preserve"><value>Eliminar mascota</value></data>
+  <data name="Pets_DeleteConfirm" xml:space="preserve"><value>¿Eliminar a {0}? Esta acción no se puede deshacer.</value></data>
+  <data name="Pets_DeleteCancel" xml:space="preserve"><value>No, mantener</value></data>
+  <data name="Pets_DeleteOk" xml:space="preserve"><value>Sí, eliminar</value></data>
 
   <data name="Search_Businesses" xml:space="preserve"><value>Buscar negocios</value></data>
   <data name="Search_CityMaps" xml:space="preserve"><value>Ciudad (Maps)</value></data>

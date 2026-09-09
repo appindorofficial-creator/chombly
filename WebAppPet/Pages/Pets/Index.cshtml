@@ -47,7 +47,12 @@
                     <a class="icon-btn" asp-page="./Care" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Control", "Care")">💚</a>
                     <a class="icon-btn" asp-page="./Reminders" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Recordatorios", "Reminders")">⏰</a>
                     <a class="icon-btn" asp-page="./History" asp-route-id="@p.Id" title="@L["Appt_History"]">📋</a>
-                    <form method="post" asp-page-handler="Delete" onsubmit="return confirm('@string.Format(L["Pets_DeleteConfirm"].Value, p.Name)')">
+                    <form method="post" asp-page-handler="Delete"
+                          data-confirm
+                          data-confirm-title="@L["Pets_DeleteTitle"]"
+                          data-confirm-message="@string.Format(L["Pets_DeleteConfirm"].Value, p.Name)"
+                          data-confirm-cancel="@L["Pets_DeleteCancel"]"
+                          data-confirm-ok="@L["Pets_DeleteOk"]">
                         <input type="hidden" name="id" value="@p.Id" />
                         <button type="submit" class="icon-btn" title="@L["Common_Delete"]">🗑️</button>
                     </form>
