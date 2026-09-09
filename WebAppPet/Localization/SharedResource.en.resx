@@ -218,7 +218,7 @@
   <data name="Pets_Empty" xml:space="preserve"><value>You don't have any pets yet.</value></data>
   <data name="Pets_Species" xml:space="preserve"><value>Species</value></data>
   <data name="Pets_Breed" xml:space="preserve"><value>Breed</value></data>
-  <data name="Pets_Age" xml:space="preserve"><value>Age</value></data>
+  <data name="Pets_Age" xml:space="preserve"><value>Age (years)</value></data>
   <data name="Pets_Weight" xml:space="preserve"><value>Weight</value></data>
   <data name="Pets_Photo" xml:space="preserve"><value>Photo</value></data>
   <data name="Pets_PhotoHint" xml:space="preserve"><value>Take a photo or choose from gallery (max 5 MB).</value></data>
@@ -244,6 +244,7 @@
   <data name="Pets_OtherTypeRequired" xml:space="preserve"><value>Enter which pet you have</value></data>
   <data name="Pets_AgeRequired" xml:space="preserve"><value>Age is required</value></data>
   <data name="Pets_AgeRange" xml:space="preserve"><value>Age must be between 0 and 40 years.</value></data>
+  <data name="Pets_AgeHint" xml:space="preserve"><value>Whole years. If under 1 year old, enter 0.</value></data>
 
   <data name="Booking_SelectService" xml:space="preserve"><value>Select a service.</value></data>
   <data name="Booking_SelectDateTime" xml:space="preserve"><value>Select a date and time.</value></data>

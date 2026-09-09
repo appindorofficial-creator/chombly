@@ -227,7 +227,7 @@
   <data name="Pets_Empty" xml:space="preserve"><value>Aún no tienes mascotas registradas.</value></data>
   <data name="Pets_Species" xml:space="preserve"><value>Especie</value></data>
   <data name="Pets_Breed" xml:space="preserve"><value>Raza</value></data>
-  <data name="Pets_Age" xml:space="preserve"><value>Edad</value></data>
+  <data name="Pets_Age" xml:space="preserve"><value>Edad (años)</value></data>
   <data name="Pets_Weight" xml:space="preserve"><value>Peso</value></data>
   <data name="Pets_Photo" xml:space="preserve"><value>Foto</value></data>
   <data name="Pets_PhotoHint" xml:space="preserve"><value>Toma una foto o elige de la galería (máx. 5 MB).</value></data>
@@ -253,6 +253,7 @@
   <data name="Pets_OtherTypeRequired" xml:space="preserve"><value>Indica qué mascota tienes</value></data>
   <data name="Pets_AgeRequired" xml:space="preserve"><value>La edad es obligatoria</value></data>
   <data name="Pets_AgeRange" xml:space="preserve"><value>La edad debe estar entre 0 y 40 años.</value></data>
+  <data name="Pets_AgeHint" xml:space="preserve"><value>En años enteros. Si tiene menos de 1 año, indica 0.</value></data>
 
   <!-- Appointments -->
   <data name="Booking_SelectService" xml:space="preserve"><value>Selecciona un servicio.</value></data>
