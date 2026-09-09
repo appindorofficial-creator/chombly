@@ -43,7 +43,7 @@ public class CreateModel : PageModel
     public string? Breed { get; set; }
 
     [BindProperty]
-    public int? AgeYears { get; set; } = 1;
+    public int? AgeYears { get; set; }
 
     [BindProperty]
     public PetSize Size { get; set; } = PetSize.Medium;
@@ -102,8 +102,10 @@ public class CreateModel : PageModel
         else if (Species == PetSpecies.Other && string.IsNullOrWhiteSpace(CustomType))
             ModelState.AddModelError(nameof(CustomType), _L["Pets_OtherTypeRequired"].Value);
 
-        var age = AgeYears ?? 1;
-        if (AgeYears is null || age < 0 || age > 40)
+        var age = AgeYears;
+        if (age is null)
+            ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRequired"].Value);
+        else if (age < 0 || age > 40)
             ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRange"].Value);
 
         var photoError = PetPhotoStorage.Validate(PhotoFile);
@@ -143,7 +145,7 @@ public class CreateModel : PageModel
             Name = Name.Trim(),
             Species = species,
             Breed = breed,
-            AgeYears = age,
+            AgeYears = age!.Value,
             Size = Size,
             Temperament = string.IsNullOrWhiteSpace(Temperament) ? temperamentDefault : Temperament.Trim(),
             PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species),

@@ -50,7 +50,9 @@
 
         <div class="form-group">
             <label>@L["Pets_Age"]</label>
-            <input class="form-control" asp-for="AgeYears" type="number" min="0" max="40" />
+            <input class="form-control" asp-for="AgeYears" type="number" min="0" max="40" required
+                   data-msg-required="@L["Pets_AgeRequired"]"
+                   inputmode="numeric" />
             <span asp-validation-for="AgeYears" class="field-error"></span>
         </div>
 

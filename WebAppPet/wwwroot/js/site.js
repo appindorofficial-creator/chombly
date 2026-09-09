@@ -294,7 +294,7 @@
         var isPhone = el.getAttribute('data-phone') === '1' || name === 'phone';
 
         if (el.required && !v) {
-          el.setCustomValidity(msgs.required);
+          el.setCustomValidity(el.getAttribute('data-msg-required') || msgs.required);
           return;
         }
         if (!v) return;

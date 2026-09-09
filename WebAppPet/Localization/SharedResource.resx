@@ -239,6 +239,7 @@
   <data name="Pets_OtherType" xml:space="preserve"><value>¿Cuál es tu mascota?</value></data>
   <data name="Pets_OtherTypePlaceholder" xml:space="preserve"><value>Ej. hámster, tortuga, iguana…</value></data>
   <data name="Pets_OtherTypeRequired" xml:space="preserve"><value>Indica qué mascota tienes</value></data>
+  <data name="Pets_AgeRequired" xml:space="preserve"><value>La edad es obligatoria</value></data>
   <data name="Pets_AgeRange" xml:space="preserve"><value>La edad debe estar entre 0 y 40 años.</value></data>
 
   <!-- Appointments -->
