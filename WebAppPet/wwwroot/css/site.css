@@ -1287,24 +1287,65 @@ input[type=radio]:checked + .size-opt {
   background: var(--brand); border-color: var(--brand); color: #fff;
 }
 
+html:has(body.chat-layout),
+body.chat-layout {
+  height: 100%;
+  overflow: hidden;
+}
+body.chat-layout .app-shell {
+  height: 100vh;
+  height: 100svh;
+  max-height: 100vh;
+  max-height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.chat-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.chat-shell .chat-header {
+  flex-shrink: 0;
+  position: relative;
+  top: auto;
+}
 .chat-page {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 56px);
-  padding-bottom: 12px !important;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
 }
 .chat-thread {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+}
+.chat-empty {
+  margin: auto;
+  text-align: center;
+  color: var(--muted);
+  font-size: .92rem;
+  padding: 24px 12px;
 }
 .chat-bubble {
   max-width: 82%;
   padding: 10px 12px;
   border-radius: 16px;
+  flex-shrink: 0;
 }
 .chat-bubble.mine {
   align-self: flex-end;
@@ -1320,17 +1361,21 @@ input[type=radio]:checked + .size-opt {
 }
 .chat-body { font-size: .92rem; line-height: 1.4; }
 .chat-meta { font-size: .68rem; opacity: .75; margin-top: 4px; }
+.chat-error {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
 .chat-composer {
   display: flex;
   gap: 8px;
   align-items: center;
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
+  position: relative;
   background: var(--bg);
   padding-top: 8px;
 }
-.chat-composer .form-control { flex: 1; }
-.chat-composer .btn { width: auto; padding: 12px 16px; }
+.chat-composer .form-control { flex: 1; min-width: 0; }
+.chat-composer .btn { width: auto; padding: 12px 16px; flex-shrink: 0; }
 
 .provider-banner {
   display: flex;

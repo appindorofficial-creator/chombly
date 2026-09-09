@@ -3,57 +3,70 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Chat", "Chat");
     ViewData["HideNav"] = true;
+    ViewData["BodyClass"] = "chat-layout";
 }
-<div class="page-header">
-    @if (Model.UseHistoryBack)
-    {
-        <a class="back-btn" href="@Model.BackHref" onclick="history.back();return false;">←</a>
-    }
-    else
-    {
-        <a class="back-btn" href="@Model.BackHref">←</a>
-    }
-    <h1>@(Model.Groomer?.BusinessName ?? CatalogLocalizer.Loc("Chat", "Chat"))</h1>
-</div>
-<main class="app-main no-nav chat-page">
-    @if (Model.Groomer == null)
-    {
-        <div class="empty">@CatalogLocalizer.Loc("Negocio no encontrado.", "Business not found.")</div>
-    }
-    else
-    {
-        <div class="chat-thread">
-            @if (!Model.Messages.Any())
-            {
-                <div class="empty">@CatalogLocalizer.Loc("Aún no hay mensajes. Escribe el primero.", "No messages yet. Write the first one.")</div>
-            }
-            @foreach (var m in Model.Messages)
-            {
-                var mine = m.SenderUserId == Model.CurrentUserId;
-                <div class="chat-bubble @(mine ? "mine" : "theirs")">
-                    <div class="chat-body">@m.Body</div>
-                    <div class="chat-meta">@m.Sender.FullName · @AppTimeZones.FormatShort(m.SentAt)</div>
-                </div>
-            }
-        </div>
-
-        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+<div class="chat-shell">
+    <div class="page-header chat-header">
+        @if (Model.UseHistoryBack)
         {
-            <div class="alert alert-danger">@Model.ErrorMessage</div>
+            <a class="back-btn" href="@Model.BackHref" onclick="history.back();return false;">←</a>
         }
+        else
+        {
+            <a class="back-btn" href="@Model.BackHref">←</a>
+        }
+        <h1>@(Model.Groomer?.BusinessName ?? CatalogLocalizer.Loc("Chat", "Chat"))</h1>
+    </div>
 
-        <form method="post" class="chat-composer"
-              asp-page="./Index"
-              asp-route-groomerId="@Model.GroomerId"
-              asp-route-appointmentId="@Model.AppointmentId"
-              asp-route-conversationId="@Model.ConversationId"
-              asp-route-returnUrl="@(Model.ReturnUrl ?? Model.BackHref)">
-            <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
-            <input type="hidden" name="AppointmentId" value="@Model.AppointmentId" />
-            <input type="hidden" name="ConversationId" value="@Model.ConversationId" />
-            <input type="hidden" name="ReturnUrl" value="@(Model.ReturnUrl ?? Model.BackHref)" />
-            <input class="form-control" asp-for="Body" placeholder="@CatalogLocalizer.Loc("Escribe un mensaje…", "Write a message…")" maxlength="2000" autocomplete="off" />
-            <button class="btn btn-primary" type="submit">@CatalogLocalizer.Loc("Enviar", "Send")</button>
-        </form>
-    }
-</main>
+    <main class="chat-page">
+        @if (Model.Groomer == null)
+        {
+            <div class="empty">@CatalogLocalizer.Loc("Negocio no encontrado.", "Business not found.")</div>
+        }
+        else
+        {
+            <div class="chat-thread" id="chat-thread">
+                @if (!Model.Messages.Any())
+                {
+                    <div class="chat-empty">@CatalogLocalizer.Loc("Aún no hay mensajes. Escribe el primero.", "No messages yet. Write the first one.")</div>
+                }
+                @foreach (var m in Model.Messages)
+                {
+                    var mine = m.SenderUserId == Model.CurrentUserId;
+                    <div class="chat-bubble @(mine ? "mine" : "theirs")">
+                        <div class="chat-body">@m.Body</div>
+                        <div class="chat-meta">@m.Sender.FullName · @AppTimeZones.FormatShort(m.SentAt)</div>
+                    </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger chat-error">@Model.ErrorMessage</div>
+            }
+
+            <form method="post" class="chat-composer"
+                  asp-page="./Index"
+                  asp-route-groomerId="@Model.GroomerId"
+                  asp-route-appointmentId="@Model.AppointmentId"
+                  asp-route-conversationId="@Model.ConversationId"
+                  asp-route-returnUrl="@(Model.ReturnUrl ?? Model.BackHref)">
+                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
+                <input type="hidden" name="AppointmentId" value="@Model.AppointmentId" />
+                <input type="hidden" name="ConversationId" value="@Model.ConversationId" />
+                <input type="hidden" name="ReturnUrl" value="@(Model.ReturnUrl ?? Model.BackHref)" />
+                <input class="form-control" asp-for="Body" placeholder="@CatalogLocalizer.Loc("Escribe un mensaje…", "Write a message…")" maxlength="2000" autocomplete="off" />
+                <button class="btn btn-primary" type="submit">@CatalogLocalizer.Loc("Enviar", "Send")</button>
+            </form>
+        }
+    </main>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+  var thread = document.getElementById('chat-thread');
+  if (thread) thread.scrollTop = thread.scrollHeight;
+})();
+</script>
+}

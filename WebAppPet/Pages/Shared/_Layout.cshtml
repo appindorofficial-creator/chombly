@@ -32,7 +32,7 @@
     var notifFromAppt = NotifFrom("/Appointments");
     var notifFromProfile = onNotifications && !notifFromHome && !notifFromAppt;
 }
-<body>
+<body class="@(ViewData["BodyClass"] as string)">
 <div class="app-shell">
     @RenderBody()
 
