@@ -20,8 +20,9 @@
             <div class="species-grid">
                 @foreach (var sp in Model.SpeciesOptions)
                 {
+                    var speciesId = $"species-{sp.Value}";
                     <label class="species-opt @(Model.Species == sp.Value ? "selected" : "")">
-                        <input type="radio" asp-for="Species" value="@sp.Value" />
+                        <input type="radio" asp-for="Species" value="@sp.Value" id="@speciesId" />
                         <span class="species-emoji">@sp.Emoji</span>
                         <span class="species-label">@PetSpecies.DisplayLabel(sp.Value)</span>
                     </label>
@@ -133,32 +134,32 @@
 
 <script>
 (() => {
-  const breedsBySpecies = {
-@foreach (var sp in Model.SpeciesOptions.Where(s => s.Value != PetSpecies.Other))
-{
-    var list = PetCatalog.BreedsFor(sp.Value);
-    @:    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sp.Value)): [
-    foreach (var b in list)
-    {
-    @:      { value: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(b.Value)), label: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(PetCatalog.Display(b.Value, b.LabelEn))) },
-    }
-    @:    ],
+@{
+    var breedsPayload = Model.SpeciesOptions
+        .Where(s => s.Value != PetSpecies.Other)
+        .ToDictionary(
+            s => s.Value,
+            s => PetCatalog.BreedsFor(s.Value)
+                .Select(b => new { value = b.Value, label = PetCatalog.Display(b.Value, b.LabelEn) })
+                .ToList());
 }
-  };
+  const breedsBySpecies = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(breedsPayload));
   const otherBreedValue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(PetCatalog.OtherBreed));
   const otherBreedLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pets_BreedOther"].Value));
-  const selectedBreed = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Breed ?? ""));
+  const initialBreed = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Breed ?? ""));
   const breedSelect = document.getElementById('breed-select');
   const breedGroup = document.getElementById('breed-group');
   const customBreed = document.getElementById('custom-breed-input');
   const otherGroup = document.getElementById('other-type-group');
   const customType = document.getElementById('custom-type-input');
-  const otherValue = "@PetSpecies.Other";
+  const otherValue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(PetSpecies.Other));
 
   function fillBreeds(species, keepValue) {
     if (!breedSelect) return;
     const list = breedsBySpecies[species] || [];
     const current = keepValue || '';
+    const keep = current && list.some(b => b.value === current) ? current
+      : (current === otherBreedValue ? current : '');
     breedSelect.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
@@ -172,13 +173,13 @@
       const opt = document.createElement('option');
       opt.value = b.value;
       opt.textContent = b.label;
-      if (b.value === current) opt.selected = true;
+      if (b.value === keep) opt.selected = true;
       breedSelect.appendChild(opt);
     });
     const otherOpt = document.createElement('option');
     otherOpt.value = otherBreedValue;
     otherOpt.textContent = otherBreedLabel;
-    if (current === otherBreedValue) otherOpt.selected = true;
+    if (keep === otherBreedValue) otherOpt.selected = true;
     breedSelect.appendChild(otherOpt);
     syncCustomBreed();
   }
@@ -190,26 +191,25 @@
     if (!show) customBreed.value = '';
   }
 
-  function syncOther(species) {
+  function syncSpecies(species, keepBreed) {
     const isOther = species === otherValue;
     if (otherGroup) otherGroup.hidden = !isOther;
     if (breedGroup) breedGroup.hidden = isOther;
     if (!isOther && customType) customType.value = '';
-    if (!isOther) fillBreeds(species, selectedBreed);
+    document.querySelectorAll('.species-opt').forEach(el => el.classList.remove('selected'));
+    const checkedInput = document.querySelector('input[name="Species"]:checked');
+    checkedInput?.closest('.species-opt')?.classList.add('selected');
+    if (!isOther) fillBreeds(species, keepBreed ? keepBreed : '');
   }
 
   breedSelect?.addEventListener('change', syncCustomBreed);
 
   document.querySelectorAll('input[name="Species"]').forEach(r => {
-    r.addEventListener('change', () => {
-      document.querySelectorAll('.species-opt').forEach(el => el.classList.remove('selected'));
-      r.closest('.species-opt')?.classList.add('selected');
-      syncOther(r.value);
-    });
+    r.addEventListener('change', () => syncSpecies(r.value, ''));
   });
 
   const checked = document.querySelector('input[name="Species"]:checked');
-  syncOther(checked ? checked.value : '');
+  syncSpecies(checked ? checked.value : '', initialBreed);
 
   const fileInput = document.getElementById('photo-file');
   const preview = document.getElementById('photo-preview');

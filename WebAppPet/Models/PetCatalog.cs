@@ -88,7 +88,13 @@ public static class PetCatalog
             },
             [PetSpecies.Ferret] = new[]
             {
-                ("Estándar", "Standard"),
+                ("Estándar / sable", "Standard / sable"),
+                ("Albino", "Albino"),
+                ("Canela", "Cinnamon"),
+                ("Chocolate", "Chocolate"),
+                ("Champagne", "Champagne"),
+                ("Negro", "Black"),
+                ("Panda / blaze", "Panda / blaze"),
                 ("Angora", "Angora"),
                 ("Mestizo / mixto", "Mixed / mix"),
             }

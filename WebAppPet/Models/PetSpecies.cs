@@ -20,7 +20,7 @@ public static class PetSpecies
         (Rabbit, "Conejo", "Rabbit", "🐇", "Holland Lop, Rex, Enano…", "Holland Lop, Rex, Dwarf…"),
         (GuineaPig, "Cobaya", "Guinea pig", "🐹", "Americana, Abisinia, Peruana…", "American, Abyssinian, Peruvian…"),
         (Bird, "Ave", "Bird", "🦜", "Periquito, Cacatúa, Agapornis…", "Budgie, Cockatoo, Lovebird…"),
-        (Ferret, "Hurón", "Ferret", "🦡", "Estándar, Angora…", "Standard, Angora…"),
+        (Ferret, "Hurón", "Ferret", "🦡", "Estándar, Albino, Angora…", "Standard, Albino, Angora…"),
         (Other, "Otro", "Other", "🐾", "Raza o tipo de tu mascota", "Breed or type of your pet")
     };
 
