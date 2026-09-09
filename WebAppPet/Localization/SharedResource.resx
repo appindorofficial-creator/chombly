@@ -246,6 +246,15 @@
   <data name="Pets_AgeRange" xml:space="preserve"><value>La edad debe estar entre 0 y 40 años.</value></data>
 
   <!-- Appointments -->
+  <data name="Booking_SelectService" xml:space="preserve"><value>Selecciona un servicio.</value></data>
+  <data name="Booking_SelectDateTime" xml:space="preserve"><value>Selecciona fecha y hora.</value></data>
+  <data name="Booking_SelectPet" xml:space="preserve"><value>Selecciona una mascota.</value></data>
+  <data name="Booking_CheckDates" xml:space="preserve"><value>Revisa check-in y check-out.</value></data>
+  <data name="Booking_InvalidDates" xml:space="preserve"><value>Fechas inválidas.</value></data>
+  <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Fecha u hora inválida.</value></data>
+  <data name="Booking_MissingData" xml:space="preserve"><value>Faltan datos de la reserva.</value></data>
+  <data name="Booking_SpeciesNotAccepted" xml:space="preserve"><value>Este negocio no atiende {0}.</value></data>
+
   <data name="Appt_Title" xml:space="preserve"><value>Mis citas</value></data>
   <data name="Appt_Empty" xml:space="preserve"><value>No tienes citas todavía.</value></data>
   <data name="Appt_Upcoming" xml:space="preserve"><value>Próximas</value></data>

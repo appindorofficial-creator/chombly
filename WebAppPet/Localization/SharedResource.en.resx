@@ -236,6 +236,15 @@
   <data name="Pets_AgeRequired" xml:space="preserve"><value>Age is required</value></data>
   <data name="Pets_AgeRange" xml:space="preserve"><value>Age must be between 0 and 40 years.</value></data>
 
+  <data name="Booking_SelectService" xml:space="preserve"><value>Select a service.</value></data>
+  <data name="Booking_SelectDateTime" xml:space="preserve"><value>Select a date and time.</value></data>
+  <data name="Booking_SelectPet" xml:space="preserve"><value>Select a pet.</value></data>
+  <data name="Booking_CheckDates" xml:space="preserve"><value>Check your check-in and check-out dates.</value></data>
+  <data name="Booking_InvalidDates" xml:space="preserve"><value>Invalid dates.</value></data>
+  <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Invalid date or time.</value></data>
+  <data name="Booking_MissingData" xml:space="preserve"><value>Booking details are incomplete.</value></data>
+  <data name="Booking_SpeciesNotAccepted" xml:space="preserve"><value>This business does not serve {0}.</value></data>
+
   <data name="Appt_Title" xml:space="preserve"><value>My bookings</value></data>
   <data name="Appt_Empty" xml:space="preserve"><value>You don't have any bookings yet.</value></data>
   <data name="Appt_Upcoming" xml:space="preserve"><value>Upcoming</value></data>

@@ -126,7 +126,7 @@
                         @foreach (var t in Model.TimeSlots)
                         {
                             <label>
-                                <input type="radio" name="Time" value="@t" @(Model.Time == t ? "checked" : "") />
+                                <input type="radio" name="Time" value="@t" required @(Model.Time == t ? "checked" : "") />
                                 <div class="slot">@t</div>
                             </label>
                         }

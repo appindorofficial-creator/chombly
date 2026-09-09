@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -12,12 +14,14 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly PromoCodeService _promo;
+    private readonly IStringLocalizer<SharedResource> _L;
 
-    public IndexModel(AppDbContext db, AuthService auth, PromoCodeService promo)
+    public IndexModel(AppDbContext db, AuthService auth, PromoCodeService promo, IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
         _promo = promo;
+        _L = L;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -37,13 +41,13 @@ public class IndexModel : PageModel
     public int PetId { get; set; }
 
     [BindProperty]
-    public string Date { get; set; } = DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+    public string Date { get; set; } = string.Empty;
 
     [BindProperty]
-    public string EndDate { get; set; } = DateTime.Today.AddDays(2).ToString("yyyy-MM-dd");
+    public string EndDate { get; set; } = string.Empty;
 
     [BindProperty]
-    public string Time { get; set; } = "10:00 AM";
+    public string Time { get; set; } = string.Empty;
 
     [BindProperty]
     public string? Notes { get; set; }
@@ -125,6 +129,7 @@ public class IndexModel : PageModel
         if (handler == "Back")
         {
             Step = Math.Max(1, Step - 1);
+            ModelState.Remove(nameof(Step));
             await PrepareConfirmAsync(applyPromo: Step == 4);
             return Page();
         }
@@ -132,6 +137,7 @@ public class IndexModel : PageModel
         if (handler == "ApplyPromo")
         {
             Step = 4;
+            ModelState.Remove(nameof(Step));
             await PrepareConfirmAsync(applyPromo: true);
             return Page();
         }
@@ -142,7 +148,7 @@ public class IndexModel : PageModel
             {
                 if (ServiceId == 0 || !Services.Any(s => s.Id == ServiceId))
                 {
-                    ErrorMessage = "Selecciona un servicio.";
+                    ErrorMessage = _L["Booking_SelectService"].Value;
                     ServiceId = 0;
                     return Page();
                 }
@@ -154,13 +160,13 @@ public class IndexModel : PageModel
                 {
                     if (!DateTime.TryParse(Date, out var cin) || !DateTime.TryParse(EndDate, out var cout) || cout <= cin)
                     {
-                        ErrorMessage = "Revisa check-in y check-out.";
+                        ErrorMessage = _L["Booking_CheckDates"].Value;
                         return Page();
                     }
                 }
                 else if (string.IsNullOrWhiteSpace(Date) || string.IsNullOrWhiteSpace(Time))
                 {
-                    ErrorMessage = "Selecciona fecha y hora.";
+                    ErrorMessage = _L["Booking_SelectDateTime"].Value;
                     return Page();
                 }
             }
@@ -169,18 +175,19 @@ public class IndexModel : PageModel
             {
                 if (PetId == 0)
                 {
-                    ErrorMessage = "Selecciona una mascota.";
+                    ErrorMessage = _L["Booking_SelectPet"].Value;
                     return Page();
                 }
                 var petCheck = Pets.FirstOrDefault(p => p.Id == PetId);
                 if (petCheck != null && !Groomer.AcceptsSpecies(petCheck.Species))
                 {
-                    ErrorMessage = $"Este negocio no atiende {petCheck.Species}.";
+                    ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, petCheck.Species);
                     return Page();
                 }
             }
 
             Step = Math.Min(4, Step + 1);
+            ModelState.Remove(nameof(Step));
             await PrepareConfirmAsync(applyPromo: Step == 4);
             return Page();
         }
@@ -190,21 +197,24 @@ public class IndexModel : PageModel
             await PrepareConfirmAsync(applyPromo: true);
             if (SelectedService == null || SelectedPet == null)
             {
-                ErrorMessage = "Faltan datos de la reserva.";
+                ErrorMessage = _L["Booking_MissingData"].Value;
                 Step = 1;
+                ModelState.Remove(nameof(Step));
                 return Page();
             }
 
             if (!string.IsNullOrWhiteSpace(PromoCode) && !string.IsNullOrEmpty(PromoError))
             {
                 Step = 4;
+                ModelState.Remove(nameof(Step));
                 return Page();
             }
 
             if (!Groomer.AcceptsSpecies(SelectedPet.Species))
             {
-                ErrorMessage = $"Este negocio no atiende {SelectedPet.Species}.";
+                ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, SelectedPet.Species);
                 Step = 3;
+                ModelState.Remove(nameof(Step));
                 return Page();
             }
 
@@ -216,8 +226,9 @@ public class IndexModel : PageModel
             {
                 if (!DateTime.TryParse(Date, out var cin) || !DateTime.TryParse(EndDate, out var cout) || cout <= cin)
                 {
-                    ErrorMessage = "Fechas inválidas.";
+                    ErrorMessage = _L["Booking_InvalidDates"].Value;
                     Step = 2;
+                    ModelState.Remove(nameof(Step));
                     return Page();
                 }
                 scheduled = cin.Date.AddHours(14); // check-in default 2pm
@@ -228,8 +239,9 @@ public class IndexModel : PageModel
             {
                 if (!DateTime.TryParse($"{Date} {Time}", out scheduled))
                 {
-                    ErrorMessage = "Fecha u hora inválida.";
+                    ErrorMessage = _L["Booking_InvalidDateTime"].Value;
                     Step = 2;
+                    ModelState.Remove(nameof(Step));
                     return Page();
                 }
             }
