@@ -102,7 +102,7 @@ public class ProvidersModel : PageModel
         var state = Consultation!.PetUsState;
         Providers = await _db.Groomers.AsNoTracking()
             .Include(g => g.Licenses)
-            .Where(g => g.IsPublished &&
+            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved &&
                         g.VetProviderKind == VetProviderKind.LocalVet &&
                         g.Licenses.Any(l => l.IsVerified && l.IsUsState && l.Jurisdiction == state))
             .OrderByDescending(g => g.Rating)
@@ -113,7 +113,7 @@ public class ProvidersModel : PageModel
         {
             Providers = await _db.Groomers.AsNoTracking()
                 .Include(g => g.Licenses)
-                .Where(g => g.IsPublished && g.VetProviderKind == VetProviderKind.LocalVet)
+                .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.LocalVet)
                 .OrderByDescending(g => g.Rating)
                 .Take(30)
                 .ToListAsync();

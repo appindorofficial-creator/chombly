@@ -18,54 +18,89 @@
 
     @if (Model.Pets.Count == 0)
     {
-        <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
-        <a class="btn btn-primary" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+        <div class="card card-pad" style="text-align:center">
+            <p class="muted" style="margin:0 0 14px">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
+            <a class="btn btn-primary btn-block" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+        </div>
     }
     else
     {
-        <form method="post" enctype="multipart/form-data" class="stack" style="gap:16px">
+        <form method="post" enctype="multipart/form-data">
             <input type="hidden" asp-for="ConsultationId" />
             <input type="hidden" asp-for="Next" />
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Selecciona tu mascota", "Select your pet")</h2>
-                <div class="stack" style="gap:8px">
-                    @foreach (var p in Model.Pets)
-                    {
-                        <label class="radio-card @(Model.PetId == p.Id ? "is-selected" : "")">
-                            <input type="radio" name="PetId" value="@p.Id" checked="@(Model.PetId == p.Id)" />
-                            <span>
-                                <strong>@p.Name</strong>
-                                <span class="muted small">@p.Species · @p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "yrs")</span>
-                            </span>
-                        </label>
-                    }
-                </div>
-            </section>
+            <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Selecciona tu mascota", "Select your pet")</h2>
+            @foreach (var p in Model.Pets)
+            {
+                <label class="radio-card">
+                    <input type="radio" name="PetId" value="@p.Id" required @(Model.PetId == p.Id ? "checked" : null) />
+                    <div class="inner">
+                        <div class="pet-select" style="border:none;padding:0;flex:1">
+                            <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
+                            <div>
+                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                                <div class="muted small">@PetSpecies.DisplayLabel(p.Species) · @p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "yrs")</div>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            }
+            <p class="muted small" style="margin:-4px 0 16px">
+                <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}")">
+                    + @CatalogLocalizer.Loc("Agregar otra mascota", "Add another pet")
+                </a>
+            </p>
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Estado actual (EE.UU.)", "Current U.S. state")</h2>
-                <select class="input" asp-for="PetUsState">
+            <div class="form-group">
+                <label asp-for="PetUsState">@CatalogLocalizer.Loc("Estado actual (EE.UU.)", "Current U.S. state")</label>
+                <select class="form-control" asp-for="PetUsState">
                     @foreach (var s in PetModel.UsStates)
                     {
                         <option value="@s.Code">@s.Name</option>
                     }
                 </select>
-                <p class="muted small">@CatalogLocalizer.Loc("Esto no es el país del veterinario internacional.", "This is not the international vet's country.")</p>
-            </section>
+                <p class="field-hint" style="margin:8px 0 0">@CatalogLocalizer.Loc("Esto no es el país del veterinario internacional.", "This is not the international vet's country.")</p>
+            </div>
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Síntomas o motivo", "Symptoms or reason")</h2>
-                <textarea class="input" asp-for="Symptoms" rows="3" placeholder="@CatalogLocalizer.Loc("Describe brevemente…", "Briefly describe…")"></textarea>
-            </section>
+            <div class="form-group">
+                <label asp-for="Symptoms">@CatalogLocalizer.Loc("Síntomas o motivo", "Symptoms or reason")</label>
+                <textarea class="form-control" asp-for="Symptoms" rows="3" placeholder="@CatalogLocalizer.Loc("Describe brevemente…", "Briefly describe…")"></textarea>
+            </div>
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Fotos o video corto (opcional)", "Photos or short video (optional)")</h2>
-                <input class="input" type="file" asp-for="Media1" accept="image/*,video/mp4,video/webm,video/quicktime" />
-                <input class="input" type="file" asp-for="Media2" accept="image/*,video/mp4,video/webm,video/quicktime" style="margin-top:8px" />
-            </section>
+            <div class="form-group pet-photo-field">
+                <label>@CatalogLocalizer.Loc("Fotos o video corto (opcional)", "Photos or short video (optional)")</label>
+                <p class="field-hint">@CatalogLocalizer.Loc("Hasta 2 archivos · imagen o video corto", "Up to 2 files · image or short video")</p>
+                <div class="vet-media-picks">
+                    <label class="pet-photo-pick btn btn-outline">
+                        <span class="vet-media-pick-label" data-empty="@CatalogLocalizer.Loc("Foto / video 1", "Photo / video 1")">@CatalogLocalizer.Loc("Foto / video 1", "Photo / video 1")</span>
+                        <input type="file" asp-for="Media1" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                    </label>
+                    <label class="pet-photo-pick btn btn-outline">
+                        <span class="vet-media-pick-label" data-empty="@CatalogLocalizer.Loc("Foto / video 2", "Photo / video 2")">@CatalogLocalizer.Loc("Foto / video 2", "Photo / video 2")</span>
+                        <input type="file" asp-for="Media2" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                    </label>
+                </div>
+            </div>
 
             <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
         </form>
     }
 </main>
+
+@section Scripts {
+<script>
+(function () {
+  document.querySelectorAll('.vet-media-picks .pet-photo-pick').forEach(function (pick) {
+    var input = pick.querySelector('input[type=file]');
+    var label = pick.querySelector('.vet-media-pick-label');
+    if (!input || !label) return;
+    var empty = label.getAttribute('data-empty') || label.textContent;
+    input.addEventListener('change', function () {
+      var name = input.files && input.files[0] ? input.files[0].name : empty;
+      label.textContent = name;
+      pick.classList.toggle('is-filled', !!(input.files && input.files[0]));
+    });
+  });
+})();
+</script>
+}

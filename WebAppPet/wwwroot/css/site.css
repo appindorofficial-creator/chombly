@@ -1868,6 +1868,29 @@ a.vet-modality-emergency:hover {
   font-size: 1.05rem;
 }
 
+.vet-media-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vet-media-picks .pet-photo-pick {
+  width: 100%;
+  justify-content: center;
+  min-height: 48px;
+}
+.vet-media-picks .pet-photo-pick.is-filled {
+  border-color: var(--brand);
+  background: rgba(46, 125, 50, 0.06);
+  font-weight: 700;
+}
+.radio-card .pet-select .pet-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .center {
   text-align: center;
 }

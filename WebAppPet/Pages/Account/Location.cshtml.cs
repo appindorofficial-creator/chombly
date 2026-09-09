@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -18,23 +19,37 @@ public class LocationModel : PageModel
         _auth = auth;
     }
 
-    public async Task<IActionResult> OnPostAsync([FromForm] double lat, [FromForm] double lng)
+    /// <summary>
+    /// Guarda lat/lng del navegador. Usa string + InvariantCulture para evitar 400
+    /// por model binding cuando la cultura de la request es "es" (coma decimal).
+    /// </summary>
+    public async Task<IActionResult> OnPostAsync([FromForm] string? lat, [FromForm] string? lng)
     {
         if (_auth.CurrentUserId is not int userId)
             return new JsonResult(new { ok = false, error = "login" }) { StatusCode = 401 };
 
-        if (lat is < -90 or > 90 || lng is < -180 or > 180)
-            return new JsonResult(new { ok = false, error = "coords" }) { StatusCode = 400 };
+        if (!TryParseCoord(lat, out var latitude) || !TryParseCoord(lng, out var longitude) ||
+            latitude is < -90 or > 90 || longitude is < -180 or > 180)
+            return new JsonResult(new { ok = false, error = "coords" });
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return new JsonResult(new { ok = false, error = "user" }) { StatusCode = 404 };
 
-        user.Latitude = lat;
-        user.Longitude = lng;
+        user.Latitude = latitude;
+        user.Longitude = longitude;
         user.LocationUpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
         return new JsonResult(new { ok = true });
+    }
+
+    private static bool TryParseCoord(string? value, out double result)
+    {
+        result = 0;
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        // JS siempre manda punto; aceptamos también coma por si la cultura del cliente interfiere.
+        value = value.Trim().Replace(',', '.');
+        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }
 }

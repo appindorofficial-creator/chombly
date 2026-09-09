@@ -29,7 +29,9 @@ public class EmergencyModel : PageModel
     {
         Clinics = await _db.Groomers.AsNoTracking()
             .Include(g => g.Category)
-            .Where(g => g.IsPublished && g.OffersEmergency24x7 &&
+            .Where(g => g.IsActive &&
+                        g.PublishStatus == BusinessPublishStatus.Approved &&
+                        g.OffersEmergency24x7 &&
                         (g.Category == null || g.Category.Slug == "vet"))
             .OrderByDescending(g => g.Rating)
             .Take(20)
@@ -39,7 +41,10 @@ public class EmergencyModel : PageModel
         {
             Clinics = await _db.Groomers.AsNoTracking()
                 .Include(g => g.Category)
-                .Where(g => g.IsPublished && g.Category != null && g.Category.Slug == "vet")
+                .Where(g => g.IsActive &&
+                            g.PublishStatus == BusinessPublishStatus.Approved &&
+                            g.Category != null &&
+                            g.Category.Slug == "vet")
                 .OrderByDescending(g => g.Rating)
                 .Take(10)
                 .ToListAsync();

@@ -47,7 +47,7 @@ public class MatchesModel : PageModel
 
         var providers = await _db.Groomers.AsNoTracking()
             .Include(g => g.Licenses)
-            .Where(g => g.IsPublished && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
+            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
             .ToListAsync();
 
         var breedMap = await _db.ProviderBreedExpertises.AsNoTracking()
@@ -114,7 +114,7 @@ public class MatchesModel : PageModel
         if (Consultation is null) return RedirectToPage("/Vet/International/Home");
 
         var p = await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g =>
-            g.Id == providerId && g.VetProviderKind == VetProviderKind.InternationalAdvisor && g.IsPublished);
+            g.Id == providerId && g.VetProviderKind == VetProviderKind.InternationalAdvisor && g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved);
         if (p is null) return RedirectToPage(new { consultationId = ConsultationId });
 
         Consultation.ProviderId = p.Id;

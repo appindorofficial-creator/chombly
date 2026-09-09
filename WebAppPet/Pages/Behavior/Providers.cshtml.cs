@@ -177,7 +177,7 @@ public class ProvidersModel : PageModel
 
         CatalogItem = await _catalog.GetAsync(ServiceCatalogCodes.BehaviorSession);
         Providers = await _db.Groomers.AsNoTracking()
-            .Where(g => g.IsPublished && g.VetProviderKind == VetProviderKind.BehaviorSpecialist)
+            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.BehaviorSpecialist)
             .OrderByDescending(g => g.Rating)
             .Take(30)
             .ToListAsync();

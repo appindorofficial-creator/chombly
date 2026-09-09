@@ -77,7 +77,7 @@ public class ProvidersModel : PageModel
 
         Providers = await _db.Groomers.AsNoTracking()
             .Include(g => g.Licenses)
-            .Where(g => g.IsPublished && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
+            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
             .OrderByDescending(g => g.Rating)
             .Take(30)
             .ToListAsync();
@@ -94,7 +94,7 @@ public class ProvidersModel : PageModel
         UsingCareBenefit = CareBenefit == 1 || Consultation.UsesCareBenefit;
         Providers = await _db.Groomers.AsNoTracking()
             .Include(g => g.Licenses)
-            .Where(g => g.IsPublished && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
+            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
             .OrderByDescending(g => g.Rating)
             .Take(30)
             .ToListAsync();
