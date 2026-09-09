@@ -37,7 +37,7 @@ public class IndexModel : PageModel
         }
 
         var query = _db.Appointments
-            .Include(a => a.Groomer)
+            .Include(a => a.Groomer)!.ThenInclude(g => g.Category)
             .Include(a => a.Service)
             .Include(a => a.Pet)
             .Where(a => a.ClientId == userId);

@@ -46,9 +46,17 @@
         {
             @foreach (var a in Model.Items)
             {
+                var img = !string.IsNullOrWhiteSpace(a.Groomer.ImageUrl)
+                    ? a.Groomer.ImageUrl!
+                    : !string.IsNullOrWhiteSpace(a.Groomer.Category?.Slug)
+                        ? $"/images/categories/cat-{a.Groomer.Category!.Slug}.png"
+                        : "/images/pet-other.svg";
                 <a class="appt-card" asp-page="./Details" asp-route-id="@a.Id">
                     <div class="row">
-                        <img src="@a.Groomer.ImageUrl" alt="@a.Groomer.BusinessName" />
+                        <img src="@img"
+                             alt="@a.Groomer.BusinessName"
+                             loading="lazy"
+                             onerror="this.onerror=null;this.src='/images/pet-other.svg';" />
                         <div style="flex:1">
                             <strong>@a.Groomer.BusinessName</strong>
                             <div class="muted small">@CatalogLocalizer.Text(a.Service.Name) · @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species))</div>

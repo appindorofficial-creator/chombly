@@ -26,7 +26,7 @@ public class DetailsModel : PageModel
             return RedirectToPage("/Account/Login");
 
         Appointment = await _db.Appointments
-            .Include(a => a.Groomer)
+            .Include(a => a.Groomer)!.ThenInclude(g => g.Category)
             .Include(a => a.Service)
             .Include(a => a.Pet)
             .Include(a => a.Extras)

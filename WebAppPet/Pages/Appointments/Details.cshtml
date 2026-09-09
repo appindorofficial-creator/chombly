@@ -17,7 +17,15 @@ else
 {
     var a = Model.Appointment;
     <div class="card" style="margin-bottom:14px">
-        <img src="@(a.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" style="width:100%;height:160px;object-fit:cover" />
+        @{
+            var detailImg = !string.IsNullOrWhiteSpace(a.Groomer.ImageUrl)
+                ? a.Groomer.ImageUrl!
+                : !string.IsNullOrWhiteSpace(a.Groomer.Category?.Slug)
+                    ? $"/images/categories/cat-{a.Groomer.Category!.Slug}.png"
+                    : "/images/pet-other.svg";
+        }
+        <img src="@detailImg" alt="" style="width:100%;height:160px;object-fit:cover"
+             onerror="this.onerror=null;this.src='/images/pet-other.svg';" />
         <div class="card-pad">
             <h2 style="margin:0 0 6px">@a.Groomer.BusinessName</h2>
             <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
