@@ -50,8 +50,21 @@
             {
                 <p class="muted small">📞 @Model.UserEntity.Phone</p>
             }
-            <p class="muted small location">📍 @Model.UserEntity.City</p>
-            <a class="btn btn-outline btn-block" asp-page="/Account/EditProfile" style="margin-top:12px">✏️ @L["Profile_Edit"]</a>
+            <p class="muted small location" id="profile-city-line">
+                📍 @(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)
+            </p>
+            @if (Model.HasGpsLocation)
+            {
+                <p class="muted small" id="profile-gps-status" style="margin-top:4px">✅ @L["Profile_LocationGpsOk"]</p>
+            }
+            else
+            {
+                <p class="muted small" id="profile-gps-status" style="margin-top:4px">⚠️ @L["Profile_LocationGpsMissing"]</p>
+            }
+            <button type="button" class="btn btn-outline btn-block" id="btn-profile-loc" style="margin-top:10px">
+                📍 @L["Search_UseMyLocation"]
+            </button>
+            <a class="btn btn-outline btn-block" asp-page="/Account/EditProfile" style="margin-top:10px">✏️ @L["Profile_Edit"]</a>
         </div>
 
         <div class="menu-list menu-chombly">
@@ -82,3 +95,87 @@
         </div>
     }
 </main>
+
+@section Scripts {
+@if (Model.UserEntity != null)
+{
+    <partial name="_GooglePlaces" />
+<script>
+(function () {
+  var btn = document.getElementById('btn-profile-loc');
+  if (!btn || !navigator.geolocation) return;
+  var cityLine = document.getElementById('profile-city-line');
+  var gpsStatus = document.getElementById('profile-gps-status');
+  var okMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Profile_LocationGpsOk"].Value));
+  var failMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Search_LocationFail"].Value));
+  var updatedMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Profile_LocationUpdated"].Value));
+
+  function reverseCity(lat, lng) {
+    return new Promise(function (resolve) {
+      if (!(window.google && google.maps && google.maps.Geocoder)) {
+        resolve(null);
+        return;
+      }
+      try {
+        new google.maps.Geocoder().geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
+          if (status !== 'OK' || !results || !results[0]) {
+            resolve(null);
+            return;
+          }
+          var comps = results[0].address_components || [];
+          var city = '', state = '';
+          comps.forEach(function (c) {
+            var t = c.types || [];
+            if (t.indexOf('locality') >= 0) city = c.long_name;
+            if (t.indexOf('sublocality') >= 0 && !city) city = c.long_name;
+            if (t.indexOf('administrative_area_level_1') >= 0) state = c.short_name;
+          });
+          resolve([city, state].filter(Boolean).join(', ') || null);
+        });
+      } catch (_) {
+        resolve(null);
+      }
+    });
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    navigator.geolocation.getCurrentPosition(async function (pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      var city = await reverseCity(lat, lng);
+      var body = new URLSearchParams();
+      body.set('lat', String(lat));
+      body.set('lng', String(lng));
+      if (city) body.set('city', city);
+      try {
+        var res = await fetch('/Account/Location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body,
+          credentials: 'same-origin'
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || !data.ok) {
+          alert(failMsg);
+          btn.disabled = false;
+          return;
+        }
+        if (cityLine && (data.city || city))
+          cityLine.textContent = '📍 ' + (data.city || city);
+        if (gpsStatus) gpsStatus.textContent = '✅ ' + okMsg;
+        btn.disabled = false;
+        alert(updatedMsg);
+      } catch (_) {
+        alert(failMsg);
+        btn.disabled = false;
+      }
+    }, function () {
+      alert(failMsg);
+      btn.disabled = false;
+    });
+  });
+})();
+</script>
+}
+}

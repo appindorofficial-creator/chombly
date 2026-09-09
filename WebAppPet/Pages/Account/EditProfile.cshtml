@@ -1,8 +1,10 @@
 @page
 @model WebAppPet.Pages.Account.EditProfileModel
+@using System.Globalization
 @{
     ViewData["Title"] = L["Profile_Edit"].Value;
     ViewData["HideNav"] = true;
+    var inv = CultureInfo.InvariantCulture;
 }
 <div class="page-header">
     <a class="back-btn" asp-page="/Account/Profile">←</a>
@@ -18,12 +20,13 @@
         <div class="alert alert-danger">@Model.ErrorMessage</div>
     }
 
-    <form method="post" data-validate-i18n="1"
+    <form method="post" id="edit-profile-form" data-validate-i18n="1"
           data-msg-required="@L["Validation_Required"]"
           data-msg-email="@L["Profile_Edit_EmailInvalid"]"
           data-msg-phone="@L["Phone_Invalid"]"
           data-msg-password="@L["Profile_Edit_PasswordShort"]"
-          data-msg-password-mismatch="@L["Profile_Edit_PasswordMismatch"]">
+          data-msg-password-mismatch="@L["Profile_Edit_PasswordMismatch"]"
+          data-msg-city-maps="@L["Profile_Edit_CityMapsRequired"]">
         <div class="form-group">
             <label>@L["Register_FullName"]</label>
             <input class="form-control" asp-for="FullName" required maxlength="100" autocomplete="name" />
@@ -40,8 +43,13 @@
         </div>
         <div class="form-group">
             <label>@L["Common_City"]</label>
-            <input class="form-control" asp-for="City" data-places="city" data-places-fill="city"
-                   placeholder="@L["Home_LocationPlaceholder"]" autocomplete="address-level2" />
+            <input class="form-control" asp-for="City" id="City" data-places="city" data-places-fill="city"
+                   data-places-lat="#Latitude" data-places-lng="#Longitude" data-places-require="1"
+                   placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
+            <input type="hidden" asp-for="Latitude" id="Latitude" data-places-fill="lat" />
+            <input type="hidden" asp-for="Longitude" id="Longitude" data-places-fill="lng" />
+            <p class="field-hint" style="margin:8px 0 0">@L["Profile_Edit_CityHint"]</p>
+            <p class="field-error" id="city-maps-error" hidden>@L["Profile_Edit_CityMapsRequired"]</p>
         </div>
 
         <h3 class="section-title" style="margin-top:8px">@L["Profile_Edit_ChangePassword"]</h3>
@@ -64,4 +72,44 @@
 
 @section Scripts {
     <partial name="_GooglePlaces" />
+<script>
+(function () {
+  var city = document.getElementById('City');
+  var lat = document.getElementById('Latitude');
+  var lng = document.getElementById('Longitude');
+  var err = document.getElementById('city-maps-error');
+  var form = document.getElementById('edit-profile-form');
+  if (!city || !lat || !lng || !form) return;
+
+  var baseline = (city.value || '').trim();
+
+  function refreshBaseline() {
+    baseline = (city.value || '').trim();
+  }
+
+  lat.addEventListener('change', refreshBaseline);
+  lng.addEventListener('change', refreshBaseline);
+
+  city.addEventListener('input', function () {
+    // Si edita a mano tras elegir Maps, invalida coords hasta nueva sugerencia.
+    if ((city.value || '').trim() !== baseline || !lat.value || !lng.value) {
+      if ((city.value || '').trim() !== baseline) {
+        lat.value = '';
+        lng.value = '';
+      }
+    }
+    if (err) err.hidden = true;
+  });
+
+  form.addEventListener('submit', function (e) {
+    var c = (city.value || '').trim();
+    if (!c) return;
+    var hasCoords = !!(lat.value && lng.value) && !(Number(lat.value) === 0 && Number(lng.value) === 0);
+    if (hasCoords) return;
+    e.preventDefault();
+    if (err) err.hidden = false;
+    city.focus();
+  });
+})();
+</script>
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,12 @@ public class EditProfileModel : PageModel
     public string City { get; set; } = string.Empty;
 
     [BindProperty]
+    public string? Latitude { get; set; }
+
+    [BindProperty]
+    public string? Longitude { get; set; }
+
+    [BindProperty]
     public string? NewPassword { get; set; }
 
     [BindProperty]
@@ -56,6 +63,8 @@ public class EditProfileModel : PageModel
         Email = user.Email;
         Phone = user.Phone;
         City = user.City;
+        Latitude = user.Latitude?.ToString("0.######", CultureInfo.InvariantCulture);
+        Longitude = user.Longitude?.ToString("0.######", CultureInfo.InvariantCulture);
         return Page();
     }
 
@@ -99,6 +108,12 @@ public class EditProfileModel : PageModel
             return Page();
         }
 
+        if (!TryResolveCityCoordinates(user, out var lat, out var lng, out var cityError))
+        {
+            ErrorMessage = cityError;
+            return Page();
+        }
+
         var changingPassword = !string.IsNullOrWhiteSpace(NewPassword) || !string.IsNullOrWhiteSpace(ConfirmPassword);
         if (changingPassword)
         {
@@ -121,14 +136,67 @@ public class EditProfileModel : PageModel
         user.Email = Email;
         user.Phone = Phone;
         user.City = City;
-        await _db.SaveChangesAsync();
+        if (lat is not null && lng is not null)
+        {
+            user.Latitude = lat;
+            user.Longitude = lng;
+            user.LocationUpdatedAt = DateTime.UtcNow;
+        }
 
-        // Actualiza cookie (nombre / email en claims)
+        await _db.SaveChangesAsync();
         await _auth.SignInAsync(user);
 
         SuccessMessage = _L["Profile_Edit_Saved"].Value;
         NewPassword = null;
         ConfirmPassword = null;
+        Latitude = lat?.ToString("0.######", CultureInfo.InvariantCulture);
+        Longitude = lng?.ToString("0.######", CultureInfo.InvariantCulture);
         return Page();
+    }
+
+    private bool TryResolveCityCoordinates(Models.AppUser user, out double? lat, out double? lng, out string? error)
+    {
+        lat = null;
+        lng = null;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(City))
+            return true;
+
+        var parsedLat = TryParseCoord(Latitude, out var postedLat);
+        var parsedLng = TryParseCoord(Longitude, out var postedLng);
+        var hasPostedCoords = parsedLat && parsedLng && IsValidCoordPair(postedLat, postedLng);
+        var cityUnchanged = string.Equals(City, user.City?.Trim(), StringComparison.OrdinalIgnoreCase);
+        var hasStoredCoords = user.Latitude is double slat && user.Longitude is double slng
+                              && IsValidCoordPair(slat, slng);
+
+        if (hasPostedCoords)
+        {
+            lat = postedLat;
+            lng = postedLng;
+            return true;
+        }
+
+        // Ciudad sin cambiar y ya había GPS/coords: conservar.
+        if (cityUnchanged && hasStoredCoords)
+        {
+            lat = user.Latitude;
+            lng = user.Longitude;
+            return true;
+        }
+
+        error = _L["Profile_Edit_CityMapsRequired"].Value;
+        return false;
+    }
+
+    private static bool IsValidCoordPair(double lat, double lng) =>
+        lat is >= -90 and <= 90 && lng is >= -180 and <= 180 && !(lat == 0 && lng == 0);
+
+    private static bool TryParseCoord(string? value, out double result)
+    {
+        result = 0;
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        value = value.Trim().Replace(',', '.');
+        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }
 }

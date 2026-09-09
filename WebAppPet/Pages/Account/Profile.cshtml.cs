@@ -18,6 +18,7 @@ public class ProfileModel : PageModel
     }
 
     public AppUser? UserEntity { get; set; }
+    public bool HasGpsLocation { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -28,5 +29,8 @@ public class ProfileModel : PageModel
         // Cookie de sesión apunta a un usuario que ya no existe en esta BD.
         if (UserEntity is null && _auth.IsAuthenticated)
             await _auth.SignOutAsync();
+
+        HasGpsLocation = UserEntity?.Latitude is double lat && UserEntity.Longitude is double lng
+                         && !(lat == 0 && lng == 0);
     }
 }

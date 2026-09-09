@@ -15,11 +15,12 @@
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
     }
-    <form method="post" data-validate-i18n="1"
+    <form method="post" id="register-form" data-validate-i18n="1"
           data-msg-required="@L["Validation_Required"]"
           data-msg-email="@L["Profile_Edit_EmailInvalid"]"
           data-msg-phone="@L["Phone_Invalid"]"
-          data-msg-password="@L["Profile_Edit_PasswordShort"]">
+          data-msg-password="@L["Profile_Edit_PasswordShort"]"
+          data-msg-city-maps="@L["Profile_Edit_CityMapsRequired"]">
         <div class="form-group">
             <label>@L["Register_FullName"]</label>
             <input class="form-control" asp-for="FullName" required />
@@ -36,8 +37,14 @@
         </div>
         <div class="form-group">
             <label>@L["Common_City"]</label>
-            <input class="form-control" asp-for="City" data-places="city" data-places-fill="city"
-                   placeholder="@L["Home_LocationPlaceholder"]" />
+            <input class="form-control" asp-for="City" id="City" required
+                   data-places="city" data-places-fill="city"
+                   data-places-lat="#Latitude" data-places-lng="#Longitude" data-places-require="1"
+                   placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
+            <input type="hidden" asp-for="Latitude" id="Latitude" data-places-fill="lat" />
+            <input type="hidden" asp-for="Longitude" id="Longitude" data-places-fill="lng" />
+            <p class="field-hint" style="margin:8px 0 0">@L["Profile_Edit_CityHint"]</p>
+            <p class="field-error" id="city-maps-error" hidden>@L["Profile_Edit_CityMapsRequired"]</p>
         </div>
         <div class="form-group">
             <label>@L["Common_Password"]</label>
@@ -54,4 +61,30 @@
 
 @section Scripts {
     <partial name="_GooglePlaces" />
+<script>
+(function () {
+  var city = document.getElementById('City');
+  var lat = document.getElementById('Latitude');
+  var lng = document.getElementById('Longitude');
+  var err = document.getElementById('city-maps-error');
+  var form = document.getElementById('register-form');
+  if (!city || !lat || !lng || !form) return;
+
+  city.addEventListener('input', function () {
+    lat.value = '';
+    lng.value = '';
+    if (err) err.hidden = true;
+  });
+
+  form.addEventListener('submit', function (e) {
+    var c = (city.value || '').trim();
+    if (!c) return;
+    var hasCoords = !!(lat.value && lng.value) && !(Number(lat.value) === 0 && Number(lng.value) === 0);
+    if (hasCoords) return;
+    e.preventDefault();
+    if (err) err.hidden = false;
+    city.focus();
+  });
+})();
+</script>
 }

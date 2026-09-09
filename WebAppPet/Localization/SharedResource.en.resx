@@ -187,6 +187,12 @@
   <data name="Profile_Edit_EmailTaken" xml:space="preserve"><value>That email is already in use.</value></data>
   <data name="Profile_Edit_PasswordShort" xml:space="preserve"><value>Password must be at least 6 characters, include an uppercase letter and a special character (e.g. !@#$). It cannot be only numbers.</value></data>
   <data name="Profile_Edit_PasswordMismatch" xml:space="preserve"><value>Passwords do not match.</value></data>
+  <data name="Profile_Edit_CityHint" xml:space="preserve"><value>Pick a Google Maps suggestion so we can show nearby groomers and vets.</value></data>
+  <data name="Profile_Edit_CityMapsRequired" xml:space="preserve"><value>Select your city from the Google Maps suggestions (don't type free text).</value></data>
+  <data name="Profile_LocationMissing" xml:space="preserve"><value>No location</value></data>
+  <data name="Profile_LocationGpsOk" xml:space="preserve"><value>Location ready to find nearby businesses</value></data>
+  <data name="Profile_LocationGpsMissing" xml:space="preserve"><value>GPS missing: enable it to see distances to nearby businesses</value></data>
+  <data name="Profile_LocationUpdated" xml:space="preserve"><value>Location updated.</value></data>
   <data name="Phone_Invalid" xml:space="preserve"><value>Invalid phone. Digits only (7–10). E.g. 7045551234</value></data>
   <data name="Phone_Required" xml:space="preserve"><value>Phone is required.</value></data>
   <data name="Validation_Required" xml:space="preserve"><value>This field is required.</value></data>

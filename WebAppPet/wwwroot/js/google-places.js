@@ -91,7 +91,7 @@
 
     var options = {
       fields: ["address_components", "formatted_address", "geometry", "name"],
-      componentRestrictions: { country: ["us", "co", "mx", "es"] }
+      componentRestrictions: { country: ["us", "co", "mx", "sv", "es"] }
     };
     if (mode === "city") {
       options.types = ["(cities)"];

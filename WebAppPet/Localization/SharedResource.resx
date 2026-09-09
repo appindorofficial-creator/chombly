@@ -194,6 +194,12 @@
   <data name="Profile_Edit_EmailTaken" xml:space="preserve"><value>Ese email ya está en uso.</value></data>
   <data name="Profile_Edit_PasswordShort" xml:space="preserve"><value>La contraseña debe tener al menos 6 caracteres, una mayúscula y un carácter especial (ej. !@#$). No puede ser solo números.</value></data>
   <data name="Profile_Edit_PasswordMismatch" xml:space="preserve"><value>Las contraseñas no coinciden.</value></data>
+  <data name="Profile_Edit_CityHint" xml:space="preserve"><value>Elige una sugerencia de Google Maps. Así podemos mostrar peluquerías y veterinarias cerca de ti.</value></data>
+  <data name="Profile_Edit_CityMapsRequired" xml:space="preserve"><value>Selecciona tu ciudad desde las sugerencias de Google Maps (no escribas texto libre).</value></data>
+  <data name="Profile_LocationMissing" xml:space="preserve"><value>Sin ubicación</value></data>
+  <data name="Profile_LocationGpsOk" xml:space="preserve"><value>Ubicación lista para buscar cerca de ti</value></data>
+  <data name="Profile_LocationGpsMissing" xml:space="preserve"><value>Falta GPS: actívalo para ver distancias a negocios cercanos</value></data>
+  <data name="Profile_LocationUpdated" xml:space="preserve"><value>Ubicación actualizada.</value></data>
   <data name="Phone_Invalid" xml:space="preserve"><value>Teléfono inválido. Solo números (7 a 10 dígitos). Ej: 7045551234</value></data>
   <data name="Phone_Required" xml:space="preserve"><value>El teléfono es obligatorio.</value></data>
   <data name="Validation_Required" xml:space="preserve"><value>Este campo es obligatorio.</value></data>
