@@ -2517,6 +2517,80 @@ a.vet-modality-emergency:hover {
   color: var(--forest-deep);
 }
 
+/* Auth screens (Login / Register) — same shell as Welcome */
+.onboard-auth::before {
+  height: 28%;
+}
+.onboard-auth .onboard-stage {
+  align-items: flex-start;
+  padding-top: 12px;
+}
+.onboard-auth-card {
+  text-align: left;
+  padding: 20px 18px 22px;
+}
+.onboard-auth-card h1 {
+  margin: 8px 0 6px;
+  font-family: var(--font);
+  font-size: clamp(1.35rem, 5vw, 1.55rem);
+  font-weight: 800;
+  color: var(--forest-deep);
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+.onboard-auth-lead {
+  margin: 0 0 16px;
+  color: #66736c;
+  font-size: .92rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.onboard-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .82rem;
+  font-weight: 750;
+  color: var(--forest);
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+.onboard-auth-form .form-group {
+  margin-bottom: 14px;
+}
+.onboard-auth-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: .82rem;
+  font-weight: 750;
+  color: var(--forest-deep);
+}
+.onboard-auth-form .form-control {
+  border-radius: 14px;
+  min-height: 48px;
+}
+.onboard-auth-form .btn-enter {
+  margin-top: 6px;
+}
+.onboard-auth-links {
+  margin: 16px 0 4px;
+  text-align: center;
+  color: #6b7670;
+  font-size: .88rem;
+}
+.onboard-auth-links a {
+  color: var(--forest);
+  font-weight: 800;
+  text-decoration: none;
+}
+.onboard-auth .onboard-secondary {
+  margin-top: 2px;
+}
+.onboard-auth .alert {
+  margin-bottom: 14px;
+  border-radius: 14px;
+}
+
 /* City/address suggestion dropdown (Maps or OSM fallback) */
 .places-field,
 .form-group:has([data-places]) {
