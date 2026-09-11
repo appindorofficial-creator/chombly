@@ -1,5 +1,6 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Groomers.DetailsModel
+@using WebAppPet.Services
 @{
     ViewData["Title"] = Model.Groomer?.BusinessName ?? L["Detail_Business"].Value;
 }
@@ -10,8 +11,9 @@
 else
 {
     var g = Model.Groomer;
+    var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
     <div class="hero-photo">
-        <img src="@(g.ImageUrl ?? "/images/pet-other.svg")" alt="@g.BusinessName" />
+        <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
         <div class="actions">
             <a class="icon-btn"
                asp-page="./Index"

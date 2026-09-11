@@ -10,10 +10,8 @@
 <div class="onboard" data-audience="families">
     <header class="onboard-top">
         <div class="onboard-brand">
-            <img src="~/brand/v2/chombly-mark.png" alt="Chombly" class="onboard-mark" />
+            <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" />
             <strong class="onboard-word">Chombly</strong>
-            <span class="onboard-badge" data-badge-families>@L["Onboard_BadgeFamilies"]</span>
-            <span class="onboard-badge is-biz" data-badge-biz hidden>@L["Onboard_BadgeBiz"]</span>
         </div>
         <partial name="_LanguageSwitch" />
     </header>
@@ -106,7 +104,7 @@
   }, { passive: true });
   setInterval(() => show(i + 1), 5500);
 
-  function setAudience( whi ) {
+  function setAudience(whi) {
     root.dataset.audience = whi;
     const families = whi === 'families';
     root.querySelectorAll('[data-audience-btn]').forEach(b => {
@@ -114,10 +112,10 @@
       b.classList.toggle('is-active', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    root.querySelector('[data-badge-families]').hidden = !families;
-    root.querySelector('[data-badge-biz]').hidden = families;
-    root.querySelector('[data-cta-families]').hidden = !families;
-    root.querySelector('[data-cta-biz]').hidden = families;
+    const ctaFamilies = root.querySelector('[data-cta-families]');
+    const ctaBiz = root.querySelector('[data-cta-biz]');
+    if (ctaFamilies) ctaFamilies.hidden = !families;
+    if (ctaBiz) ctaBiz.hidden = families;
   }
   root.querySelectorAll('[data-audience-btn]').forEach(b => {
     b.addEventListener('click', () => setAudience(b.dataset.audienceBtn));

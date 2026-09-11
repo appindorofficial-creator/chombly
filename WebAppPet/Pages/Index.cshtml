@@ -1,28 +1,8 @@
 ﻿@page "/Index"
 @model WebAppPet.Pages.IndexModel
+@using WebAppPet.Services
 @{
     ViewData["Title"] = L["Nav_Home"].Value;
-    string PopularIcon(string name)
-    {
-        var n = name.ToLowerInvariant();
-        if (n.Contains("baño") || n.Contains("bano") || n.Contains("cepill") || n.Contains("bath"))
-            return "/images/icons/svc-bath.png";
-        if (n.Contains("deshedd") || n.Contains("muda") || n.Contains("pelo"))
-            return "/images/icons/svc-deshedding.png";
-        if (n.Contains("corte") || n.Contains("clip") || n.Contains("estilo") || n.Contains("cut"))
-            return "/images/icons/svc-cut.png";
-        if (n.Contains("consulta") || n.Contains("vacun") || n.Contains("vet"))
-            return "/images/categories/cat-vet.png";
-        if (n.Contains("noche") || n.Contains("hotel") || n.Contains("board"))
-            return "/images/categories/cat-hotel.png";
-        if (n.Contains("día") || n.Contains("dia") || n.Contains("daycare"))
-            return "/images/categories/cat-daycare.png";
-        if (n.Contains("paseo") || n.Contains("walk"))
-            return "/images/categories/cat-walkers.png";
-        if (n.Contains("entren") || n.Contains("cachorr") || n.Contains("obedien") || n.Contains("train"))
-            return "/images/categories/cat-trainers.png";
-        return "/images/icons/svc-grooming.png";
-    }
 }
 <header class="topbar">
     <partial name="_Brand" />
@@ -66,10 +46,9 @@
                     _ => "/Groomers/Index"
                 };
                 var catRoute = c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug;
-                var icon = $"/images/categories/cat-{c.Slug}.png";
                 <a class="category-chip category-chip-illus" asp-page="@catPage" asp-route-category="@catRoute">
                     <span class="category-img-wrap">
-                        <img src="@icon" alt="@c.DisplayName()" class="category-img" />
+                        <img src="~/images/categories/cat-@(c.Slug).png" asp-append-version="true" alt="@c.DisplayName()" class="category-img" />
                     </span>
                     <strong>@c.DisplayName()</strong>
                 </a>
@@ -90,14 +69,18 @@
                 <button type="button" class="species-chip" id="species-other-chip"
                         data-species="@PetSpecies.Other"
                         aria-expanded="false" aria-controls="other-species-panel">
-                    <span class="species-emoji">@sp.Emoji</span>
+                    <span class="species-img-wrap">
+                        <img src="~/images/pet-other.svg" asp-append-version="true" alt="" class="species-img" />
+                    </span>
                     <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
                 </button>
             }
             else
             {
                 <a class="species-chip" asp-page="/Groomers/Index" asp-route-species="@sp.Value">
-                    <span class="species-emoji">@sp.Emoji</span>
+                    <span class="species-img-wrap">
+                        <img src="~@PetSpecies.IconPath(sp.Value)" asp-append-version="true" alt="" class="species-img" />
+                    </span>
                     <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
                 </a>
             }
@@ -125,9 +108,10 @@
     <div class="services-scroll">
         @foreach (var name in Model.PopularServices)
         {
+            var icon = CatalogImages.PopularService(name);
             <a class="service-pill service-pill-rich" asp-page="/Groomers/Index" asp-route-service="@name">
                 <span class="service-img-wrap">
-                    <img src="@PopularIcon(name)" alt="" />
+                    <img src="~@icon" asp-append-version="true" alt="" />
                 </span>
                 <span>@CatalogLocalizer.Text(name)</span>
             </a>
@@ -148,9 +132,10 @@
         @foreach (var g in Model.Featured)
         {
             var isFav = Model.FavoriteIds.Contains(g.Id);
+            var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
             <div class="groomer-card-wrap">
                 <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-                    <img src="@(g.ImageUrl ?? "/images/categories/cat-grooming.png")" alt="@g.BusinessName" />
+                    <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
                     <div class="info">
                         <h3>@g.BusinessName</h3>
                         <div class="meta-row">

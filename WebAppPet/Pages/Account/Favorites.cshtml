@@ -1,5 +1,6 @@
 @page
 @model WebAppPet.Pages.Account.FavoritesModel
+@using WebAppPet.Services
 @{
     ViewData["Title"] = L["Favorites_Title"].Value;
 }
@@ -14,14 +15,10 @@
     }
     @foreach (var g in Model.Groomers)
     {
-        var img = !string.IsNullOrWhiteSpace(g.ImageUrl)
-            ? g.ImageUrl!
-            : !string.IsNullOrWhiteSpace(g.Category?.Slug)
-                ? $"/images/categories/cat-{g.Category!.Slug}.png"
-                : "/images/pet-other.svg";
+        var img = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
         <div class="groomer-card-wrap">
             <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-                <img src="@img" alt="@g.BusinessName" onerror="this.onerror=null;this.src='/images/pet-other.svg';" />
+                <img src="~@img" asp-append-version="true" alt="@g.BusinessName" onerror="this.onerror=null;this.src='/images/pet-other.svg';" />
                 <div class="info">
                     <h3>@g.BusinessName</h3>
                     <div class="meta-row">

@@ -60,9 +60,11 @@ public static class PetSpecies
         Bird => "/images/pet-bird.svg",
         Ferret => "/images/pet-ferret.svg",
         Other => "/images/pet-other.svg",
-        Dog => "/images/dog-max.png",
+        Dog => "/images/pet-dog.svg",
         _ => "/images/pet-other.svg"
     };
+
+    public static string IconPath(string? species) => DefaultPhoto(species);
 
     public static string PhotoOrDefault(string? photoUrl, string? species) =>
         string.IsNullOrWhiteSpace(photoUrl) ? DefaultPhoto(species) : photoUrl;

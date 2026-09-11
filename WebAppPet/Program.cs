@@ -24,6 +24,13 @@ builder.Services.AddSingleton<IConfigureOptions<MvcOptions>, WebAppPet.Localizat
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
 builder.Services.Configure<GoogleMapsOptions>(builder.Configuration.GetSection(GoogleMapsOptions.SectionName));
+builder.Services.AddHttpClient("nominatim", client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("ChomblyPetCare/1.0 (https://chombly.app; places-suggest)");
+    client.Timeout = TimeSpan.FromSeconds(8);
+});
+builder.Services.AddScoped<PlacesSuggestService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AvailabilityService>();
 builder.Services.AddScoped<PromoCodeService>();
@@ -132,6 +139,28 @@ app.UseAuthorization();
 // Entrada pública: invitados ven la presentación; usuarios logueados van al marketplace.
 app.MapGet("/", (HttpContext ctx) =>
     Results.Redirect(ctx.User.Identity?.IsAuthenticated == true ? "/Index" : "/Welcome"));
+
+// City/address suggestions (Google Maps when key is set; OSM Nominatim fallback otherwise).
+app.MapGet("/api/places/suggest", async (
+    string? q,
+    string? type,
+    PlacesSuggestService places,
+    CancellationToken ct) =>
+{
+    var mode = (type ?? "city").Trim().ToLowerInvariant();
+    var items = mode == "address"
+        ? await places.SuggestAddressesAsync(q ?? "", ct)
+        : await places.SuggestCitiesAsync(q ?? "", ct);
+
+    return Results.Json(items.Select(i => new
+    {
+        label = i.Label,
+        city = i.City,
+        address = i.Address,
+        lat = i.Lat,
+        lng = i.Lng
+    }));
+});
 
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();

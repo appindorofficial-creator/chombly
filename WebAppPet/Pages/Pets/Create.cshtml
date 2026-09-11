@@ -23,7 +23,9 @@
                     var speciesId = $"species-{sp.Value}";
                     <label class="species-opt @(Model.Species == sp.Value ? "selected" : "")">
                         <input type="radio" asp-for="Species" value="@sp.Value" id="@speciesId" />
-                        <span class="species-emoji">@sp.Emoji</span>
+                        <span class="species-img-wrap">
+                            <img src="~@PetSpecies.IconPath(sp.Value)" asp-append-version="true" alt="" class="species-img" />
+                        </span>
                         <span class="species-label">@PetSpecies.DisplayLabel(sp.Value)</span>
                     </label>
                 }
