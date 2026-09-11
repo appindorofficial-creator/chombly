@@ -58,6 +58,9 @@
 
   <data name="Register_Title" xml:space="preserve"><value>Create account</value></data>
   <data name="Register_Submit" xml:space="preserve"><value>Create account</value></data>
+  <data name="Register_SuccessTitle" xml:space="preserve"><value>Registration successful!</value></data>
+  <data name="Register_SuccessBody" xml:space="preserve"><value>Your Chombly account is ready. Start taking care of your pet.</value></data>
+  <data name="Register_SuccessCta" xml:space="preserve"><value>Continue</value></data>
   <data name="Register_HaveAccount" xml:space="preserve"><value>Already have an account?</value></data>
   <data name="Register_Login" xml:space="preserve"><value>Sign in</value></data>
   <data name="Register_FullName" xml:space="preserve"><value>Full name</value></data>
@@ -230,6 +233,7 @@
   <data name="Profile_LocationUpdated" xml:space="preserve"><value>Location updated.</value></data>
   <data name="Phone_Invalid" xml:space="preserve"><value>Invalid phone. Digits only (7–10). E.g. 7045551234</value></data>
   <data name="Phone_Required" xml:space="preserve"><value>Phone is required.</value></data>
+  <data name="Phone_Placeholder" xml:space="preserve"><value>E.g. 7045551234</value></data>
   <data name="Validation_Required" xml:space="preserve"><value>This field is required.</value></data>
   <data name="Validation_FieldRequired" xml:space="preserve"><value>The {0} field is required.</value></data>
   <data name="Validation_ValueInvalid" xml:space="preserve"><value>The value '{0}' is invalid.</value></data>

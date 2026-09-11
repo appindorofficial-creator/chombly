@@ -315,6 +315,41 @@ h1, h2, h3,
   border-color: var(--forest);
   box-shadow: 0 0 0 3px rgba(182, 231, 64, 0.45);
 }
+.password-field {
+  position: relative;
+}
+.password-field .form-control {
+  padding-right: 48px;
+}
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--forest);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 0;
+}
+.password-toggle:hover {
+  background: rgba(15, 61, 47, 0.06);
+}
+.password-toggle-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+/* Icono = estado: tachado si está oculta, abierto si se ve */
+.password-toggle-icon--show { display: none; }
+.password-toggle-icon--hide { display: block; }
+.password-field.is-visible .password-toggle-icon--show { display: block; }
+.password-field.is-visible .password-toggle-icon--hide { display: none; }
 .form-error { color: var(--danger); font-size: .82rem; margin-top: 4px; }
 .alert {
   padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 14px;
@@ -2636,6 +2671,82 @@ a.vet-modality-emergency:hover {
 }
 .onboard-auth-form .loc-manual .form-control {
   margin-top: 0;
+}
+
+body.celebrate-open {
+  overflow: hidden;
+}
+.celebrate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(7, 61, 46, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.celebrate-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.celebrate-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.celebrate-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 360px);
+  background: #fff;
+  border-radius: 28px;
+  padding: 28px 22px 22px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  transform: translateY(12px) scale(.96);
+  transition: transform .28s ease;
+}
+.celebrate-overlay.is-open .celebrate-dialog {
+  transform: none;
+}
+.celebrate-mark {
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  width: 64px;
+  height: 64px;
+  animation: celebrate-bounce 0.9s ease both;
+}
+.celebrate-mark img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+.celebrate-dialog h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--forest-deep);
+  letter-spacing: -.03em;
+}
+.celebrate-dialog p {
+  margin: 0 0 18px;
+  color: #5a6861;
+  font-size: .95rem;
+  line-height: 1.45;
+  font-weight: 500;
+}
+@keyframes celebrate-bounce {
+  0% { transform: scale(.4); opacity: 0; }
+  55% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
 }
 
 /* City/address suggestion dropdown (Maps or OSM fallback) */

@@ -47,7 +47,9 @@
                 <div class="form-group">
                     <label>@L["Common_Phone"]</label>
                     <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
-                           maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel" placeholder="7045551234" />
+                           required maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel"
+                           placeholder="@L["Phone_Placeholder"]"
+                           data-msg-required="@L["Phone_Required"]" />
                 </div>
                 <div class="form-group">
                     <label>@L["Register_LocationLabel"]</label>

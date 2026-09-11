@@ -28,6 +28,53 @@
     });
   }
 
+  function passwordToggleLabels() {
+    var lang = (document.documentElement.lang || 'es').toLowerCase();
+    if (lang.indexOf('en') === 0) {
+      return { show: 'Show password', hide: 'Hide password' };
+    }
+    return { show: 'Mostrar contraseña', hide: 'Ocultar contraseña' };
+  }
+
+  function bindPasswordToggles(root) {
+    var labels = passwordToggleLabels();
+    (root || document).querySelectorAll('input[type="password"]').forEach(function (input) {
+      if (input.dataset.passwordToggleBound === '1') return;
+      if (input.getAttribute('data-pay-field') || input.getAttribute('data-no-password-toggle') === '1') return;
+      input.dataset.passwordToggleBound = '1';
+
+      var wrap = input.closest('.password-field');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.className = 'password-field';
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
+      }
+
+      var btn = wrap.querySelector('.password-toggle');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'password-toggle';
+        btn.setAttribute('aria-label', labels.show);
+        btn.setAttribute('title', labels.show);
+        btn.innerHTML =
+          '<svg class="password-toggle-icon password-toggle-icon--show" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 5c-5 0-9.3 3.1-11 7 1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 9a2.5 2.5 0 0 0 0 5z"/></svg>' +
+          '<svg class="password-toggle-icon password-toggle-icon--hide" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.3 2.2 2 3.5l3.1 3.1C3.3 8 1.7 9.7 1 12c1.7 3.9 6 7 11 7 1.7 0 3.3-.4 4.7-1l3.3 3.3 1.3-1.3L3.3 2.2zM12 17c-3.7 0-6.9-2-8.5-5 .6-1.2 1.6-2.3 2.8-3.1l1.7 1.7A5 5 0 0 0 12 17zm0-10a5 5 0 0 1 4.9 4l2.1 2.1c.5-.6.9-1.3 1.2-2.1C18.9 7 14.7 5 12 5c-.7 0-1.3.1-2 .2l1.4 1.4c.2 0 .4-.1.6-.1z"/></svg>';
+        wrap.appendChild(btn);
+      }
+
+      btn.addEventListener('click', function () {
+        var revealing = input.type === 'password';
+        input.type = revealing ? 'text' : 'password';
+        wrap.classList.toggle('is-visible', revealing);
+        btn.setAttribute('aria-label', revealing ? labels.hide : labels.show);
+        btn.setAttribute('title', revealing ? labels.hide : labels.show);
+        input.focus();
+      });
+    });
+  }
+
   // Preserve scroll across hotel-flow GET filter auto-submits (onchange → form.submit())
   // and same-page filter links (e.g. "Elegir paseador"). HTMLFormElement.submit() does
   // not fire "submit", so we listen for "change" instead.
@@ -430,6 +477,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
+    bindPasswordToggles(document);
     bindLocalizedValidation(document);
     restoreFlowScroll();
     bindConfirmForms(document);
@@ -438,6 +486,7 @@
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;
+  window.ChomblyBindPasswordToggles = bindPasswordToggles;
   window.ChomblyBindLocalizedValidation = bindLocalizedValidation;
   window.ChomblyConfirm = openConfirm;
   window.ChomblyBindConfirmForms = bindConfirmForms;

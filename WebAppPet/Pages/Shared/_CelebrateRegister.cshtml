@@ -1,0 +1,94 @@
+@{
+    var celebrate = string.Equals(TempData["CelebrateRegister"] as string, "1", StringComparison.Ordinal);
+}
+@if (celebrate)
+{
+    <div class="celebrate-overlay is-open" id="celebrate-overlay" role="dialog" aria-modal="true" aria-labelledby="celebrate-title">
+        <canvas class="celebrate-canvas" id="celebrate-canvas" aria-hidden="true"></canvas>
+        <div class="celebrate-dialog">
+            <div class="celebrate-mark" aria-hidden="true">
+                <img src="~/brand/v2/chombly-mark-lime.png" asp-append-version="true" alt="" width="56" height="56" />
+            </div>
+            <h2 id="celebrate-title">@L["Register_SuccessTitle"]</h2>
+            <p>@L["Register_SuccessBody"]</p>
+            <button type="button" class="btn btn-enter btn-block" id="celebrate-continue">@L["Register_SuccessCta"]</button>
+        </div>
+    </div>
+    <script>
+    (function () {
+      var overlay = document.getElementById('celebrate-overlay');
+      var canvas = document.getElementById('celebrate-canvas');
+      var btn = document.getElementById('celebrate-continue');
+      if (!overlay || !canvas) return;
+
+      document.body.classList.add('celebrate-open');
+
+      function close() {
+        overlay.classList.remove('is-open');
+        document.body.classList.remove('celebrate-open');
+        setTimeout(function () { overlay.remove(); }, 280);
+      }
+      btn && btn.addEventListener('click', close);
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) close();
+      });
+
+      var ctx = canvas.getContext('2d');
+      var pieces = [];
+      var colors = ['#b6e740', '#073d26', '#0f3d2f', '#fff', '#e8f7bb', '#f4c542', '#ff6b6b', '#4ecdc4'];
+      var running = true;
+      var start = performance.now();
+
+      function resize() {
+        canvas.width = window.innerWidth * devicePixelRatio;
+        canvas.height = window.innerHeight * devicePixelRatio;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      for (var i = 0; i < 140; i++) {
+        pieces.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * -window.innerHeight,
+          w: 6 + Math.random() * 8,
+          h: 8 + Math.random() * 12,
+          vx: -2 + Math.random() * 4,
+          vy: 2 + Math.random() * 4,
+          r: Math.random() * Math.PI,
+          vr: -0.2 + Math.random() * 0.4,
+          color: colors[i % colors.length]
+        });
+      }
+
+      function frame(now) {
+        if (!running) return;
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        pieces.forEach(function (p) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.r += p.vr;
+          if (p.y > window.innerHeight + 20) {
+            p.y = -20;
+            p.x = Math.random() * window.innerWidth;
+          }
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.r);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        if (now - start < 4500) requestAnimationFrame(frame);
+        else {
+          running = false;
+          ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        }
+      }
+      requestAnimationFrame(frame);
+      setTimeout(function () { if (btn) btn.focus(); }, 50);
+    })();
+    </script>
+}

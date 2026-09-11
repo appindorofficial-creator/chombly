@@ -30,8 +30,8 @@ public class RegisterModel : PageModel
     [BindProperty, Required, EmailAddress, MaxLength(150)]
     public string Email { get; set; } = string.Empty;
 
-    [BindProperty, MaxLength(10)]
-    public string? Phone { get; set; }
+    [BindProperty, Required, MaxLength(10)]
+    public string Phone { get; set; } = string.Empty;
 
     [BindProperty, Required, MaxLength(120)]
     public string City { get; set; } = string.Empty;
@@ -53,7 +53,7 @@ public class RegisterModel : PageModel
     {
         FullName = (FullName ?? "").Trim();
         Email = (Email ?? "").Trim().ToLowerInvariant();
-        Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone.Trim();
+        Phone = (Phone ?? "").Trim();
         City = (City ?? "").Trim();
 
         if (string.IsNullOrWhiteSpace(FullName))
@@ -68,7 +68,13 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm))
+        if (string.IsNullOrWhiteSpace(Phone))
+        {
+            ErrorMessage = _L["Phone_Required"].Value;
+            return Page();
+        }
+
+        if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
         {
             ErrorMessage = _L["Phone_Invalid"].Value;
             return Page();
@@ -121,6 +127,7 @@ public class RegisterModel : PageModel
         await _db.SaveChangesAsync();
 
         await _auth.SignInAsync(user);
+        TempData["CelebrateRegister"] = "1";
         return RedirectToPage("/Index");
     }
 
