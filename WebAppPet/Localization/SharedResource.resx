@@ -177,6 +177,32 @@
   <data name="Welcome_HeroSub" xml:space="preserve"><value>{0}, {1}, {2}, {3} y {4} cerca de ti.</value></data>
   <data name="Welcome_Explore" xml:space="preserve"><value>Explorar servicios</value></data>
   <data name="Welcome_BackHome" xml:space="preserve"><value>← Volver al inicio</value></data>
+  <data name="Closing_Title" xml:space="preserve"><value>¿Tu mascota también es familia?</value></data>
+  <data name="Closing_Body" xml:space="preserve"><value>Entonces Chombly es para ustedes.</value></data>
+  <data name="Closing_CtaOwner" xml:space="preserve"><value>Quiero Chombly para mi mascota</value></data>
+  <data name="Closing_CtaBiz" xml:space="preserve"><value>Quiero estar en Chombly</value></data>
+  <data name="Closing_Note" xml:space="preserve"><value>Sin compromiso. Empieza cuando quieras.</value></data>
+  <data name="Closing_FooterTagline" xml:space="preserve"><value>Cuidado cercano para quienes ya son familia.</value></data>
+  <data name="Closing_ColFamilies" xml:space="preserve"><value>Familias</value></data>
+  <data name="Closing_ColBiz" xml:space="preserve"><value>Profesionales</value></data>
+  <data name="Closing_ColLegal" xml:space="preserve"><value>Legal</value></data>
+  <data name="Closing_LinkPros" xml:space="preserve"><value>Onboarding profesional</value></data>
+  <data name="Closing_MadeFor" xml:space="preserve"><value>Hecho para Colombia</value></data>
+  <data name="Onboard_BadgeFamilies" xml:space="preserve"><value>Familias</value></data>
+  <data name="Onboard_BadgeBiz" xml:space="preserve"><value>Negocios</value></data>
+  <data name="Onboard_Audience" xml:space="preserve"><value>Tipo de cuenta</value></data>
+  <data name="Onboard_Families" xml:space="preserve"><value>Familias</value></data>
+  <data name="Onboard_Biz" xml:space="preserve"><value>Negocios</value></data>
+  <data name="Onboard_EnterFamilies" xml:space="preserve"><value>Entrar a Chombly</value></data>
+  <data name="Onboard_EnterBiz" xml:space="preserve"><value>Registrar mi negocio</value></data>
+  <data name="Onboard_Slide1Title" xml:space="preserve"><value>Descubre Chombly</value></data>
+  <data name="Onboard_Slide1Body" xml:space="preserve"><value>El cuidado de tu mascota, <strong>organizado en un solo lugar</strong>.</value></data>
+  <data name="Onboard_Slide2Title" xml:space="preserve"><value>Servicios cerca de ti</value></data>
+  <data name="Onboard_Slide2Body" xml:space="preserve"><value>Grooming, hotel, guardería y más con profesionales de confianza.</value></data>
+  <data name="Onboard_Slide3Title" xml:space="preserve"><value>Salud y tranquilidad</value></data>
+  <data name="Onboard_Slide3Body" xml:space="preserve"><value>Agenda atención veterinaria y sigue el historial de tu mascota.</value></data>
+  <data name="Onboard_Slide4Title" xml:space="preserve"><value>Paseos y rutina</value></data>
+  <data name="Onboard_Slide4Body" xml:space="preserve"><value>Encuentra paseadores y entrenadores para el día a día.</value></data>
 
   <!-- Profile -->
   <data name="Profile_Title" xml:space="preserve"><value>Perfil</value></data>
