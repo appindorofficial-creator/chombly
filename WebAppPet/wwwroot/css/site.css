@@ -1917,7 +1917,7 @@ input[type=radio]:checked + .size-opt {
   height: 64px;
   margin: 0 auto;
   border-radius: 18px;
-  background: linear-gradient(160deg, var(--lime-soft), var(--ivory));
+  background: #fff;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1925,10 +1925,11 @@ input[type=radio]:checked + .size-opt {
 .category-chip .category-img {
   width: 58px;
   height: 58px;
-  object-fit: cover;
-  border-radius: 14px;
+  object-fit: contain;
+  border-radius: 0;
   margin: 0;
   display: block;
+  filter: saturate(1.06);
 }
 .category-chip strong { font-size: .78rem; color: var(--forest); }
 .category-chip small { font-size: .65rem; color: var(--muted); line-height: 1.2; }

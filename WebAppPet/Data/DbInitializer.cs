@@ -31,12 +31,12 @@ public static class DbInitializer
     {
         var catalog = new (string Slug, string Name, string NameEn, string Subtitle, string SubtitleEn, string Icon, string Emoji, bool Overnight, int Order)[]
         {
-            ("grooming", "Peluquería", "Grooming", "Baño, corte y estética", "Bath, cut & styling", "/images/categories/cat-grooming.png", "✂️", false, 1),
-            ("hotel", "Hotel", "Hotel", "Hospedaje para tu mascota", "Overnight pet boarding", "/images/categories/cat-hotel.png", "🏨", true, 2),
-            ("vet", "Veterinario", "Veterinary", "Consultas y cuidados", "Checkups & care", "/images/categories/cat-vet.png", "🩺", false, 3),
-            ("daycare", "Guardería", "Daycare", "Guardería diurna", "Daytime pet care", "/images/categories/cat-daycare.png", "☀️", true, 4),
-            ("walkers", "Paseadores", "Walkers", "Paseos profesionales", "Professional dog walks", "/images/categories/cat-walkers.png", "🦮", false, 5),
-            ("trainers", "Entrenadores", "Trainers", "Entrenamiento", "Training sessions", "/images/categories/cat-trainers.png", "🎓", false, 6)
+            ("grooming", "Peluquería", "Grooming", "Baño, corte y estética", "Bath, cut & styling", "/images/categories/cat-grooming-live.png", "✂️", false, 1),
+            ("hotel", "Hotel", "Hotel", "Hospedaje para tu mascota", "Overnight pet boarding", "/images/categories/cat-hotel-live.png", "🏨", true, 2),
+            ("vet", "Veterinario", "Veterinary", "Consultas y cuidados", "Checkups & care", "/images/categories/cat-vet-live.png", "🩺", false, 3),
+            ("daycare", "Guardería", "Daycare", "Guardería diurna", "Daytime pet care", "/images/categories/cat-daycare-live.png", "☀️", true, 4),
+            ("walkers", "Paseadores", "Walkers", "Paseos profesionales", "Professional dog walks", "/images/categories/cat-walkers-live.png", "🦮", false, 5),
+            ("trainers", "Entrenadores", "Trainers", "Entrenamiento", "Training sessions", "/images/categories/cat-trainers-live.png", "🎓", false, 6)
         };
 
         foreach (var item in catalog)

@@ -167,7 +167,7 @@
                                 var on = Model.CategoryId == c.Id || (Model.CategoryId == 0 && c == Model.Categories.First());
                                 <label class="biz-cat-card @(on ? "active" : "")">
                                     <input type="radio" name="CategoryId" value="@c.Id" @(on ? "checked" : "") />
-                                    <img src="/images/categories/cat-@(c.Slug).png" alt="" />
+                                    <img src="/images/categories/cat-@(c.Slug)-live.png" alt="" />
                                     <strong>@c.DisplayName()</strong>
                                 </label>
                             }
