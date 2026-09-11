@@ -81,7 +81,7 @@
                         <h2 class="biz-section-title">@L["Biz_HowTitle"]</h2>
                         <label class="biz-type-card @(Model.ProviderKindKey != "independent" ? "active" : "")">
                             <input type="radio" name="ProviderKindKey" value="business" @(Model.ProviderKindKey != "independent" ? "checked" : "") />
-                            <img src="~/images/onboarding/dev-grooming.webp" alt="" class="biz-type-art" asp-append-version="true" />
+                            <img src="~/images/biz/biz-type-business-cat.png" alt="" class="biz-type-art" asp-append-version="true" />
                             <span class="biz-type-copy">
                                 <strong>@L["Biz_TypeBusinessTitle"]</strong>
                                 <small>@L["Biz_TypeBusinessDesc"]</small>
@@ -89,7 +89,7 @@
                         </label>
                         <label class="biz-type-card @(Model.ProviderKindKey == "independent" ? "active" : "")">
                             <input type="radio" name="ProviderKindKey" value="independent" @(Model.ProviderKindKey == "independent" ? "checked" : "") />
-                            <img src="~/images/onboarding/dev-walk.webp" alt="" class="biz-type-art" asp-append-version="true" />
+                            <img src="~/images/biz/biz-type-independent.png" alt="" class="biz-type-art" asp-append-version="true" />
                             <span class="biz-type-copy">
                                 <strong>@L["Biz_TypeIndependentTitle"]</strong>
                                 <small>@L["Biz_TypeIndependentDesc"]</small>
