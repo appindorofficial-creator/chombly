@@ -26,6 +26,40 @@ public sealed class PlacesSuggestService
     public async Task<IReadOnlyList<PlaceSuggestion>> SuggestAddressesAsync(string query, CancellationToken ct = default)
         => await SuggestAsync(query, cityOnly: false, ct);
 
+    public async Task<PlaceSuggestion?> ReverseAsync(double lat, double lng, CancellationToken ct = default)
+    {
+        if (lat is < -90 or > 90 || lng is < -180 or > 180)
+            return null;
+
+        var client = _httpFactory.CreateClient("nominatim");
+        var path =
+            $"reverse?format=jsonv2&addressdetails=1&lat={lat.ToString(CultureInfo.InvariantCulture)}&lon={lng.ToString(CultureInfo.InvariantCulture)}";
+
+        try
+        {
+            using var res = await client.GetAsync(path, ct);
+            if (!res.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Nominatim reverse {Status} for {Lat},{Lng}", (int)res.StatusCode, lat, lng);
+                return null;
+            }
+
+            await using var stream = await res.Content.ReadAsStreamAsync(ct);
+            var row = await JsonSerializer.DeserializeAsync<NominatimRow>(stream, cancellationToken: ct);
+            if (row == null) return null;
+
+            // Prefer device coords over Nominatim's snapped point.
+            var mapped = MapRow(row);
+            if (mapped == null) return null;
+            return mapped with { Lat = Math.Round(lat, 6), Lng = Math.Round(lng, 6) };
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Nominatim reverse failed for {Lat},{Lng}", lat, lng);
+            return null;
+        }
+    }
+
     private async Task<IReadOnlyList<PlaceSuggestion>> SuggestAsync(string query, bool cityOnly, CancellationToken ct)
     {
         query = (query ?? "").Trim();

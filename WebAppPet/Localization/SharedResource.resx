@@ -66,6 +66,12 @@
   <data name="Register_Login" xml:space="preserve"><value>Inicia sesión</value></data>
   <data name="Register_FullName" xml:space="preserve"><value>Nombre completo</value></data>
   <data name="Register_ConfirmPassword" xml:space="preserve"><value>Confirmar contraseña</value></data>
+  <data name="Register_LocationLabel" xml:space="preserve"><value>Tu ubicación</value></data>
+  <data name="Register_LocationHint" xml:space="preserve"><value>Comparte tu ubicación para ver servicios cerca. Si prefieres, busca tu ciudad abajo.</value></data>
+  <data name="Register_LocationRequired" xml:space="preserve"><value>Activa tu ubicación o elige una ciudad de la lista.</value></data>
+  <data name="Register_LocationLoading" xml:space="preserve"><value>Obteniendo ubicación…</value></data>
+  <data name="Register_LocationOk" xml:space="preserve"><value>Ubicación lista</value></data>
+  <data name="Register_OrSearchCity" xml:space="preserve"><value>O busca tu ciudad</value></data>
 
   <!-- Welcome -->
   <data name="Welcome_Title" xml:space="preserve"><value>Bienvenido a Chombly</value></data>

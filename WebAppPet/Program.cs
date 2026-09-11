@@ -162,6 +162,29 @@ app.MapGet("/api/places/suggest", async (
     }));
 });
 
+app.MapGet("/api/places/reverse", async (
+    double? lat,
+    double? lng,
+    PlacesSuggestService places,
+    CancellationToken ct) =>
+{
+    if (lat is null || lng is null)
+        return Results.BadRequest(new { error = "coords" });
+
+    var hit = await places.ReverseAsync(lat.Value, lng.Value, ct);
+    if (hit is null)
+        return Results.Json(new { city = (string?)null, lat = lat.Value, lng = lng.Value });
+
+    return Results.Json(new
+    {
+        label = hit.Label,
+        city = hit.City,
+        address = hit.Address,
+        lat = hit.Lat,
+        lng = hit.Lng
+    });
+});
+
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
 

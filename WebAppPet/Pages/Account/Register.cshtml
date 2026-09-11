@@ -3,86 +3,183 @@
 @{
     ViewData["Title"] = L["Register_Title"].Value;
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    Layout = "_Layout";
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Account/Login">←</a>
-    <h1>@L["Register_Title"]</h1>
-    @{ ViewData["LangCompact"] = true; }
-    <partial name="_LanguageSwitch" />
+<div class="onboard onboard-auth">
+    <header class="onboard-top">
+        <div class="onboard-brand">
+            <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" />
+            <strong class="onboard-word">Chombly</strong>
+        </div>
+        <partial name="_LanguageSwitch" />
+    </header>
+
+    <div class="onboard-stage">
+        <div class="onboard-card onboard-auth-card">
+            <a class="onboard-back" asp-page="/Account/Login">← @L["Register_Login"]</a>
+            <h1>@L["Register_Title"]</h1>
+            <p class="onboard-auth-lead">@L["Home_HeroSubtitle"]</p>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+
+            <form method="post" id="register-form" class="onboard-auth-form" data-validate-i18n="1"
+                  data-msg-required="@L["Validation_Required"]"
+                  data-msg-email="@L["Profile_Edit_EmailInvalid"]"
+                  data-msg-phone="@L["Phone_Invalid"]"
+                  data-msg-password="@L["Profile_Edit_PasswordShort"]"
+                  data-msg-city-maps="@L["Register_LocationRequired"]"
+                  data-msg-loc-fail="@L["Search_LocationFail"]"
+                  data-msg-loc-loading="@L["Register_LocationLoading"]"
+                  data-msg-loc-ok="@L["Register_LocationOk"]">
+                <div class="form-group">
+                    <label>@L["Register_FullName"]</label>
+                    <input class="form-control" asp-for="FullName" required autocomplete="name" />
+                </div>
+                <div class="form-group">
+                    <label>@L["Common_Email"]</label>
+                    <input class="form-control" asp-for="Email" type="email" required maxlength="150"
+                           autocomplete="email" inputmode="email" placeholder="@L["Common_EmailPlaceholder"]" />
+                </div>
+                <div class="form-group">
+                    <label>@L["Common_Phone"]</label>
+                    <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
+                           maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel" placeholder="7045551234" />
+                </div>
+                <div class="form-group">
+                    <label>@L["Register_LocationLabel"]</label>
+                    <button type="button" class="btn btn-outline btn-block loc-btn" id="btn-use-location">
+                        @L["Search_UseMyLocation"]
+                    </button>
+                    <p class="field-hint" id="loc-status">@L["Register_LocationHint"]</p>
+                    <p class="field-error" id="city-maps-error" hidden>@L["Register_LocationRequired"]</p>
+
+                    <details class="loc-manual" id="loc-manual">
+                        <summary>@L["Register_OrSearchCity"]</summary>
+                        <input class="form-control" asp-for="City" id="City"
+                               data-places="city" data-places-fill="city"
+                               data-places-lat="#Latitude" data-places-lng="#Longitude" data-places-require="1"
+                               placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
+                        <p class="field-hint">@L["Profile_Edit_CityHint"]</p>
+                    </details>
+                    <input type="hidden" asp-for="Latitude" id="Latitude" data-places-fill="lat" />
+                    <input type="hidden" asp-for="Longitude" id="Longitude" data-places-fill="lng" />
+                </div>
+                <div class="form-group">
+                    <label>@L["Common_Password"]</label>
+                    <input class="form-control" asp-for="Password" type="password" required minlength="6"
+                           data-password-policy="1" autocomplete="new-password" />
+                    <p class="field-hint">@L["Profile_Edit_PasswordShort"]</p>
+                </div>
+                <button class="btn btn-enter btn-block" type="submit">@L["Register_Submit"]</button>
+            </form>
+
+            <p class="onboard-auth-links">
+                @L["Register_HaveAccount"]
+                <a asp-page="/Account/Login">@L["Register_Login"]</a>
+            </p>
+        </div>
+    </div>
+
+    <p class="onboard-version">Chombly · Pet Care</p>
 </div>
-<main class="app-main no-nav">
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
-    <form method="post" id="register-form" data-validate-i18n="1"
-          data-msg-required="@L["Validation_Required"]"
-          data-msg-email="@L["Profile_Edit_EmailInvalid"]"
-          data-msg-phone="@L["Phone_Invalid"]"
-          data-msg-password="@L["Profile_Edit_PasswordShort"]"
-          data-msg-city-maps="@L["Profile_Edit_CityMapsRequired"]">
-        <div class="form-group">
-            <label>@L["Register_FullName"]</label>
-            <input class="form-control" asp-for="FullName" required />
-        </div>
-        <div class="form-group">
-            <label>@L["Common_Email"]</label>
-            <input class="form-control" asp-for="Email" type="email" required maxlength="150"
-                   autocomplete="email" inputmode="email" placeholder="@L["Common_EmailPlaceholder"]" />
-        </div>
-        <div class="form-group">
-            <label>@L["Common_Phone"]</label>
-            <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
-                   maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel" placeholder="7045551234" />
-        </div>
-        <div class="form-group">
-            <label>@L["Common_City"]</label>
-            <input class="form-control" asp-for="City" id="City" required
-                   data-places="city" data-places-fill="city"
-                   data-places-lat="#Latitude" data-places-lng="#Longitude" data-places-require="1"
-                   placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
-            <input type="hidden" asp-for="Latitude" id="Latitude" data-places-fill="lat" />
-            <input type="hidden" asp-for="Longitude" id="Longitude" data-places-fill="lng" />
-            <p class="field-hint" style="margin:8px 0 0">@L["Profile_Edit_CityHint"]</p>
-            <p class="field-error" id="city-maps-error" hidden>@L["Profile_Edit_CityMapsRequired"]</p>
-        </div>
-        <div class="form-group">
-            <label>@L["Common_Password"]</label>
-            <input class="form-control" asp-for="Password" type="password" required minlength="6"
-                   data-password-policy="1" autocomplete="new-password" />
-            <p class="muted small" style="margin:6px 0 0">@L["Profile_Edit_PasswordShort"]</p>
-        </div>
-        <button class="btn btn-primary btn-block" type="submit">@L["Register_Submit"]</button>
-    </form>
-    <p class="muted small" style="text-align:center;margin-top:16px">
-        @L["Register_HaveAccount"] <a asp-page="/Account/Login" style="color:var(--brand);font-weight:700">@L["Register_Login"]</a>
-    </p>
-</main>
 
 @section Scripts {
     <partial name="_GooglePlaces" />
 <script>
 (function () {
+  var form = document.getElementById('register-form');
   var city = document.getElementById('City');
   var lat = document.getElementById('Latitude');
   var lng = document.getElementById('Longitude');
   var err = document.getElementById('city-maps-error');
-  var form = document.getElementById('register-form');
-  if (!city || !lat || !lng || !form) return;
+  var status = document.getElementById('loc-status');
+  var btn = document.getElementById('btn-use-location');
+  var manual = document.getElementById('loc-manual');
+  if (!form || !city || !lat || !lng) return;
+
+  var msgFail = form.getAttribute('data-msg-loc-fail') || '';
+  var msgLoading = form.getAttribute('data-msg-loc-loading') || '';
+  var msgOk = form.getAttribute('data-msg-loc-ok') || '';
+
+  function hasCoords() {
+    return !!(lat.value && lng.value) && !(Number(lat.value) === 0 && Number(lng.value) === 0);
+  }
+
+  function setStatus(text, ok) {
+    if (!status) return;
+    status.textContent = text;
+    status.classList.toggle('is-ok', !!ok);
+    status.classList.toggle('is-err', ok === false);
+  }
+
+  function applyLocation(cityLabel, latitude, longitude) {
+    city.value = cityLabel || city.value || '';
+    lat.value = String(latitude);
+    lng.value = String(longitude);
+    if (err) {
+      err.hidden = true;
+      err.style.display = 'none';
+    }
+    setStatus((msgOk ? msgOk + ': ' : '') + (cityLabel || (latitude + ', ' + longitude)), true);
+    if (manual) manual.open = !cityLabel;
+    city.dispatchEvent(new Event('change', { bubbles: true }));
+  }
 
   city.addEventListener('input', function () {
     lat.value = '';
     lng.value = '';
     if (err) err.hidden = true;
+    setStatus(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Register_LocationHint"].Value)), null);
   });
+
+  if (btn && navigator.geolocation) {
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      setStatus(msgLoading, null);
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var la = pos.coords.latitude;
+        var ln = pos.coords.longitude;
+        fetch('/api/places/reverse?lat=' + encodeURIComponent(la) + '&lng=' + encodeURIComponent(ln), {
+          headers: { Accept: 'application/json' }
+        })
+          .then(function (r) { return r.ok ? r.json() : {}; })
+          .then(function (data) {
+            applyLocation(data.city || data.label || msgOk || '', data.lat != null ? data.lat : la, data.lng != null ? data.lng : ln);
+            btn.disabled = false;
+          })
+          .catch(function () {
+            applyLocation(msgOk || '', la, ln);
+            btn.disabled = false;
+          });
+      }, function () {
+        setStatus(msgFail, false);
+        if (manual) manual.open = true;
+        btn.disabled = false;
+        city.focus();
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+    });
+  } else if (btn) {
+    btn.hidden = true;
+    if (manual) manual.open = true;
+  }
 
   form.addEventListener('submit', function (e) {
     var c = (city.value || '').trim();
-    if (!c) return;
-    var hasCoords = !!(lat.value && lng.value) && !(Number(lat.value) === 0 && Number(lng.value) === 0);
-    if (hasCoords) return;
+    if (!c && !hasCoords()) {
+      e.preventDefault();
+      if (err) { err.hidden = false; err.style.display = ''; }
+      if (manual) manual.open = true;
+      (btn && !btn.hidden ? btn : city).focus();
+      return;
+    }
+    if (hasCoords()) return;
     e.preventDefault();
-    if (err) err.hidden = false;
+    if (err) { err.hidden = false; err.style.display = ''; }
+    if (manual) manual.open = true;
     city.focus();
   });
 })();

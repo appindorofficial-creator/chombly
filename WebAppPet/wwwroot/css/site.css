@@ -1444,6 +1444,9 @@ input[type=radio]:checked + .size-opt {
   font-weight: 600;
   margin-top: 4px;
 }
+.field-error[hidden] {
+  display: none !important;
+}
 @media (max-width: 380px) {
   .species-grid { grid-template-columns: repeat(3, 1fr); }
 }
@@ -2589,6 +2592,50 @@ a.vet-modality-emergency:hover {
 .onboard-auth .alert {
   margin-bottom: 14px;
   border-radius: 14px;
+}
+.onboard-auth-form .field-hint {
+  margin: 8px 0 0;
+  color: #6b7670;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+.onboard-auth-form .field-error {
+  margin: 8px 0 0;
+}
+.onboard-auth-form .loc-btn {
+  justify-content: center;
+  font-weight: 800;
+  border-radius: var(--radius-pill);
+  min-height: 48px;
+}
+.onboard-auth-form #loc-status.is-ok {
+  color: var(--forest);
+  font-weight: 700;
+}
+.onboard-auth-form #loc-status.is-err {
+  color: #b42318;
+  font-weight: 700;
+}
+.onboard-auth-form .loc-manual {
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 61, 47, 0.10);
+  background: #f7f8f7;
+  padding: 10px 12px;
+}
+.onboard-auth-form .loc-manual summary {
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 750;
+  color: var(--forest);
+  list-style: none;
+}
+.onboard-auth-form .loc-manual summary::-webkit-details-marker { display: none; }
+.onboard-auth-form .loc-manual[open] summary {
+  margin-bottom: 10px;
+}
+.onboard-auth-form .loc-manual .form-control {
+  margin-top: 0;
 }
 
 /* City/address suggestion dropdown (Maps or OSM fallback) */

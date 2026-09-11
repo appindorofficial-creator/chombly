@@ -62,6 +62,12 @@
   <data name="Register_Login" xml:space="preserve"><value>Sign in</value></data>
   <data name="Register_FullName" xml:space="preserve"><value>Full name</value></data>
   <data name="Register_ConfirmPassword" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="Register_LocationLabel" xml:space="preserve"><value>Your location</value></data>
+  <data name="Register_LocationHint" xml:space="preserve"><value>Share your location to see nearby services. Or search your city below.</value></data>
+  <data name="Register_LocationRequired" xml:space="preserve"><value>Enable location or pick a city from the suggestions.</value></data>
+  <data name="Register_LocationLoading" xml:space="preserve"><value>Getting location…</value></data>
+  <data name="Register_LocationOk" xml:space="preserve"><value>Location ready</value></data>
+  <data name="Register_OrSearchCity" xml:space="preserve"><value>Or search your city</value></data>
 
   <data name="Welcome_Title" xml:space="preserve"><value>Welcome to Chombly</value></data>
   <data name="Welcome_Subtitle" xml:space="preserve"><value>Everything your pet needs, in one place.</value></data>

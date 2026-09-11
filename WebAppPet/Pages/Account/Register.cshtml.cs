@@ -80,11 +80,14 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        if (string.IsNullOrWhiteSpace(City) || !TryParseCoords(out var lat, out var lng))
+        if (!TryParseCoords(out var lat, out var lng))
         {
-            ErrorMessage = _L["Profile_Edit_CityMapsRequired"].Value;
+            ErrorMessage = _L["Register_LocationRequired"].Value;
             return Page();
         }
+
+        if (string.IsNullOrWhiteSpace(City))
+            City = _L["Register_LocationOk"].Value;
 
         if (await _db.Users.AnyAsync(u => u.Email == Email))
         {
