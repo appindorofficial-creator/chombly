@@ -85,10 +85,12 @@
 
   <!-- Home -->
   <data name="Home_Greeting" xml:space="preserve"><value>Hola</value></data>
-  <data name="Home_HeroTitle" xml:space="preserve"><value>El mejor cuidado para tu mascota</value></data>
+  <data name="Home_HeroHello" xml:space="preserve"><value>Hola, {0}</value></data>
+  <data name="Home_HeroHelloGuest" xml:space="preserve"><value>Hola</value></data>
+  <data name="Home_HeroTitle" xml:space="preserve"><value>En Chombly tienes el mejor cuidado para tu mascota</value></data>
   <data name="Home_HeroSubtitle" xml:space="preserve"><value>Peluquería, hotel, veterinario, guardería y más</value></data>
   <data name="Home_SearchPlaceholder" xml:space="preserve"><value>Buscar servicios cerca de ti</value></data>
-  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Busca tu ciudad…</value></data>
+  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Busca en tu ciudad…</value></data>
   <data name="Home_Categories" xml:space="preserve"><value>Categorías</value></data>
   <data name="Home_EmptyCategories" xml:space="preserve"><value>No hay categorías en la base de datos.</value></data>
   <data name="Home_WhatPet" xml:space="preserve"><value>¿Qué mascota tienes?</value></data>

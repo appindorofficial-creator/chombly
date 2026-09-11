@@ -22,6 +22,7 @@ public class IndexModel : PageModel
     }
 
     public string City { get; set; } = string.Empty;
+    public string? GreetingName { get; set; }
     public List<ServiceCategory> Categories { get; set; } = new();
     public List<GroomerProfile> Featured { get; set; } = new();
     public List<string> PopularServices { get; set; } = new();
@@ -30,6 +31,7 @@ public class IndexModel : PageModel
     public async Task OnGetAsync(string? city)
     {
         City = city ?? string.Empty;
+        GreetingName = FirstName(_auth.IsAuthenticated ? User.Identity?.Name : null);
 
         Categories = await _db.Categories
             .Where(c => c.IsActive)
@@ -92,4 +94,11 @@ public class IndexModel : PageModel
         GroomerType.InHome => _L["Type_InHome"].Value,
         _ => _L["Type_Salon"].Value
     };
+
+    private static string? FirstName(string? fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return null;
+        var part = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+        return string.IsNullOrWhiteSpace(part) ? null : part;
+    }
 }

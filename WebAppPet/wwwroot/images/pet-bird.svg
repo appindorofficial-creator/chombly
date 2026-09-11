@@ -1,8 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
   <rect width="256" height="256" rx="48" fill="#E8F7BB"/>
-  <ellipse cx="130" cy="150" rx="48" ry="55" fill="#0F3D2F"/>
-  <circle cx="150" cy="105" r="32" fill="#0F3D2F"/>
-  <polygon points="178,105 210,112 178,120" fill="#B6E740"/>
-  <circle cx="158" cy="100" r="6" fill="#E8F7BB"/>
-  <path d="M95 160 Q70 140 85 175" fill="#073D26"/>
+  <!-- body -->
+  <ellipse cx="118" cy="148" rx="58" ry="46" fill="#0F3D2F"/>
+  <!-- wing -->
+  <path d="M78 140 Q100 108 142 128 Q118 148 90 158 Q78 152 78 140Z" fill="#073D26"/>
+  <!-- head -->
+  <circle cx="168" cy="108" r="36" fill="#0F3D2F"/>
+  <!-- beak -->
+  <polygon points="198,104 236,112 198,122" fill="#B6E740"/>
+  <!-- eye -->
+  <circle cx="176" cy="100" r="7" fill="#E8F7BB"/>
+  <circle cx="178" cy="100" r="3.2" fill="#073D26"/>
+  <!-- crest -->
+  <path d="M158 78 Q168 48 182 72" stroke="#0F3D2F" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <!-- tail -->
+  <path d="M62 150 Q40 128 48 168 Q56 180 72 168 Q68 156 62 150Z" fill="#0F3D2F"/>
+  <!-- feet -->
+  <path d="M104 190 L104 208 M118 190 L118 208" stroke="#B6E740" stroke-width="5" stroke-linecap="round"/>
 </svg>

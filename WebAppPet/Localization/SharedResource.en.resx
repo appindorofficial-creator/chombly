@@ -79,10 +79,12 @@
   <data name="Welcome_Business" xml:space="preserve"><value>I'm a business</value></data>
 
   <data name="Home_Greeting" xml:space="preserve"><value>Hi</value></data>
-  <data name="Home_HeroTitle" xml:space="preserve"><value>The best care for your pet</value></data>
+  <data name="Home_HeroHello" xml:space="preserve"><value>Hi, {0}</value></data>
+  <data name="Home_HeroHelloGuest" xml:space="preserve"><value>Hi</value></data>
+  <data name="Home_HeroTitle" xml:space="preserve"><value>In Chombly you have the best care for your pet</value></data>
   <data name="Home_HeroSubtitle" xml:space="preserve"><value>Grooming, hotel, vet, daycare and more</value></data>
   <data name="Home_SearchPlaceholder" xml:space="preserve"><value>Search services near you</value></data>
-  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Search your city…</value></data>
+  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Search in your city…</value></data>
   <data name="Home_Categories" xml:space="preserve"><value>Categories</value></data>
   <data name="Home_EmptyCategories" xml:space="preserve"><value>No categories in the database.</value></data>
   <data name="Home_WhatPet" xml:space="preserve"><value>What pet do you have?</value></data>
