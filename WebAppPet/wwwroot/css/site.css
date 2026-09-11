@@ -1852,26 +1852,73 @@ body.chat-layout .app-shell {
   height: 100%; background: var(--brand); border-radius: 999px; transition: width .25s ease;
 }
 .biz-type-card {
-  display: flex; gap: 14px; align-items: center;
-  border: 1.5px solid var(--border); border-radius: 16px; padding: 16px;
-  margin-bottom: 12px; background: #fff; cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  border: 1.5px solid rgba(15, 61, 47, 0.10);
+  border-radius: 22px;
+  padding: 12px 12px 14px;
+  margin-bottom: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
 .biz-type-card input { display: none; }
-.biz-type-card.active { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 1px var(--brand); }
-.biz-type-ico { font-size: 1.8rem; width: 48px; text-align: center; }
-.biz-type-card strong { display: block; }
-.biz-type-card small { display: block; margin-top: 2px; }
+.biz-type-card.active {
+  border-color: var(--lime);
+  background: #fbfff3;
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.45);
+}
+.biz-type-art {
+  display: block;
+  width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #eef6e4 0%, #f7faf5 100%);
+}
+.biz-type-copy {
+  display: block;
+  padding: 0 4px;
+}
+.biz-type-card strong {
+  display: block;
+  font-size: .98rem;
+  font-weight: 800;
+  color: var(--forest-deep);
+  letter-spacing: -.02em;
+}
+.biz-type-card small {
+  display: block;
+  margin-top: 4px;
+  color: #66736c;
+  font-size: .82rem;
+  line-height: 1.35;
+  font-weight: 500;
+}
+.biz-type-ico { display: none; }
 .biz-cat-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;
 }
 .biz-cat-card {
-  border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 6px;
+  border: 1.5px solid rgba(15, 61, 47, 0.10); border-radius: 16px; padding: 12px 6px;
   text-align: center; background: #fff; cursor: pointer;
 }
 .biz-cat-card input { display: none; }
-.biz-cat-card img { width: 44px; height: 44px; object-fit: cover; border-radius: 10px; margin-bottom: 4px; }
-.biz-cat-card strong { font-size: .72rem; display: block; }
-.biz-cat-card.active { border-color: var(--brand); background: var(--brand-soft); }
+.biz-cat-card img {
+  width: 52px; height: 52px; object-fit: contain; border-radius: 12px; margin: 0 auto 6px;
+  background: linear-gradient(180deg, #eef6e4 0%, #f7faf5 100%);
+  display: block;
+}
+.biz-cat-card strong { font-size: .72rem; display: block; color: var(--forest-deep); font-weight: 750; }
+.biz-cat-card.active {
+  border-color: var(--lime);
+  background: #fbfff3;
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.45);
+}
 .biz-success { text-align: center; padding: 24px 8px; }
 .biz-success-check {
   width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 50%;
@@ -2747,6 +2794,78 @@ body.celebrate-open {
   0% { transform: scale(.4); opacity: 0; }
   55% { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
+}
+
+/* Business register wizard — same auth shell */
+.onboard-biz .onboard-biz-card {
+  width: min(100%, 440px);
+  position: relative;
+}
+.onboard-biz .biz-progress {
+  margin: 0 0 16px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 61, 47, 0.08);
+  overflow: hidden;
+}
+.onboard-biz .biz-progress-bar {
+  height: 100%;
+  background: var(--lime);
+  border-radius: inherit;
+  transition: width .25s ease;
+}
+.onboard-biz .biz-section-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--forest-deep);
+  letter-spacing: -.02em;
+}
+.onboard-biz button.onboard-back {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.onboard-biz .biz-account-mark {
+  display: block;
+  width: 88px;
+  margin: 18px auto 0;
+  opacity: .9;
+}
+.onboard-biz .biz-success {
+  text-align: center;
+  padding: 8px 0 4px;
+  position: relative;
+  z-index: 1;
+}
+.onboard-biz .biz-success-next {
+  text-align: left;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #f7f8f7;
+  border: 1px solid rgba(15, 61, 47, 0.08);
+}
+.onboard-biz .biz-success-next strong {
+  display: block;
+  color: var(--forest-deep);
+  font-size: .95rem;
+}
+.onboard-biz .biz-success-next p {
+  margin: 6px 0 0;
+  color: #5a6861;
+  font-size: .88rem;
+  line-height: 1.4;
+}
+.biz-celebrate-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* City/address suggestion dropdown (Maps or OSM fallback) */

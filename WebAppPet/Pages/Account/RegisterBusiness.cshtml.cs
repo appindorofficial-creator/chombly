@@ -50,7 +50,7 @@ public class RegisterBusinessModel : PageModel
     [BindProperty] public string ProviderKindKey { get; set; } = "business";
     [BindProperty, MaxLength(100)] public string FullName { get; set; } = string.Empty;
     [BindProperty, MaxLength(120)] public string BusinessName { get; set; } = string.Empty;
-    [BindProperty] public string? Phone { get; set; }
+    [BindProperty, Required, MaxLength(10)] public string Phone { get; set; } = string.Empty;
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string City { get; set; } = string.Empty;
     [BindProperty] public string Address { get; set; } = string.Empty;
@@ -161,7 +161,7 @@ public class RegisterBusinessModel : PageModel
 
         if (string.IsNullOrWhiteSpace(FullName)) FullName = user.FullName;
         if (string.IsNullOrWhiteSpace(Email)) Email = user.Email;
-        if (string.IsNullOrWhiteSpace(Phone)) Phone = user.Phone;
+        if (string.IsNullOrWhiteSpace(Phone)) Phone = user.Phone ?? "";
         if (!string.IsNullOrWhiteSpace(user.City)
             && (string.IsNullOrWhiteSpace(City) || City == "Charlotte, NC"))
             City = user.City;
@@ -206,12 +206,17 @@ public class RegisterBusinessModel : PageModel
                     ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
                     return false;
                 }
+                if (string.IsNullOrWhiteSpace(Phone))
+                {
+                    ErrorMessage = _L["Phone_Required"].Value;
+                    return false;
+                }
                 if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
                 {
                     ErrorMessage = _L["Phone_Invalid"].Value;
                     return false;
                 }
-                Phone = phoneNorm;
+                Phone = phoneNorm!;
                 break;
             case 2:
                 if (CategoryId <= 0)
