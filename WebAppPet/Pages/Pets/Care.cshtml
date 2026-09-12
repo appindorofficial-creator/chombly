@@ -16,7 +16,7 @@
         <p class="muted small mb-0">@Model.Pet?.Species · @Model.Pet?.Breed · @Model.Pet?.AgeYears @CatalogLocalizer.Loc("años", "yrs")</p>
     </div>
 
-    <div class="card card-pad @(Model.Subscription != null ? "vet-vcpr-ok" : "vet-vcpr-missing")" style="margin-bottom:14px">
+    <div class="card card-pad @(Model.Subscription != null ? "vet-vcpr-ok" : "vet-vcpr-missing care-upsell")" style="margin-bottom:14px">
         @if (Model.Subscription != null)
         {
             <strong>Chombly Care</strong>

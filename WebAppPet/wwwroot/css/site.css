@@ -3221,7 +3221,12 @@ body.ch-confirm-open {
   text-decoration: none;
   color: inherit;
   margin: 0;
+  animation: vet-card-in .45s ease both;
 }
+.vet-modality-card:nth-child(1) { animation-delay: .04s; }
+.vet-modality-card:nth-child(2) { animation-delay: .1s; }
+.vet-modality-card:nth-child(3) { animation-delay: .16s; }
+.vet-modality-card:nth-child(4) { animation-delay: .22s; }
 .vet-modality-btn {
   display: flex;
   flex-direction: column;
@@ -3236,10 +3241,16 @@ body.ch-confirm-open {
   cursor: pointer;
   font: inherit;
   color: inherit;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 .vet-modality-btn:hover {
   border-color: var(--brand);
   background: var(--brand-soft, #f0f7f1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(7, 61, 46, 0.08);
+}
+.vet-modality-btn:hover .vet-modality-icon {
+  transform: scale(1.12) translateY(-1px);
 }
 .vet-modality-emergency .vet-modality-btn,
 a.vet-modality-emergency {
@@ -3250,15 +3261,93 @@ a.vet-modality-emergency:hover {
   background: #fef2f2;
 }
 .vet-modality-icon {
+  display: inline-block;
   font-size: 1.4rem;
   line-height: 1;
   margin-bottom: 4px;
+  transform-origin: center bottom;
+  animation: vet-icon-float 2.8s ease-in-out infinite;
+  transition: transform .18s ease;
+}
+.vet-modality-card:nth-child(2) .vet-modality-icon {
+  animation-delay: .35s;
+}
+.vet-modality-card:nth-child(3) .vet-modality-icon {
+  animation-delay: .7s;
+}
+.vet-modality-card:nth-child(4) .vet-modality-icon,
+.vet-modality-emergency .vet-modality-icon {
+  animation: vet-icon-pulse 1.8s ease-in-out infinite;
+}
+@keyframes vet-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes vet-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes vet-icon-pulse {
+  0%, 100% { transform: scale(1); filter: saturate(1); }
+  50% { transform: scale(1.1); filter: saturate(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vet-modality-card,
+  .vet-modality-icon,
+  .vet-modality-card:nth-child(4) .vet-modality-icon,
+  .vet-modality-emergency .vet-modality-icon {
+    animation: none;
+  }
+  .vet-modality-btn:hover {
+    transform: none;
+  }
+  .vet-modality-btn:hover .vet-modality-icon {
+    transform: none;
+  }
 }
 .vet-vcpr-ok {
   border-left: 4px solid var(--brand);
 }
 .vet-vcpr-missing {
   border-left: 4px solid #f59e0b;
+}
+.care-upsell {
+  position: relative;
+  border: 1.5px solid rgba(182, 231, 64, 0.65);
+  border-left: 4px solid var(--forest);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(182, 231, 64, 0.22) 0%, transparent 55%),
+    #fff;
+  box-shadow:
+    0 0 0 0 rgba(182, 231, 64, 0.45),
+    0 8px 22px rgba(7, 61, 38, 0.08);
+  animation: care-upsell-glow 2.4s ease-in-out infinite;
+}
+@keyframes care-upsell-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(182, 231, 64, 0.45),
+      0 8px 22px rgba(7, 61, 38, 0.08);
+    border-color: rgba(182, 231, 64, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(182, 231, 64, 0),
+      0 0 28px 6px rgba(182, 231, 64, 0.4),
+      0 8px 22px rgba(7, 61, 38, 0.1);
+    border-color: var(--lime);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .care-upsell {
+    animation: none;
+  }
 }
 .vet-consent .check-row,
 .check-row {
