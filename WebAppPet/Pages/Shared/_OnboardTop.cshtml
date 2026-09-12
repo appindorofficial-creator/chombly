@@ -1,3 +1,7 @@
+@using WebAppPet.Data
+@using WebAppPet.Services
+@inject AppDbContext Db
+@inject AuthService Auth
 @{
     var backHref = ViewData["OnboardBackHref"] as string;
     var showNotif = ViewData["OnboardShowNotif"] as bool? == true;
@@ -6,6 +10,15 @@
     var ctaPage = ViewData["OnboardCtaPage"] as string;
     var ctaText = ViewData["OnboardCtaText"] as string;
     var ctaHref = ViewData["OnboardCtaHref"] as string;
+    var unreadNotif = 0;
+    if (showNotif && Auth.CurrentUserId is int notifUserId)
+    {
+        unreadNotif = Db.Notifications.Count(n => n.UserId == notifUserId && !n.IsRead);
+    }
+    var notifBadge = unreadNotif > 99 ? "99+" : unreadNotif.ToString();
+    var notifLabel = unreadNotif > 0
+        ? $"{L["Profile_Notifications"].Value} ({unreadNotif})"
+        : L["Profile_Notifications"].Value;
 }
 <header class="onboard-top">
     @if (!string.IsNullOrWhiteSpace(backHref))
@@ -23,9 +36,14 @@
         }
         @if (showNotif)
         {
-            <a class="home-notif-btn" asp-page="/Account/Notifications" asp-route-returnUrl="@notifReturn"
-               title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
+            <a class="home-notif-btn @(unreadNotif > 0 ? "has-unread" : null)"
+               asp-page="/Account/Notifications" asp-route-returnUrl="@notifReturn"
+               title="@notifLabel" aria-label="@notifLabel">
                 <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
+                @if (unreadNotif > 0)
+                {
+                    <span class="home-notif-badge" aria-hidden="true">@notifBadge</span>
+                }
             </a>
         }
         @if (!string.IsNullOrWhiteSpace(ctaPage) && !string.IsNullOrWhiteSpace(ctaText))

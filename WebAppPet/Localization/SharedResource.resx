@@ -225,6 +225,7 @@
   <data name="Notif_ClearAll" xml:space="preserve"><value>Eliminar todas</value></data>
   <data name="Notif_ClearAllTitle" xml:space="preserve"><value>Eliminar todas</value></data>
   <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>¿Eliminar todas las notificaciones?</value></data>
+  <data name="Notif_SwipeHint" xml:space="preserve"><value>Desliza a la izquierda para eliminar</value></data>
   <data name="Profile_MyPets" xml:space="preserve"><value>Mis mascotas</value></data>
   <data name="Profile_MyAppointments" xml:space="preserve"><value>Mis citas</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Panel de negocio</value></data>

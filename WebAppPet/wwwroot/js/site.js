@@ -281,6 +281,92 @@
     submitConfirmForm(form);
   }
 
+  function bindNotifSwipe(root) {
+    var list = (root || document).querySelectorAll('[data-notif-swipe]');
+    list.forEach(function (card) {
+      if (card.dataset.notifSwipeBound === '1') return;
+      card.dataset.notifSwipeBound = '1';
+
+      var startX = 0;
+      var startY = 0;
+      var dx = 0;
+      var dragging = false;
+      var axis = null;
+      var maxSwipe = 88;
+
+      function setX(x) {
+        dx = Math.max(-maxSwipe, Math.min(0, x));
+        card.style.transform = dx ? 'translateX(' + dx + 'px)' : '';
+      }
+
+      function reset() {
+        card.classList.remove('is-dragging');
+        setX(0);
+        dragging = false;
+        axis = null;
+      }
+
+      function triggerDelete() {
+        var form = card.querySelector('form[data-animate-remove]');
+        var btn = card.querySelector('.notif-delete-btn');
+        card.classList.remove('is-dragging');
+        setX(-maxSwipe);
+        setTimeout(function () {
+          if (btn) btn.click();
+          else if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
+          else if (form) form.submit();
+          setTimeout(function () {
+            if (!card.closest('.notif-swipe.is-removing')) reset();
+          }, 80);
+        }, 120);
+      }
+
+      card.addEventListener('pointerdown', function (e) {
+        if (e.button != null && e.button !== 0) return;
+        if (e.target.closest('button, a, input, label')) return;
+        dragging = true;
+        axis = null;
+        startX = e.clientX;
+        startY = e.clientY;
+        dx = 0;
+        card.classList.add('is-dragging');
+        try { card.setPointerCapture(e.pointerId); } catch (_) { }
+      });
+
+      card.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var mx = e.clientX - startX;
+        var my = e.clientY - startY;
+        if (!axis) {
+          if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+          axis = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+          if (axis === 'y') {
+            dragging = false;
+            card.classList.remove('is-dragging');
+            card.style.transform = '';
+            return;
+          }
+        }
+        if (axis !== 'x') return;
+        e.preventDefault();
+        setX(mx);
+      });
+
+      function endDrag() {
+        if (!dragging && !card.classList.contains('is-dragging')) return;
+        card.classList.remove('is-dragging');
+        if (dx <= -56) triggerDelete();
+        else reset();
+      }
+
+      card.addEventListener('pointerup', endDrag);
+      card.addEventListener('pointercancel', reset);
+      card.addEventListener('lostpointercapture', function () {
+        if (card.classList.contains('is-dragging')) endDrag();
+      });
+    });
+  }
+
   function bindConfirmForms(root) {
     (root || document).querySelectorAll('form[data-confirm]').forEach(function (form) {
       if (form.dataset.chConfirmBound === '1') return;
@@ -520,6 +606,7 @@
     bindLocalizedValidation(document);
     restoreFlowScroll();
     bindConfirmForms(document);
+    bindNotifSwipe(document);
     bindAcceptTerms(document);
     bindFavoriteButtons(document);
     scrollToVisibleTermsError();
@@ -529,6 +616,7 @@
   window.ChomblyBindLocalizedValidation = bindLocalizedValidation;
   window.ChomblyConfirm = openConfirm;
   window.ChomblyBindConfirmForms = bindConfirmForms;
+  window.ChomblyBindNotifSwipe = bindNotifSwipe;
   window.ChomblyBindAcceptTerms = bindAcceptTerms;
   window.ChomblyBindFavoriteButtons = bindFavoriteButtons;
 })();
