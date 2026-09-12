@@ -4,15 +4,15 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = CatalogLocalizer.Loc($"Recordatorios · {Model.Pet?.Name}", $"Reminders · {Model.Pet?.Name}");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Pets/Care", new { id = Model.Id });
+    var HideNav = ViewData["HideNav"] as bool? == true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Pets/Care" asp-route-id="@Model.Id">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Recordatorios", "Reminders")</h1>
-        <p class="muted small">@Model.Pet?.Name · @CatalogLocalizer.Loc("vacunas, medicinas, horas silenciosas", "vaccines, meds, quiet hours")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Recordatorios", "Reminders")</h1>
+    <p class="muted small">@Model.Pet?.Name · @CatalogLocalizer.Loc("vacunas, medicinas, horas silenciosas", "vaccines, meds, quiet hours")</p>
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-info">@Model.Message</div>
@@ -87,4 +87,6 @@
             <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Crear", "Create")</button>
         </form>
     </section>
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

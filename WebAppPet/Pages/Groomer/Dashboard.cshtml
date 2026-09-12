@@ -3,12 +3,13 @@
 @{
     ViewData["Title"] = "Panel groomer";
     ViewData["GroomerTab"] = "dashboard";
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Groomer/Dashboard";
 }
-<header class="topbar">
-    <partial name="_Brand" />
-    <a class="icon-btn" asp-page="/Account/Notifications" asp-route-returnUrl="/Groomer/Dashboard" title="Notificaciones" aria-label="Notificaciones">🔔</a>
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
 
     @if (Model.JustRegistered || Model.Profile?.PublishStatus == BusinessPublishStatus.PendingReview)
@@ -103,4 +104,6 @@
             </div>
         </div>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

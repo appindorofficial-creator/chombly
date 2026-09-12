@@ -2,17 +2,16 @@
 @model WebAppPet.Pages.Vet.International.PurchaseOptionModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Elige cómo pagar", "Choose how to pay");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/Matches", new { consultationId = Model.ConsultationId });
     var once = Model.IntlItem?.Price ?? 30m;
     var care = Model.CareItem?.Price ?? 14.99m;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/International/Matches" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Elección de compra", "Purchase choice")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Elección de compra", "Purchase choice")</h1>
         <p class="muted small">@(Model.Provider?.BusinessName)</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="card card-pad" style="margin-bottom:14px">
         <strong>@(Model.Provider?.BusinessName)</strong>
         <p class="muted small mb-0">
@@ -51,4 +50,6 @@
     <p class="muted small" style="margin-top:14px">
         @CatalogLocalizer.Loc("Conservamos profesional, horario y mascota en el siguiente paso.", "We keep provider, schedule, and pet for the next step.")
     </p>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

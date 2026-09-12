@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.EmergencyModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Emergencia", "Emergency");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Index">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Emergencia", "Emergency")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Emergencia", "Emergency")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("No cobramos ni reservamos online. Busca atención inmediata.", "We do not charge or book online. Seek care now.")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="alert alert-danger" role="alert">
         @CatalogLocalizer.Loc(
             "Si tu mascota está en peligro, llama ahora o ve a una clínica 24/7. La orientación virtual no sustituye una emergencia.",
@@ -46,4 +45,6 @@
             }
         </div>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

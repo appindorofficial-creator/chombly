@@ -3,15 +3,14 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Países", "Countries");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/MatchMode", new { consultationId = Model.ConsultationId });
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Catálogo de países", "Country catalog")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Catálogo de países", "Country catalog")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Solo Disponible permite reservar", "Only Available allows booking")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-success">@Model.Message</div>
@@ -65,4 +64,6 @@
         </label>
         <button type="submit" class="btn btn-outline btn-block" style="margin-top:10px">@CatalogLocalizer.Loc("Unirme a la lista", "Join waitlist")</button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

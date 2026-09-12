@@ -2,17 +2,16 @@
 @model WebAppPet.Pages.Vet.Virtual.CheckoutModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Confirmación y pago", "Confirm & pay");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = "javascript:history.back()";
     var price = Model.ChargeAmount;
     var isIntl = Model.CatalogItem?.Code == ServiceCatalogCodes.VetIntl30;
 }
-<div class="page-header">
-    <a class="back-btn" href="javascript:history.back()">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Confirmación y pago", "Confirm & pay")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Confirmación y pago", "Confirm & pay")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Pago simulado · sin cargo real aún", "Simulated payment · no real charge yet")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -115,4 +114,6 @@
         </button>
         <p class="muted small center">@CatalogLocalizer.Loc("Pago seguro simulado · sin cargo real", "Simulated secure payment · no real charge")</p>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

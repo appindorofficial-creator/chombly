@@ -5,11 +5,11 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Mis pagos", "My payouts");
     ViewData["GroomerTab"] = "payouts";
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
     <h1 class="page-title">@CatalogLocalizer.Loc("Mis pagos", "My payouts")</h1>
     <p class="muted small">@CatalogLocalizer.Loc("Comisiones y resúmenes de período (simulado, sin Stripe real).", "Commissions and period summaries (simulated, no real Stripe).")</p>
@@ -86,4 +86,6 @@
             }
         }
     </section>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

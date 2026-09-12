@@ -3,12 +3,13 @@
 @{
     ViewData["Title"] = "Citas";
     ViewData["GroomerTab"] = "appointments";
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Groomer/Appointments";
 }
-<header class="topbar">
-    <partial name="_Brand" />
-    <a class="icon-btn" asp-page="/Account/Notifications" asp-route-returnUrl="/Groomer/Appointments" title="Notificaciones" aria-label="Notificaciones">🔔</a>
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
 
     <div class="tabs">
@@ -76,4 +77,6 @@
             }
         </div>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

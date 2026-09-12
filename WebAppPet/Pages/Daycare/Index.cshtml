@@ -2,17 +2,14 @@
 @model WebAppPet.Pages.Daycare.IndexModel
 @{
     ViewData["Title"] = L["Daycare_Title"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
 }
-<div class="page-header hotel-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <div class="hotel-header-text">
-        <h1>@L["Daycare_Title"]</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+        <h1 class="app-page-heading">@L["Daycare_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
-    </div>
-    <img src="~/images/categories/cat-daycare-v2.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
-</div>
-
-<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -250,7 +247,9 @@
         <div><span>✓</span><small>Todo en una pantalla</small></div>
         <div><span>💳</span><small>Tarjetas guardadas</small></div>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @if (Model.SelectedDaycare != null && Model.SelectedService != null)
 {

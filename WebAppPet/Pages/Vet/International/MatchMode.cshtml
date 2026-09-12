@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.International.MatchModeModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Cómo buscar", "How to search");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/Home", new { consultationId = Model.ConsultationId });
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/International/Home" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Estrategia de coincidencia", "Match strategy")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Estrategia de coincidencia", "Match strategy")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("País, raza o mejor combinación", "Country, breed, or best combination")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrWhiteSpace(Model.PetBreed))
     {
         <p class="muted small">@CatalogLocalizer.Loc("Raza en perfil:", "Breed on profile:") <strong>@Model.PetBreed</strong></p>
@@ -41,4 +40,6 @@
         </label>
         <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

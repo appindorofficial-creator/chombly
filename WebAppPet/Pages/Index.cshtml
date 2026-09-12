@@ -5,21 +5,11 @@
     ViewData["Title"] = L["Nav_Home"].Value;
     ViewData["LangCompact"] = true;
     ViewData["BodyClass"] = "page-onboard-home";
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Index";
 }
 <div class="onboard onboard-home">
-    <header class="onboard-top">
-        <div class="onboard-brand">
-            <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" asp-append-version="true" />
-            <strong class="onboard-word">Chombly</strong>
-        </div>
-        <div class="home-top-actions">
-            <partial name="_LanguageSwitch" />
-            <a class="home-notif-btn" asp-page="/Account/Notifications" asp-route-returnUrl="/Index"
-               title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
-                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
-            </a>
-        </div>
-    </header>
+    <partial name="_OnboardTop" />
 
     <div class="home-body">
         <section class="home-hero">
@@ -195,12 +185,19 @@
             <div class="empty">@L["Home_EmptyFeatured"]</div>
         }
 
-        <div class="home-biz-cta">
-            <strong>@L["Home_BizCta"]</strong>
+        <section class="home-biz-cta" aria-labelledby="home-biz-cta-title">
+            <div class="home-biz-cta-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+                    <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 id="home-biz-cta-title">@L["Home_BizCta"]</h2>
             <p>@L["Home_BizCtaSub"]</p>
-            <a class="btn btn-enter btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
-            <a class="onboard-secondary" asp-page="/Welcome">@L["Home_SeeWelcome"]</a>
-        </div>
+            <div class="home-biz-cta-actions">
+                <a class="btn btn-enter btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
+                <a class="onboard-secondary" asp-page="/Welcome">@L["Home_SeeWelcome"]</a>
+            </div>
+        </section>
 
         <div class="bottom-nav-clearance" aria-hidden="true"
              style="height:calc(68px + env(safe-area-inset-bottom, 0px));pointer-events:none"></div>

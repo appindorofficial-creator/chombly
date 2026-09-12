@@ -2,16 +2,15 @@
 @model WebAppPet.Pages.Vet.Virtual.ProvidersModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Veterinario local", "Local veterinarian");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Service", new { consultationId = Model.ConsultationId });
     var price = Model.CatalogItem?.Price ?? 70m;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Virtual/Service" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Veterinario local", "Local veterinarian")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Veterinario local", "Local veterinarian")</h1>
         <p class="muted small">$@price.ToString("0.##") · 30 min · @Model.Consultation?.PetUsState</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -63,4 +62,6 @@
             @CatalogLocalizer.Loc("Reservar consulta", "Book consultation")
         </button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

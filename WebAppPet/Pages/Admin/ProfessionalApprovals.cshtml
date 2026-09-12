@@ -4,12 +4,14 @@
 @{
     ViewData["Title"] = "Aprobaciones profesionales";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Admin/Approvals");
+    var HideNav = true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Admin/Approvals">←</a>
-    <h1>Onboarding profesional</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">Onboarding profesional</h1>
     <p class="muted small">Solicitudes Local / Internacional / Conducta.</p>
     <p class="muted small" style="margin-bottom:12px">
         <a asp-page="/Admin/Approvals">Negocios</a> ·
@@ -69,4 +71,6 @@
             </div>
         </div>
     }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

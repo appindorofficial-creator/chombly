@@ -3,12 +3,14 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = L["Favorites_Title"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Account/Profile");
+    var HideNav = ViewData["HideNav"] as bool? == true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Account/Profile">←</a>
-    <h1>@L["Favorites_Title"]</h1>
-</div>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@L["Favorites_Title"]</h1>
     @if (!Model.Groomers.Any())
     {
         <div class="empty">@L["Favorites_Empty"]</div>
@@ -30,4 +32,6 @@
             <partial name="_FavoriteHeart" model="@((g.Id, true, "fav-remove-card"))" />
         </div>
     }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

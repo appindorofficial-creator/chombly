@@ -3,59 +3,64 @@
 @{
     ViewData["Title"] = "Confirmación";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Appointments/Index");
     var a = Model.Appointment;
 }
-<main class="app-main no-nav">
-    <div class="success-wrap">
-        <img src="~/images/booking-success.png" alt="" class="success-illu" />
-        <div class="success-check">✓</div>
-        <h2>¡Reserva enviada!</h2>
-        <p class="muted">El negocio confirmará tu solicitud. Te avisaremos por notificación.</p>
-    </div>
-
-    @if (a != null)
-    {
-        <div class="card card-pad" style="margin-bottom:16px">
-            <div class="row" style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
-                <img src="@(a.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" style="width:64px;height:64px;border-radius:12px;object-fit:cover" />
-                <div>
-                    <strong>@a.Groomer.BusinessName</strong>
-                    <div class="muted small">@(a.Groomer.Category != null ? a.Groomer.Category.DisplayName() : "") · @a.Groomer.Address</div>
-                </div>
-            </div>
-            <p><strong>@(CatalogLocalizer.Loc("Servicio", "Service")):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
-            @if (a.Nights > 0 && a.EndAt.HasValue)
-            {
-                <p><strong>Check-in:</strong> @a.ScheduledAt.ToString("ddd d MMM yyyy")</p>
-                <p><strong>Check-out:</strong> @a.EndAt.Value.ToString("ddd d MMM yyyy")</p>
-                <p><strong>Noches:</strong> @a.Nights</p>
-            }
-            else
-            {
-                <p><strong>Fecha:</strong> @a.ScheduledAt.ToString("dddd, MMM d, yyyy · h:mm tt")</p>
-            }
-            <p><strong>Mascota:</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@a.Pet.Species)</p>
-            @if (a.Extras.Any())
-            {
-                <p><strong>Extras:</strong> @string.Join(", ", a.Extras.Select(e => e.Name))</p>
-            }
-            @if (a.DiscountAmount > 0 && !string.IsNullOrEmpty(a.PromoCode))
-            {
-                <p class="promo-line promo-discount">
-                    <strong>@string.Format(L["Promo_DiscountLine"].Value, a.PromoCode)</strong>
-                    <span class="price">−$@a.DiscountAmount.ToString("0.00")</span>
-                </p>
-            }
-            <p><strong>Total:</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
-            <p class="muted small">Anticipo: $@a.DepositPaid.ToString("0.00")</p>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body no-nav">
+        <div class="success-wrap">
+            <img src="~/images/booking-success.png" alt="" class="success-illu" />
+            <div class="success-check">✓</div>
+            <h2>¡Reserva enviada!</h2>
+            <p class="muted">El negocio confirmará tu solicitud. Te avisaremos por notificación.</p>
         </div>
 
-        <a class="btn btn-outline btn-block" asp-page="/Appointments/Details" asp-route-id="@a.Id">Ver detalles de la reserva</a>
-        <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@Url.Page("/Booking/Confirm", new { id = a.Id })" style="margin-top:10px">Enviar mensaje al negocio</a>
-        @if (!string.IsNullOrEmpty(a.Groomer.Address))
+        @if (a != null)
         {
-            <a class="btn btn-outline btn-block" href="https://maps.google.com/?q=@Uri.EscapeDataString(a.Groomer.Address)" target="_blank" rel="noopener" style="margin-top:10px">Cómo llegar</a>
+            <div class="card card-pad" style="margin-bottom:16px">
+                <div class="row" style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+                    <img src="@(a.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" style="width:64px;height:64px;border-radius:12px;object-fit:cover" />
+                    <div>
+                        <strong>@a.Groomer.BusinessName</strong>
+                        <div class="muted small">@(a.Groomer.Category != null ? a.Groomer.Category.DisplayName() : "") · @a.Groomer.Address</div>
+                    </div>
+                </div>
+                <p><strong>@(CatalogLocalizer.Loc("Servicio", "Service")):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
+                @if (a.Nights > 0 && a.EndAt.HasValue)
+                {
+                    <p><strong>Check-in:</strong> @a.ScheduledAt.ToString("ddd d MMM yyyy")</p>
+                    <p><strong>Check-out:</strong> @a.EndAt.Value.ToString("ddd d MMM yyyy")</p>
+                    <p><strong>Noches:</strong> @a.Nights</p>
+                }
+                else
+                {
+                    <p><strong>Fecha:</strong> @a.ScheduledAt.ToString("dddd, MMM d, yyyy · h:mm tt")</p>
+                }
+                <p><strong>Mascota:</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@a.Pet.Species)</p>
+                @if (a.Extras.Any())
+                {
+                    <p><strong>Extras:</strong> @string.Join(", ", a.Extras.Select(e => e.Name))</p>
+                }
+                @if (a.DiscountAmount > 0 && !string.IsNullOrEmpty(a.PromoCode))
+                {
+                    <p class="promo-line promo-discount">
+                        <strong>@string.Format(L["Promo_DiscountLine"].Value, a.PromoCode)</strong>
+                        <span class="price">−$@a.DiscountAmount.ToString("0.00")</span>
+                    </p>
+                }
+                <p><strong>Total:</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
+                <p class="muted small">Anticipo: $@a.DepositPaid.ToString("0.00")</p>
+            </div>
+
+            <a class="btn btn-outline btn-block" asp-page="/Appointments/Details" asp-route-id="@a.Id">Ver detalles de la reserva</a>
+            <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@Url.Page("/Booking/Confirm", new { id = a.Id })" style="margin-top:10px">Enviar mensaje al negocio</a>
+            @if (!string.IsNullOrEmpty(a.Groomer.Address))
+            {
+                <a class="btn btn-outline btn-block" href="https://maps.google.com/?q=@Uri.EscapeDataString(a.Groomer.Address)" target="_blank" rel="noopener" style="margin-top:10px">Cómo llegar</a>
+            }
+            <a class="btn btn-primary btn-block" asp-page="/Appointments/Index" style="margin-top:10px">Ver mis citas</a>
         }
-        <a class="btn btn-primary btn-block" asp-page="/Appointments/Index" style="margin-top:10px">Ver mis citas</a>
-    }
-</main>
+    </div>
+</div>

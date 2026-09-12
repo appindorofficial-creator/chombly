@@ -3,13 +3,16 @@
 @{
     ViewData["Title"] = L["Pets_Add"].Value;
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("./Index");
+    ViewData["BodyClass"] = "page-pets-create";
+    var HideNav = true;
     var en = CultureCookie.IsEnglish();
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="./Index">←</a>
-    <h1>@L["Pets_Add"]</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app pets-create">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@L["Pets_Add"]</h1>
     <form method="post" id="pet-create-form" enctype="multipart/form-data"
           data-validate-i18n="1"
           data-msg-required="@L["Pets_NameRequired"]">
@@ -133,7 +136,9 @@
 
         <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
     </form>
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>
 
 <script>
 (() => {
@@ -194,25 +199,35 @@
     if (!show) customBreed.value = '';
   }
 
-  function syncSpecies(species, keepBreed) {
+  function syncSpecies(species, keepBreed, animate) {
     const isOther = species === otherValue;
     if (otherGroup) otherGroup.hidden = !isOther;
     if (breedGroup) breedGroup.hidden = isOther;
     if (!isOther && customType) customType.value = '';
-    document.querySelectorAll('.species-opt').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.species-opt').forEach(el => {
+      el.classList.remove('selected', 'pick-anim');
+    });
     const checkedInput = document.querySelector('input[name="Species"]:checked');
-    checkedInput?.closest('.species-opt')?.classList.add('selected');
+    const opt = checkedInput?.closest('.species-opt');
+    if (opt) {
+      opt.classList.add('selected');
+      if (animate) {
+        void opt.offsetWidth;
+        opt.classList.add('pick-anim');
+        opt.addEventListener('animationend', () => opt.classList.remove('pick-anim'), { once: true });
+      }
+    }
     if (!isOther) fillBreeds(species, keepBreed ? keepBreed : '');
   }
 
   breedSelect?.addEventListener('change', syncCustomBreed);
 
   document.querySelectorAll('input[name="Species"]').forEach(r => {
-    r.addEventListener('change', () => syncSpecies(r.value, ''));
+    r.addEventListener('change', () => syncSpecies(r.value, '', true));
   });
 
   const checked = document.querySelector('input[name="Species"]:checked');
-  syncSpecies(checked ? checked.value : '', initialBreed);
+  syncSpecies(checked ? checked.value : '', initialBreed, false);
 
   const fileInput = document.getElementById('photo-file');
   const preview = document.getElementById('photo-preview');

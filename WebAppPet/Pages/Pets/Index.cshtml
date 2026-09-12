@@ -2,71 +2,74 @@
 @model WebAppPet.Pages.Pets.IndexModel
 @{
     ViewData["Title"] = L["Pets_Title"].Value;
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-    @if (!Model.IsGuest && Model.Pets.Any())
-    {
-        <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
-    }
-</header>
-
-<main class="app-main">
-    <h1 class="page-title">@L["Pets_Title"]</h1>
-
-    @if (Model.IsGuest)
-    {
-        <div class="empty-chombly">
-            <img src="~/images/chombly-empty-pets.png" alt="" class="empty-illu" />
-            <h2>@L["Pets_GuestTitle"]</h2>
-            <p>@L["Pets_GuestSub"]</p>
-            <a class="btn btn-primary btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Pets">@L["Login_Title"]</a>
-            <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:10px">@L["Register_Title"]</a>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <div class="page-title-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
+            <h1 class="page-title" style="margin:0">@L["Pets_Title"]</h1>
+            @if (!Model.IsGuest && Model.Pets.Any())
+            {
+                <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
+            }
         </div>
-    }
-    else if (Model.Pets.Any())
-    {
-        @foreach (var p in Model.Pets)
+
+        @if (Model.IsGuest)
         {
-            <div class="pet-card">
-                <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
-                <div class="pet-info">
-                    <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                    <div class="muted small">@PetSpecies.Label(p.Species) · @PetCatalog.DisplayBreed(p.Species, p.Breed) · @Model.SizeLabel(p.Size) · @p.AgeYears @L["Pets_Years"]</div>
-                    <div class="muted small">@PetCatalog.DisplayTemperament(p.Temperament)</div>
-                    @if (p.IsSenior || p.IsAnxious || p.HasSpecialNeeds)
-                    {
-                        <div class="chip-row" style="margin:6px 0 0">
-                            @if (p.IsSenior) { <span class="badge badge-orange">@L["Pets_Senior"]</span> }
-                            @if (p.IsAnxious) { <span class="badge badge-orange">@L["Pets_Anxious"]</span> }
-                            @if (p.HasSpecialNeeds) { <span class="badge badge-orange">@L["Pets_SpecialNeeds"]</span> }
-                        </div>
-                    }
-                </div>
-                <div class="pet-actions">
-                    <a class="icon-btn" asp-page="./Care" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Control", "Care")">💚</a>
-                    <a class="icon-btn" asp-page="./Reminders" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Recordatorios", "Reminders")">⏰</a>
-                    <a class="icon-btn" asp-page="./History" asp-route-id="@p.Id" title="@L["Appt_History"]">📋</a>
-                    <form method="post" asp-page-handler="Delete"
-                          data-confirm
-                          data-confirm-title="@L["Pets_DeleteTitle"]"
-                          data-confirm-message="@string.Format(L["Pets_DeleteConfirm"].Value, p.Name)"
-                          data-confirm-cancel="@L["Pets_DeleteCancel"]"
-                          data-confirm-ok="@L["Pets_DeleteOk"]">
-                        <input type="hidden" name="id" value="@p.Id" />
-                        <button type="submit" class="icon-btn" title="@L["Common_Delete"]">🗑️</button>
-                    </form>
-                </div>
+            <div class="empty-chombly">
+                <img src="~/images/chombly-empty-pets-v3.png" asp-append-version="true" alt="" class="empty-illu" />
+                <h2>@L["Pets_GuestTitle"]</h2>
+                <p>@L["Pets_GuestSub"]</p>
+                <a class="btn btn-primary btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Pets">@L["Login_Title"]</a>
+                <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:10px">@L["Register_Title"]</a>
             </div>
         }
-    }
-    else
-    {
-        <div class="empty-chombly">
-            <img src="~/images/chombly-empty-pets.png" alt="" class="empty-illu" />
-            <h2>@L["Pets_EmptyTitle"]</h2>
-            <p>@L["Pets_EmptySub"]</p>
-            <a class="btn btn-primary btn-block" asp-page="./Create">+ @L["Pets_Add"]</a>
-        </div>
-    }
-</main>
+        else if (Model.Pets.Any())
+        {
+            @foreach (var p in Model.Pets)
+            {
+                <div class="pet-card">
+                    <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
+                    <div class="pet-info">
+                        <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                        <div class="muted small">@PetSpecies.Label(p.Species) · @PetCatalog.DisplayBreed(p.Species, p.Breed) · @Model.SizeLabel(p.Size) · @p.AgeYears @L["Pets_Years"]</div>
+                        <div class="muted small">@PetCatalog.DisplayTemperament(p.Temperament)</div>
+                        @if (p.IsSenior || p.IsAnxious || p.HasSpecialNeeds)
+                        {
+                            <div class="chip-row" style="margin:6px 0 0">
+                                @if (p.IsSenior) { <span class="badge badge-orange">@L["Pets_Senior"]</span> }
+                                @if (p.IsAnxious) { <span class="badge badge-orange">@L["Pets_Anxious"]</span> }
+                                @if (p.HasSpecialNeeds) { <span class="badge badge-orange">@L["Pets_SpecialNeeds"]</span> }
+                            </div>
+                        }
+                    </div>
+                    <div class="pet-actions">
+                        <a class="icon-btn" asp-page="./Care" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Control", "Care")">💚</a>
+                        <a class="icon-btn" asp-page="./Reminders" asp-route-id="@p.Id" title="@CatalogLocalizer.Loc("Recordatorios", "Reminders")">⏰</a>
+                        <a class="icon-btn" asp-page="./History" asp-route-id="@p.Id" title="@L["Appt_History"]">📋</a>
+                        <form method="post" asp-page-handler="Delete"
+                              data-confirm
+                              data-confirm-title="@L["Pets_DeleteTitle"]"
+                              data-confirm-message="@string.Format(L["Pets_DeleteConfirm"].Value, p.Name)"
+                              data-confirm-cancel="@L["Pets_DeleteCancel"]"
+                              data-confirm-ok="@L["Pets_DeleteOk"]">
+                            <input type="hidden" name="id" value="@p.Id" />
+                            <button type="submit" class="icon-btn" title="@L["Common_Delete"]">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-chombly">
+                <img src="~/images/chombly-empty-pets-v3.png" asp-append-version="true" alt="" class="empty-illu" />
+                <h2>@L["Pets_EmptyTitle"]</h2>
+                <p>@L["Pets_EmptySub"]</p>
+                <a class="btn btn-primary btn-block" asp-page="./Create">+ @L["Pets_Add"]</a>
+            </div>
+        }
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

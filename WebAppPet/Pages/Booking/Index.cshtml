@@ -3,12 +3,14 @@
 @{
     ViewData["Title"] = "Reservar";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Groomers/Details", new { id = Model.GroomerId, service = Model.Service });
+    var HideNav = true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Groomers/Details" asp-route-id="@Model.GroomerId" asp-route-service="@Model.Service">←</a>
-    <h1>Reserva</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">Reserva</h1>
     @if (Model.Groomer != null)
     {
         <div class="card card-pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:center">
@@ -247,4 +249,6 @@
             </div>
         }
     </form>
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

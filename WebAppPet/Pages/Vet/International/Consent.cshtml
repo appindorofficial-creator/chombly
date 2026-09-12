@@ -2,16 +2,15 @@
 @model WebAppPet.Pages.Vet.International.ConsentModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Aceptación", "Consent");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/PurchaseOption", new { consultationId = Model.ConsultationId });
     var price = Model.UsingCare ? 0m : (Model.CatalogItem?.Price ?? 30m);
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/International/PurchaseOption" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Antes del pago", "Before payment")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Antes del pago", "Before payment")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Casillas vacías · sin tarjeta todavía", "Empty checkboxes · no card yet")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -86,4 +85,6 @@
             }
         </button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

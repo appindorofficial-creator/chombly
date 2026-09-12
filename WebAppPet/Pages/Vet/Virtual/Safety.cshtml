@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.Virtual.SafetyModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Seguridad y VCPR", "Safety & VCPR");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Pet", new { consultationId = Model.ConsultationId });
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Virtual/Pet" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Seguridad y VCPR", "Safety & VCPR")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Seguridad y VCPR", "Safety & VCPR")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Cuestionario de banderas rojas", "Red-flag screening questionnaire")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="card card-pad @(Model.HasVcpr ? "vet-vcpr-ok" : "vet-vcpr-missing")" style="margin-bottom:16px">
         @if (Model.HasVcpr)
         {
@@ -40,4 +39,6 @@
 
         <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Buscar veterinario", "Find a veterinarian")</button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

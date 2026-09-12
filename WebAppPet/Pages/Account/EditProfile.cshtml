@@ -4,13 +4,15 @@
 @{
     ViewData["Title"] = L["Profile_Edit"].Value;
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Account/Profile");
+    var HideNav = true;
     var inv = CultureInfo.InvariantCulture;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Account/Profile">←</a>
-    <h1>@L["Profile_Edit"]</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@L["Profile_Edit"]</h1>
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {
         <div class="alert alert-success">@Model.SuccessMessage</div>
@@ -68,7 +70,9 @@
         <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
         <a class="btn btn-outline btn-block" asp-page="/Account/Profile" style="margin-top:10px">@L["Common_Cancel"]</a>
     </form>
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>
 
 @section Scripts {
     <partial name="_GooglePlaces" />

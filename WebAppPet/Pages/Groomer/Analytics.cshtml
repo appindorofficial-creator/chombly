@@ -3,12 +3,13 @@
 @{
     ViewData["Title"] = "Analíticas";
     ViewData["GroomerTab"] = "analytics";
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Groomer/Analytics";
 }
-<header class="topbar">
-    <partial name="_Brand" />
-    <a class="icon-btn" asp-page="/Account/Notifications" asp-route-returnUrl="/Groomer/Analytics" title="Notificaciones" aria-label="Notificaciones">🔔</a>
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
 
     <h2 style="margin:0 0 16px">Analíticas · @DateTime.Today.ToString("MMMM yyyy")</h2>
@@ -55,4 +56,6 @@
     {
         <div class="empty">Aún no hay datos suficientes.</div>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

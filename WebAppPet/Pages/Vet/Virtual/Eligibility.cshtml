@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.Virtual.EligibilityModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Sin VCPR", "No VCPR");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Safety", new { consultationId = Model.ConsultationId });
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Falta revisión presencial", "In-person exam needed")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Falta revisión presencial", "In-person exam needed")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("No podemos habilitar consulta clínica local con receta", "We cannot enable local clinical care with prescriptions")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="card card-pad" style="margin-bottom:16px">
         <p>
             @CatalogLocalizer.Loc(
@@ -32,4 +31,6 @@
                 "An in-person vaccine visit can activate a VCPR for future local consults.")
         </p>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

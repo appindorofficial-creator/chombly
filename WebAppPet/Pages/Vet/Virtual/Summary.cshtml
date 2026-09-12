@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.Virtual.SummaryModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Resumen", "Summary");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Appointments/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Appointments/Index">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Resumen y seguimiento", "Summary & follow-up")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Resumen y seguimiento", "Summary & follow-up")</h1>
         <p class="muted small">#@Model.Id</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-success">@Model.Message</div>
@@ -49,4 +48,6 @@
         }
         <a class="btn btn-outline" asp-page="/Vet/Index">@CatalogLocalizer.Loc("Volver a Veterinaria", "Back to Veterinary")</a>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

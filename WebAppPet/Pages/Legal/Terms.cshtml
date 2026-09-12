@@ -2,13 +2,15 @@
 @model WebAppPet.Pages.Legal.TermsModel
 @{
     ViewData["Title"] = L["Legal_PageTitle"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = "javascript:history.back()";
+    var HideNav = ViewData["HideNav"] as bool? == true;
     var isEn = CatalogLocalizer.IsEnglish();
 }
-<div class="page-header">
-    <a class="back-btn" href="javascript:history.back()">←</a>
-    <h1>@L["Legal_PageTitle"]</h1>
-</div>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@L["Legal_PageTitle"]</h1>
     <nav class="legal-toc card card-pad" aria-label="@L["Legal_PageTitle"]">
         <a class="legal-link" href="#terms">@L["Legal_TermsConditions"]</a>
         <span class="muted">·</span>
@@ -91,4 +93,6 @@
             <p>Solicitudes de privacidad: <a class="legal-link" href="mailto:privacy@chombly.app">privacy@chombly.app</a>.</p>
         </article>
     }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

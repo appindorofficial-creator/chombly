@@ -7,12 +7,13 @@
     var title = Model.ActiveCategory != null
         ? $"{Model.ActiveCategory.Emoji} {catName}"
         : L["Search_ServicesTitle"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <h1>@title</h1>
-</div>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <h1 class="app-page-heading">@title</h1>
     @if (Model.ActiveCategory != null)
     {
         <p class="muted small" style="margin-top:-8px">@Model.ActiveCategory.DisplaySubtitle()</p>
@@ -145,7 +146,9 @@
     {
         <div class="empty">@L["Search_Empty"]</div>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @section Scripts {
 <script>
