@@ -11,7 +11,7 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body">
+    <div class="home-body" data-appt-how>
         <h1 class="page-title">@L["Appt_Title"]</h1>
 
         @if (Model.IsGuest)
@@ -35,7 +35,7 @@
                     <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 10.5V7h-2v7l5 3 1-1.7-4-2.8z"/></svg>
                     @L["Appt_History"]
                 </a>
-                <a class="tabs-cta" href="/Groomers">
+                <a class="tabs-cta" data-how-cta href="/Groomers">
                     <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2z"/></svg>
                     @L["Appt_Book"]
                 </a>
@@ -73,38 +73,38 @@
                     <img src="~/images/chombly-empty-appointments-v3.png" asp-append-version="true" alt="" class="empty-illu" />
                     <h2>@L["Appt_EmptyTitle"]</h2>
                     <p>@L["Appt_EmptySub"]</p>
-                    <a class="btn btn-primary btn-block" href="/Groomers">
+                    <a class="btn btn-primary btn-block" data-appt-primary-cta data-how-cta href="/Groomers">
                         📅 @L["Appt_BookNew"]
                     </a>
                 </div>
-
-                <section class="how-card" aria-labelledby="appt-how-title">
-                    <h3 id="appt-how-title">@L["Appt_HowTitle"]</h3>
-                    <ol class="how-steps">
-                        <li class="how-step">
-                            <span class="how-num" aria-hidden="true">1</span>
-                            <div class="how-copy">
-                                <strong>@L["Appt_HowSearch"]</strong>
-                                <p>@L["Appt_HowSearchDesc"]</p>
-                            </div>
-                        </li>
-                        <li class="how-step">
-                            <span class="how-num" aria-hidden="true">2</span>
-                            <div class="how-copy">
-                                <strong>@L["Appt_HowBook"]</strong>
-                                <p>@L["Appt_HowBookDesc"]</p>
-                            </div>
-                        </li>
-                        <li class="how-step">
-                            <span class="how-num" aria-hidden="true">3</span>
-                            <div class="how-copy">
-                                <strong>@L["Appt_HowEnjoy"]</strong>
-                                <p>@L["Appt_HowEnjoyDesc"]</p>
-                            </div>
-                        </li>
-                    </ol>
-                </section>
             }
+
+            <section class="how-card" data-how-glow aria-labelledby="appt-how-title">
+                <h3 id="appt-how-title">@L["Appt_HowTitle"]</h3>
+                <ol class="how-steps">
+                    <li class="how-step">
+                        <span class="how-num" aria-hidden="true">1</span>
+                        <div class="how-copy">
+                            <strong>@L["Appt_HowSearch"]</strong>
+                            <p>@L["Appt_HowSearchDesc"]</p>
+                        </div>
+                    </li>
+                    <li class="how-step">
+                        <span class="how-num" aria-hidden="true">2</span>
+                        <div class="how-copy">
+                            <strong>@L["Appt_HowBook"]</strong>
+                            <p>@L["Appt_HowBookDesc"]</p>
+                        </div>
+                    </li>
+                    <li class="how-step">
+                        <span class="how-num" aria-hidden="true">3</span>
+                        <div class="how-copy">
+                            <strong>@L["Appt_HowEnjoy"]</strong>
+                            <p>@L["Appt_HowEnjoyDesc"]</p>
+                        </div>
+                    </li>
+                </ol>
+            </section>
         }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>

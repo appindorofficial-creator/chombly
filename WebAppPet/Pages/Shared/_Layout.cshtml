@@ -8,6 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="view-transition" content="same-origin" />
     <title>@ViewData["Title"] - Chombly</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="icon" href="~/brand/v2/chombly-mark.png" asp-append-version="true" />
@@ -35,7 +36,8 @@
 
     @if (!hideNav)
     {
-        <nav class="bottom-nav">
+        <nav class="bottom-nav" data-bottom-nav>
+            <span class="bottom-nav-indicator" aria-hidden="true"></span>
             <a asp-page="/Index" class="@(IsActive("/Index") || path == "/" || notifFromHome ? "active" : "")">
                 <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
                 @L["Nav_Home"]
@@ -60,6 +62,8 @@
     }
 </div>
     <partial name="_CelebrateRegister" />
+    <partial name="Ui/_AppToastHost" />
+    <partial name="Ui/_AppFlash" />
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>

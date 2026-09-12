@@ -163,10 +163,20 @@ public class IndexModel : PageModel
                         ErrorMessage = _L["Booking_CheckDates"].Value;
                         return Page();
                     }
+                    if (cin.Date < AppTimeZones.TodayLocalDate())
+                    {
+                        ErrorMessage = _L["Booking_DateNotPast"].Value;
+                        return Page();
+                    }
                 }
                 else if (string.IsNullOrWhiteSpace(Date) || string.IsNullOrWhiteSpace(Time))
                 {
                     ErrorMessage = _L["Booking_SelectDateTime"].Value;
+                    return Page();
+                }
+                else if (DateTime.TryParse(Date, out var day) && day.Date < AppTimeZones.TodayLocalDate())
+                {
+                    ErrorMessage = _L["Booking_DateNotPast"].Value;
                     return Page();
                 }
             }
@@ -231,6 +241,13 @@ public class IndexModel : PageModel
                     ModelState.Remove(nameof(Step));
                     return Page();
                 }
+                if (cin.Date < AppTimeZones.TodayLocalDate())
+                {
+                    ErrorMessage = _L["Booking_DateNotPast"].Value;
+                    Step = 2;
+                    ModelState.Remove(nameof(Step));
+                    return Page();
+                }
                 scheduled = cin.Date.AddHours(14); // check-in default 2pm
                 endAt = cout.Date.AddHours(11);    // check-out default 11am
                 nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
@@ -240,6 +257,13 @@ public class IndexModel : PageModel
                 if (!DateTime.TryParse($"{Date} {Time}", out scheduled))
                 {
                     ErrorMessage = _L["Booking_InvalidDateTime"].Value;
+                    Step = 2;
+                    ModelState.Remove(nameof(Step));
+                    return Page();
+                }
+                if (scheduled.Date < AppTimeZones.TodayLocalDate())
+                {
+                    ErrorMessage = _L["Booking_DateNotPast"].Value;
                     Step = 2;
                     ModelState.Remove(nameof(Step));
                     return Page();

@@ -26,10 +26,11 @@
                 <div class="alert alert-danger">@Model.ErrorMessage</div>
             }
 
-            <form method="post" id="loginForm" class="onboard-auth-form" data-validate-i18n="1"
+            <form method="post" id="loginForm" class="onboard-auth-form" data-feedback="login" data-validate-i18n="1"
                   data-msg-required="@L["Validation_Required"]"
                   data-msg-email="@L["Profile_Edit_EmailInvalid"]"
-                  data-msg-password="@L["Profile_Edit_PasswordShort"]">
+                  data-msg-password="@L["Profile_Edit_PasswordShort"]"
+                  data-feedback-loading="@L["Feedback_LoginLoading"]">
                 <input type="hidden" asp-for="ReturnUrl" />
                 <input type="hidden" asp-for="Culture" id="cultureInput" />
                 <div class="form-group">

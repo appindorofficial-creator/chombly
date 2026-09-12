@@ -6,6 +6,7 @@ using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Pets;
 
@@ -73,6 +74,7 @@ public class IndexModel : PageModel
 
                 _db.Pets.Remove(pet);
                 await _db.SaveChangesAsync();
+                AppFlash.Toast(this, "✓ " + _L["Feedback_PetDeleted"].Value);
             }
         }
 

@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Account;
 
@@ -11,11 +14,13 @@ public class NotificationsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly IStringLocalizer<SharedResource> _L;
 
-    public NotificationsModel(AppDbContext db, AuthService auth)
+    public NotificationsModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
+        _L = L;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -37,9 +42,13 @@ public class NotificationsModel : PageModel
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
 
-        foreach (var n in Items.Where(x => !x.IsRead))
-            n.IsRead = true;
-        await _db.SaveChangesAsync();
+        // Mark read in DB without mutating the in-memory list, so this visit still shows unread styling.
+        if (Items.Any(x => !x.IsRead))
+        {
+            await _db.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
+        }
 
         return Page();
     }
@@ -55,6 +64,7 @@ public class NotificationsModel : PageModel
             await ClearDeliveryLinksAsync(new[] { n.Id });
             _db.Notifications.Remove(n);
             await _db.SaveChangesAsync();
+            AppFlash.Toast(this, "✓ " + _L["Feedback_Deleted"].Value);
         }
 
         return RedirectToPage(new { returnUrl = ReturnUrl });
@@ -71,6 +81,7 @@ public class NotificationsModel : PageModel
             await ClearDeliveryLinksAsync(items.Select(x => x.Id));
             _db.Notifications.RemoveRange(items);
             await _db.SaveChangesAsync();
+            AppFlash.Toast(this, "✓ " + _L["Feedback_DeletedAll"].Value);
         }
 
         return RedirectToPage(new { returnUrl = ReturnUrl });

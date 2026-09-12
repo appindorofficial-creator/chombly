@@ -14,6 +14,17 @@
   <data name="Common_Continue" xml:space="preserve"><value>Continue</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Feedback_Saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="Feedback_Saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="Feedback_Deleted" xml:space="preserve"><value>Deleted</value></data>
+  <data name="Feedback_DeletedAll" xml:space="preserve"><value>Notifications cleared</value></data>
+  <data name="Feedback_Copied" xml:space="preserve"><value>Copied</value></data>
+  <data name="Feedback_CopyFail" xml:space="preserve"><value>Could not copy</value></data>
+  <data name="Feedback_Downloading" xml:space="preserve"><value>Downloading…</value></data>
+  <data name="Feedback_DownloadDone" xml:space="preserve"><value>Download ready</value></data>
+  <data name="Feedback_LoginLoading" xml:space="preserve"><value>Signing in…</value></data>
+  <data name="Feedback_Error" xml:space="preserve"><value>Check the details and try again</value></data>
+  <data name="Feedback_PetDeleted" xml:space="preserve"><value>Pet deleted</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Common_Edit" xml:space="preserve"><value>Edit</value></data>
@@ -297,6 +308,7 @@
   <data name="Booking_CheckDates" xml:space="preserve"><value>Check your check-in and check-out dates.</value></data>
   <data name="Booking_InvalidDates" xml:space="preserve"><value>Invalid dates.</value></data>
   <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Invalid date or time.</value></data>
+  <data name="Booking_DateNotPast" xml:space="preserve"><value>You can't select a past date.</value></data>
   <data name="Booking_MissingData" xml:space="preserve"><value>Booking details are incomplete.</value></data>
   <data name="Booking_SpeciesNotAccepted" xml:space="preserve"><value>This business does not serve {0}.</value></data>
 

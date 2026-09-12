@@ -36,6 +36,11 @@
                     <li class="profile-fact">
                         <span class="profile-fact-ico" aria-hidden="true">✉️</span>
                         <span class="profile-fact-value">@Model.UserEntity.Email</span>
+                        <button type="button" class="profile-fact-copy"
+                                data-copy="@Model.UserEntity.Email"
+                                data-copy-ok="✓ @L["Feedback_Copied"]"
+                                data-copy-fail="@L["Feedback_CopyFail"]"
+                                aria-label="@L["Feedback_Copied"]">⧉</button>
                     </li>
                     @if (!string.IsNullOrWhiteSpace(Model.UserEntity.Phone))
                     {

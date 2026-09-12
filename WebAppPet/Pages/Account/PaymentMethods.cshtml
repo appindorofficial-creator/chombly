@@ -35,7 +35,9 @@
         <div class="alert alert-danger" id="pay-server-error">@Model.ErrorMessage</div>
     }
     <div class="alert alert-danger" id="pay-client-error" hidden></div>
-    <form method="post" id="pay-form" novalidate>
+    <form method="post" id="pay-form" novalidate data-feedback="save"
+          data-feedback-loading="@L["Feedback_Saving"]"
+          data-feedback-done="@L["Feedback_Saved"]">
         <div class="form-group">
             <label for="CardNumber">@L["Pay_CardNumber"]</label>
             <input class="form-control" asp-for="CardNumber" id="CardNumber"

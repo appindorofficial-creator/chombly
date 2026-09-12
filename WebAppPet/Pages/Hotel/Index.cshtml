@@ -4,6 +4,8 @@
     ViewData["Title"] = L["Hotel_Title"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
+    var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
+    var minCheckout = AppTimeZones.TodayLocalDate().AddDays(1).ToString("yyyy-MM-dd");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -40,11 +42,11 @@
             <div class="date-row">
                 <div class="form-group" style="flex:1;margin:0">
                     <label class="muted small">Check-in</label>
-                    <input class="form-control" type="date" name="CheckIn" value="@Model.CheckIn" onchange="this.form.submit()" />
+                    <input class="form-control" type="date" name="CheckIn" value="@Model.CheckIn" min="@minDate" onchange="this.form.submit()" />
                 </div>
                 <div class="form-group" style="flex:1;margin:0">
                     <label class="muted small">Check-out</label>
-                    <input class="form-control" type="date" name="CheckOut" value="@Model.CheckOut" onchange="this.form.submit()" />
+                    <input class="form-control" type="date" name="CheckOut" value="@Model.CheckOut" min="@minCheckout" onchange="this.form.submit()" />
                 </div>
             </div>
         }
@@ -182,12 +184,40 @@
         </div>
     </form>
 
-    <div class="trust-bar">
-        <div><span>🔒</span><small>Reservas seguras</small></div>
-        <div><span>✓</span><small>Proveedores verificados</small></div>
-        <div><span>💬</span><small>Soporte 24/7</small></div>
-        <div><span>🌿</span><small>Para tu tranquilidad</small></div>
-    </div>
+    <aside class="trust-banner" data-trust-banner aria-label="@CatalogLocalizer.Loc("Confianza Chombly", "Chombly trust")">
+        <div class="trust-banner-glow" aria-hidden="true"></div>
+        <div class="trust-banner-viewport">
+            <div class="trust-banner-item is-active" data-trust-item aria-hidden="false">
+                <span class="trust-banner-ico" aria-hidden="true">🔒</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Reservas seguras", "Secure bookings")</strong>
+                    <small>@CatalogLocalizer.Loc("Tu pago y datos están protegidos", "Your payment and data stay protected")</small>
+                </span>
+            </div>
+            <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                <span class="trust-banner-ico" aria-hidden="true">✓</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Proveedores verificados", "Verified providers")</strong>
+                    <small>@CatalogLocalizer.Loc("Hoteles revisados por Chombly", "Hotels reviewed by Chombly")</small>
+                </span>
+            </div>
+            <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                <span class="trust-banner-ico" aria-hidden="true">💬</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Soporte 24/7", "24/7 support")</strong>
+                    <small>@CatalogLocalizer.Loc("Ayuda cuando la necesites", "Help whenever you need it")</small>
+                </span>
+            </div>
+            <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                <span class="trust-banner-ico" aria-hidden="true">🌿</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Para tu tranquilidad", "For your peace of mind")</strong>
+                    <small>@CatalogLocalizer.Loc("Cuidado pensado para tu mascota", "Care designed for your pet")</small>
+                </span>
+            </div>
+        </div>
+        <div class="trust-banner-dots" data-trust-dots aria-hidden="true"></div>
+    </aside>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

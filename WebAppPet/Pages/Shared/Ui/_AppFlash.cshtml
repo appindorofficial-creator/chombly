@@ -1,0 +1,10 @@
+@{
+    var toast = TempData[WebAppPet.Ui.AppFlash.ToastKey] as string;
+    var kind = TempData[WebAppPet.Ui.AppFlash.ToastKindKey] as string ?? "success";
+}
+@if (!string.IsNullOrWhiteSpace(toast))
+{
+    <div id="app-flash-toast" hidden
+         data-toast="@toast"
+         data-toast-kind="@kind"></div>
+}

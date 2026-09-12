@@ -14,6 +14,9 @@
     <div class="home-body @(HideNav ? "no-nav" : "")">
     <h1 class="app-page-heading">@L["Pets_Add"]</h1>
     <form method="post" id="pet-create-form" enctype="multipart/form-data"
+          data-feedback="save"
+          data-feedback-loading="@L["Feedback_Saving"]"
+          data-feedback-done="@L["Feedback_Saved"]"
           data-validate-i18n="1"
           data-msg-required="@L["Pets_NameRequired"]">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
@@ -72,7 +75,9 @@
 
         <div class="form-group">
             <label>@L["Pets_Size"]</label>
-            <div class="size-grid">
+            <div class="size-segment" data-size-segment>
+                <span class="size-segment-thumb" aria-hidden="true"></span>
+                <div class="size-grid">
                 @foreach (var opt in Model.SizeOptions)
                 {
                     <label class="size-pick">
@@ -83,6 +88,7 @@
                         </span>
                     </label>
                 }
+                </div>
             </div>
         </div>
 

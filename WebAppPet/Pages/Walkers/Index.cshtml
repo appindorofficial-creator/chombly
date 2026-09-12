@@ -4,6 +4,7 @@
     ViewData["Title"] = L["Walkers_Title"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
+    var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -37,7 +38,7 @@
         @if (Model.When == "fecha")
         {
             <div class="form-group">
-                <input class="form-control" type="date" name="Date" value="@Model.Date" onchange="this.form.submit()" />
+                <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" onchange="this.form.submit()" />
             </div>
         }
         else

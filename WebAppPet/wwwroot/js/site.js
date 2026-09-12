@@ -251,8 +251,6 @@
     if (removeSel) {
       var target = form.closest(removeSel);
       if (target) {
-        var trash = form.querySelector('.notif-delete-btn');
-        if (trash) trash.classList.add('is-pressing');
         target.classList.add('is-removing');
         var done = false;
         function finish() {
@@ -308,13 +306,12 @@
 
       function triggerDelete() {
         var form = card.querySelector('form[data-animate-remove]');
-        var btn = card.querySelector('.notif-delete-btn');
         card.classList.remove('is-dragging');
         setX(-maxSwipe);
         setTimeout(function () {
-          if (btn) btn.click();
-          else if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
-          else if (form) form.submit();
+          if (!form) { reset(); return; }
+          if (typeof form.requestSubmit === 'function') form.requestSubmit();
+          else form.submit();
           setTimeout(function () {
             if (!card.closest('.notif-swipe.is-removing')) reset();
           }, 80);
@@ -600,6 +597,383 @@
     });
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function bindPageTransitions() {
+    // Cross-document View Transitions are driven by CSS:
+    // @view-transition { navigation: auto; } + view-transition-name on shell regions.
+    if (prefersReducedMotion()) return;
+  }
+
+  function showAppToast(message, opts) {
+    opts = opts || {};
+    var host = document.getElementById('app-toast-host');
+    if (!host || !message) return;
+    var el = document.createElement('div');
+    el.className = 'app-toast' + (opts.kind === 'error' ? ' app-toast--error' : opts.kind === 'info' ? ' app-toast--info' : '');
+    el.setAttribute('role', opts.kind === 'error' ? 'alert' : 'status');
+    el.textContent = String(message);
+    host.appendChild(el);
+    var ttl = typeof opts.duration === 'number' ? opts.duration : 2800;
+    setTimeout(function () {
+      el.classList.add('is-leaving');
+      setTimeout(function () { el.remove(); }, 200);
+    }, ttl);
+  }
+
+  function feedbackLabel(form, key, fallback) {
+    if (!form) return fallback;
+    return form.getAttribute(key) || fallback;
+  }
+
+  function setButtonFeedback(btn, state, labels) {
+    if (!btn) return;
+    labels = labels || {};
+    if (btn.dataset.feedbackHtml == null) {
+      btn.dataset.feedbackHtml = btn.innerHTML;
+    }
+    if (state === 'loading') {
+      btn.classList.add('is-loading', 'app-btn');
+      btn.classList.remove('is-success');
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      btn.innerHTML = '<span class="app-btn-spinner" aria-hidden="true"></span><span class="app-btn-label"></span>';
+      btn.querySelector('.app-btn-label').textContent = labels.loading || '…';
+      return;
+    }
+    if (state === 'done') {
+      btn.classList.remove('is-loading');
+      btn.classList.add('is-success', 'app-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="app-btn-check" aria-hidden="true">✓</span><span class="app-btn-label"></span>';
+      btn.querySelector('.app-btn-label').textContent = labels.done || 'Listo';
+      return;
+    }
+    btn.classList.remove('is-loading', 'is-success');
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+    btn.innerHTML = btn.dataset.feedbackHtml;
+  }
+
+  function bindFeedbackForms(root) {
+    (root || document).querySelectorAll('form[data-feedback]').forEach(function (form) {
+      if (form.dataset.feedbackBound === '1') return;
+      form.dataset.feedbackBound = '1';
+      form.addEventListener('submit', function () {
+        if (form.dataset.chConfirmBound === '1' && form.dataset.chConfirmReady !== '1') {
+          // confirm modal will re-submit later
+        }
+        var kind = form.getAttribute('data-feedback') || 'save';
+        var btn = form.querySelector('button[type="submit"], .btn-primary, .btn-enter, .app-btn');
+        var loading = feedbackLabel(form, 'data-feedback-loading',
+          kind === 'login' ? '…' : '…');
+        var done = feedbackLabel(form, 'data-feedback-done', '✓');
+        setButtonFeedback(btn, 'loading', { loading: loading, done: done });
+      });
+    });
+  }
+
+  function bindCopyActions(root) {
+    (root || document).querySelectorAll('[data-copy]').forEach(function (el) {
+      if (el.dataset.copyBound === '1') return;
+      el.dataset.copyBound = '1';
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        var text = el.getAttribute('data-copy') || '';
+        var okMsg = el.getAttribute('data-copy-ok') || '✓ Copiado';
+        var failMsg = el.getAttribute('data-copy-fail') || 'No se pudo copiar';
+        function ok() {
+          showAppToast(okMsg, { kind: 'success' });
+          el.classList.add('is-copied');
+          setTimeout(function () { el.classList.remove('is-copied'); }, 1200);
+        }
+        function fail() { showAppToast(failMsg, { kind: 'error' }); }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(ok).catch(fail);
+        } else {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            ok();
+          } catch (_) { fail(); }
+        }
+      });
+    });
+  }
+
+  function bindDownloadProgress(root) {
+    (root || document).querySelectorAll('[data-download]').forEach(function (el) {
+      if (el.dataset.downloadBound === '1') return;
+      el.dataset.downloadBound = '1';
+      el.addEventListener('click', function (e) {
+        var href = el.getAttribute('href') || el.getAttribute('data-download');
+        if (!href || href === '#') return;
+        e.preventDefault();
+        var barHost = el.querySelector('.app-download-bar') || document.createElement('span');
+        barHost.className = 'app-download-bar';
+        if (!barHost.parentNode) el.appendChild(barHost);
+        barHost.style.width = '8%';
+        showAppToast(el.getAttribute('data-download-loading') || 'Descargando…', { kind: 'info', duration: 1600 });
+        var prog = 8;
+        var tick = setInterval(function () {
+          prog = Math.min(90, prog + 12);
+          barHost.style.width = prog + '%';
+        }, 180);
+        fetch(href, { credentials: 'same-origin' }).then(function (res) {
+          if (!res.ok) throw new Error('dl');
+          return res.blob().then(function (blob) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = el.getAttribute('data-download-name') || '';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          });
+        }).then(function () {
+          clearInterval(tick);
+          barHost.style.width = '100%';
+          showAppToast(el.getAttribute('data-download-done') || '✓ Descarga lista', { kind: 'success' });
+          setTimeout(function () { barHost.style.width = '0%'; }, 600);
+        }).catch(function () {
+          clearInterval(tick);
+          barHost.style.width = '0%';
+          showAppToast(el.getAttribute('data-download-fail') || 'Error al descargar', { kind: 'error' });
+        });
+      });
+    });
+  }
+
+  function bindSoftFilters(root) {
+    var scope = root || document;
+    function markUpdating(fromEl) {
+      var body = (fromEl && fromEl.closest) ? (fromEl.closest('.home-body') || fromEl.closest('.app-shell')) : document.querySelector('.home-body');
+      if (!body) return;
+      body.classList.add('is-soft-updating');
+      var sk = body.querySelector('.app-soft-skeleton');
+      if (!sk) {
+        sk = document.createElement('div');
+        sk.className = 'app-soft-skeleton';
+        sk.innerHTML = '<app-skeleton></app-skeleton>';
+        // plain HTML skeleton (tag helpers won't run client-side)
+        sk.innerHTML =
+          '<div class="app-skeleton app-skeleton--text" aria-hidden="true">' +
+          '<span class="app-skeleton-line" style="width:100%"></span>' +
+          '<span class="app-skeleton-line" style="width:92%"></span>' +
+          '<span class="app-skeleton-line" style="width:70%"></span>' +
+          '</div>';
+        body.appendChild(sk);
+      }
+    }
+
+    scope.querySelectorAll('.filter-bar a, .chip-row a, a.chip, .hotel-flow a[href]').forEach(function (a) {
+      if (a.dataset.softFilterBound === '1') return;
+      a.dataset.softFilterBound = '1';
+      a.addEventListener('click', function () {
+        if (a.target === '_blank') return;
+        markUpdating(a);
+      });
+    });
+
+    scope.querySelectorAll('.hotel-flow form, form[data-soft-filter]').forEach(function (form) {
+      if (form.dataset.softFilterBound === '1') return;
+      form.dataset.softFilterBound = '1';
+      form.addEventListener('change', function () {
+        markUpdating(form);
+      }, true);
+      form.addEventListener('submit', function () {
+        markUpdating(form);
+      });
+    });
+  }
+
+  function bindRoutePending() {
+    document.querySelectorAll('[data-bottom-nav] a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        document.documentElement.classList.add('ch-route-pending');
+      });
+    });
+  }
+
+  function bindFlashAndAlerts() {
+    var flash = document.getElementById('app-flash-toast');
+    if (flash) {
+      var msg = flash.getAttribute('data-toast');
+      var kind = flash.getAttribute('data-toast-kind') || 'success';
+      if (msg) showAppToast(msg, { kind: kind });
+    }
+
+    document.querySelectorAll('.alert-success').forEach(function (el) {
+      if (el.dataset.toasted === '1') return;
+      el.dataset.toasted = '1';
+      var text = (el.textContent || '').trim();
+      if (text) showAppToast('✓ ' + text.replace(/^✓\s*/, ''), { kind: 'success' });
+      el.classList.add('alert-success--quiet');
+    });
+
+    document.querySelectorAll('.alert-danger').forEach(function (el) {
+      el.classList.add('alert-danger--pop');
+    });
+  }
+
+  function bindBottomNav(root) {
+    var nav = (root || document).querySelector('[data-bottom-nav]');
+    if (!nav || nav.dataset.chNavBound === '1') return;
+    nav.dataset.chNavBound = '1';
+    var links = Array.prototype.slice.call(nav.querySelectorAll('a'));
+    if (!links.length) return;
+
+    function setActiveIndex(i) {
+      if (i < 0) i = 0;
+      nav.style.setProperty('--nav-active', String(i));
+    }
+
+    var initial = links.findIndex(function (a) { return a.classList.contains('active'); });
+    setActiveIndex(initial >= 0 ? initial : 0);
+
+    links.forEach(function (a, i) {
+      a.addEventListener('pointerdown', function () {
+        setActiveIndex(i);
+      });
+    });
+  }
+
+  function bindTrustBanner(root) {
+    var banners = (root || document).querySelectorAll('[data-trust-banner]');
+    banners.forEach(function (banner) {
+      if (banner.dataset.chTrustBound === '1') return;
+      banner.dataset.chTrustBound = '1';
+
+      var items = Array.prototype.slice.call(banner.querySelectorAll('[data-trust-item]'));
+      var dotsHost = banner.querySelector('[data-trust-dots]');
+      if (items.length < 2) return;
+
+      var index = Math.max(0, items.findIndex(function (el) { return el.classList.contains('is-active'); }));
+      if (index < 0) index = 0;
+      var timer = null;
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var intervalMs = 3400;
+
+      function renderDots() {
+        if (!dotsHost) return;
+        dotsHost.innerHTML = '';
+        items.forEach(function (_, i) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'trust-banner-dot' + (i === index ? ' is-active' : '');
+          btn.setAttribute('aria-label', 'Trust ' + (i + 1));
+          btn.addEventListener('click', function () {
+            show(i, true);
+          });
+          dotsHost.appendChild(btn);
+        });
+      }
+
+      function show(next, userDriven) {
+        if (next === index) return;
+        var prev = items[index];
+        var cur = items[next];
+        if (!cur) return;
+
+        if (prev) {
+          prev.classList.remove('is-active');
+          prev.classList.add('is-leaving');
+          prev.setAttribute('aria-hidden', 'true');
+          window.setTimeout(function () {
+            prev.classList.remove('is-leaving');
+          }, reduceMotion ? 0 : 280);
+        }
+
+        cur.setAttribute('aria-hidden', 'false');
+        void cur.offsetWidth;
+        cur.classList.add('is-active');
+        index = next;
+        renderDots();
+
+        if (userDriven) restart();
+      }
+
+      function next() {
+        show((index + 1) % items.length, false);
+      }
+
+      function restart() {
+        if (timer) window.clearInterval(timer);
+        if (reduceMotion) return;
+        timer = window.setInterval(next, intervalMs);
+      }
+
+      items.forEach(function (el, i) {
+        var active = i === index;
+        el.classList.toggle('is-active', active);
+        el.classList.remove('is-leaving');
+        el.setAttribute('aria-hidden', active ? 'false' : 'true');
+      });
+      renderDots();
+      restart();
+
+      banner.addEventListener('pointerenter', function () {
+        if (timer) window.clearInterval(timer);
+      });
+      banner.addEventListener('pointerleave', restart);
+    });
+  }
+
+  function bindHowGlow(root) {
+    var shells = (root || document).querySelectorAll('[data-appt-how]');
+    shells.forEach(function (shell) {
+      if (shell.dataset.chHowBound === '1') return;
+      shell.dataset.chHowBound = '1';
+
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) return;
+
+      function isVisible(el) {
+        if (!el) return false;
+        var style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+        return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+      }
+
+      function targets() {
+        var list = Array.prototype.slice.call(shell.querySelectorAll('[data-how-glow] .how-num'));
+        var primary = shell.querySelector('[data-appt-primary-cta]');
+        var tabCta = shell.querySelector('[data-how-cta].tabs-cta, .tabs-cta[data-how-cta]');
+        var cta = isVisible(primary) ? primary : (isVisible(tabCta) ? tabCta : null);
+        if (cta) list.push(cta);
+        return list;
+      }
+
+      var index = 0;
+      var timer = null;
+
+      function clearGlow(list) {
+        shell.querySelectorAll('.is-glow').forEach(function (el) {
+          el.classList.remove('is-glow');
+        });
+      }
+
+      function tick() {
+        var list = targets();
+        clearGlow();
+        if (!list.length) return;
+        if (index >= list.length) index = 0;
+        list[index].classList.add('is-glow');
+        index = (index + 1) % list.length;
+      }
+
+      tick();
+      window.setInterval(tick, 1500);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
     bindPasswordToggles(document);
@@ -607,8 +981,18 @@
     restoreFlowScroll();
     bindConfirmForms(document);
     bindNotifSwipe(document);
+    bindBottomNav(document);
+    bindPageTransitions();
+    bindFeedbackForms(document);
+    bindCopyActions(document);
+    bindDownloadProgress(document);
+    bindSoftFilters(document);
+    bindRoutePending();
+    bindFlashAndAlerts();
     bindAcceptTerms(document);
     bindFavoriteButtons(document);
+    bindTrustBanner(document);
+    bindHowGlow(document);
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;
@@ -617,6 +1001,12 @@
   window.ChomblyConfirm = openConfirm;
   window.ChomblyBindConfirmForms = bindConfirmForms;
   window.ChomblyBindNotifSwipe = bindNotifSwipe;
+  window.ChomblyBindBottomNav = bindBottomNav;
+  window.ChomblyToast = { show: showAppToast };
+  window.ChomblyFeedback = {
+    setButton: setButtonFeedback,
+    toast: showAppToast
+  };
   window.ChomblyBindAcceptTerms = bindAcceptTerms;
   window.ChomblyBindFavoriteButtons = bindFavoriteButtons;
 })();

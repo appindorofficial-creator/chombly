@@ -22,7 +22,10 @@
         <div class="alert alert-danger">@Model.ErrorMessage</div>
     }
 
-    <form method="post" id="edit-profile-form" data-validate-i18n="1"
+    <form method="post" id="edit-profile-form" data-feedback="save"
+          data-feedback-loading="@L["Feedback_Saving"]"
+          data-feedback-done="@L["Feedback_Saved"]"
+          data-validate-i18n="1"
           data-msg-required="@L["Validation_Required"]"
           data-msg-email="@L["Profile_Edit_EmailInvalid"]"
           data-msg-phone="@L["Phone_Invalid"]"

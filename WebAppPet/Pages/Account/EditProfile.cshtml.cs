@@ -7,6 +7,7 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Services;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Account;
 
@@ -147,6 +148,7 @@ public class EditProfileModel : PageModel
         await _auth.SignInAsync(user);
 
         SuccessMessage = _L["Profile_Edit_Saved"].Value;
+        AppFlash.Toast(this, "✓ " + _L["Feedback_Saved"].Value);
         NewPassword = null;
         ConfirmPassword = null;
         Latitude = lat?.ToString("0.######", CultureInfo.InvariantCulture);

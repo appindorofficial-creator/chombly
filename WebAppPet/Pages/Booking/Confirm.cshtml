@@ -10,11 +10,13 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body no-nav">
-        <div class="success-wrap">
+        <div class="success-wrap" data-success-celebrate>
             <img src="~/images/booking-success-v2.png" asp-append-version="true" alt="" class="success-illu" />
-            <div class="success-check" aria-hidden="true">✓</div>
-            <h2>¡Reserva enviada!</h2>
-            <p class="muted">El negocio confirmará tu solicitud. Te avisaremos por notificación.</p>
+            <div class="success-check" aria-hidden="true">
+                <span class="success-check-mark">✓</span>
+            </div>
+            <h2 class="success-title">¡Reserva enviada!</h2>
+            <p class="muted success-sub">El negocio confirmará tu solicitud. Te avisaremos por notificación.</p>
         </div>
 
         @if (a != null)
