@@ -212,6 +212,12 @@
   <data name="Profile_Title" xml:space="preserve"><value>Profile</value></data>
   <data name="Profile_Logout" xml:space="preserve"><value>Sign out</value></data>
   <data name="Profile_Notifications" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Notif_Delete" xml:space="preserve"><value>Delete notification</value></data>
+  <data name="Notif_DeleteTitle" xml:space="preserve"><value>Delete notification</value></data>
+  <data name="Notif_DeleteConfirm" xml:space="preserve"><value>Delete this notification?</value></data>
+  <data name="Notif_ClearAll" xml:space="preserve"><value>Clear all</value></data>
+  <data name="Notif_ClearAllTitle" xml:space="preserve"><value>Clear all</value></data>
+  <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>Delete all notifications?</value></data>
   <data name="Profile_MyPets" xml:space="preserve"><value>My pets</value></data>
   <data name="Profile_MyAppointments" xml:space="preserve"><value>My bookings</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Business panel</value></data>

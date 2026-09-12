@@ -240,6 +240,47 @@
     setTimeout(function () { prefer && prefer.focus(); }, 0);
   }
 
+  function submitConfirmForm(form) {
+    form.dataset.chConfirmReady = '1';
+    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form.submit();
+  }
+
+  function animateThenSubmit(form) {
+    var removeSel = form.getAttribute('data-animate-remove');
+    if (removeSel) {
+      var target = form.closest(removeSel);
+      if (target) {
+        var trash = form.querySelector('.notif-delete-btn');
+        if (trash) trash.classList.add('is-pressing');
+        target.classList.add('is-removing');
+        var done = false;
+        function finish() {
+          if (done) return;
+          done = true;
+          submitConfirmForm(form);
+        }
+        target.addEventListener('transitionend', finish, { once: true });
+        setTimeout(finish, 340);
+        return;
+      }
+    }
+
+    var clearSel = form.getAttribute('data-animate-clear');
+    if (clearSel) {
+      var items = Array.prototype.slice.call(document.querySelectorAll(clearSel));
+      if (items.length) {
+        items.forEach(function (el, i) {
+          setTimeout(function () { el.classList.add('is-removing'); }, i * 45);
+        });
+        setTimeout(function () { submitConfirmForm(form); }, items.length * 45 + 320);
+        return;
+      }
+    }
+
+    submitConfirmForm(form);
+  }
+
   function bindConfirmForms(root) {
     (root || document).querySelectorAll('form[data-confirm]').forEach(function (form) {
       if (form.dataset.chConfirmBound === '1') return;
@@ -257,9 +298,7 @@
           okLabel: form.getAttribute('data-confirm-ok') || 'OK',
           onResult: function (ok) {
             if (!ok) return;
-            form.dataset.chConfirmReady = '1';
-            if (typeof form.requestSubmit === 'function') form.requestSubmit();
-            else form.submit();
+            animateThenSubmit(form);
           }
         });
       });

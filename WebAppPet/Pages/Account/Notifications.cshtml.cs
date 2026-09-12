@@ -44,6 +44,50 @@ public class NotificationsModel : PageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    {
+        if (_auth.CurrentUserId is not int userId)
+            return RedirectToPage("/Account/Login", new { returnUrl = BuildLoginReturn() });
+
+        var n = await _db.Notifications.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
+        if (n != null)
+        {
+            await ClearDeliveryLinksAsync(new[] { n.Id });
+            _db.Notifications.Remove(n);
+            await _db.SaveChangesAsync();
+        }
+
+        return RedirectToPage(new { returnUrl = ReturnUrl });
+    }
+
+    public async Task<IActionResult> OnPostClearAsync()
+    {
+        if (_auth.CurrentUserId is not int userId)
+            return RedirectToPage("/Account/Login", new { returnUrl = BuildLoginReturn() });
+
+        var items = await _db.Notifications.Where(n => n.UserId == userId).ToListAsync();
+        if (items.Count > 0)
+        {
+            await ClearDeliveryLinksAsync(items.Select(x => x.Id));
+            _db.Notifications.RemoveRange(items);
+            await _db.SaveChangesAsync();
+        }
+
+        return RedirectToPage(new { returnUrl = ReturnUrl });
+    }
+
+    private async Task ClearDeliveryLinksAsync(IEnumerable<int> notificationIds)
+    {
+        var ids = notificationIds.ToList();
+        if (ids.Count == 0) return;
+
+        var deliveries = await _db.ReminderDeliveries
+            .Where(d => d.AppNotificationId != null && ids.Contains(d.AppNotificationId.Value))
+            .ToListAsync();
+        foreach (var d in deliveries)
+            d.AppNotificationId = null;
+    }
+
     private string BuildLoginReturn()
     {
         var path = "/Account/Notifications";
