@@ -11,17 +11,18 @@
     <partial name="_OnboardTop" />
     <div class="home-body no-nav">
         <div class="success-wrap">
-            <img src="~/images/booking-success.png" alt="" class="success-illu" />
-            <div class="success-check">✓</div>
+            <img src="~/images/booking-success-v2.png" asp-append-version="true" alt="" class="success-illu" />
+            <div class="success-check" aria-hidden="true">✓</div>
             <h2>¡Reserva enviada!</h2>
             <p class="muted">El negocio confirmará tu solicitud. Te avisaremos por notificación.</p>
         </div>
 
         @if (a != null)
         {
+            var bizThumb = CatalogImages.Business(a.Groomer.ImageUrl, a.Groomer.Category?.Slug);
             <div class="card card-pad" style="margin-bottom:16px">
                 <div class="row" style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
-                    <img src="@(a.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" style="width:64px;height:64px;border-radius:12px;object-fit:cover" />
+                    <img src="@bizThumb" alt="" class="confirm-biz-thumb" width="64" height="64" />
                     <div>
                         <strong>@a.Groomer.BusinessName</strong>
                         <div class="muted small">@(a.Groomer.Category != null ? a.Groomer.Category.DisplayName() : "") · @a.Groomer.Address</div>

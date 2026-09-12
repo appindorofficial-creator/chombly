@@ -963,6 +963,7 @@ public static class DbInitializer
                 Longitude = -74.0721,
                 About = "Orientación internacional. Licenciado en Colombia.",
                 Phone = "+573001112233",
+                ImageUrl = "/images/categories/cat-vet-v2.png",
                 StartingPrice = 30m,
                 PriceUnit = "/ 30 min",
                 Rating = 4.8,
@@ -1002,6 +1003,8 @@ public static class DbInitializer
             intl.VetProviderKind = VetProviderKind.InternationalAdvisor;
             intl.LicenseCountry = "CO";
             intl.CategoryId = vetCat.Id;
+            if (string.IsNullOrWhiteSpace(intl.ImageUrl))
+                intl.ImageUrl = "/images/categories/cat-vet-v2.png";
             await db.SaveChangesAsync();
         }
 

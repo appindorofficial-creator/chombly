@@ -31,25 +31,37 @@
             <div class="profile-card">
                 <div class="profile-avatar">👤</div>
                 <h2>@Model.UserEntity.FullName</h2>
-                <div class="profile-meta">
-                    <p class="profile-email">@Model.UserEntity.Email</p>
+                <ul class="profile-facts">
+                    <li class="profile-fact">
+                        <span class="profile-fact-ico" aria-hidden="true">✉️</span>
+                        <span class="profile-fact-value">@Model.UserEntity.Email</span>
+                    </li>
                     @if (!string.IsNullOrWhiteSpace(Model.UserEntity.Phone))
                     {
-                        <p class="profile-phone">@Model.UserEntity.Phone</p>
+                        <li class="profile-fact">
+                            <span class="profile-fact-ico" aria-hidden="true">📞</span>
+                            <span class="profile-fact-value">@Model.UserEntity.Phone</span>
+                        </li>
                     }
-                    <p class="profile-place" id="profile-city-line">
-                        <span aria-hidden="true">📍</span>
-                        <span class="profile-place-text">@(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)</span>
+                    <li class="profile-fact" id="profile-city-line">
+                        <span class="profile-fact-ico" aria-hidden="true">📍</span>
+                        <span class="profile-fact-value">@(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)</span>
+                    </li>
+                </ul>
+                @if (Model.HasGpsLocation)
+                {
+                    <p class="profile-loc-status is-ok" id="profile-gps-status">
+                        <span aria-hidden="true">✅</span>
+                        <span>@L["Profile_LocationGpsOk"]</span>
                     </p>
-                    @if (Model.HasGpsLocation)
-                    {
-                        <p class="profile-loc-status is-ok" id="profile-gps-status">@L["Profile_LocationGpsOk"]</p>
-                    }
-                    else
-                    {
-                        <p class="profile-loc-status is-warn" id="profile-gps-status">@L["Profile_LocationGpsMissing"]</p>
-                    }
-                </div>
+                }
+                else
+                {
+                    <p class="profile-loc-status is-warn" id="profile-gps-status">
+                        <span aria-hidden="true">⚠️</span>
+                        <span>@L["Profile_LocationGpsMissing"]</span>
+                    </p>
+                }
                 <div class="profile-actions">
                     <button type="button" class="btn profile-action-btn" id="btn-profile-loc">
                         📍 @L["Search_UseMyLocation"]
@@ -157,13 +169,13 @@
           return;
         }
         if (cityLine && (data.city || city)) {
-          var cityText = cityLine.querySelector('.profile-place-text');
+          var cityText = cityLine.querySelector('.profile-fact-value');
           if (cityText) cityText.textContent = data.city || city;
           else cityLine.textContent = '📍 ' + (data.city || city);
         }
         if (gpsStatus) {
           gpsStatus.className = 'profile-loc-status is-ok';
-          gpsStatus.textContent = okMsg;
+          gpsStatus.innerHTML = '<span aria-hidden="true">✅</span><span>' + okMsg + '</span>';
         }
         btn.disabled = false;
         btn.classList.remove('is-active');
