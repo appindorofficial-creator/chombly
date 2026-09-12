@@ -1913,23 +1913,26 @@ input[type=radio]:checked + .size-opt {
 }
 .category-chip .category-emoji { font-size: 1.5rem; line-height: 1; }
 .category-chip .category-img-wrap {
-  width: 64px;
-  height: 64px;
+  width: 68px;
+  height: 68px;
   margin: 0 auto;
-  border-radius: 18px;
-  background: #fff;
+  border-radius: 0;
+  background: transparent;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  overflow: visible;
 }
 .category-chip .category-img {
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   border-radius: 0;
   margin: 0;
   display: block;
   filter: saturate(1.06);
+}
+.onboard-home .category-chip .category-img-wrap {
+  background: transparent;
 }
 .category-chip strong { font-size: .78rem; color: var(--forest); }
 .category-chip small { font-size: .65rem; color: var(--muted); line-height: 1.2; }

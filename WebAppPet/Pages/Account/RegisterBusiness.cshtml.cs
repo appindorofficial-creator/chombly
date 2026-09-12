@@ -381,7 +381,7 @@ public class RegisterBusinessModel : PageModel
             About = About.Trim(),
             LogoUrl = string.IsNullOrWhiteSpace(LogoUrl) ? null : LogoUrl.Trim(),
             CoverUrl = string.IsNullOrWhiteSpace(CoverUrl) ? null : CoverUrl.Trim(),
-            ImageUrl = string.IsNullOrWhiteSpace(CoverUrl) ? $"/images/categories/cat-{cat.Slug}-live.png" : CoverUrl.Trim(),
+            ImageUrl = string.IsNullOrWhiteSpace(CoverUrl) ? $"/images/categories/cat-{cat.Slug}-v2.png" : CoverUrl.Trim(),
             StartingPrice = firstPrice,
             PriceUnit = unit,
             AcceptedSpecies = PetSpecies.DefaultAcceptedList,

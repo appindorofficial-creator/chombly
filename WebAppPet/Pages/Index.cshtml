@@ -56,7 +56,7 @@
                         var catRoute = c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug;
                         <a class="category-chip category-chip-illus" asp-page="@catPage" asp-route-category="@catRoute">
                             <span class="category-img-wrap">
-                                <img src="~/images/categories/cat-@(c.Slug)-live.png" asp-append-version="true" alt="@c.DisplayName()" class="category-img" />
+                                <img src="~/images/categories/cat-@(c.Slug)-v2.png" asp-append-version="true" alt="@c.DisplayName()" class="category-img" />
                             </span>
                             <strong>@c.DisplayName()</strong>
                         </a>

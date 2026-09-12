@@ -9,7 +9,7 @@
         <h1>@L["Trainers_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
     </div>
-    <img src="~/images/categories/cat-trainers-live.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
+    <img src="~/images/categories/cat-trainers-v2.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
 </div>
 
 <main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
@@ -120,7 +120,7 @@
                     <span class="badge badge-green hotel-reco">@item.AvailabilityLabel</span>
                 }
                 <div class="hotel-card-main">
-                    <img src="@(t.ImageUrl ?? "/images/categories/cat-trainers-live.png")" alt="@t.BusinessName" />
+                    <img src="@(t.ImageUrl ?? "/images/categories/cat-trainers-v2.png")" alt="@t.BusinessName" />
                     <div class="info">
                         <h3>@t.BusinessName</h3>
                         <div class="meta-row">
@@ -222,7 +222,7 @@
         <div class="hotel-summary-inner">
             <h3>Confirmar reserva</h3>
             <div class="summary-hotel">
-                <img src="@(Model.SelectedTrainer.ImageUrl ?? "/images/categories/cat-trainers-live.png")" alt="" />
+                <img src="@(Model.SelectedTrainer.ImageUrl ?? "/images/categories/cat-trainers-v2.png")" alt="" />
                 <div>
                     <strong>@Model.SelectedTrainer.BusinessName</strong>
                     <div class="muted small">@Model.NeedLabel · @Model.PackageLabel</div>

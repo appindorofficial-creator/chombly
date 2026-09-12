@@ -6,7 +6,7 @@ public static class CatalogImages
     public static string Category(string? slug) =>
         string.IsNullOrWhiteSpace(slug)
             ? "/images/pet-other.svg"
-            : $"/images/categories/cat-{slug.Trim().ToLowerInvariant()}-live.png";
+            : $"/images/categories/cat-{slug.Trim().ToLowerInvariant()}-v2.png";
 
     /// <summary>
     /// Prefer a real photo; if missing or a stale category placeholder, use the business category icon.

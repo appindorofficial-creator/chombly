@@ -49,7 +49,7 @@
                 var img = !string.IsNullOrWhiteSpace(a.Groomer.ImageUrl)
                     ? a.Groomer.ImageUrl!
                     : !string.IsNullOrWhiteSpace(a.Groomer.Category?.Slug)
-                        ? $"/images/categories/cat-{a.Groomer.Category!.Slug}.png"
+                        ? CatalogImages.Category(a.Groomer.Category!.Slug)
                         : "/images/pet-other.svg";
                 <a class="appt-card" asp-page="./Details" asp-route-id="@a.Id">
                     <div class="row">
