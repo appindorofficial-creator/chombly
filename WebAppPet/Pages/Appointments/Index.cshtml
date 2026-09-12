@@ -76,25 +76,31 @@
                     </a>
                 </div>
 
-                <section class="how-card">
-                    <h3>@L["Appt_HowTitle"]</h3>
-                    <div class="how-grid">
-                        <div class="how-step">
-                            <div class="how-ico">🔍</div>
-                            <strong>@L["Appt_HowSearch"]</strong>
-                            <p>@L["Appt_HowSearchDesc"]</p>
-                        </div>
-                        <div class="how-step">
-                            <div class="how-ico">📅</div>
-                            <strong>@L["Appt_HowBook"]</strong>
-                            <p>@L["Appt_HowBookDesc"]</p>
-                        </div>
-                        <div class="how-step">
-                            <div class="how-ico">🐾</div>
-                            <strong>@L["Appt_HowEnjoy"]</strong>
-                            <p>@L["Appt_HowEnjoyDesc"]</p>
-                        </div>
-                    </div>
+                <section class="how-card" aria-labelledby="appt-how-title">
+                    <h3 id="appt-how-title">@L["Appt_HowTitle"]</h3>
+                    <ol class="how-steps">
+                        <li class="how-step">
+                            <span class="how-num" aria-hidden="true">1</span>
+                            <div class="how-copy">
+                                <strong>@L["Appt_HowSearch"]</strong>
+                                <p>@L["Appt_HowSearchDesc"]</p>
+                            </div>
+                        </li>
+                        <li class="how-step">
+                            <span class="how-num" aria-hidden="true">2</span>
+                            <div class="how-copy">
+                                <strong>@L["Appt_HowBook"]</strong>
+                                <p>@L["Appt_HowBookDesc"]</p>
+                            </div>
+                        </li>
+                        <li class="how-step">
+                            <span class="how-num" aria-hidden="true">3</span>
+                            <div class="how-copy">
+                                <strong>@L["Appt_HowEnjoy"]</strong>
+                                <p>@L["Appt_HowEnjoyDesc"]</p>
+                            </div>
+                        </li>
+                    </ol>
                 </section>
             }
         }

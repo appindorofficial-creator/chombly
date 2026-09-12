@@ -75,63 +75,90 @@
             <div class="size-grid">
                 @foreach (var opt in Model.SizeOptions)
                 {
-                    <label>
+                    <label class="size-pick">
                         <input type="radio" asp-for="Size" value="@opt.Value" />
-                        <div class="size-opt"><span class="emoji">@opt.Emoji</span>@opt.Label</div>
+                        <span class="size-opt">
+                            <span class="size-code">@opt.Emoji</span>
+                            <span class="size-name">@opt.Label</span>
+                        </span>
                     </label>
                 }
             </div>
         </div>
 
         <div class="form-group">
-            <label for="temperament-select">@L["Pets_Temperament"]</label>
-            <select class="form-control" asp-for="Temperament" id="temperament-select" required
-                    data-msg-required="@L["Pets_TemperamentRequired"]">
-                <option value="">@L["Pets_TemperamentSelect"]</option>
+            <label>@L["Pets_Temperament"]</label>
+            <div class="temperament-grid">
+                @{ var tempFirst = true; }
                 @foreach (var t in Model.TemperamentOptions)
                 {
-                    <option value="@t.Value">@PetCatalog.Display(t.Value, t.LabelEn)</option>
+                    <label class="temperament-pick" for="temperament-@t.Value">
+                        <input type="radio" asp-for="Temperament" value="@t.Value" id="temperament-@t.Value"
+                               required="@(tempFirst ? "required" : null)"
+                               data-msg-required="@L["Pets_TemperamentRequired"]" />
+                        <span class="temperament-chip">@PetCatalog.Display(t.Value, t.LabelEn)</span>
+                    </label>
+                    tempFirst = false;
                 }
-            </select>
+            </div>
             <span asp-validation-for="Temperament" class="field-error"></span>
         </div>
 
         <div class="form-group pet-photo-field">
             <label>@L["Pets_Photo"]</label>
             <p class="field-hint">@L["Pets_PhotoHint"]</p>
-            <div class="pet-photo-upload">
-                <img id="photo-preview" class="pet-photo-preview" alt="" hidden />
-                <label class="pet-photo-pick btn btn-outline">
-                    @L["Pets_PhotoChoose"]
-                    <input type="file" asp-for="PhotoFile" id="photo-file" accept="image/*" capture="environment" />
-                </label>
+            <div class="pet-photo-card">
+                <div class="pet-photo-upload">
+                    <img id="photo-preview" class="pet-photo-preview" alt="" hidden />
+                    <div class="pet-photo-placeholder" id="photo-placeholder" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+                            <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h2l1.2-1.5A1.5 1.5 0 0 1 10.9 3h2.2a1.5 1.5 0 0 1 1.2.5L15.5 5H17.5A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                        </svg>
+                    </div>
+                    <label class="pet-photo-pick btn btn-outline">
+                        @L["Pets_PhotoChoose"]
+                        <input type="file" asp-for="PhotoFile" id="photo-file" accept="image/*" capture="environment" />
+                    </label>
+                </div>
+                <details class="pet-photo-url-fallback">
+                    <summary>@L["Pets_PhotoOrUrl"]</summary>
+                    <input class="form-control" asp-for="PhotoUrl" placeholder="https://…" />
+                </details>
             </div>
             <span asp-validation-for="PhotoFile" class="field-error"></span>
-            <details class="pet-photo-url-fallback">
-                <summary>@L["Pets_PhotoOrUrl"]</summary>
-                <input class="form-control" asp-for="PhotoUrl" placeholder="https://…" />
-            </details>
         </div>
 
-        <div class="toggle-row">
-            <span>@L["Pets_Senior"]</span>
-            <input asp-for="IsSenior" type="checkbox" />
-        </div>
-        <div class="toggle-row">
-            <span>
-                @L["Pets_Anxious"]
-                <span class="field-hint" style="display:block;font-weight:400;margin-top:2px">@L["Pets_AnxiousHint"]</span>
-            </span>
-            <input asp-for="IsAnxious" type="checkbox" />
-        </div>
-        <div class="toggle-row">
-            <span>@L["Pets_SpecialNeeds"]</span>
-            <input asp-for="HasSpecialNeeds" type="checkbox" />
+        <div class="pet-care-panel">
+            <h3 class="pet-care-title">@CatalogLocalizer.Loc("Cuidados al agendar", "Booking care flags")</h3>
+            <p class="pet-care-lead">@CatalogLocalizer.Loc("Ayuda a los negocios a prepararse mejor para tu mascota.", "Help providers prepare better for your pet.")</p>
+            <label class="care-flag">
+                <input asp-for="IsSenior" type="checkbox" />
+                <span class="care-flag-body">
+                    <strong>@L["Pets_Senior"]</strong>
+                    <small>@CatalogLocalizer.Loc("Mayor de 7–8 años según la especie", "Usually 7–8+ years depending on species")</small>
+                </span>
+            </label>
+            <label class="care-flag">
+                <input asp-for="IsAnxious" type="checkbox" />
+                <span class="care-flag-body">
+                    <strong>@L["Pets_Anxious"]</strong>
+                    <small>@L["Pets_AnxiousHint"]</small>
+                </span>
+            </label>
+            <label class="care-flag">
+                <input asp-for="HasSpecialNeeds" type="checkbox" />
+                <span class="care-flag-body">
+                    <strong>@L["Pets_SpecialNeeds"]</strong>
+                    <small>@CatalogLocalizer.Loc("Medicación, movilidad u otras consideraciones", "Medication, mobility, or other considerations")</small>
+                </span>
+            </label>
         </div>
 
-        <div class="form-group" style="margin-top:14px">
+        <div class="form-group pet-notes-panel">
             <label>@L["Common_Notes"]</label>
-            <textarea class="form-control" asp-for="Notes" rows="3"></textarea>
+            <p class="field-hint">@CatalogLocalizer.Loc("Opcional: alergias, rutinas o tips para el cuidado.", "Optional: allergies, routines, or care tips.")</p>
+            <textarea class="form-control" asp-for="Notes" rows="3" placeholder="@CatalogLocalizer.Loc("Escribe algo útil para el negocio…", "Write something useful for the provider…")"></textarea>
         </div>
 
         <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
@@ -231,6 +258,7 @@
 
   const fileInput = document.getElementById('photo-file');
   const preview = document.getElementById('photo-preview');
+  const placeholder = document.getElementById('photo-placeholder');
   let objectUrl = null;
   fileInput?.addEventListener('change', () => {
     if (objectUrl) {
@@ -240,11 +268,13 @@
     const f = fileInput.files && fileInput.files[0];
     if (!f || !preview) {
       if (preview) preview.hidden = true;
+      if (placeholder) placeholder.hidden = false;
       return;
     }
     objectUrl = URL.createObjectURL(f);
     preview.src = objectUrl;
     preview.hidden = false;
+    if (placeholder) placeholder.hidden = true;
   });
 })();
 </script>

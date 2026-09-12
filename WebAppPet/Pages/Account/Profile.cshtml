@@ -3,21 +3,13 @@
 @{
     ViewData["Title"] = L["Profile_Title"].Value;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardShowLang"] = false;
+    ViewData["OnboardShowLang"] = true;
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Account/Profile";
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body">
-        <div class="lang-profile-block">
-            <div>
-                <strong>@L["Profile_Language"]</strong>
-                <p class="muted small" style="margin:2px 0 0">@L["Common_LanguageHint"]</p>
-            </div>
-            <partial name="_LanguageSwitch" />
-        </div>
-
         @if (Model.UserEntity == null)
         {
             <div class="empty-chombly">
@@ -39,26 +31,31 @@
             <div class="profile-card">
                 <div class="profile-avatar">👤</div>
                 <h2>@Model.UserEntity.FullName</h2>
-                <p class="muted small">@Model.UserEntity.Email</p>
-                @if (!string.IsNullOrWhiteSpace(Model.UserEntity.Phone))
-                {
-                    <p class="muted small">📞 @Model.UserEntity.Phone</p>
-                }
-                <p class="muted small location" id="profile-city-line">
-                    📍 @(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)
-                </p>
-                @if (Model.HasGpsLocation)
-                {
-                    <p class="muted small" id="profile-gps-status" style="margin-top:4px">✅ @L["Profile_LocationGpsOk"]</p>
-                }
-                else
-                {
-                    <p class="muted small" id="profile-gps-status" style="margin-top:4px">⚠️ @L["Profile_LocationGpsMissing"]</p>
-                }
-                <button type="button" class="btn btn-outline btn-block" id="btn-profile-loc" style="margin-top:10px">
-                    📍 @L["Search_UseMyLocation"]
-                </button>
-                <a class="btn btn-outline btn-block" asp-page="/Account/EditProfile" style="margin-top:10px">✏️ @L["Profile_Edit"]</a>
+                <div class="profile-meta">
+                    <p class="profile-email">@Model.UserEntity.Email</p>
+                    @if (!string.IsNullOrWhiteSpace(Model.UserEntity.Phone))
+                    {
+                        <p class="profile-phone">@Model.UserEntity.Phone</p>
+                    }
+                    <p class="profile-place" id="profile-city-line">
+                        <span aria-hidden="true">📍</span>
+                        <span class="profile-place-text">@(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)</span>
+                    </p>
+                    @if (Model.HasGpsLocation)
+                    {
+                        <p class="profile-loc-status is-ok" id="profile-gps-status">@L["Profile_LocationGpsOk"]</p>
+                    }
+                    else
+                    {
+                        <p class="profile-loc-status is-warn" id="profile-gps-status">@L["Profile_LocationGpsMissing"]</p>
+                    }
+                </div>
+                <div class="profile-actions">
+                    <button type="button" class="btn profile-action-btn" id="btn-profile-loc">
+                        📍 @L["Search_UseMyLocation"]
+                    </button>
+                    <a class="btn profile-action-btn" asp-page="/Account/EditProfile">✏️ @L["Profile_Edit"]</a>
+                </div>
             </div>
 
             <div class="menu-list menu-chombly">
@@ -136,6 +133,7 @@
 
   btn.addEventListener('click', function () {
     btn.disabled = true;
+    btn.classList.add('is-active');
     navigator.geolocation.getCurrentPosition(async function (pos) {
       var lat = pos.coords.latitude;
       var lng = pos.coords.longitude;
@@ -155,20 +153,30 @@
         if (!res.ok || !data.ok) {
           alert(failMsg);
           btn.disabled = false;
+          btn.classList.remove('is-active');
           return;
         }
-        if (cityLine && (data.city || city))
-          cityLine.textContent = '📍 ' + (data.city || city);
-        if (gpsStatus) gpsStatus.textContent = '✅ ' + okMsg;
+        if (cityLine && (data.city || city)) {
+          var cityText = cityLine.querySelector('.profile-place-text');
+          if (cityText) cityText.textContent = data.city || city;
+          else cityLine.textContent = '📍 ' + (data.city || city);
+        }
+        if (gpsStatus) {
+          gpsStatus.className = 'profile-loc-status is-ok';
+          gpsStatus.textContent = okMsg;
+        }
         btn.disabled = false;
+        btn.classList.remove('is-active');
         alert(updatedMsg);
       } catch (_) {
         alert(failMsg);
         btn.disabled = false;
+        btn.classList.remove('is-active');
       }
     }, function () {
       alert(failMsg);
       btn.disabled = false;
+      btn.classList.remove('is-active');
     });
   });
 })();
