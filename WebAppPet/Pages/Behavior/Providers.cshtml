@@ -2,16 +2,15 @@
 @model WebAppPet.Pages.Behavior.ProvidersModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Especialista en comportamiento", "Behavior specialist");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Behavior/Intake", new { caseId = Model.CaseId });
     var price = Model.CatalogItem?.Price ?? 55m;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Behavior/Intake" asp-route-caseId="@Model.CaseId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Especialista en comportamiento", "Behavior specialist")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Especialista en comportamiento", "Behavior specialist")</h1>
         <p class="muted small">$@price.ToString("0.##") · @CatalogLocalizer.Loc("servicio separado del plan Care", "separate from Care plan")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -104,4 +103,6 @@
             <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado", "Simulated payment")</p>
         }
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

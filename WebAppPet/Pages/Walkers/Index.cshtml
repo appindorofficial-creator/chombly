@@ -2,17 +2,15 @@
 @model WebAppPet.Pages.Walkers.IndexModel
 @{
     ViewData["Title"] = L["Walkers_Title"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
+    var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
 }
-<div class="page-header hotel-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <div class="hotel-header-text">
-        <h1>@L["Walkers_Title"]</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+        <h1 class="app-page-heading">@L["Walkers_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
-    </div>
-    <img src="~/images/categories/cat-walkers.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
-</div>
-
-<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -40,7 +38,7 @@
         @if (Model.When == "fecha")
         {
             <div class="form-group">
-                <input class="form-control" type="date" name="Date" value="@Model.Date" onchange="this.form.submit()" />
+                <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" onchange="this.form.submit()" />
             </div>
         }
         else
@@ -130,7 +128,7 @@
                     <span class="badge badge-green hotel-reco">Disponible hoy</span>
                 }
                 <div class="hotel-card-main">
-                    <img src="@(w.ImageUrl ?? "/images/categories/cat-walkers.png")" alt="@w.BusinessName" />
+                    <img src="@(w.ImageUrl ?? "/images/categories/cat-walkers-v2.png")" alt="@w.BusinessName" />
                     <div class="info">
                         <h3>@w.BusinessName</h3>
                         <div class="meta-row">
@@ -218,7 +216,9 @@
         <div><span>✓</span><small>Todo en una pantalla</small></div>
         <div><span>📸</span><small>Actualizaciones</small></div>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @if (Model.SelectedWalker != null && Model.SelectedService != null)
 {
@@ -232,7 +232,7 @@
         <div class="hotel-summary-inner">
             <h3>Confirmar paseo</h3>
             <div class="summary-hotel">
-                <img src="@(Model.SelectedWalker.ImageUrl ?? "/images/categories/cat-walkers.png")" alt="" />
+                <img src="@(Model.SelectedWalker.ImageUrl ?? "/images/categories/cat-walkers-v2.png")" alt="" />
                 <div>
                     <strong>@Model.SelectedWalker.BusinessName</strong>
                     <div class="muted small">@(Model.DateLabel ?? "—") · @(Model.TimeLabel ?? "—") · @(Model.HasDuration ? $"{Model.Duration} min" : "—")</div>

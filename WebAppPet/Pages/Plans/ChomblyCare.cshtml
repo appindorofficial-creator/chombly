@@ -3,15 +3,14 @@
 @{
     ViewData["Title"] = "Chombly Care";
     var price = Model.CatalogItem?.Price ?? 14.99m;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = "javascript:history.back()";
 }
-<div class="page-header">
-    <a class="back-btn" href="javascript:history.back()">←</a>
-    <div>
-        <h1>Chombly Care</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">Chombly Care</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Plan de orientación y bienestar — no es un seguro", "Guidance & wellness plan — not insurance")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -99,4 +98,6 @@
             <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>
         </form>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

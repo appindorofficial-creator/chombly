@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.Virtual.PetModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Index">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Confirmamos dónde está la mascota en cada consulta", "We confirm where the pet is for every consult")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -101,7 +100,9 @@
             <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
         </form>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @section Scripts {
 <script>

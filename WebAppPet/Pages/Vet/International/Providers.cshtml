@@ -2,12 +2,14 @@
 @model WebAppPet.Pages.Vet.International.ProvidersModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Orientación internacional", "International guidance");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = "javascript:history.back()";
     var price = Model.CatalogItem?.Price ?? 30m;
 }
-<div class="page-header">
-    <a class="back-btn" href="javascript:history.back()">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Orientación internacional", "International guidance")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Orientación internacional", "International guidance")</h1>
         <p class="muted small">
             @if (Model.UsingCareBenefit)
             {
@@ -18,9 +20,6 @@
                 <text>$@price.ToString("0.##") · 30 min</text>
             }
         </p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="alert alert-warn" role="status">
         @CatalogLocalizer.Loc(
             "No emite recetas de EE.UU. Ni sustituye emergencia ni consulta clínica local.",
@@ -84,4 +83,6 @@
             @CatalogLocalizer.Loc("Reservar orientación", "Book guidance")
         </button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

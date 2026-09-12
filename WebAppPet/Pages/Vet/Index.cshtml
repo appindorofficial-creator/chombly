@@ -2,19 +2,18 @@
 @model WebAppPet.Pages.Vet.IndexModel
 @{
     ViewData["Title"] = L["Vet_Title"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <div>
-        <h1>@L["Vet_Title"]</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@L["Vet_Title"]</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Elige el tipo de atención", "Choose the type of care")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <p class="muted" style="margin-bottom:16px">
-        @CatalogLocalizer.Loc(
-            "Chombly ofrece orientación y bienestar. La emergencia no pasa por reserva ni pago online.",
-            "Chombly offers guidance and wellness. Emergencies never go through online booking or payment.")
+        @CatalogLocalizer.Loc("Chombly ofrece orientación y bienestar.", "Chombly offers guidance and wellness.")
+        <br />
+        <strong>@CatalogLocalizer.Loc("La emergencia no pasa por reserva ni pago online.", "Emergencies never go through online booking or payment.")</strong>
     </p>
 
     <p class="muted small" style="margin-bottom:12px">
@@ -48,4 +47,6 @@
             <span class="muted small">@CatalogLocalizer.Loc("Llamar y ruta a clínica 24/7 — sin cobro en la app", "Call and route to 24/7 clinic — no in-app charge")</span>
         </a>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

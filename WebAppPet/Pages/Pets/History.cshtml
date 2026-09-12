@@ -3,12 +3,14 @@
 @{
     ViewData["Title"] = "Historial";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("./Index");
+    var HideNav = true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="./Index">←</a>
-    <h1>Historial de @(Model.Pet?.Name ?? "mascota")</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">Historial de @(Model.Pet?.Name ?? "mascota")</h1>
     @if (Model.Pet != null)
     {
         <div class="pet-select" style="margin-bottom:16px">
@@ -38,4 +40,6 @@
             </div>
         </div>
     }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

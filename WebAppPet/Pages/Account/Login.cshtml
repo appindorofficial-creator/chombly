@@ -3,83 +3,55 @@
 @{
     ViewData["Title"] = L["Login_Title"].Value;
     ViewData["HideNav"] = true;
-    var isEn = string.Equals(Model.Culture, "en", StringComparison.OrdinalIgnoreCase);
+    ViewData["LangCompact"] = true;
+    Layout = "_Layout";
 }
-<div class="page-header">
-    <a class="back-btn" href="@(Model.BackPage)">←</a>
-    <h1>@L["Login_Title"]</h1>
+<div class="onboard onboard-auth">
+    <header class="onboard-top">
+        <div class="onboard-brand">
+            <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" />
+            <strong class="onboard-word">Chombly</strong>
+        </div>
+        <partial name="_LanguageSwitch" />
+    </header>
+
+    <div class="onboard-stage">
+        <div class="onboard-card onboard-auth-card">
+            <a class="onboard-back" href="@(Model.BackPage == "/Index" ? Url.Page("/Welcome") : Model.BackPage)">← @L["Login_Welcome"]</a>
+            <h1>@L["Login_Title"]</h1>
+            <p class="onboard-auth-lead">@L["Home_HeroSubtitle"]</p>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+
+            <form method="post" id="loginForm" class="onboard-auth-form" data-feedback="login" data-validate-i18n="1"
+                  data-msg-required="@L["Validation_Required"]"
+                  data-msg-email="@L["Profile_Edit_EmailInvalid"]"
+                  data-msg-password="@L["Profile_Edit_PasswordShort"]"
+                  data-feedback-loading="@L["Feedback_LoginLoading"]">
+                <input type="hidden" asp-for="ReturnUrl" />
+                <input type="hidden" asp-for="Culture" id="cultureInput" />
+                <div class="form-group">
+                    <label>@L["Common_Email"]</label>
+                    <input class="form-control" asp-for="Email" type="email" required autocomplete="username"
+                           placeholder="@L["Common_EmailPlaceholder"]" />
+                </div>
+                <div class="form-group">
+                    <label>@L["Common_Password"]</label>
+                    <input class="form-control" asp-for="Password" type="password" required autocomplete="current-password" />
+                </div>
+                <button class="btn btn-enter btn-block" type="submit">@L["Login_Submit"]</button>
+            </form>
+
+            <p class="onboard-auth-links">
+                @L["Login_NoAccount"]
+                <a asp-page="/Account/Register">@L["Login_Register"]</a>
+            </p>
+            <a class="onboard-secondary" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
+        </div>
+    </div>
+
+    <p class="onboard-version">Chombly · Pet Care</p>
 </div>
-<main class="app-main no-nav">
-    <section class="lang-picker" aria-label="@L["Login_SelectLanguage"]">
-        <p class="lang-picker-label">@L["Login_SelectLanguage"]</p>
-        <p class="muted small lang-picker-hint">@L["Common_LanguageHint"]</p>
-        <div class="lang-cards">
-            <button type="button" class="lang-card @(isEn ? "" : "active")" data-lang="es" id="langEs">
-                <span class="lang-flag" aria-hidden="true">🇪🇸</span>
-                <strong>Español</strong>
-                <span class="muted small">Spanish</span>
-            </button>
-            <button type="button" class="lang-card @(isEn ? "active" : "")" data-lang="en" id="langEn">
-                <span class="lang-flag" aria-hidden="true">🇺🇸</span>
-                <strong>English</strong>
-                <span class="muted small">Inglés</span>
-            </button>
-        </div>
-    </section>
-
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
-    <form method="post" id="loginForm" data-validate-i18n="1"
-          data-msg-required="@L["Validation_Required"]"
-          data-msg-email="@L["Profile_Edit_EmailInvalid"]"
-          data-msg-password="@L["Profile_Edit_PasswordShort"]">
-        <input type="hidden" asp-for="ReturnUrl" />
-        <input type="hidden" asp-for="Culture" id="cultureInput" />
-        <div class="form-group">
-            <label>@L["Common_Email"]</label>
-            <input class="form-control" asp-for="Email" type="email" required autocomplete="username"
-                   placeholder="@L["Common_EmailPlaceholder"]" />
-        </div>
-        <div class="form-group">
-            <label>@L["Common_Password"]</label>
-            <input class="form-control" asp-for="Password" type="password" required autocomplete="current-password" />
-        </div>
-        <button class="btn btn-primary btn-block" type="submit">@L["Login_Submit"]</button>
-    </form>
-    <p class="muted small" style="text-align:center;margin-top:16px">
-        @L["Login_NoAccount"] <a asp-page="/Account/Register" style="color:var(--brand);font-weight:700">@L["Login_Register"]</a>
-    </p>
-    <p class="muted small" style="text-align:center;margin-top:12px">
-        <a asp-page="/Account/RegisterBusiness" style="color:var(--brand);font-weight:700">@L["Login_ImBusiness"]</a>
-        ·
-        <a asp-page="/Welcome" style="color:var(--brand);font-weight:700">@L["Login_Welcome"]</a>
-    </p>
-</main>
-
-@section Scripts {
-<script>
-(function () {
-  var input = document.getElementById('cultureInput');
-  var cards = document.querySelectorAll('.lang-card');
-  function select(lang) {
-    if (input) input.value = lang;
-    cards.forEach(function (c) {
-      c.classList.toggle('active', c.getAttribute('data-lang') === lang);
-    });
-    // Aplica idioma de inmediato (antes del login)
-    var url = '/Account/SetLanguage?culture=' + encodeURIComponent(lang)
-      + '&returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.href = url;
-  }
-  cards.forEach(function (c) {
-    c.addEventListener('click', function () {
-      var lang = c.getAttribute('data-lang');
-      if (lang === (input && input.value)) return;
-      select(lang);
-    });
-  });
-})();
-</script>
-}

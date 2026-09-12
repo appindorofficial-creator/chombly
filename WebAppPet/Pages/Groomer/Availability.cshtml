@@ -3,11 +3,11 @@
 @{
     ViewData["Title"] = "Disponibilidad";
     ViewData["GroomerTab"] = "availability";
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
 
     <h2 style="margin:0 0 8px">Disponibilidad</h2>
@@ -76,4 +76,6 @@
             </div>
         }
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

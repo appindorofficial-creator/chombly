@@ -3,12 +3,12 @@
 @{
     ViewData["Title"] = "Verificación";
     ViewData["GroomerTab"] = "dashboard";
+    ViewData["LangCompact"] = true;
     var g = Model.Profile!;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
     <h2 style="margin:0 0 6px">Verificación del negocio</h2>
     <p class="muted small">@Model.DoneCount de @Model.TotalCount pasos · acelera la publicación</p>
@@ -86,4 +86,6 @@
 
     <a class="btn btn-primary btn-block" asp-page="./ScheduleCall">Agendar llamada con Chombly</a>
     <a class="btn btn-outline btn-block" asp-page="./Dashboard" style="margin-top:10px">Volver al panel</a>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

@@ -14,6 +14,17 @@
   <data name="Common_Continue" xml:space="preserve"><value>Continue</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Feedback_Saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="Feedback_Saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="Feedback_Deleted" xml:space="preserve"><value>Deleted</value></data>
+  <data name="Feedback_DeletedAll" xml:space="preserve"><value>Notifications cleared</value></data>
+  <data name="Feedback_Copied" xml:space="preserve"><value>Copied</value></data>
+  <data name="Feedback_CopyFail" xml:space="preserve"><value>Could not copy</value></data>
+  <data name="Feedback_Downloading" xml:space="preserve"><value>Downloading…</value></data>
+  <data name="Feedback_DownloadDone" xml:space="preserve"><value>Download ready</value></data>
+  <data name="Feedback_LoginLoading" xml:space="preserve"><value>Signing in…</value></data>
+  <data name="Feedback_Error" xml:space="preserve"><value>Check the details and try again</value></data>
+  <data name="Feedback_PetDeleted" xml:space="preserve"><value>Pet deleted</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Common_Edit" xml:space="preserve"><value>Edit</value></data>
@@ -58,10 +69,19 @@
 
   <data name="Register_Title" xml:space="preserve"><value>Create account</value></data>
   <data name="Register_Submit" xml:space="preserve"><value>Create account</value></data>
+  <data name="Register_SuccessTitle" xml:space="preserve"><value>Registration successful!</value></data>
+  <data name="Register_SuccessBody" xml:space="preserve"><value>Your Chombly account is ready. Start taking care of your pet.</value></data>
+  <data name="Register_SuccessCta" xml:space="preserve"><value>Continue</value></data>
   <data name="Register_HaveAccount" xml:space="preserve"><value>Already have an account?</value></data>
   <data name="Register_Login" xml:space="preserve"><value>Sign in</value></data>
   <data name="Register_FullName" xml:space="preserve"><value>Full name</value></data>
   <data name="Register_ConfirmPassword" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="Register_LocationLabel" xml:space="preserve"><value>Your location</value></data>
+  <data name="Register_LocationHint" xml:space="preserve"><value>Share your location to see nearby services. Or search your city below.</value></data>
+  <data name="Register_LocationRequired" xml:space="preserve"><value>Enable location or pick a city from the suggestions.</value></data>
+  <data name="Register_LocationLoading" xml:space="preserve"><value>Getting location…</value></data>
+  <data name="Register_LocationOk" xml:space="preserve"><value>Location ready</value></data>
+  <data name="Register_OrSearchCity" xml:space="preserve"><value>Or search your city</value></data>
 
   <data name="Welcome_Title" xml:space="preserve"><value>Welcome to Chombly</value></data>
   <data name="Welcome_Subtitle" xml:space="preserve"><value>Everything your pet needs, in one place.</value></data>
@@ -70,10 +90,12 @@
   <data name="Welcome_Business" xml:space="preserve"><value>I'm a business</value></data>
 
   <data name="Home_Greeting" xml:space="preserve"><value>Hi</value></data>
-  <data name="Home_HeroTitle" xml:space="preserve"><value>The best care for your pet</value></data>
+  <data name="Home_HeroHello" xml:space="preserve"><value>Hi, {0}</value></data>
+  <data name="Home_HeroHelloGuest" xml:space="preserve"><value>Hi</value></data>
+  <data name="Home_HeroTitle" xml:space="preserve"><value>In Chombly you have the best care for your pet</value></data>
   <data name="Home_HeroSubtitle" xml:space="preserve"><value>Grooming, hotel, vet, daycare and more</value></data>
   <data name="Home_SearchPlaceholder" xml:space="preserve"><value>Search services near you</value></data>
-  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Location (Google Maps)</value></data>
+  <data name="Home_LocationPlaceholder" xml:space="preserve"><value>Search in your city…</value></data>
   <data name="Home_Categories" xml:space="preserve"><value>Categories</value></data>
   <data name="Home_EmptyCategories" xml:space="preserve"><value>No categories in the database.</value></data>
   <data name="Home_WhatPet" xml:space="preserve"><value>What pet do you have?</value></data>
@@ -171,10 +193,43 @@
   <data name="Welcome_HeroSub" xml:space="preserve"><value>{0}, {1}, {2}, {3} and {4} near you.</value></data>
   <data name="Welcome_Explore" xml:space="preserve"><value>Explore services</value></data>
   <data name="Welcome_BackHome" xml:space="preserve"><value>← Back to home</value></data>
+  <data name="Closing_Title" xml:space="preserve"><value>Is your pet family too?</value></data>
+  <data name="Closing_Body" xml:space="preserve"><value>Then Chombly is for you.</value></data>
+  <data name="Closing_CtaOwner" xml:space="preserve"><value>I want Chombly for my pet</value></data>
+  <data name="Closing_CtaBiz" xml:space="preserve"><value>I want to be on Chombly</value></data>
+  <data name="Closing_Note" xml:space="preserve"><value>No commitment. Start whenever you're ready.</value></data>
+  <data name="Closing_FooterTagline" xml:space="preserve"><value>Close care for those who are already family.</value></data>
+  <data name="Closing_ColFamilies" xml:space="preserve"><value>Families</value></data>
+  <data name="Closing_ColBiz" xml:space="preserve"><value>Professionals</value></data>
+  <data name="Closing_ColLegal" xml:space="preserve"><value>Legal</value></data>
+  <data name="Closing_LinkPros" xml:space="preserve"><value>Professional onboarding</value></data>
+  <data name="Closing_MadeFor" xml:space="preserve"><value>Made for Colombia</value></data>
+  <data name="Onboard_BadgeFamilies" xml:space="preserve"><value>Families</value></data>
+  <data name="Onboard_BadgeBiz" xml:space="preserve"><value>Business</value></data>
+  <data name="Onboard_Audience" xml:space="preserve"><value>Account type</value></data>
+  <data name="Onboard_Families" xml:space="preserve"><value>Families</value></data>
+  <data name="Onboard_Biz" xml:space="preserve"><value>Business</value></data>
+  <data name="Onboard_EnterFamilies" xml:space="preserve"><value>Enter Chombly</value></data>
+  <data name="Onboard_EnterBiz" xml:space="preserve"><value>Register my business</value></data>
+  <data name="Onboard_Slide1Title" xml:space="preserve"><value>Discover Chombly</value></data>
+  <data name="Onboard_Slide1Body" xml:space="preserve"><value>Pet care, <strong>organized in one place</strong>.</value></data>
+  <data name="Onboard_Slide2Title" xml:space="preserve"><value>Services near you</value></data>
+  <data name="Onboard_Slide2Body" xml:space="preserve"><value>Grooming, boarding, daycare and more with trusted pros.</value></data>
+  <data name="Onboard_Slide3Title" xml:space="preserve"><value>Health and peace of mind</value></data>
+  <data name="Onboard_Slide3Body" xml:space="preserve"><value>Book vet care and keep your pet's history in one place.</value></data>
+  <data name="Onboard_Slide4Title" xml:space="preserve"><value>Walks and routine</value></data>
+  <data name="Onboard_Slide4Body" xml:space="preserve"><value>Find walkers and trainers for everyday care.</value></data>
 
   <data name="Profile_Title" xml:space="preserve"><value>Profile</value></data>
   <data name="Profile_Logout" xml:space="preserve"><value>Sign out</value></data>
   <data name="Profile_Notifications" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Notif_Delete" xml:space="preserve"><value>Delete notification</value></data>
+  <data name="Notif_DeleteTitle" xml:space="preserve"><value>Delete notification</value></data>
+  <data name="Notif_DeleteConfirm" xml:space="preserve"><value>Delete this notification?</value></data>
+  <data name="Notif_ClearAll" xml:space="preserve"><value>Clear all</value></data>
+  <data name="Notif_ClearAllTitle" xml:space="preserve"><value>Clear all</value></data>
+  <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>Delete all notifications?</value></data>
+  <data name="Notif_SwipeHint" xml:space="preserve"><value>Swipe left to delete</value></data>
   <data name="Profile_MyPets" xml:space="preserve"><value>My pets</value></data>
   <data name="Profile_MyAppointments" xml:space="preserve"><value>My bookings</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Business panel</value></data>
@@ -190,14 +245,15 @@
   <data name="Profile_Edit_EmailTaken" xml:space="preserve"><value>That email is already in use.</value></data>
   <data name="Profile_Edit_PasswordShort" xml:space="preserve"><value>Password must be at least 6 characters, include an uppercase letter and a special character (e.g. !@#$). It cannot be only numbers.</value></data>
   <data name="Profile_Edit_PasswordMismatch" xml:space="preserve"><value>Passwords do not match.</value></data>
-  <data name="Profile_Edit_CityHint" xml:space="preserve"><value>Pick a Google Maps suggestion so we can show nearby groomers and vets.</value></data>
-  <data name="Profile_Edit_CityMapsRequired" xml:space="preserve"><value>Select your city from the Google Maps suggestions (don't type free text).</value></data>
+  <data name="Profile_Edit_CityHint" xml:space="preserve"><value>Pick a suggestion from the list so we can show nearby groomers and vets.</value></data>
+  <data name="Profile_Edit_CityMapsRequired" xml:space="preserve"><value>Select your city from the suggestions (don't type free text).</value></data>
   <data name="Profile_LocationMissing" xml:space="preserve"><value>No location</value></data>
   <data name="Profile_LocationGpsOk" xml:space="preserve"><value>Location ready to find nearby businesses</value></data>
   <data name="Profile_LocationGpsMissing" xml:space="preserve"><value>GPS missing: enable it to see distances to nearby businesses</value></data>
   <data name="Profile_LocationUpdated" xml:space="preserve"><value>Location updated.</value></data>
   <data name="Phone_Invalid" xml:space="preserve"><value>Invalid phone. Digits only (7–10). E.g. 7045551234</value></data>
   <data name="Phone_Required" xml:space="preserve"><value>Phone is required.</value></data>
+  <data name="Phone_Placeholder" xml:space="preserve"><value>E.g. 7045551234</value></data>
   <data name="Validation_Required" xml:space="preserve"><value>This field is required.</value></data>
   <data name="Validation_FieldRequired" xml:space="preserve"><value>The {0} field is required.</value></data>
   <data name="Validation_ValueInvalid" xml:space="preserve"><value>The value '{0}' is invalid.</value></data>
@@ -252,6 +308,7 @@
   <data name="Booking_CheckDates" xml:space="preserve"><value>Check your check-in and check-out dates.</value></data>
   <data name="Booking_InvalidDates" xml:space="preserve"><value>Invalid dates.</value></data>
   <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Invalid date or time.</value></data>
+  <data name="Booking_DateNotPast" xml:space="preserve"><value>You can't select a past date.</value></data>
   <data name="Booking_MissingData" xml:space="preserve"><value>Booking details are incomplete.</value></data>
   <data name="Booking_SpeciesNotAccepted" xml:space="preserve"><value>This business does not serve {0}.</value></data>
 

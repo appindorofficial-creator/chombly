@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Behavior.SummaryModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Plan de comportamiento", "Behavior plan");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Care/Services");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Care/Services">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Plan de comportamiento", "Behavior plan")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Plan de comportamiento", "Behavior plan")</h1>
         <p class="muted small">#@Model.Id · @(Model.Case?.Pet?.Name)</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-success">@Model.Message</div>
@@ -51,4 +50,6 @@
         <a class="btn btn-outline" asp-page="/Vet/Index">@CatalogLocalizer.Loc("Si hay signos clínicos → Vet", "If clinical signs → Vet")</a>
         <a class="btn btn-outline" asp-page="/Care/Services">@CatalogLocalizer.Loc("Más servicios", "More services")</a>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

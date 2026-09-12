@@ -4,252 +4,308 @@
 @{
     ViewData["Title"] = L["Biz_ImBusiness"].Value;
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    Layout = "_Layout";
     var inv = CultureInfo.InvariantCulture;
-}
-@if (Model.Step is >= 1 and <= 4)
-{
-    ViewData["LangCompact"] = true;
-    <div class="page-header">
-        <button type="button" class="back-btn" id="biz-back-btn" style="border:none;background:transparent;cursor:pointer">←</button>
-        <h1>@string.Format(L["Biz_StepOf"].Value, Model.Step)</h1>
-        <partial name="_LanguageSwitch" />
-    </div>
-    <div class="biz-progress"><div class="biz-progress-bar" style="width:@Model.WizardProgress%"></div></div>
-}
-else if (Model.Step != 7)
-{
-    ViewData["LangCompact"] = true;
-    <div class="page-header">
-        @if (Model.Step > 0)
-        {
-            <button type="button" class="back-btn" id="biz-back-btn" style="border:none;background:transparent;cursor:pointer">←</button>
-        }
-        else
-        {
-            <a class="back-btn" asp-page="/Account/Profile">←</a>
-        }
-        <h1>@(Model.Step == 0 ? L["Biz_Join"].Value : Model.Step == 5 ? L["Biz_Services"].Value : Model.Step == 6 ? (User.Identity?.IsAuthenticated == true ? L["Biz_ConfirmAccount"].Value : L["Biz_CreateAccount"].Value) : L["Biz_Business"].Value)</h1>
-        <partial name="_LanguageSwitch" />
-    </div>
-}
-
-<main class="app-main no-nav">
-    @if (Model.Step == 7)
+    string StepHeading() => Model.Step switch
     {
-        <div class="biz-success">
-            <div class="biz-success-check">✓</div>
-            <h2>@L["Biz_WelcomeTitle"]</h2>
-            <p class="muted">@string.Format(L["Biz_ProfileCreated"].Value, Model.BusinessName)</p>
-            <div class="card card-pad" style="text-align:left;margin:16px 0">
-                <strong>@L["Biz_CompleteProfile"]</strong>
-                <p class="muted small" style="margin:6px 0 0">@L["Biz_CompleteHint"]</p>
-            </div>
-            <a class="btn btn-primary btn-block" asp-page="/Groomer/Dashboard">@L["Biz_GoDashboard"]</a>
-            <a class="btn btn-outline btn-block" asp-page="/Groomer/Verification" style="margin-top:10px">@L["Biz_CompleteVerification"]</a>
-            <a class="link-btn" asp-page="/Groomer/Dashboard" style="display:block;text-align:center;margin-top:12px">@L["Biz_CompleteLater"]</a>
+        0 => L["Biz_Join"].Value,
+        1 or 2 or 3 or 4 => string.Format(L["Biz_StepOf"].Value, Model.Step),
+        5 => L["Biz_Services"].Value,
+        6 => User.Identity?.IsAuthenticated == true ? L["Biz_ConfirmAccount"].Value : L["Biz_CreateAccount"].Value,
+        7 => L["Register_SuccessTitle"].Value,
+        _ => L["Biz_Business"].Value
+    };
+}
+<div class="onboard onboard-auth onboard-biz">
+    <header class="onboard-top">
+        <div class="onboard-brand">
+            <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" />
+            <strong class="onboard-word">Chombly</strong>
         </div>
-    }
-    else
-    {
-        ViewData["ExcludeStep"] = Model.Step;
-        <form method="post" id="biz-reg-form" novalidate action="@Url.Page("/Account/RegisterBusiness")">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="Step" id="biz-step" value="@Model.Step" />
-            <input type="hidden" name="nav" id="biz-nav" value="next" />
-            @await Html.PartialAsync("_BizRegHiddens")
+        <partial name="_LanguageSwitch" />
+    </header>
 
-            @if (Model.Step == 0)
+    <div class="onboard-stage">
+        <div class="onboard-card onboard-auth-card onboard-biz-card">
+            @if (Model.Step == 7)
             {
-                <h2 style="margin:0 0 8px">@L["Biz_HowTitle"]</h2>
-                <p class="muted small">@L["Biz_HowSub"]</p>
-                <label class="biz-type-card @(Model.ProviderKindKey != "independent" ? "active" : "")">
-                    <input type="radio" name="ProviderKindKey" value="business" @(Model.ProviderKindKey != "independent" ? "checked" : "") />
-                    <span class="biz-type-ico">🏪</span>
-                    <span>
-                        <strong>@L["Biz_TypeBusinessTitle"]</strong>
-                        <small class="muted">@L["Biz_TypeBusinessDesc"]</small>
-                    </span>
-                </label>
-                <label class="biz-type-card @(Model.ProviderKindKey == "independent" ? "active" : "")">
-                    <input type="radio" name="ProviderKindKey" value="independent" @(Model.ProviderKindKey == "independent" ? "checked" : "") />
-                    <span class="biz-type-ico">🦮</span>
-                    <span>
-                        <strong>@L["Biz_TypeIndependentTitle"]</strong>
-                        <small class="muted">@L["Biz_TypeIndependentDesc"]</small>
-                    </span>
-                </label>
-                @if (User.Identity?.IsAuthenticated == true)
+                <canvas class="biz-celebrate-canvas" id="biz-celebrate-canvas" aria-hidden="true"></canvas>
+                <div class="biz-success">
+                    <div class="celebrate-mark" aria-hidden="true">
+                        <img src="~/brand/v2/chombly-mark-lime.png" asp-append-version="true" alt="" width="56" height="56" />
+                    </div>
+                    <h1 id="celebrate-title">@L["Register_SuccessTitle"]</h1>
+                    <p class="onboard-auth-lead">@string.Format(L["Biz_ProfileCreated"].Value, Model.BusinessName)</p>
+                    <div class="biz-success-next">
+                        <strong>@L["Biz_CompleteProfile"]</strong>
+                        <p>@L["Biz_CompleteHint"]</p>
+                    </div>
+                    <a class="btn btn-enter btn-block" asp-page="/Groomer/Dashboard">@L["Biz_GoDashboard"]</a>
+                    <a class="btn btn-outline btn-block" asp-page="/Groomer/Verification" style="margin-top:10px">@L["Biz_CompleteVerification"]</a>
+                    <a class="onboard-back" asp-page="/Groomer/Dashboard" style="display:block;text-align:center;margin-top:14px">@L["Biz_CompleteLater"]</a>
+                </div>
+            }
+            else
+            {
+                ViewData["ExcludeStep"] = Model.Step;
+                if (Model.Step == 0)
                 {
-                    <p class="muted small" style="text-align:center;margin-top:16px">@L["Biz_ContinueCurrentAccount"]</p>
+                    <a class="onboard-back" asp-page="/Account/Login">← @L["Register_Login"]</a>
                 }
                 else
                 {
-                    <p class="muted small" style="text-align:center;margin-top:16px">
-                        @L["Biz_HaveAccount"] <a asp-page="/Account/Login" style="color:var(--brand);font-weight:700">@L["Biz_SignIn"]</a>
-                    </p>
+                    <button type="button" class="onboard-back" id="biz-back-btn">← @L["Common_Back"]</button>
                 }
-            }
-            else if (Model.Step == 1)
-            {
-                <h3 class="section-title" style="margin-top:0">@L["Biz_BasicInfo"]</h3>
-                <div class="form-group"><label>@L["Biz_YourFullName"]</label><input class="form-control" name="FullName" value="@Model.FullName" /></div>
-                <div class="form-group"><label>@L["Biz_BusinessName"]</label><input class="form-control" name="BusinessName" value="@Model.BusinessName" /></div>
-                <div class="form-group"><label>@L["Common_Phone"]</label><input class="form-control" name="Phone" value="@Model.Phone" type="tel" inputmode="numeric" data-phone="1" maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel" placeholder="7045551234" /></div>
-                <div class="form-group"><label>@L["Common_Email"]</label><input class="form-control" name="Email" type="email" value="@Model.Email" /></div>
-                <div class="form-group">
-                    <label>@L["Common_City"]</label>
-                    <input class="form-control" name="City" id="City" value="@Model.City"
-                           data-places="city" data-places-fill="city"
-                           data-places-lat="#Latitude" data-places-lng="#Longitude"
-                           placeholder="@L["Biz_SearchCity"]" autocomplete="off" />
-                </div>
-                <div class="form-group">
-                    <label>@L["Common_Address"]</label>
-                    <input class="form-control" name="Address" id="Address" value="@Model.Address"
-                           data-places="address" data-places-fill="address"
-                           data-places-city="#City" data-places-lat="#Latitude" data-places-lng="#Longitude"
-                           placeholder="@L["Biz_SearchAddress"]" autocomplete="off" />
-                </div>
-                <input type="hidden" name="Latitude" id="Latitude" value="@Model.Latitude.ToString(inv)" data-places-fill="lat" />
-                <input type="hidden" name="Longitude" id="Longitude" value="@Model.Longitude.ToString(inv)" data-places-fill="lng" />
-                <p class="muted small">@L["Biz_MapsTip"]</p>
-            }
-            else if (Model.Step == 2)
-            {
-                <h3 class="section-title" style="margin-top:0">@L["Biz_ServiceType"]</h3>
-                <div class="biz-cat-grid">
-                    @foreach (var c in Model.Categories)
+
+                <h1>@StepHeading()</h1>
+                @if (Model.Step is >= 1 and <= 4)
+                {
+                    <div class="biz-progress"><div class="biz-progress-bar" style="width:@Model.WizardProgress%"></div></div>
+                }
+
+                <form method="post" id="biz-reg-form" class="onboard-auth-form" novalidate
+                      action="@Url.Page("/Account/RegisterBusiness")"
+                      data-msg-loc-fail="@L["Search_LocationFail"]"
+                      data-msg-loc-loading="@L["Register_LocationLoading"]"
+                      data-msg-loc-ok="@L["Register_LocationOk"]"
+                      data-msg-city-maps="@L["Register_LocationRequired"]">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Step" id="biz-step" value="@Model.Step" />
+                    <input type="hidden" name="nav" id="biz-nav" value="next" />
+                    @await Html.PartialAsync("_BizRegHiddens")
+
+                    @if (Model.Step == 0)
                     {
-                        var on = Model.CategoryId == c.Id || (Model.CategoryId == 0 && c == Model.Categories.First());
-                        <label class="biz-cat-card @(on ? "active" : "")">
-                            <input type="radio" name="CategoryId" value="@c.Id" @(on ? "checked" : "") />
-                            <img src="/images/categories/cat-@(c.Slug).png" alt="" />
-                            <strong>@c.DisplayName()</strong>
-                        </label>
-                    }
-                </div>
-                <h3 class="section-title">@L["Biz_HowWork"]</h3>
-                @foreach (var (key, labelKey) in new[] { ("local", "Biz_WorkLocal"), ("domicilio", "Biz_WorkHome"), ("ambas", "Biz_WorkBoth") })
-                {
-                    <label class="radio-card" style="margin-bottom:8px">
-                        <input type="radio" name="WorkModeKey" value="@key" @(Model.WorkModeKey == key ? "checked" : "") />
-                        <div class="inner"><strong>@L[labelKey]</strong></div>
-                    </label>
-                }
-            }
-            else if (Model.Step == 3)
-            {
-                <h3 class="section-title" style="margin-top:0">@L["Biz_HoursTitle"]</h3>
-                <p class="muted small">@L["Biz_HoursHint"]</p>
-                @for (var i = 0; i < Model.Week.Count; i++)
-                {
-                    <div class="card card-pad" style="margin-bottom:8px">
-                        <input type="hidden" name="Week[@i].DayOfWeek" value="@Model.Week[i].DayOfWeek" />
-                        <input type="hidden" name="Week[@i].Label" value="@Model.Week[i].Label" />
-                        <label class="toggle-row" style="cursor:pointer;margin-bottom:8px">
-                            <strong>@Model.Week[i].Label</strong>
-                            <span>
-                                @* Checkbox before hidden: ASP.NET Core binds FirstValue; hidden-first always yields false. *@
-                                <input type="checkbox" name="Week[@i].IsOpen" value="true" @(Model.Week[i].IsOpen ? "checked" : "") />
-                                <input type="hidden" name="Week[@i].IsOpen" value="false" />
-                                @L["Biz_Open"]
+                        <p class="onboard-auth-lead">@L["Biz_HowSub"]</p>
+                        <h2 class="biz-section-title">@L["Biz_HowTitle"]</h2>
+                        <label class="biz-type-card @(Model.ProviderKindKey != "independent" ? "active" : "")">
+                            <input type="radio" name="ProviderKindKey" value="business" @(Model.ProviderKindKey != "independent" ? "checked" : "") />
+                            <img src="~/images/biz/biz-type-business-cat.png" alt="" class="biz-type-art" asp-append-version="true" />
+                            <span class="biz-type-copy">
+                                <strong>@L["Biz_TypeBusinessTitle"]</strong>
+                                <small>@L["Biz_TypeBusinessDesc"]</small>
                             </span>
                         </label>
-                        <div style="display:flex;gap:10px">
-                            <div class="form-group" style="flex:1;margin:0">
-                                <label class="small muted">@L["Biz_Opens"]</label>
-                                <input class="form-control" type="time" name="Week[@i].OpenTime" value="@Model.Week[i].OpenTime" />
-                            </div>
-                            <div class="form-group" style="flex:1;margin:0">
-                                <label class="small muted">@L["Biz_Closes"]</label>
-                                <input class="form-control" type="time" name="Week[@i].CloseTime" value="@Model.Week[i].CloseTime" />
-                            </div>
-                        </div>
-                    </div>
-                }
-                <h3 class="section-title">@L["Biz_ServiceArea"]</h3>
-                <div class="when-row" style="flex-wrap:wrap">
-                    @foreach (var miles in new[] { 5, 10, 20, 0 })
-                    {
-                        var label = miles == 0 ? L["Biz_WholeCity"].Value : $"{miles} mi";
-                        <label class="when-chip @(Model.ServiceAreaMiles == miles ? "active" : "")">
-                            <input type="radio" name="ServiceAreaMiles" value="@miles" @(Model.ServiceAreaMiles == miles ? "checked" : "") />
-                            @label
+                        <label class="biz-type-card @(Model.ProviderKindKey == "independent" ? "active" : "")">
+                            <input type="radio" name="ProviderKindKey" value="independent" @(Model.ProviderKindKey == "independent" ? "checked" : "") />
+                            <img src="~/images/biz/biz-type-independent.png" alt="" class="biz-type-art" asp-append-version="true" />
+                            <span class="biz-type-copy">
+                                <strong>@L["Biz_TypeIndependentTitle"]</strong>
+                                <small>@L["Biz_TypeIndependentDesc"]</small>
+                            </span>
                         </label>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <p class="onboard-auth-links">@L["Biz_ContinueCurrentAccount"]</p>
+                        }
+                        else
+                        {
+                            <p class="onboard-auth-links">
+                                @L["Biz_HaveAccount"]
+                                <a asp-page="/Account/Login">@L["Biz_SignIn"]</a>
+                            </p>
+                        }
                     }
-                </div>
-            }
-            else if (Model.Step == 4)
-            {
-                <h3 class="section-title" style="margin-top:0">@L["Biz_PhotosTitle"]</h3>
-                <p class="muted small">@L["Biz_PhotosHint"]</p>
-                <div class="form-group"><label>@L["Biz_LogoUrl"]</label><input class="form-control" name="LogoUrl" value="@Model.LogoUrl" placeholder="https://…" /></div>
-                <div class="form-group"><label>@L["Biz_CoverUrl"]</label><input class="form-control" name="CoverUrl" value="@Model.CoverUrl" placeholder="https://…" /></div>
-                <div class="form-group">
-                    <label>@L["Biz_Description"]</label>
-                    <textarea class="form-control" name="About" rows="5" maxlength="300" placeholder="@L["Biz_DescriptionPh"]">@Model.About</textarea>
-                    <p class="muted small">@L["Biz_DescriptionMax"]</p>
-                </div>
-            }
-            else if (Model.Step == 5)
-            {
-                <h3 class="section-title" style="margin-top:0">@L["Biz_ServicesInitial"]</h3>
-                <p class="muted small">@L["Biz_ServicesHint"]</p>
-                @for (var i = 0; i < Model.ServiceNames.Count; i++)
-                {
-                    <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end">
-                        <div class="form-group" style="flex:2;margin:0">
-                            <label class="small muted">@L["Biz_Service"]</label>
-                            <input class="form-control" name="ServiceNames[@i]" value="@Model.ServiceNames[i]" />
+                    else if (Model.Step == 1)
+                    {
+                        <h2 class="biz-section-title">@L["Biz_BasicInfo"]</h2>
+                        <div class="form-group">
+                            <label>@L["Biz_YourFullName"]</label>
+                            <input class="form-control" name="FullName" value="@Model.FullName" required autocomplete="name" />
                         </div>
-                        <div class="form-group" style="flex:1;margin:0">
-                            <label class="small muted">@L["Biz_FromPrice"]</label>
-                            <input class="form-control" type="number" step="0.01" name="ServicePrices[@i]" value="@Model.ServicePrices[i].ToString(inv)" />
+                        <div class="form-group">
+                            <label>@L["Biz_BusinessName"]</label>
+                            <input class="form-control" name="BusinessName" value="@Model.BusinessName" required />
                         </div>
-                    </div>
-                }
-                <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end;opacity:.85">
-                    <div class="form-group" style="flex:2;margin:0">
-                        <label class="small muted">@L["Biz_AddAnother"]</label>
-                        <input class="form-control" name="ServiceNames[@Model.ServiceNames.Count]" placeholder="@L["Biz_ServiceNamePh"]" />
-                    </div>
-                    <div class="form-group" style="flex:1;margin:0">
-                        <label class="small muted">@L["Biz_FromPrice"]</label>
-                        <input class="form-control" type="number" step="0.01" name="ServicePrices[@Model.ServiceNames.Count]" value="0" />
-                    </div>
-                </div>
-            }
-            else if (Model.Step == 6)
-            {
-                ViewData["TermsChecked"] = Model.AcceptTerms;
-                if (User.Identity?.IsAuthenticated == true)
-                {
-                    <h3 class="section-title" style="margin-top:0">@L["Biz_ConfirmAccount"]</h3>
-                    <p class="muted small">@L["Biz_ContinueCurrentAccount"]</p>
-                    <p class="muted small">@L["Common_Email"]: <strong>@Model.Email</strong></p>
-                }
-                else
-                {
-                    <h3 class="section-title" style="margin-top:0">@L["Biz_CreateAccount"]</h3>
-                    <p class="muted small">@L["Common_Email"]: <strong>@Model.Email</strong></p>
-                    <div class="form-group"><label>@L["Common_Password"]</label><input class="form-control" name="Password" type="password" minlength="6" data-password-policy="1" value="" autocomplete="new-password" /><p class="muted small" style="margin:6px 0 0">@L["Profile_Edit_PasswordShort"]</p></div>
-                    <div class="form-group"><label>@L["Register_ConfirmPassword"]</label><input class="form-control" name="ConfirmPassword" type="password" minlength="6" value="" autocomplete="new-password" /></div>
-                }
-                <partial name="_AcceptTerms" />
-                <img src="~/images/chombly-monkey.png" alt="" style="display:block;width:100px;margin:20px auto 0;opacity:.9" />
-            }
+                        <div class="form-group">
+                            <label>@L["Common_Phone"]</label>
+                            <input class="form-control" name="Phone" value="@Model.Phone" type="tel" inputmode="numeric"
+                                   data-phone="1" required maxlength="10" pattern="[0-9]{7,10}" autocomplete="tel"
+                                   placeholder="@L["Phone_Placeholder"]"
+                                   data-msg-required="@L["Phone_Required"]" />
+                        </div>
+                        <div class="form-group">
+                            <label>@L["Common_Email"]</label>
+                            <input class="form-control" name="Email" type="email" value="@Model.Email" required
+                                   autocomplete="email" placeholder="@L["Common_EmailPlaceholder"]" />
+                        </div>
+                        <div class="form-group">
+                            <label>@L["Register_LocationLabel"]</label>
+                            <button type="button" class="btn btn-outline btn-block loc-btn" id="btn-use-location">
+                                @L["Search_UseMyLocation"]
+                            </button>
+                            <p class="field-hint" id="loc-status">@L["Register_LocationHint"]</p>
+                            <p class="field-error" id="city-maps-error" hidden>@L["Register_LocationRequired"]</p>
 
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="alert alert-danger" id="biz-error" style="margin-top:12px">@Model.ErrorMessage</div>
-            }
+                            <details class="loc-manual" id="loc-manual">
+                                <summary>@L["Register_OrSearchCity"]</summary>
+                                <input class="form-control" name="City" id="City" value="@Model.City"
+                                       data-places="city" data-places-fill="city"
+                                       data-places-lat="#Latitude" data-places-lng="#Longitude" data-places-require="1"
+                                       placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
+                                <p class="field-hint">@L["Profile_Edit_CityHint"]</p>
+                            </details>
+                        </div>
+                        <div class="form-group">
+                            <label>@L["Common_Address"]</label>
+                            <input class="form-control" name="Address" id="Address" value="@Model.Address"
+                                   data-places="address" data-places-fill="address"
+                                   data-places-city="#City" data-places-lat="#Latitude" data-places-lng="#Longitude"
+                                   placeholder="@L["Biz_SearchAddress"]" autocomplete="off" />
+                            <p class="field-hint">@L["Biz_MapsTip"]</p>
+                        </div>
+                        <input type="hidden" name="Latitude" id="Latitude" value="@(Model.Latitude == 0 ? "" : Model.Latitude.ToString(inv))" data-places-fill="lat" />
+                        <input type="hidden" name="Longitude" id="Longitude" value="@(Model.Longitude == 0 ? "" : Model.Longitude.ToString(inv))" data-places-fill="lng" />
+                    }
+                    else if (Model.Step == 2)
+                    {
+                        <h2 class="biz-section-title">@L["Biz_ServiceType"]</h2>
+                        <div class="biz-cat-grid">
+                            @foreach (var c in Model.Categories)
+                            {
+                                var on = Model.CategoryId == c.Id || (Model.CategoryId == 0 && c == Model.Categories.First());
+                                <label class="biz-cat-card @(on ? "active" : "")">
+                                    <input type="radio" name="CategoryId" value="@c.Id" @(on ? "checked" : "") />
+                                    <img src="/images/categories/cat-@(c.Slug)-v2.png" alt="" />
+                                    <strong>@c.DisplayName()</strong>
+                                </label>
+                            }
+                        </div>
+                        <h2 class="biz-section-title">@L["Biz_HowWork"]</h2>
+                        @foreach (var (key, labelKey) in new[] { ("local", "Biz_WorkLocal"), ("domicilio", "Biz_WorkHome"), ("ambas", "Biz_WorkBoth") })
+                        {
+                            <label class="radio-card" style="margin-bottom:8px">
+                                <input type="radio" name="WorkModeKey" value="@key" @(Model.WorkModeKey == key ? "checked" : "") />
+                                <div class="inner"><strong>@L[labelKey]</strong></div>
+                            </label>
+                        }
+                    }
+                    else if (Model.Step == 3)
+                    {
+                        <h2 class="biz-section-title">@L["Biz_HoursTitle"]</h2>
+                        <p class="onboard-auth-lead">@L["Biz_HoursHint"]</p>
+                        @for (var i = 0; i < Model.Week.Count; i++)
+                        {
+                            <div class="card card-pad" style="margin-bottom:8px">
+                                <input type="hidden" name="Week[@i].DayOfWeek" value="@Model.Week[i].DayOfWeek" />
+                                <input type="hidden" name="Week[@i].Label" value="@Model.Week[i].Label" />
+                                <label class="toggle-row" style="cursor:pointer;margin-bottom:8px">
+                                    <strong>@Model.Week[i].Label</strong>
+                                    <span>
+                                        <input type="checkbox" name="Week[@i].IsOpen" value="true" @(Model.Week[i].IsOpen ? "checked" : "") />
+                                        <input type="hidden" name="Week[@i].IsOpen" value="false" />
+                                        @L["Biz_Open"]
+                                    </span>
+                                </label>
+                                <div style="display:flex;gap:10px">
+                                    <div class="form-group" style="flex:1;margin:0">
+                                        <label class="small muted">@L["Biz_Opens"]</label>
+                                        <input class="form-control" type="time" name="Week[@i].OpenTime" value="@Model.Week[i].OpenTime" />
+                                    </div>
+                                    <div class="form-group" style="flex:1;margin:0">
+                                        <label class="small muted">@L["Biz_Closes"]</label>
+                                        <input class="form-control" type="time" name="Week[@i].CloseTime" value="@Model.Week[i].CloseTime" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <h2 class="biz-section-title">@L["Biz_ServiceArea"]</h2>
+                        <div class="when-row" style="flex-wrap:wrap">
+                            @foreach (var miles in new[] { 5, 10, 20, 0 })
+                            {
+                                var label = miles == 0 ? L["Biz_WholeCity"].Value : $"{miles} mi";
+                                <label class="when-chip @(Model.ServiceAreaMiles == miles ? "active" : "")">
+                                    <input type="radio" name="ServiceAreaMiles" value="@miles" @(Model.ServiceAreaMiles == miles ? "checked" : "") />
+                                    @label
+                                </label>
+                            }
+                        </div>
+                    }
+                    else if (Model.Step == 4)
+                    {
+                        <h2 class="biz-section-title">@L["Biz_PhotosTitle"]</h2>
+                        <p class="onboard-auth-lead">@L["Biz_PhotosHint"]</p>
+                        <div class="form-group"><label>@L["Biz_LogoUrl"]</label><input class="form-control" name="LogoUrl" value="@Model.LogoUrl" placeholder="https://…" /></div>
+                        <div class="form-group"><label>@L["Biz_CoverUrl"]</label><input class="form-control" name="CoverUrl" value="@Model.CoverUrl" placeholder="https://…" /></div>
+                        <div class="form-group">
+                            <label>@L["Biz_Description"]</label>
+                            <textarea class="form-control" name="About" rows="5" maxlength="300" placeholder="@L["Biz_DescriptionPh"]">@Model.About</textarea>
+                            <p class="field-hint">@L["Biz_DescriptionMax"]</p>
+                        </div>
+                    }
+                    else if (Model.Step == 5)
+                    {
+                        <h2 class="biz-section-title">@L["Biz_ServicesInitial"]</h2>
+                        <p class="onboard-auth-lead">@L["Biz_ServicesHint"]</p>
+                        @for (var i = 0; i < Model.ServiceNames.Count; i++)
+                        {
+                            <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end">
+                                <div class="form-group" style="flex:2;margin:0">
+                                    <label class="small muted">@L["Biz_Service"]</label>
+                                    <input class="form-control" name="ServiceNames[@i]" value="@Model.ServiceNames[i]" />
+                                </div>
+                                <div class="form-group" style="flex:1;margin:0">
+                                    <label class="small muted">@L["Biz_FromPrice"]</label>
+                                    <input class="form-control" type="number" step="0.01" name="ServicePrices[@i]" value="@Model.ServicePrices[i].ToString(inv)" />
+                                </div>
+                            </div>
+                        }
+                        <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end;opacity:.85">
+                            <div class="form-group" style="flex:2;margin:0">
+                                <label class="small muted">@L["Biz_AddAnother"]</label>
+                                <input class="form-control" name="ServiceNames[@Model.ServiceNames.Count]" placeholder="@L["Biz_ServiceNamePh"]" />
+                            </div>
+                            <div class="form-group" style="flex:1;margin:0">
+                                <label class="small muted">@L["Biz_FromPrice"]</label>
+                                <input class="form-control" type="number" step="0.01" name="ServicePrices[@Model.ServiceNames.Count]" value="0" />
+                            </div>
+                        </div>
+                    }
+                    else if (Model.Step == 6)
+                    {
+                        ViewData["TermsChecked"] = Model.AcceptTerms;
+                        if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <h2 class="biz-section-title">@L["Biz_ConfirmAccount"]</h2>
+                            <p class="onboard-auth-lead">@L["Biz_ContinueCurrentAccount"]</p>
+                            <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
+                        }
+                        else
+                        {
+                            <h2 class="biz-section-title">@L["Biz_CreateAccount"]</h2>
+                            <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
+                            <div class="form-group">
+                                <label>@L["Common_Password"]</label>
+                                <input class="form-control" name="Password" type="password" minlength="6" required
+                                       data-password-policy="1" value="" autocomplete="new-password" />
+                                <p class="field-hint">@L["Profile_Edit_PasswordShort"]</p>
+                            </div>
+                            <div class="form-group">
+                                <label>@L["Register_ConfirmPassword"]</label>
+                                <input class="form-control" name="ConfirmPassword" type="password" minlength="6" required
+                                       value="" autocomplete="new-password" />
+                            </div>
+                        }
+                        <partial name="_AcceptTerms" />
+                        <img src="~/brand/v2/chombly-mark.png" alt="" class="biz-account-mark" />
+                    }
 
-            <button class="btn btn-primary btn-block" type="button" id="biz-continue" style="margin-top:16px;position:relative;z-index:20">
-                @(Model.Step == 6 ? L["Biz_CreateProfile"].Value : L["Common_Continue"].Value)
-            </button>
-        </form>
-    }
-</main>
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger" id="biz-error">@Model.ErrorMessage</div>
+                    }
+
+                    <button class="btn btn-enter btn-block" type="button" id="biz-continue">
+                        @(Model.Step == 6 ? L["Biz_CreateProfile"].Value : L["Common_Continue"].Value)
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <p class="onboard-version">Chombly · Pet Care</p>
+</div>
 
 @section Scripts {
     <style>
@@ -259,6 +315,59 @@ else if (Model.Step != 7)
     @if (Model.Step == 1)
     {
         <partial name="_GooglePlaces" />
+    }
+    @if (Model.Step == 7)
+    {
+        <script>
+        (function () {
+          var canvas = document.getElementById('biz-celebrate-canvas');
+          if (!canvas) return;
+          var ctx = canvas.getContext('2d');
+          var pieces = [];
+          var colors = ['#b6e740', '#073d26', '#0f3d2f', '#fff', '#e8f7bb', '#f4c542', '#ff6b6b', '#4ecdc4'];
+          var running = true;
+          var start = performance.now();
+          function resize() {
+            canvas.width = window.innerWidth * devicePixelRatio;
+            canvas.height = window.innerHeight * devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+          }
+          resize();
+          window.addEventListener('resize', resize);
+          for (var i = 0; i < 140; i++) {
+            pieces.push({
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * -window.innerHeight,
+              w: 6 + Math.random() * 8,
+              h: 8 + Math.random() * 12,
+              vx: -2 + Math.random() * 4,
+              vy: 2 + Math.random() * 4,
+              r: Math.random() * Math.PI,
+              vr: -0.2 + Math.random() * 0.4,
+              color: colors[i % colors.length]
+            });
+          }
+          function frame(now) {
+            if (!running) return;
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            pieces.forEach(function (p) {
+              p.x += p.vx; p.y += p.vy; p.r += p.vr;
+              if (p.y > window.innerHeight + 20) { p.y = -20; p.x = Math.random() * window.innerWidth; }
+              ctx.save();
+              ctx.translate(p.x, p.y);
+              ctx.rotate(p.r);
+              ctx.fillStyle = p.color;
+              ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+              ctx.restore();
+            });
+            if (now - start < 4500) requestAnimationFrame(frame);
+            else { running = false; ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); }
+          }
+          requestAnimationFrame(frame);
+        })();
+        </script>
     }
     <script>
     (function () {
@@ -278,9 +387,7 @@ else if (Model.Step != 7)
                 btn.disabled = true;
                 btn.textContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Biz_Loading"].Value));
             }
-            // submit nativo (más fiable en iOS que form.submit() a veces)
             if (typeof form.requestSubmit === 'function') {
-                // requestSubmit needs a submitter; use hidden submit
                 var tmp = document.createElement('input');
                 tmp.type = 'submit';
                 tmp.style.display = 'none';
@@ -320,7 +427,6 @@ else if (Model.Step != 7)
             });
         });
 
-        // Service-area chips: inputs are display:none; toggle checked + .active like type/category cards
         document.querySelectorAll('.when-chip').forEach(function (chip) {
             chip.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -336,6 +442,82 @@ else if (Model.Step != 7)
 
         var err = document.getElementById('biz-error');
         if (err) err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // GPS location (step 1) — same behavior as /Account/Register
+        var city = document.getElementById('City');
+        var lat = document.getElementById('Latitude');
+        var lng = document.getElementById('Longitude');
+        var locErr = document.getElementById('city-maps-error');
+        var status = document.getElementById('loc-status');
+        var locBtn = document.getElementById('btn-use-location');
+        var manual = document.getElementById('loc-manual');
+        if (city && lat && lng) {
+            var msgFail = form.getAttribute('data-msg-loc-fail') || '';
+            var msgLoading = form.getAttribute('data-msg-loc-loading') || '';
+            var msgOk = form.getAttribute('data-msg-loc-ok') || '';
+            var hint = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Register_LocationHint"].Value));
+
+            function hasCoords() {
+                return !!(lat.value && lng.value) && !(Number(lat.value) === 0 && Number(lng.value) === 0);
+            }
+            function setStatus(text, ok) {
+                if (!status) return;
+                status.textContent = text;
+                status.classList.toggle('is-ok', !!ok);
+                status.classList.toggle('is-err', ok === false);
+            }
+            function applyLocation(cityLabel, latitude, longitude) {
+                city.value = cityLabel || city.value || '';
+                lat.value = String(latitude);
+                lng.value = String(longitude);
+                if (locErr) { locErr.hidden = true; locErr.style.display = 'none'; }
+                setStatus((msgOk ? msgOk + ': ' : '') + (cityLabel || (latitude + ', ' + longitude)), true);
+                if (manual) manual.open = !cityLabel;
+                city.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            city.addEventListener('input', function () {
+                lat.value = '';
+                lng.value = '';
+                if (locErr) locErr.hidden = true;
+                setStatus(hint, null);
+            });
+
+            if (locBtn && navigator.geolocation) {
+                locBtn.addEventListener('click', function () {
+                    locBtn.disabled = true;
+                    setStatus(msgLoading, null);
+                    navigator.geolocation.getCurrentPosition(function (pos) {
+                        var la = pos.coords.latitude;
+                        var ln = pos.coords.longitude;
+                        fetch('/api/places/reverse?lat=' + encodeURIComponent(la) + '&lng=' + encodeURIComponent(ln), {
+                            headers: { Accept: 'application/json' }
+                        })
+                          .then(function (r) { return r.ok ? r.json() : {}; })
+                          .then(function (data) {
+                              applyLocation(data.city || data.label || msgOk || '', data.lat != null ? data.lat : la, data.lng != null ? data.lng : ln);
+                              locBtn.disabled = false;
+                          })
+                          .catch(function () {
+                              applyLocation(msgOk || '', la, ln);
+                              locBtn.disabled = false;
+                          });
+                    }, function () {
+                        setStatus(msgFail, false);
+                        if (manual) manual.open = true;
+                        locBtn.disabled = false;
+                        city.focus();
+                    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+                });
+            } else if (locBtn) {
+                locBtn.hidden = true;
+                if (manual) manual.open = true;
+            }
+
+            if (hasCoords() && (city.value || '').trim()) {
+                setStatus((msgOk ? msgOk + ': ' : '') + city.value, true);
+            }
+        }
     })();
     </script>
 }

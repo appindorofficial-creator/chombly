@@ -3,11 +3,11 @@
 @{
     ViewData["Title"] = "Agendar llamada";
     ViewData["GroomerTab"] = "dashboard";
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
     <a class="back-btn" asp-page="./Verification" style="margin-bottom:8px;display:inline-block">←</a>
     <h2 style="margin:0 0 6px">Agendar llamada</h2>
@@ -49,4 +49,6 @@
             <button class="btn btn-primary btn-block" type="submit">Confirmar llamada</button>
         </form>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

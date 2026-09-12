@@ -3,15 +3,14 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Servicio y precio", "Service & price");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Safety", new { consultationId = Model.ConsultationId });
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Servicio y precio", "Service & price")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Servicio y precio", "Service & price")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("El alcance importa más que el precio", "Scope matters more than price")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -47,4 +46,6 @@
         }
         <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

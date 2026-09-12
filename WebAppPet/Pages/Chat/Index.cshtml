@@ -4,20 +4,13 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Chat", "Chat");
     ViewData["HideNav"] = true;
     ViewData["BodyClass"] = "chat-layout";
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Model.UseHistoryBack ? "javascript:history.back()" : Model.BackHref;
+    var HideNav = true;
 }
-<div class="chat-shell">
-    <div class="page-header chat-header">
-        @if (Model.UseHistoryBack)
-        {
-            <a class="back-btn" href="@Model.BackHref" onclick="history.back();return false;">←</a>
-        }
-        else
-        {
-            <a class="back-btn" href="@Model.BackHref">←</a>
-        }
-        <h1>@(Model.Groomer?.BusinessName ?? CatalogLocalizer.Loc("Chat", "Chat"))</h1>
-    </div>
-
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
     <main class="chat-page">
         @if (Model.Groomer == null)
         {
@@ -60,6 +53,7 @@
             </form>
         }
     </main>
+    </div>
 </div>
 
 @section Scripts {

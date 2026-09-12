@@ -18,5 +18,6 @@
 }
 else
 {
-    <script>console.warn('GoogleMaps:BrowserApiKey no configurada');</script>
+    @* Local/dev without BrowserApiKey: OpenStreetMap suggestions via /api/places/suggest *@
+    <script src="~/js/city-places-fallback.js" asp-append-version="true"></script>
 }

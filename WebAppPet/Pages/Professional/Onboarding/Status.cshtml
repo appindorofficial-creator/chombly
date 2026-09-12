@@ -6,12 +6,12 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Estado de onboarding", "Onboarding status");
     ViewData["GroomerTab"] = "onboarding";
+    ViewData["LangCompact"] = true;
     var a = Model.Application;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
     <h1 class="page-title">@CatalogLocalizer.Loc("Estado de solicitud", "Application status")</h1>
 
@@ -50,4 +50,6 @@
             <a class="btn btn-outline btn-block" style="margin-top:12px" asp-page="/Professional/Payouts">@CatalogLocalizer.Loc("Ver mis pagos", "View my payouts")</a>
         }
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

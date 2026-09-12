@@ -54,15 +54,17 @@ public static class PetSpecies
 
     public static string DefaultPhoto(string? species) => species switch
     {
-        Cat => "/images/pet-cat.svg",
-        Rabbit => "/images/pet-rabbit.svg",
-        GuineaPig => "/images/pet-guineapig.svg",
-        Bird => "/images/pet-bird.svg",
-        Ferret => "/images/pet-ferret.svg",
-        Other => "/images/pet-other.svg",
-        Dog => "/images/dog-max.png",
-        _ => "/images/pet-other.svg"
+        Cat => "/images/species/cat-face.png",
+        Rabbit => "/images/species/rabbit-face.png",
+        GuineaPig => "/images/species/guineapig-face.png",
+        Bird => "/images/species/bird-face.png",
+        Ferret => "/images/species/ferret-face.png",
+        Other => "/images/species/other-face.png",
+        Dog => "/images/species/dog-face.png",
+        _ => "/images/species/other-face.png"
     };
+
+    public static string IconPath(string? species) => DefaultPhoto(species);
 
     public static string PhotoOrDefault(string? photoUrl, string? species) =>
         string.IsNullOrWhiteSpace(photoUrl) ? DefaultPhoto(species) : photoUrl;

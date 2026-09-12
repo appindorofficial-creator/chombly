@@ -2,21 +2,21 @@
 @model WebAppPet.Pages.Pets.CareModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc($"Control de {Model.Pet?.Name}", $"Care for {Model.Pet?.Name}");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Pets/Index");
+    var HideNav = ViewData["HideNav"] as bool? == true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Pets/Index">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc($"Control de {Model.Pet?.Name}", $"Care for {Model.Pet?.Name}")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("Historial, plan y próximas tareas", "History, plan, and upcoming tasks")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc($"Control de {Model.Pet?.Name}", $"Care for {Model.Pet?.Name}")</h1>
+    <p class="muted small">@CatalogLocalizer.Loc("Historial, plan y próximas tareas", "History, plan, and upcoming tasks")</p>
     <div class="card card-pad" style="margin-bottom:14px">
         <strong>@Model.Pet?.Name</strong>
         <p class="muted small mb-0">@Model.Pet?.Species · @Model.Pet?.Breed · @Model.Pet?.AgeYears @CatalogLocalizer.Loc("años", "yrs")</p>
     </div>
 
-    <div class="card card-pad @(Model.Subscription != null ? "vet-vcpr-ok" : "vet-vcpr-missing")" style="margin-bottom:14px">
+    <div class="card card-pad @(Model.Subscription != null ? "vet-vcpr-ok" : "vet-vcpr-missing care-upsell")" style="margin-bottom:14px">
         @if (Model.Subscription != null)
         {
             <strong>Chombly Care</strong>
@@ -86,4 +86,6 @@
             @CatalogLocalizer.Loc("Crear aviso rápido de vacunas/chequeo", "Create quick vaccine/checkup notice")
         </button>
     </form>
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

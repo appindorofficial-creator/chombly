@@ -3,12 +3,14 @@
 @{
     ViewData["Title"] = L["Pay_Title"].Value;
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("./Profile");
+    var HideNav = true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="./Profile">←</a>
-    <h1>@L["Pay_Title"]</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">@L["Pay_Title"]</h1>
     @foreach (var m in Model.Items)
     {
         <div class="card card-pad" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
@@ -33,7 +35,9 @@
         <div class="alert alert-danger" id="pay-server-error">@Model.ErrorMessage</div>
     }
     <div class="alert alert-danger" id="pay-client-error" hidden></div>
-    <form method="post" id="pay-form" novalidate>
+    <form method="post" id="pay-form" novalidate data-feedback="save"
+          data-feedback-loading="@L["Feedback_Saving"]"
+          data-feedback-done="@L["Feedback_Saved"]">
         <div class="form-group">
             <label for="CardNumber">@L["Pay_CardNumber"]</label>
             <input class="form-control" asp-for="CardNumber" id="CardNumber"
@@ -67,7 +71,9 @@
         <button class="btn btn-primary btn-block" type="submit">@L["Common_Save"]</button>
         <p class="muted small" style="text-align:center;margin-top:10px">@L["Pay_Disclaimer"]</p>
     </form>
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>
 
 <script>
 (function () {

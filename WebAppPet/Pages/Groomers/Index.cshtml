@@ -1,17 +1,19 @@
 @page
 @model WebAppPet.Pages.Groomers.IndexModel
+@using WebAppPet.Services
 @{
     var catName = Model.ActiveCategory?.DisplayName();
     ViewData["Title"] = catName ?? L["Search_Title"].Value;
     var title = Model.ActiveCategory != null
         ? $"{Model.ActiveCategory.Emoji} {catName}"
         : L["Search_ServicesTitle"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <h1>@title</h1>
-</div>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <h1 class="app-page-heading">@title</h1>
     @if (Model.ActiveCategory != null)
     {
         <p class="muted small" style="margin-top:-8px">@Model.ActiveCategory.DisplaySubtitle()</p>
@@ -58,12 +60,15 @@
            asp-page="./Index" asp-route-category="@Model.Category" asp-route-q="@Model.Q" asp-route-city="@Model.City">@L["Search_AllPets"]</a>
         @foreach (var sp in PetSpecies.All.Take(5))
         {
-            <a class="chip @(Model.Species == sp.Value ? "active" : "")"
+            <a class="chip chip-species @(Model.Species == sp.Value ? "active" : "")"
                asp-page="./Index"
                asp-route-category="@Model.Category"
                asp-route-species="@sp.Value"
                asp-route-q="@Model.Q"
-               asp-route-city="@Model.City">@sp.Emoji @(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</a>
+               asp-route-city="@Model.City">
+                <img src="~@PetSpecies.IconPath(sp.Value)" asp-append-version="true" alt="" class="chip-species-img" />
+                @(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)
+            </a>
         }
         @if (string.Equals(Model.Species, PetSpecies.Other, StringComparison.OrdinalIgnoreCase))
         {
@@ -93,9 +98,10 @@
     {
         var g = item.Business;
         var isFav = Model.FavoriteIds.Contains(g.Id);
+        var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
         <div class="groomer-card-wrap">
             <a class="groomer-card" asp-page="./Details" asp-route-id="@g.Id" asp-route-service="@Model.Service">
-                <img src="@(g.ImageUrl ?? "/images/pet-other.svg")" alt="@g.BusinessName" />
+                <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
                 <div class="info">
                     <h3>@g.BusinessName</h3>
                     <div class="meta-row">
@@ -140,7 +146,9 @@
     {
         <div class="empty">@L["Search_Empty"]</div>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @section Scripts {
 <script>

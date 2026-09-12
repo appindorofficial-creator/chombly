@@ -5,37 +5,120 @@
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     Layout = "_Layout";
+    var loggedIn = User.Identity?.IsAuthenticated == true;
 }
-<div class="splash">
-    <div class="splash-top">
-        <div class="splash-logo">
-            <img src="~/images/chombly-monkey.png" alt="Chombly" class="splash-mascot" />
-            <div class="splash-brand">
-                <span class="splash-name">Chombly</span>
-                <span class="splash-tag">Pet Care App</span>
+<div class="onboard" data-audience="families">
+    <header class="onboard-top">
+        <div class="onboard-brand">
+            <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" />
+            <strong class="onboard-word">Chombly</strong>
+        </div>
+        <partial name="_LanguageSwitch" />
+    </header>
+
+    <div class="onboard-stage">
+        <div class="onboard-card">
+            <div class="onboard-slides" id="onboard-slides">
+                <article class="onboard-slide is-active" data-slide="0">
+                    <img src="~/images/onboarding/dev-owner.webp" alt="" class="onboard-art" />
+                    <h1>@L["Onboard_Slide1Title"]</h1>
+                    <p>@Html.Raw(L["Onboard_Slide1Body"].Value)</p>
+                </article>
+                <article class="onboard-slide" data-slide="1" hidden>
+                    <img src="~/images/onboarding/dev-grooming.webp" alt="" class="onboard-art" />
+                    <h1>@L["Onboard_Slide2Title"]</h1>
+                    <p>@Html.Raw(L["Onboard_Slide2Body"].Value)</p>
+                </article>
+                <article class="onboard-slide" data-slide="2" hidden>
+                    <img src="~/images/onboarding/dev-vet.webp" alt="" class="onboard-art" />
+                    <h1>@L["Onboard_Slide3Title"]</h1>
+                    <p>@Html.Raw(L["Onboard_Slide3Body"].Value)</p>
+                </article>
+                <article class="onboard-slide" data-slide="3" hidden>
+                    <img src="~/images/onboarding/dev-walk.webp" alt="" class="onboard-art" />
+                    <h1>@L["Onboard_Slide4Title"]</h1>
+                    <p>@Html.Raw(L["Onboard_Slide4Body"].Value)</p>
+                </article>
+            </div>
+            <div class="onboard-dots" id="onboard-dots" aria-hidden="true">
+                <button type="button" class="is-active" data-dot="0" aria-label="1"></button>
+                <button type="button" data-dot="1" aria-label="2"></button>
+                <button type="button" data-dot="2" aria-label="3"></button>
+                <button type="button" data-dot="3" aria-label="4"></button>
             </div>
         </div>
-        <div class="splash-lang">
-            <partial name="_LanguageSwitch" />
+    </div>
+
+    <div class="onboard-footer">
+        <div class="segmented" role="tablist" aria-label="@L["Onboard_Audience"]">
+            <button type="button" class="is-active" data-audience-btn="families" role="tab" aria-selected="true">@L["Onboard_Families"]</button>
+            <button type="button" data-audience-btn="biz" role="tab" aria-selected="false">@L["Onboard_Biz"]</button>
         </div>
-    </div>
-    <div class="splash-hero">
-        <p class="splash-slogan">@L["Welcome_Slogan"]</p>
-        <img src="~/images/hero-dog.png" alt="Chombly pet care" class="splash-photo" />
-    </div>
-    <div class="splash-actions">
-        <h2>@L["Welcome_Hero"]</h2>
-        <p>@string.Format(L["Welcome_HeroSub"].Value, L["Hotel_Title"].Value, L["Vet_Title"].Value, L["Daycare_Title"].Value, L["Walkers_Title"].Value, L["Trainers_Title"].Value)</p>
-        <a class="btn btn-primary btn-block" asp-page="/Index">@L["Welcome_Explore"]</a>
-        @if (User.Identity?.IsAuthenticated != true)
-        {
-            <a class="btn btn-outline btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Index">@L["Login_Title"]</a>
-            <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:8px">@L["Register_Title"]</a>
-        }
-        <a class="btn btn-outline btn-block" asp-page="/Account/RegisterBusiness" style="margin-top:8px">@L["Welcome_Business"]</a>
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <a class="link-btn" asp-page="/Index" style="display:block;text-align:center;margin-top:14px">@L["Welcome_BackHome"]</a>
-        }
+
+        <div data-cta-families>
+            @if (loggedIn)
+            {
+                <a class="btn btn-enter btn-block" asp-page="/Index">@L["Onboard_EnterFamilies"]</a>
+            }
+            else
+            {
+                <a class="btn btn-enter btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Index">@L["Onboard_EnterFamilies"]</a>
+                <a class="onboard-secondary" asp-page="/Account/Register">@L["Register_Title"]</a>
+            }
+        </div>
+        <div data-cta-biz hidden>
+            <a class="btn btn-enter btn-block" asp-page="/Account/RegisterBusiness">@L["Onboard_EnterBiz"]</a>
+            <a class="onboard-secondary" asp-page="/Index">@L["Welcome_Explore"]</a>
+        </div>
+
+        <p class="onboard-version">Chombly · Pet Care</p>
     </div>
 </div>
+
+<script>
+(() => {
+  const root = document.querySelector('.onboard');
+  if (!root) return;
+  const slides = [...root.querySelectorAll('.onboard-slide')];
+  const dots = [...root.querySelectorAll('[data-dot]')];
+  let i = 0;
+
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, idx) => {
+      const on = idx === i;
+      s.classList.toggle('is-active', on);
+      s.hidden = !on;
+    });
+    dots.forEach((d, idx) => d.classList.toggle('is-active', idx === i));
+  }
+
+  dots.forEach(d => d.addEventListener('click', () => show(+d.dataset.dot)));
+  let startX = 0;
+  const card = root.querySelector('.onboard-card');
+  card?.addEventListener('touchstart', e => { startX = e.changedTouches[0].clientX; }, { passive: true });
+  card?.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) < 40) return;
+    show(i + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+  setInterval(() => show(i + 1), 5500);
+
+  function setAudience(whi) {
+    root.dataset.audience = whi;
+    const families = whi === 'families';
+    root.querySelectorAll('[data-audience-btn]').forEach(b => {
+      const on = b.dataset.audienceBtn === whi;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    const ctaFamilies = root.querySelector('[data-cta-families]');
+    const ctaBiz = root.querySelector('[data-cta-biz]');
+    if (ctaFamilies) ctaFamilies.hidden = !families;
+    if (ctaBiz) ctaBiz.hidden = families;
+  }
+  root.querySelectorAll('[data-audience-btn]').forEach(b => {
+    b.addEventListener('click', () => setAudience(b.dataset.audienceBtn));
+  });
+})();
+</script>

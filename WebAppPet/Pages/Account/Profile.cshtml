@@ -2,99 +2,119 @@
 @model WebAppPet.Pages.Account.ProfileModel
 @{
     ViewData["Title"] = L["Profile_Title"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardShowLang"] = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Account/Profile";
 }
-<header class="topbar">
-    <partial name="_Brand" />
-    @if (Model.UserEntity != null)
-    {
-        <div class="topbar-right">
-            <a class="icon-btn" asp-page="/Account/Notifications" asp-route-returnUrl="/Account/Profile" title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
-                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
-            </a>
-        </div>
-    }
-</header>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        @if (Model.UserEntity == null)
+        {
+            <div class="empty-chombly">
+                <img src="~/brand/v2/chombly-mark.png" alt="" class="empty-illu" style="max-width:140px" />
+                <h2>@L["Profile_GuestTitle"]</h2>
+                <p>@L["Profile_GuestSub"]</p>
+                <a class="btn btn-primary btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Account/Profile">@L["Login_Title"]</a>
+                <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:10px">@L["Register_Title"]</a>
+            </div>
 
-<main class="app-main">
-    <div class="lang-profile-block">
-        <div>
-            <strong>@L["Profile_Language"]</strong>
-            <p class="muted small" style="margin:2px 0 0">@L["Common_LanguageHint"]</p>
-        </div>
-        <partial name="_LanguageSwitch" />
+            <div class="menu-list menu-chombly" style="margin-top:16px">
+                <p class="menu-section-label">@CatalogLocalizer.Loc("Explorar", "Explore")</p>
+                <a asp-page="/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🏠</span> @L["Profile_Explore"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🏪</span> @L["Profile_BecomeBusiness"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Welcome"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✨</span> @L["Profile_WelcomeLink"]</span><span class="chev" aria-hidden="true">›</span></a>
+            </div>
+        }
+        else
+        {
+            <div class="profile-card">
+                <div class="profile-avatar">👤</div>
+                <h2>@Model.UserEntity.FullName</h2>
+                <ul class="profile-facts">
+                    <li class="profile-fact">
+                        <span class="profile-fact-ico" aria-hidden="true">✉️</span>
+                        <span class="profile-fact-value">@Model.UserEntity.Email</span>
+                        <button type="button" class="profile-fact-copy"
+                                data-copy="@Model.UserEntity.Email"
+                                data-copy-ok="✓ @L["Feedback_Copied"]"
+                                data-copy-fail="@L["Feedback_CopyFail"]"
+                                aria-label="@L["Feedback_Copied"]">⧉</button>
+                    </li>
+                    @if (!string.IsNullOrWhiteSpace(Model.UserEntity.Phone))
+                    {
+                        <li class="profile-fact">
+                            <span class="profile-fact-ico" aria-hidden="true">📞</span>
+                            <span class="profile-fact-value">@Model.UserEntity.Phone</span>
+                        </li>
+                    }
+                    <li class="profile-fact" id="profile-city-line">
+                        <span class="profile-fact-ico" aria-hidden="true">📍</span>
+                        <span class="profile-fact-value">@(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)</span>
+                    </li>
+                </ul>
+                @if (Model.HasGpsLocation)
+                {
+                    <p class="profile-loc-status is-ok" id="profile-gps-status">
+                        <span aria-hidden="true">✅</span>
+                        <span>@L["Profile_LocationGpsOk"]</span>
+                    </p>
+                }
+                else
+                {
+                    <p class="profile-loc-status is-warn" id="profile-gps-status">
+                        <span aria-hidden="true">⚠️</span>
+                        <span>@L["Profile_LocationGpsMissing"]</span>
+                    </p>
+                }
+                <div class="profile-actions">
+                    <button type="button" class="btn profile-action-btn" id="btn-profile-loc">
+                        📍 @L["Search_UseMyLocation"]
+                    </button>
+                    <a class="btn profile-action-btn" asp-page="/Account/EditProfile">✏️ @L["Profile_Edit"]</a>
+                </div>
+            </div>
+
+            <div class="menu-list menu-chombly">
+                @if (Model.UserEntity.Role == UserRole.Groomer)
+                {
+                    <p class="menu-section-label">@CatalogLocalizer.Loc("Negocio", "Business")</p>
+                    <a asp-page="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Professional/Onboarding"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🩺</span> @CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Professional/Payouts"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💵</span> @CatalogLocalizer.Loc("Mis pagos", "My payouts")</span><span class="chev" aria-hidden="true">›</span></a>
+                }
+                else if (Model.UserEntity.Role == UserRole.Admin)
+                {
+                    <p class="menu-section-label">Admin</p>
+                    <a asp-page="/Admin/Approvals"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✅</span> @L["Profile_AdminApprovals"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Admin/ProfessionalApprovals"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🩺</span> Onboarding profesional</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Admin/Payouts"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💵</span> Payouts</span><span class="chev" aria-hidden="true">›</span></a>
+                }
+
+                <p class="menu-section-label">@CatalogLocalizer.Loc("Tu actividad", "Your activity")</p>
+                <a asp-page="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Chat/Inbox"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💬</span> @L["Profile_Messages"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Account/Favorites"><span class="menu-left"><span class="menu-ico" aria-hidden="true">❤️</span> @L["Profile_Favorites"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Appointments/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">📅</span> @L["Profile_MyAppointments"]</span><span class="chev" aria-hidden="true">›</span></a>
+
+                <p class="menu-section-label">@CatalogLocalizer.Loc("Cuenta", "Account")</p>
+                @if (Model.UserEntity.Role != UserRole.Groomer && Model.UserEntity.Role != UserRole.Admin)
+                {
+                    <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🏪</span> @L["Profile_BecomeBusiness"]</span><span class="chev" aria-hidden="true">›</span></a>
+                }
+                <a asp-page="/Account/PaymentMethods"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💳</span> @L["Profile_Payments"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Account/Notifications" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🔔</span> @L["Profile_Notifications"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Welcome"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✨</span> @L["Profile_WelcomeLink"]</span><span class="chev" aria-hidden="true">›</span></a>
+            </div>
+
+            <div class="menu-list menu-chombly menu-chombly-logout">
+                <a asp-page="/Account/Logout" class="menu-logout"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🚪</span> @L["Profile_Logout"]</span><span class="chev" aria-hidden="true">›</span></a>
+            </div>
+        }
     </div>
-
-    @if (Model.UserEntity == null)
-    {
-        <div class="empty-chombly">
-            <img src="~/images/chombly-monkey.png" alt="" class="empty-illu" style="max-width:140px" />
-            <h2>@L["Profile_GuestTitle"]</h2>
-            <p>@L["Profile_GuestSub"]</p>
-            <a class="btn btn-primary btn-block" asp-page="/Account/Login" asp-route-returnUrl="/Account/Profile">@L["Login_Title"]</a>
-            <a class="btn btn-outline btn-block" asp-page="/Account/Register" style="margin-top:10px">@L["Register_Title"]</a>
-        </div>
-
-        <div class="menu-list menu-chombly" style="margin-top:16px">
-            <a asp-page="/Index"><span class="menu-left"><span class="menu-ico">🏠</span> @L["Profile_Explore"]</span><span class="chev">›</span></a>
-            <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico">🏪</span> @L["Profile_BecomeBusiness"]</span><span class="chev">›</span></a>
-            <a asp-page="/Welcome"><span class="menu-left"><span class="menu-ico">✨</span> @L["Profile_WelcomeLink"]</span><span class="chev">›</span></a>
-        </div>
-    }
-    else
-    {
-        <div class="profile-card">
-            <div class="profile-avatar">👤</div>
-            <h2>@Model.UserEntity.FullName</h2>
-            <p class="muted small">@Model.UserEntity.Email</p>
-            @if (!string.IsNullOrWhiteSpace(Model.UserEntity.Phone))
-            {
-                <p class="muted small">📞 @Model.UserEntity.Phone</p>
-            }
-            <p class="muted small location" id="profile-city-line">
-                📍 @(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)
-            </p>
-            @if (Model.HasGpsLocation)
-            {
-                <p class="muted small" id="profile-gps-status" style="margin-top:4px">✅ @L["Profile_LocationGpsOk"]</p>
-            }
-            else
-            {
-                <p class="muted small" id="profile-gps-status" style="margin-top:4px">⚠️ @L["Profile_LocationGpsMissing"]</p>
-            }
-            <button type="button" class="btn btn-outline btn-block" id="btn-profile-loc" style="margin-top:10px">
-                📍 @L["Search_UseMyLocation"]
-            </button>
-            <a class="btn btn-outline btn-block" asp-page="/Account/EditProfile" style="margin-top:10px">✏️ @L["Profile_Edit"]</a>
-        </div>
-
-        <div class="menu-list menu-chombly">
-            @if (Model.UserEntity.Role == UserRole.Groomer)
-            {
-                <a asp-page="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev">›</span></a>
-                <a asp-page="/Professional/Onboarding"><span class="menu-left"><span class="menu-ico">🩺</span> @CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</span><span class="chev">›</span></a>
-                <a asp-page="/Professional/Payouts"><span class="menu-left"><span class="menu-ico">💵</span> @CatalogLocalizer.Loc("Mis pagos", "My payouts")</span><span class="chev">›</span></a>
-            }
-            else if (Model.UserEntity.Role == UserRole.Admin)
-            {
-                <a asp-page="/Admin/Approvals"><span class="menu-left"><span class="menu-ico">✅</span> @L["Profile_AdminApprovals"]</span><span class="chev">›</span></a>
-                <a asp-page="/Admin/ProfessionalApprovals"><span class="menu-left"><span class="menu-ico">🩺</span> Onboarding profesional</span><span class="chev">›</span></a>
-                <a asp-page="/Admin/Payouts"><span class="menu-left"><span class="menu-ico">💵</span> Payouts</span><span class="chev">›</span></a>
-            }
-            else
-            {
-                <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico">🏪</span> @L["Profile_BecomeBusiness"]</span><span class="chev">›</span></a>
-            }
-            <a asp-page="/Pets/Index"><span class="menu-left"><span class="menu-ico">🐾</span> @L["Profile_MyPets"]</span><span class="chev">›</span></a>
-            <a asp-page="/Chat/Inbox"><span class="menu-left"><span class="menu-ico">💬</span> @L["Profile_Messages"]</span><span class="chev">›</span></a>
-            <a asp-page="/Account/Favorites"><span class="menu-left"><span class="menu-ico">❤️</span> @L["Profile_Favorites"]</span><span class="chev">›</span></a>
-            <a asp-page="/Appointments/Index"><span class="menu-left"><span class="menu-ico">📅</span> @L["Profile_MyAppointments"]</span><span class="chev">›</span></a>
-            <a asp-page="/Account/PaymentMethods"><span class="menu-left"><span class="menu-ico">💳</span> @L["Profile_Payments"]</span><span class="chev">›</span></a>
-            <a asp-page="/Account/Notifications" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico">🔔</span> @L["Profile_Notifications"]</span><span class="chev">›</span></a>
-            <a asp-page="/Welcome"><span class="menu-left"><span class="menu-ico">✨</span> @L["Profile_WelcomeLink"]</span><span class="chev">›</span></a>
-            <a asp-page="/Account/Logout" class="menu-logout"><span class="menu-left"><span class="menu-ico">🚪</span> @L["Profile_Logout"]</span><span class="chev">›</span></a>
-        </div>
-    }
-</main>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @section Scripts {
 @if (Model.UserEntity != null)
@@ -140,6 +160,7 @@
 
   btn.addEventListener('click', function () {
     btn.disabled = true;
+    btn.classList.add('is-active');
     navigator.geolocation.getCurrentPosition(async function (pos) {
       var lat = pos.coords.latitude;
       var lng = pos.coords.longitude;
@@ -159,20 +180,30 @@
         if (!res.ok || !data.ok) {
           alert(failMsg);
           btn.disabled = false;
+          btn.classList.remove('is-active');
           return;
         }
-        if (cityLine && (data.city || city))
-          cityLine.textContent = '📍 ' + (data.city || city);
-        if (gpsStatus) gpsStatus.textContent = '✅ ' + okMsg;
+        if (cityLine && (data.city || city)) {
+          var cityText = cityLine.querySelector('.profile-fact-value');
+          if (cityText) cityText.textContent = data.city || city;
+          else cityLine.textContent = '📍 ' + (data.city || city);
+        }
+        if (gpsStatus) {
+          gpsStatus.className = 'profile-loc-status is-ok';
+          gpsStatus.innerHTML = '<span aria-hidden="true">✅</span><span>' + okMsg + '</span>';
+        }
         btn.disabled = false;
+        btn.classList.remove('is-active');
         alert(updatedMsg);
       } catch (_) {
         alert(failMsg);
         btn.disabled = false;
+        btn.classList.remove('is-active');
       }
     }, function () {
       alert(failMsg);
       btn.disabled = false;
+      btn.classList.remove('is-active');
     });
   });
 })();

@@ -1,204 +1,274 @@
 ﻿@page "/Index"
 @model WebAppPet.Pages.IndexModel
+@using WebAppPet.Services
 @{
     ViewData["Title"] = L["Nav_Home"].Value;
-    string PopularIcon(string name)
-    {
-        var n = name.ToLowerInvariant();
-        if (n.Contains("baño") || n.Contains("bano") || n.Contains("cepill") || n.Contains("bath"))
-            return "/images/icons/svc-bath.png";
-        if (n.Contains("deshedd") || n.Contains("muda") || n.Contains("pelo"))
-            return "/images/icons/svc-deshedding.png";
-        if (n.Contains("corte") || n.Contains("clip") || n.Contains("estilo") || n.Contains("cut"))
-            return "/images/icons/svc-cut.png";
-        if (n.Contains("consulta") || n.Contains("vacun") || n.Contains("vet"))
-            return "/images/categories/cat-vet.png";
-        if (n.Contains("noche") || n.Contains("hotel") || n.Contains("board"))
-            return "/images/categories/cat-hotel.png";
-        if (n.Contains("día") || n.Contains("dia") || n.Contains("daycare"))
-            return "/images/categories/cat-daycare.png";
-        if (n.Contains("paseo") || n.Contains("walk"))
-            return "/images/categories/cat-walkers.png";
-        if (n.Contains("entren") || n.Contains("cachorr") || n.Contains("obedien") || n.Contains("train"))
-            return "/images/categories/cat-trainers.png";
-        return "/images/icons/svc-grooming.png";
-    }
+    ViewData["LangCompact"] = true;
+    ViewData["BodyClass"] = "page-onboard-home";
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Index";
 }
-<header class="topbar">
-    <partial name="_Brand" />
-    <div class="topbar-right">
-        @{ ViewData["LangCompact"] = true; }
-        <partial name="_LanguageSwitch" />
-        <a class="icon-btn" asp-page="/Account/Notifications" asp-route-returnUrl="/Index" title="@L["Profile_Notifications"]" aria-label="@L["Profile_Notifications"]">
-            <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
-        </a>
-    </div>
-</header>
+<div class="onboard onboard-home">
+    <partial name="_OnboardTop" />
 
-<main class="app-main">
-    <div class="hero-copy">
-        <h2>
-            @L["Home_HeroTitle"]
-            <img src="~/images/icons/ico-leaves.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
-        </h2>
-        <p class="muted small" style="margin:4px 0 0">@L["Home_HeroSubtitle"]</p>
-    </div>
+    <div class="home-body">
+        <section class="home-hero">
+            <p class="home-hello">
+                @(string.IsNullOrWhiteSpace(Model.GreetingName)
+                    ? L["Home_HeroHelloGuest"].Value
+                    : string.Format(L["Home_HeroHello"].Value, Model.GreetingName))
+            </p>
+            <h1>@L["Home_HeroTitle"]</h1>
+            <p>@L["Home_HeroSubtitle"]</p>
+            <form method="get" asp-page="/Groomers/Index" class="home-search">
+                <input class="form-control" name="city" value="@Model.City" data-places="city" data-places-fill="city"
+                       placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
+                <button class="btn btn-enter" type="submit">@L["Common_Search"]</button>
+            </form>
+        </section>
 
-    <form method="get" asp-page="/Groomers/Index" class="search-box">
-        <input class="form-control" name="city" value="@Model.City" data-places="city" data-places-fill="city"
-               placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
-        <button class="btn btn-primary" type="submit">@L["Common_Search"]</button>
-    </form>
+        <h2 class="home-section-title">@L["Home_Categories"]</h2>
+        @if (Model.Categories.Any())
+        {
+            <div class="hscroll" data-hscroll>
+                <div class="category-scroll hscroll-rail" data-hscroll-rail>
+                    @foreach (var c in Model.Categories)
+                    {
+                        var catPage = c.Slug switch
+                        {
+                            "hotel" => "/Hotel/Index",
+                            "vet" => "/Vet/Index",
+                            "daycare" => "/Daycare/Index",
+                            "walkers" => "/Walkers/Index",
+                            "trainers" => "/Trainers/Index",
+                            _ => "/Groomers/Index"
+                        };
+                        var catRoute = c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug;
+                        <a class="category-chip category-chip-illus" asp-page="@catPage" asp-route-category="@catRoute">
+                            <span class="category-img-wrap">
+                                <img src="~/images/categories/cat-@(c.Slug)-v2.png" asp-append-version="true" alt="@c.DisplayName()" class="category-img" />
+                            </span>
+                            <strong>@c.DisplayName()</strong>
+                        </a>
+                    }
+                </div>
+                <div class="hscroll-dots" data-hscroll-dots aria-hidden="true"></div>
+            </div>
+        }
+        else
+        {
+            <div class="empty">@L["Home_EmptyCategories"]</div>
+        }
 
-    <h3 class="section-title">@L["Home_Categories"]</h3>
-    @if (Model.Categories.Any())
-    {
-        <div class="category-scroll">
-            @foreach (var c in Model.Categories)
-            {
-                var catPage = c.Slug switch
+        <h2 class="home-section-title">@L["Home_WhatPet"]</h2>
+        <div class="hscroll" data-hscroll>
+            <div class="species-scroll hscroll-rail" id="home-species-scroll" data-hscroll-rail>
+                @foreach (var sp in PetSpecies.All)
                 {
-                    "hotel" => "/Hotel/Index",
-                    "vet" => "/Vet/Index",
-                    "daycare" => "/Daycare/Index",
-                    "walkers" => "/Walkers/Index",
-                    "trainers" => "/Trainers/Index",
-                    _ => "/Groomers/Index"
-                };
-                var catRoute = c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug;
-                var icon = $"/images/categories/cat-{c.Slug}.png";
-                <a class="category-chip category-chip-illus" asp-page="@catPage" asp-route-category="@catRoute">
-                    <span class="category-img-wrap">
-                        <img src="@icon" alt="@c.DisplayName()" class="category-img" />
-                    </span>
-                    <strong>@c.DisplayName()</strong>
-                </a>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="empty">@L["Home_EmptyCategories"]</div>
-    }
-
-    <h3 class="section-title">@L["Home_WhatPet"]</h3>
-    <div class="species-scroll" id="home-species-scroll">
-        @foreach (var sp in PetSpecies.All)
-        {
-            if (sp.Value == PetSpecies.Other)
-            {
-                <button type="button" class="species-chip" id="species-other-chip"
-                        data-species="@PetSpecies.Other"
-                        aria-expanded="false" aria-controls="other-species-panel">
-                    <span class="species-emoji">@sp.Emoji</span>
-                    <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
-                </button>
-            }
-            else
-            {
-                <a class="species-chip" asp-page="/Groomers/Index" asp-route-species="@sp.Value">
-                    <span class="species-emoji">@sp.Emoji</span>
-                    <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
-                </a>
-            }
-        }
-    </div>
-    <div id="other-species-panel" class="other-species-panel" hidden>
-        <form method="get" asp-page="/Groomers/Index" id="other-species-form" class="other-species-form">
-            <input type="hidden" name="species" value="@PetSpecies.Other" />
-            <label class="small" for="customType">@L["Home_OtherPet"]</label>
-            <div class="other-species-row">
-                <input class="form-control" id="customType" name="customType" maxlength="80"
-                       placeholder="@L["Home_OtherPetPlaceholder"]" autocomplete="off" />
-                <button class="btn btn-primary" type="submit">@L["Common_Search"]</button>
+                    if (sp.Value == PetSpecies.Other)
+                    {
+                        <button type="button" class="species-chip" id="species-other-chip"
+                                data-species="@PetSpecies.Other"
+                                aria-expanded="false" aria-controls="other-species-panel">
+                            <span class="species-img-wrap">
+                                <img src="~@PetSpecies.IconPath(PetSpecies.Other)" asp-append-version="true" alt="" class="species-img" />
+                            </span>
+                            <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <a class="species-chip" asp-page="/Groomers/Index" asp-route-species="@sp.Value">
+                            <span class="species-img-wrap">
+                                <img src="~@PetSpecies.IconPath(sp.Value)" asp-append-version="true" alt="" class="species-img" />
+                            </span>
+                            <span>@(CultureCookie.IsEnglish() ? sp.LabelEn : sp.Label)</span>
+                        </a>
+                    }
+                }
             </div>
-            <p class="field-error" id="other-species-error" hidden>@L["Home_OtherPetRequired"]</p>
-        </form>
-    </div>
-
-    <a class="card card-pad" asp-page="/Care/Services" style="display:block;margin-bottom:16px;text-decoration:none;color:inherit">
-        <strong>@L["Home_CareTitle"]</strong>
-        <span class="muted small" style="display:block">@L["Home_CareSub"]</span>
-    </a>
-
-    <h3 class="section-title">@L["Home_Popular"]</h3>
-    <div class="services-scroll">
-        @foreach (var name in Model.PopularServices)
-        {
-            <a class="service-pill service-pill-rich" asp-page="/Groomers/Index" asp-route-service="@name">
-                <span class="service-img-wrap">
-                    <img src="@PopularIcon(name)" alt="" />
-                </span>
-                <span>@CatalogLocalizer.Text(name)</span>
-            </a>
-        }
-    </div>
-
-    <div class="promo-banner">
-        <img src="~/images/hero-dog.png" alt="" />
-        <div>
-            <strong>@L["Home_PromoTitle"]</strong>
-            <span class="small">@L["Home_PromoCode"] <code>CHOMBLY10</code></span>
+            <div class="hscroll-dots" data-hscroll-dots aria-hidden="true"></div>
         </div>
-    </div>
+        <div id="other-species-panel" class="other-species-panel" hidden>
+            <form method="get" asp-page="/Groomers/Index" id="other-species-form" class="other-species-form">
+                <input type="hidden" name="species" value="@PetSpecies.Other" />
+                <label class="small" for="customType">@L["Home_OtherPet"]</label>
+                <div class="other-species-row">
+                    <input class="form-control" id="customType" name="customType" maxlength="80"
+                           placeholder="@L["Home_OtherPetPlaceholder"]" autocomplete="off" />
+                    <button class="btn btn-enter" type="submit">@L["Common_Search"]</button>
+                </div>
+                <p class="field-error" id="other-species-error" hidden>@L["Home_OtherPetRequired"]</p>
+            </form>
+        </div>
 
-    <h3 class="section-title">@L["Home_Featured"]</h3>
-    @if (Model.Featured.Any())
-    {
-        @foreach (var g in Model.Featured)
-        {
-            var isFav = Model.FavoriteIds.Contains(g.Id);
-            <div class="groomer-card-wrap">
-                <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-                    <img src="@(g.ImageUrl ?? "/images/categories/cat-grooming.png")" alt="@g.BusinessName" />
-                    <div class="info">
-                        <h3>@g.BusinessName</h3>
-                        <div class="meta-row">
-                            @if (g.Category != null)
-                            {
-                                <span class="badge badge-purple">@g.Category.Emoji @g.Category.DisplayName()</span>
-                            }
-                            else
-                            {
-                                <span class="badge badge-purple">@Model.TypeLabel(g.Type)</span>
-                            }
-                            @if (g.ReviewCount > 0)
-                            {
-                                <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
-                                <span>(@g.ReviewCount)</span>
-                            }
-                        </div>
-                        <div class="meta-row">
-                            <span>@g.City</span>
-                            @if (g.StartingPrice > 0)
-                            {
-                                <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
-                            }
-                        </div>
-                    </div>
-                </a>
-                <partial name="_FavoriteHeart" model="(g.Id, isFav, (string?)null)" />
+        <a class="home-care-spotlight" asp-page="/Care/Services">
+            <span class="home-care-glow" aria-hidden="true"></span>
+            <span class="home-care-shine" aria-hidden="true"></span>
+            <span class="home-care-mark" aria-hidden="true">
+                <img src="~/brand/v2/chombly-mark-lime.png" alt="" asp-append-version="true" width="44" height="44" />
+            </span>
+            <span class="home-care-copy">
+                <strong>@L["Home_CareTitle"]</strong>
+                <span>@L["Home_CareSub"]</span>
+            </span>
+            <span class="home-care-go" aria-hidden="true">›</span>
+        </a>
+
+        <h2 class="home-section-title">@L["Home_Popular"]</h2>
+        <div class="hscroll" data-hscroll>
+            <div class="services-scroll hscroll-rail" data-hscroll-rail>
+                @foreach (var name in Model.PopularServices)
+                {
+                    var icon = CatalogImages.PopularService(name);
+                    <a class="service-pill service-pill-rich" asp-page="/Groomers/Index" asp-route-service="@name">
+                        <span class="service-img-wrap">
+                            <img src="~@icon" asp-append-version="true" alt="" />
+                        </span>
+                        <span>@CatalogLocalizer.Text(name)</span>
+                    </a>
+                }
             </div>
-        }
-    }
-    else
-    {
-        <div class="empty">@L["Home_EmptyFeatured"]</div>
-    }
+            <div class="hscroll-dots" data-hscroll-dots aria-hidden="true"></div>
+        </div>
 
-    <div class="card card-pad home-biz-cta">
-        <strong>@L["Home_BizCta"]</strong>
-        <p class="muted small" style="margin:6px 0 12px">@L["Home_BizCtaSub"]</p>
-        <a class="btn btn-outline btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
-        <a class="btn btn-primary btn-block" asp-page="/Welcome" style="margin-top:10px">@L["Home_SeeWelcome"]</a>
+        <div class="home-promo">
+            <img src="~/images/onboarding/dev-grooming.webp" alt="" asp-append-version="true" />
+            <div>
+                <strong>@L["Home_PromoTitle"]</strong>
+                <span>@L["Home_PromoCode"] <code>CHOMBLY10</code></span>
+            </div>
+        </div>
+
+        <h2 class="home-section-title">@L["Home_Featured"]</h2>
+        @if (Model.Featured.Any())
+        {
+            @foreach (var g in Model.Featured)
+            {
+                var isFav = Model.FavoriteIds.Contains(g.Id);
+                var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
+                <div class="groomer-card-wrap">
+                    <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
+                        <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+                        <div class="info">
+                            <h3>@g.BusinessName</h3>
+                            <div class="meta-row">
+                                @if (g.Category != null)
+                                {
+                                    <span class="badge badge-purple">@g.Category.DisplayName()</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-purple">@Model.TypeLabel(g.Type)</span>
+                                }
+                                @if (g.ReviewCount > 0)
+                                {
+                                    <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
+                                    <span>(@g.ReviewCount)</span>
+                                }
+                            </div>
+                            <div class="meta-row">
+                                <span>@g.City</span>
+                                @if (g.StartingPrice > 0)
+                                {
+                                    <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                    <partial name="_FavoriteHeart" model="(g.Id, isFav, (string?)null)" />
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty">@L["Home_EmptyFeatured"]</div>
+        }
+
+        <section class="home-biz-cta" aria-labelledby="home-biz-cta-title">
+            <div class="home-biz-cta-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+                    <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 id="home-biz-cta-title">@L["Home_BizCta"]</h2>
+            <p>@L["Home_BizCtaSub"]</p>
+            <div class="home-biz-cta-actions">
+                <a class="btn btn-enter btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
+                <a class="onboard-secondary" asp-page="/Welcome">@L["Home_SeeWelcome"]</a>
+            </div>
+        </section>
+
+        <div class="bottom-nav-clearance" aria-hidden="true"
+             style="height:calc(68px + env(safe-area-inset-bottom, 0px));pointer-events:none"></div>
     </div>
-    @* Reserva espacio real bajo el CTA para que la bottom-nav fija no intercepte el click *@
-    <div class="bottom-nav-clearance" aria-hidden="true"
-         style="height:calc(68px + env(safe-area-inset-bottom, 0px));pointer-events:none"></div>
-</main>
+</div>
 
 @section Scripts {
 <script>
+(function () {
+  function bindHScroll(root) {
+    var rail = root.querySelector('[data-hscroll-rail]');
+    var dots = root.querySelector('[data-hscroll-dots]');
+    if (!rail || !dots) return;
+
+    function pageCount() {
+      var max = rail.scrollWidth - rail.clientWidth;
+      if (max <= 8) return 1;
+      return Math.max(2, Math.min(6, Math.ceil(rail.scrollWidth / Math.max(rail.clientWidth, 1))));
+    }
+
+    function render() {
+      var n = pageCount();
+      root.classList.toggle('has-overflow', n > 1);
+      if (n <= 1) {
+        dots.innerHTML = '';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < n; i++) html += '<button type="button" data-page="' + i + '" aria-label="' + (i + 1) + '"></button>';
+      dots.innerHTML = html;
+      sync();
+    }
+
+    function sync() {
+      var n = dots.children.length;
+      if (!n) return;
+      var max = Math.max(rail.scrollWidth - rail.clientWidth, 1);
+      var idx = Math.round((rail.scrollLeft / max) * (n - 1));
+      idx = Math.max(0, Math.min(n - 1, idx));
+      Array.prototype.forEach.call(dots.children, function (btn, i) {
+        btn.classList.toggle('is-active', i === idx);
+      });
+    }
+
+    dots.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-page]');
+      if (!btn) return;
+      var n = dots.children.length;
+      var i = +btn.getAttribute('data-page') || 0;
+      var max = Math.max(rail.scrollWidth - rail.clientWidth, 0);
+      var left = n <= 1 ? 0 : (i / (n - 1)) * max;
+      rail.scrollTo({ left: left, behavior: 'smooth' });
+    });
+
+    rail.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', render);
+    if (window.ResizeObserver) {
+      try { new ResizeObserver(render).observe(rail); } catch (_) {}
+    }
+    // Images can expand scrollWidth after first paint
+    rail.querySelectorAll('img').forEach(function (img) {
+      if (!img.complete) img.addEventListener('load', render, { once: true });
+    });
+    render();
+    setTimeout(render, 120);
+    setTimeout(render, 480);
+  }
+
+  document.querySelectorAll('[data-hscroll]').forEach(bindHScroll);
+})();
+
 (function () {
   if (!navigator.geolocation) return;
 
@@ -249,7 +319,6 @@
     var send = function (city) {
       postLocation(lat, lng, city).catch(function () { });
     };
-    // Espera breve a que cargue Maps; si no, guarda solo coords.
     var tries = 0;
     (function waitMaps() {
       if (window.google && google.maps && google.maps.Geocoder) {

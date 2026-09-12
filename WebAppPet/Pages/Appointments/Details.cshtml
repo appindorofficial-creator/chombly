@@ -3,12 +3,14 @@
 @{
     ViewData["Title"] = "Detalle de cita";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("./Index");
+    var HideNav = true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="./Index">←</a>
-    <h1>Detalle de cita</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">Detalle de cita</h1>
 @if (Model.Appointment == null)
 {
     <div class="empty">Cita no encontrada.</div>
@@ -21,7 +23,7 @@ else
             var detailImg = !string.IsNullOrWhiteSpace(a.Groomer.ImageUrl)
                 ? a.Groomer.ImageUrl!
                 : !string.IsNullOrWhiteSpace(a.Groomer.Category?.Slug)
-                    ? $"/images/categories/cat-{a.Groomer.Category!.Slug}.png"
+                    ? CatalogImages.Category(a.Groomer.Category!.Slug)
                     : "/images/pet-other.svg";
         }
         <img src="@detailImg" alt="" style="width:100%;height:160px;object-fit:cover"
@@ -88,4 +90,6 @@ else
         </form>
     }
 }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

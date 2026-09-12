@@ -117,7 +117,7 @@
 
     input._chomblyPlaces = ac;
     input.setAttribute("autocomplete", "off");
-    input.placeholder = input.placeholder || (mode === "city" ? "Busca tu ciudad…" : "Busca la dirección…");
+    input.placeholder = input.placeholder || (mode === "city" ? "Busca en tu ciudad…" : "Busca la dirección…");
   }
 
   function initChomblyPlaces() {

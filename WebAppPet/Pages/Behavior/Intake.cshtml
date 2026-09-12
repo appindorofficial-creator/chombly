@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Behavior.IntakeModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Care/Services");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Care/Services">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Problema, frecuencia y contexto", "Problem, frequency, and context")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -79,4 +78,6 @@
             <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
         </form>
     }
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

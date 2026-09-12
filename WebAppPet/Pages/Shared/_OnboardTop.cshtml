@@ -1,0 +1,57 @@
+@using WebAppPet.Data
+@using WebAppPet.Services
+@inject AppDbContext Db
+@inject AuthService Auth
+@{
+    var backHref = ViewData["OnboardBackHref"] as string;
+    var showNotif = ViewData["OnboardShowNotif"] as bool? == true;
+    var notifReturn = ViewData["OnboardNotifReturn"] as string ?? "/Index";
+    var showLang = ViewData["OnboardShowLang"] as bool? ?? true;
+    var ctaPage = ViewData["OnboardCtaPage"] as string;
+    var ctaText = ViewData["OnboardCtaText"] as string;
+    var ctaHref = ViewData["OnboardCtaHref"] as string;
+    var unreadNotif = 0;
+    if (showNotif && Auth.CurrentUserId is int notifUserId)
+    {
+        unreadNotif = Db.Notifications.Count(n => n.UserId == notifUserId && !n.IsRead);
+    }
+    var notifLabel = unreadNotif > 0
+        ? $"{L["Profile_Notifications"].Value} ({unreadNotif})"
+        : L["Profile_Notifications"].Value;
+}
+<header class="onboard-top">
+    @if (!string.IsNullOrWhiteSpace(backHref))
+    {
+        <a class="onboard-top-back" href="@backHref" aria-label="Back">←</a>
+    }
+    <div class="onboard-brand">
+        <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" asp-append-version="true" />
+        <strong class="onboard-word">Chombly</strong>
+    </div>
+    <div class="home-top-actions">
+        @if (showLang)
+        {
+            <partial name="_LanguageSwitch" />
+        }
+        @if (showNotif)
+        {
+            <a class="home-notif-btn @(unreadNotif > 0 ? "has-unread" : null)"
+               asp-page="/Account/Notifications" asp-route-returnUrl="@notifReturn"
+               title="@notifLabel" aria-label="@notifLabel">
+                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2z"/></svg>
+                @if (unreadNotif > 0)
+                {
+                    <app-badge count="@unreadNotif" />
+                }
+            </a>
+        }
+        @if (!string.IsNullOrWhiteSpace(ctaPage) && !string.IsNullOrWhiteSpace(ctaText))
+        {
+            <a class="btn btn-enter btn-sm onboard-top-cta" asp-page="@ctaPage">@ctaText</a>
+        }
+        else if (!string.IsNullOrWhiteSpace(ctaHref) && !string.IsNullOrWhiteSpace(ctaText))
+        {
+            <a class="btn btn-enter btn-sm onboard-top-cta" href="@ctaHref">@ctaText</a>
+        }
+    </div>
+</header>

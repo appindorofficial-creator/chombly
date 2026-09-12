@@ -3,11 +3,11 @@
 @{
     ViewData["Title"] = "Mi negocio";
     ViewData["GroomerTab"] = "business";
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="_GroomerNav" />
 
     <h2 style="margin:0 0 8px">Mi negocio</h2>
@@ -144,7 +144,9 @@
             <button class="btn btn-outline" type="submit">+</button>
         </div>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @section Scripts {
     <partial name="_GooglePlaces" />

@@ -6,18 +6,16 @@
         ? CatalogLocalizer.Loc("Onboarding conducta", "Behavior onboarding")
         : CatalogLocalizer.Loc("Onboarding local", "Local onboarding");
     ViewData["GroomerTab"] = "onboarding";
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Professional/Onboarding");
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
-    <div class="page-header" style="padding:0;margin-bottom:12px">
-        <a class="back-btn" asp-page="/Professional/Onboarding">←</a>
-        <h1>@(Model.IsBehavior
-            ? CatalogLocalizer.Loc("Conducta", "Behavior")
-            : CatalogLocalizer.Loc("Veterinario local (US)", "Local veterinarian (US)"))</h1>
-    </div>
+    <h1 class="app-page-heading">@(Model.IsBehavior
+        ? CatalogLocalizer.Loc("Conducta", "Behavior")
+        : CatalogLocalizer.Loc("Veterinario local (US)", "Local veterinarian (US)"))</h1>
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
@@ -78,4 +76,6 @@
         <button class="btn btn-outline btn-block" type="submit" asp-page-handler="Draft">@CatalogLocalizer.Loc("Guardar borrador", "Save draft")</button>
         <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Submit" style="margin-top:8px">@CatalogLocalizer.Loc("Enviar a revisión", "Submit for review")</button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

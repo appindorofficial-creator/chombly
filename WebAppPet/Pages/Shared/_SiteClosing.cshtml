@@ -1,0 +1,57 @@
+@* Closing conversion + column footer (website-inspired, mobile shell) *@
+<section class="site-closing" aria-labelledby="site-closing-title">
+    <div class="site-closing-inner">
+        <img src="~/brand/v2/chombly-mark.png" alt="" class="site-closing-mark" width="94" height="99" />
+        <h2 id="site-closing-title">@L["Closing_Title"]</h2>
+        <p class="site-closing-body">@L["Closing_Body"]</p>
+        <div class="site-closing-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="btn btn-primary btn-block" asp-page="/Index">@L["Closing_CtaOwner"]</a>
+            }
+            else
+            {
+                <a class="btn btn-primary btn-block" asp-page="/Account/Register">@L["Closing_CtaOwner"]</a>
+            }
+            <a class="site-closing-link" asp-page="/Account/RegisterBusiness">
+                @L["Closing_CtaBiz"]
+                <span aria-hidden="true">↗</span>
+            </a>
+        </div>
+        <small class="site-closing-note">@L["Closing_Note"]</small>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="site-footer-brand">
+        <img src="~/brand/v2/chombly-wordmark-light.png" alt="Chombly" class="site-footer-wordmark" />
+        <p>@L["Closing_FooterTagline"]</p>
+    </div>
+    <div class="site-footer-cols">
+        <div>
+            <p class="site-footer-label">@L["Closing_ColFamilies"]</p>
+            <a asp-page="/Pets/Index">@L["Nav_Pets"]</a>
+            <a asp-page="/Groomers/Index">@L["Nav_Search"]</a>
+            <a asp-page="/Appointments/Index">@L["Nav_Appointments"]</a>
+        </div>
+        <div>
+            <p class="site-footer-label">@L["Closing_ColBiz"]</p>
+            <a asp-page="/Account/RegisterBusiness">@L["Welcome_Business"]</a>
+            <a asp-page="/Professional/Onboarding">@L["Closing_LinkPros"]</a>
+        </div>
+        <div>
+            <p class="site-footer-label">Chombly</p>
+            <a asp-page="/Index">@L["Nav_Home"]</a>
+            <a asp-page="/Account/Profile">@L["Nav_Profile"]</a>
+        </div>
+        <div>
+            <p class="site-footer-label">@L["Closing_ColLegal"]</p>
+            <a asp-page="/Legal/Terms" asp-fragment="terms">@L["Legal_Terms"]</a>
+            <a asp-page="/Legal/Terms" asp-fragment="privacy">@L["Legal_PrivacyPolicy"]</a>
+        </div>
+    </div>
+    <div class="site-footer-bottom">
+        <span>© @DateTime.UtcNow.Year Chombly</span>
+        <span>@L["Closing_MadeFor"]</span>
+    </div>
+</footer>

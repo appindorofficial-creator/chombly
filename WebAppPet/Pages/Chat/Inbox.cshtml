@@ -2,46 +2,48 @@
 @model WebAppPet.Pages.Chat.InboxModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Mensajes", "Messages");
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
-    <h1 class="page-title">@CatalogLocalizer.Loc("Mensajes", "Messages")</h1>
-    <p class="muted" style="margin-top:-6px;margin-bottom:14px">
-        @CatalogLocalizer.Loc(
-            "Puedes leer y escribir. Abre un chat para responder.",
-            "You can read and write. Open a chat to reply.")
-    </p>
-    @if (!Model.Items.Any())
-    {
-        <div class="empty">
-            <div>@CatalogLocalizer.Loc("No tienes conversaciones aún.", "No conversations yet.")</div>
-            <p class="muted" style="margin-top:10px;line-height:1.45">
-                @CatalogLocalizer.Loc(
-                    "Para escribir a un negocio: ábrelo y toca Mensaje.",
-                    "To message a business: open it and tap Message.")
-            </p>
-            <a class="btn btn-primary" asp-page="/Groomers/Index" style="margin-top:12px;display:inline-block">
-                @CatalogLocalizer.Loc("Buscar negocios", "Find businesses")
-            </a>
-        </div>
-    }
-    @foreach (var c in Model.Items)
-    {
-        var asProvider = Model.MyGroomerId.HasValue && c.GroomerId == Model.MyGroomerId.Value;
-        var title = asProvider ? c.Client.FullName : c.Groomer.BusinessName;
-        var preview = Model.LastPreview.GetValueOrDefault(c.Id);
-        <a class="groomer-card" asp-page="./Index" asp-route-groomerId="@c.GroomerId" asp-route-conversationId="@c.Id" asp-route-returnUrl="@Url.Page("./Inbox")">
-            <img src="@(c.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" />
-            <div class="info">
-                <h3>@title</h3>
-                @if (!string.IsNullOrEmpty(preview))
-                {
-                    <div class="muted small">@preview</div>
-                }
-                <div class="muted small">@CatalogLocalizer.Loc("Último mensaje", "Last message") @AppTimeZones.FormatShort(c.LastMessageAt)</div>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <h1 class="page-title">@CatalogLocalizer.Loc("Mensajes", "Messages")</h1>
+        <p class="muted" style="margin-top:-6px;margin-bottom:14px">
+            @CatalogLocalizer.Loc(
+                "Puedes leer y escribir. Abre un chat para responder.",
+                "You can read and write. Open a chat to reply.")
+        </p>
+        @if (!Model.Items.Any())
+        {
+            <div class="empty">
+                <div>@CatalogLocalizer.Loc("No tienes conversaciones aún.", "No conversations yet.")</div>
+                <p class="muted" style="margin-top:10px;line-height:1.45">
+                    @CatalogLocalizer.Loc(
+                        "Para escribir a un negocio: ábrelo y toca Mensaje.",
+                        "To message a business: open it and tap Message.")
+                </p>
+                <a class="btn btn-primary" asp-page="/Groomers/Index" style="margin-top:12px;display:inline-block">
+                    @CatalogLocalizer.Loc("Buscar negocios", "Find businesses")
+                </a>
             </div>
-        </a>
-    }
-</main>
+        }
+        @foreach (var c in Model.Items)
+        {
+            var asProvider = Model.MyGroomerId.HasValue && c.GroomerId == Model.MyGroomerId.Value;
+            var title = asProvider ? c.Client.FullName : c.Groomer.BusinessName;
+            var preview = Model.LastPreview.GetValueOrDefault(c.Id);
+            <a class="groomer-card" asp-page="./Index" asp-route-groomerId="@c.GroomerId" asp-route-conversationId="@c.Id" asp-route-returnUrl="@Url.Page("./Inbox")">
+                <img src="@(c.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt="" />
+                <div class="info">
+                    <h3>@title</h3>
+                    @if (!string.IsNullOrEmpty(preview))
+                    {
+                        <div class="muted small">@preview</div>
+                    }
+                    <div class="muted small">@CatalogLocalizer.Loc("Último mensaje", "Last message") @AppTimeZones.FormatShort(c.LastMessageAt)</div>
+                </div>
+            </a>
+        }
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

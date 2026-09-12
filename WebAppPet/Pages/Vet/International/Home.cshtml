@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.International.HomeModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Veterinario como en casa", "Your vet, like at home");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/Index">←</a>
-    <div>
-        <h1 class="intl-hero-title">@CatalogLocalizer.Loc("El veterinario que mejor conoce a tu mascota", "The vet who knows your pet best")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading intl-hero-title">@CatalogLocalizer.Loc("El veterinario que mejor conoce a tu mascota", "The vet who knows your pet best")</h1>
         <p class="muted">@CatalogLocalizer.Loc("Como en casa, estés donde estés.", "Like at home, wherever you are.")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="intl-hero card card-pad">
         <p class="intl-hero-lead">
             @CatalogLocalizer.Loc(
@@ -45,4 +44,6 @@
     <p class="muted small center" style="margin-top:10px">
         @CatalogLocalizer.Loc("Orientación · no emergencia · no receta de EE.UU.", "Guidance · not emergency · no U.S. prescription")
     </p>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

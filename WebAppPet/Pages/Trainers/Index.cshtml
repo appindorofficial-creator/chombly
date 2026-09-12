@@ -2,17 +2,14 @@
 @model WebAppPet.Pages.Trainers.IndexModel
 @{
     ViewData["Title"] = L["Trainers_Title"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
 }
-<div class="page-header hotel-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <div class="hotel-header-text">
-        <h1>@L["Trainers_Title"]</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+        <h1 class="app-page-heading">@L["Trainers_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
-    </div>
-    <img src="~/images/categories/cat-trainers.png" alt="" class="hero-leaf" onerror="this.style.display='none'" />
-</div>
-
-<main class="app-main hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -120,7 +117,7 @@
                     <span class="badge badge-green hotel-reco">@item.AvailabilityLabel</span>
                 }
                 <div class="hotel-card-main">
-                    <img src="@(t.ImageUrl ?? "/images/categories/cat-trainers.png")" alt="@t.BusinessName" />
+                    <img src="@(t.ImageUrl ?? "/images/categories/cat-trainers-v2.png")" alt="@t.BusinessName" />
                     <div class="info">
                         <h3>@t.BusinessName</h3>
                         <div class="meta-row">
@@ -208,7 +205,9 @@
         <div><span>✓</span><small>Todo en una pantalla</small></div>
         <div><span>🎓</span><small>@CatalogLocalizer.Loc("Entrenadores verificados", "Verified trainers")</small></div>
     </div>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>
 
 @if (Model.SelectedTrainer != null && Model.SelectedService != null)
 {
@@ -222,7 +221,7 @@
         <div class="hotel-summary-inner">
             <h3>Confirmar reserva</h3>
             <div class="summary-hotel">
-                <img src="@(Model.SelectedTrainer.ImageUrl ?? "/images/categories/cat-trainers.png")" alt="" />
+                <img src="@(Model.SelectedTrainer.ImageUrl ?? "/images/categories/cat-trainers-v2.png")" alt="" />
                 <div>
                     <strong>@Model.SelectedTrainer.BusinessName</strong>
                     <div class="muted small">@Model.NeedLabel · @Model.PackageLabel</div>

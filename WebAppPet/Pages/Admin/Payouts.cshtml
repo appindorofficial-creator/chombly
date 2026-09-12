@@ -4,12 +4,14 @@
 @{
     ViewData["Title"] = "Payouts proveedores";
     ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Admin/Approvals");
+    var HideNav = true;
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Admin/Approvals">←</a>
-    <h1>Payouts</h1>
-</div>
-<main class="app-main no-nav">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <h1 class="app-page-heading">Payouts</h1>
     <p class="muted small">Pagos simulados a proveedores (sin Stripe Connect real).</p>
     <p class="muted small" style="margin-bottom:12px">
         <a asp-page="/Admin/Approvals">Aprobaciones negocio</a> ·
@@ -53,4 +55,6 @@
             </span>
         </div>
     }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>

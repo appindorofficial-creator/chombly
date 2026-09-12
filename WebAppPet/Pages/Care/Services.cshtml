@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Care.ServicesModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("¿Qué ayuda necesitas?", "What help do you need?");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Index");
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Index">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("¿Qué ayuda necesitas?", "What help do you need?")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("¿Qué ayuda necesitas?", "What help do you need?")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Veterinaria y comportamiento son servicios distintos", "Veterinary and behavior are separate services")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     <div class="card card-pad care-hero" style="margin-bottom:16px">
         <strong>@CatalogLocalizer.Loc("El cuidado de tu mascota, organizado", "Your pet's care, organized")</strong>
         <p class="muted small mb-0">@CatalogLocalizer.Loc("Elige el servicio correcto. Comportamiento y Care no sustituyen una emergencia.", "Pick the right service. Behavior and Care do not replace an emergency.")</p>
@@ -48,4 +47,6 @@
             "El plan de conducta no sustituye atención veterinaria ni diagnostica enfermedades.",
             "A behavior plan does not replace veterinary care or diagnose medical conditions.")
     </p>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

@@ -4,11 +4,11 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding");
     ViewData["GroomerTab"] = "onboarding";
+    ViewData["LangCompact"] = true;
 }
-<header class="topbar">
-    <partial name="_Brand" />
-</header>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
     <h1 class="page-title">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
     <p class="muted small">@CatalogLocalizer.Loc("Elige tu trayectoria: local (EE.UU.), internacional o conducta.", "Choose your track: local (US), international, or behavior.")</p>
@@ -40,4 +40,6 @@
     <p style="margin-top:16px">
         <a class="btn btn-outline btn-block" asp-page="/Professional/Onboarding/Status">@CatalogLocalizer.Loc("Ver estado de solicitud", "View application status")</a>
     </p>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

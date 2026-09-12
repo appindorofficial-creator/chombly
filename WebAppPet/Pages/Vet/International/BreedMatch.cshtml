@@ -2,15 +2,14 @@
 @model WebAppPet.Pages.Vet.International.BreedMatchModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Experiencia con la raza", "Breed experience");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/MatchMode", new { consultationId = Model.ConsultationId });
 }
-<div class="page-header">
-    <a class="back-btn" asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">←</a>
-    <div>
-        <h1>@CatalogLocalizer.Loc("Experiencia con la raza", "Breed experience")</h1>
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Experiencia con la raza", "Breed experience")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Verificada en el perfil — no por nacionalidad", "Verified on the profile — not by nationality")</p>
-    </div>
-</div>
-<main class="app-main hotel-flow">
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>
@@ -35,4 +34,6 @@
         </p>
         <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Buscar coincidencias", "Find matches")</button>
     </form>
-</main>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

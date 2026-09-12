@@ -2,25 +2,68 @@
 @model WebAppPet.Pages.Account.NotificationsModel
 @{
     ViewData["Title"] = L["Profile_Notifications"].Value;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Model.BackHref;
+    var HideNav = ViewData["HideNav"] as bool? == true;
+    var i = 0;
 }
-<div class="page-header">
-    <a class="back-btn" href="@Model.BackHref">←</a>
-    <h1>@L["Profile_Notifications"]</h1>
-</div>
-<main class="app-main">
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <div class="notif-page-head">
+        <h1 class="app-page-heading">@L["Profile_Notifications"]</h1>
+        @if (Model.Items.Any())
+        {
+            <form method="post" asp-page-handler="Clear"
+                  data-confirm
+                  data-confirm-title="@L["Notif_ClearAllTitle"]"
+                  data-confirm-message="@L["Notif_ClearAllConfirm"]"
+                  data-confirm-cancel="@L["Common_Cancel"]"
+                  data-confirm-ok="@L["Pets_DeleteOk"]"
+                  data-animate-clear=".notif-swipe">
+                <input type="hidden" asp-for="ReturnUrl" />
+                <button type="submit" class="link-btn notif-clear-btn">@L["Notif_ClearAll"]</button>
+            </form>
+        }
+    </div>
     @if (!Model.Items.Any())
     {
-        <div class="empty">@CatalogLocalizer.Loc("No tienes notificaciones.", "You have no notifications.")</div>
+        <app-card animation="FadeIn" variant="soft" class="empty notif-empty">
+            @CatalogLocalizer.Loc("No tienes notificaciones.", "You have no notifications.")
+        </app-card>
     }
     else
     {
+        <p class="muted small notif-swipe-hint">@L["Notif_SwipeHint"]</p>
+        <div class="notif-list">
         @foreach (var n in Model.Items)
         {
-            <div class="notif-item @(n.IsRead ? "" : "unread")">
-                <strong>@n.Title</strong>
-                <p class="muted small" style="margin:6px 0 0">@n.Message</p>
-                <p class="muted small" style="margin:6px 0 0">@AppTimeZones.FormatShort(n.CreatedAt)</p>
+            <div class="notif-swipe" style="--i:@i">
+                <div class="notif-swipe-bg" aria-hidden="true">
+                    <span>🗑️</span>
+                    <span>@L["Common_Delete"]</span>
+                </div>
+                <div class="notif-item @(n.IsRead ? "" : "unread")" data-notif-swipe>
+                    <strong>@n.Title</strong>
+                    <form method="post" asp-page-handler="Delete" class="notif-delete-form"
+                          data-confirm
+                          data-confirm-title="@L["Notif_DeleteTitle"]"
+                          data-confirm-message="@L["Notif_DeleteConfirm"]"
+                          data-confirm-cancel="@L["Common_Cancel"]"
+                          data-confirm-ok="@L["Pets_DeleteOk"]"
+                          data-animate-remove=".notif-swipe">
+                        <input type="hidden" name="id" value="@n.Id" />
+                        <input type="hidden" asp-for="ReturnUrl" />
+                        <button type="submit" tabindex="-1">@L["Notif_Delete"]</button>
+                    </form>
+                    <p class="muted small notif-item-msg">@n.Message</p>
+                    <p class="muted small notif-item-time">@AppTimeZones.FormatShort(n.CreatedAt)</p>
+                </div>
             </div>
+            i++;
         }
+        </div>
     }
-</main>
+    </div>
+    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+</div>
