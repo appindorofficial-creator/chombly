@@ -1123,7 +1123,7 @@ h1, h2, h3,
 .groomer-card {
   display: flex;
   gap: 12px;
-  align-items: stretch;
+  align-items: center;
   background: var(--ivory-light);
   border-radius: 18px;
   overflow: hidden;
@@ -1133,20 +1133,26 @@ h1, h2, h3,
   text-decoration: none;
   color: inherit;
   transition: border-color .15s ease, transform .12s ease;
+  padding: 10px 12px 10px 10px;
 }
 .groomer-card:hover {
   border-color: var(--lime);
   transform: translateY(-1px);
 }
 .groomer-card img {
-  width: 104px;
-  min-height: 118px;
+  width: 68px;
+  height: 68px;
+  min-height: 0;
   object-fit: cover;
   flex-shrink: 0;
-  background: var(--lime-soft);
+  background: transparent;
+  border-radius: 14px;
+  border: none;
+  /* Category PNGs ship with a white plate — blend into the ivory card */
+  mix-blend-mode: multiply;
 }
 .groomer-card .info {
-  padding: 12px 14px 12px 0;
+  padding: 0 2px 0 0;
   flex: 1;
   min-width: 0;
   display: flex;
