@@ -2065,19 +2065,22 @@ h1, h2, h3,
 .menu-list.menu-chombly a {
   padding: 13px 14px;
   font-weight: 650;
+  font-size: .95rem;
   color: var(--forest-deep);
   border-bottom: 1px solid rgba(15, 61, 47, 0.06);
-  transition: background .15s ease, transform .12s ease;
+  transition: background .15s ease, color .15s ease, font-size .15s ease;
 }
 .menu-list.menu-chombly a:last-child {
   border-bottom: none;
 }
 .menu-list.menu-chombly a:hover,
-.menu-list.menu-chombly a:focus-visible {
-  background: var(--lime-soft);
-}
-.menu-list.menu-chombly a:active {
-  background: rgba(182, 231, 64, 0.35);
+.menu-list.menu-chombly a:focus-visible,
+.menu-list.menu-chombly a:active,
+.menu-list.menu-chombly a.is-selected {
+  background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: 750;
 }
 .menu-list.menu-chombly .menu-left {
   display: inline-flex;
@@ -2096,22 +2099,34 @@ h1, h2, h3,
   font-size: 1.28rem;
   line-height: 1;
   background: #fff;
-  border: 1.5px solid rgba(15, 61, 47, 0.18);
+  border: 1.5px solid #fff;
   box-shadow: none;
   filter: saturate(1.2) contrast(1.05);
+  transition: background .15s ease, border-color .15s ease, transform .15s ease, font-size .15s ease, box-shadow .15s ease;
 }
 .menu-list.menu-chombly a:hover .menu-ico,
-.menu-list.menu-chombly a:focus-visible .menu-ico {
-  border-color: var(--forest);
+.menu-list.menu-chombly a:focus-visible .menu-ico,
+.menu-list.menu-chombly a:active .menu-ico,
+.menu-list.menu-chombly a.is-selected .menu-ico {
+  background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+  border-color: var(--lime);
+  box-shadow: inset 0 0 0 1px rgba(182, 231, 64, 0.35);
+  transform: scale(1.1);
+  font-size: 1.42rem;
+  filter: saturate(1.35) contrast(1.08) brightness(1.05);
 }
 .menu-list.menu-chombly .chev {
   color: var(--forest);
   font-size: 1.15rem;
   font-weight: 700;
   opacity: .55;
+  transition: color .15s ease, opacity .15s ease;
 }
 .menu-list.menu-chombly a:hover .chev,
-.menu-list.menu-chombly a:focus-visible .chev {
+.menu-list.menu-chombly a:focus-visible .chev,
+.menu-list.menu-chombly a:active .chev,
+.menu-list.menu-chombly a.is-selected .chev {
+  color: var(--lime);
   opacity: 1;
 }
 .menu-list.menu-chombly-logout {
@@ -2123,12 +2138,21 @@ h1, h2, h3,
 }
 .menu-list.menu-chombly a.menu-logout .menu-ico {
   background: #fff;
-  border-color: rgba(180, 35, 24, 0.28);
+  border-color: #fff;
   filter: saturate(1.25);
 }
 .menu-list.menu-chombly a.menu-logout:hover,
-.menu-list.menu-chombly a.menu-logout:focus-visible {
-  background: #fff1f0;
+.menu-list.menu-chombly a.menu-logout:focus-visible,
+.menu-list.menu-chombly a.menu-logout:active {
+  background: #9f1239;
+  color: #fff;
+}
+.menu-list.menu-chombly a.menu-logout:hover .menu-ico,
+.menu-list.menu-chombly a.menu-logout:focus-visible .menu-ico,
+.menu-list.menu-chombly a.menu-logout:active .menu-ico {
+  background: #9f1239;
+  border-color: #fecdd3;
+  box-shadow: none;
 }
 
 .appt-card {
