@@ -1362,9 +1362,22 @@ h1, h2, h3,
 
 /* Groomer detail */
 .hero-photo {
-  position: relative; height: 220px; overflow: hidden;
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  background: var(--ivory-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.hero-photo img { width: 100%; height: 100%; object-fit: cover; }
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  /* Category icons keep a white plate — blend into hero bg */
+  mix-blend-mode: multiply;
+}
 .hero-photo .actions {
   position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 2;
 }
@@ -1431,17 +1444,104 @@ h1, h2, h3,
   background: #fff; border-radius: 20px 20px 0 0; padding: 18px 16px;
   box-shadow: 0 -4px 20px rgba(0,0,0,.06);
 }
+.detail-services {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+.detail-service-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  background: linear-gradient(180deg, #fff 0%, var(--ivory-light) 100%);
+  border: 1.5px solid rgba(15, 61, 47, 0.16);
+  box-shadow: 0 6px 16px rgba(7, 61, 46, 0.06);
+  transition: border-color .15s ease, background .15s ease, transform .12s ease, box-shadow .15s ease;
+}
+.detail-service-btn:hover,
+.detail-service-btn:focus-visible {
+  border-color: var(--forest);
+  background: var(--lime-soft);
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.35), 0 8px 18px rgba(7, 61, 46, 0.08);
+  transform: translateY(-1px);
+}
+.detail-service-btn:active {
+  transform: translateY(0);
+}
+.detail-service-btn.is-highlighted {
+  border-color: var(--forest);
+  background: var(--lime-soft);
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.45);
+}
+.detail-service-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+.detail-service-copy strong {
+  font-size: .95rem;
+  font-weight: 750;
+  color: var(--forest-deep);
+  letter-spacing: -.01em;
+}
+.detail-service-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.detail-service-meta .price {
+  font-weight: 800;
+  color: var(--forest);
+  font-size: .92rem;
+  white-space: nowrap;
+}
+.detail-service-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--forest);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
 .quick-actions {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px 28px;
   margin: 14px 0;
 }
 .quick-actions a, .quick-actions span {
-  text-align: center; font-size: .72rem; font-weight: 700; color: var(--muted);
+  text-align: center;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--forest);
+  min-width: 64px;
+  text-decoration: none;
 }
 .quick-actions .circle {
   width: 48px; height: 48px; margin: 0 auto 6px;
-  border-radius: 50%; background: var(--purple-soft); color: var(--purple);
+  border-radius: 50%;
+  background: var(--lime-soft);
+  color: var(--forest-deep);
   display: grid; place-items: center; font-size: 1.2rem;
+  border: 1.5px solid var(--forest);
+  box-shadow: 0 4px 12px rgba(7, 61, 38, 0.08);
 }
 .sticky-cta {
   position: fixed;

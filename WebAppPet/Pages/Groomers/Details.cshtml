@@ -92,20 +92,28 @@ else
             <h3 class="section-title">@L["Detail_ServicesPrices"]</h3>
             @if (Model.Services.Any())
             {
+                <div class="detail-services">
                 @foreach (var s in Model.Services)
                 {
                     var highlighted = Model.PrefillServiceId == s.Id
                         || (!string.IsNullOrWhiteSpace(Model.Service)
                             && s.Name.Contains(Model.Service, StringComparison.OrdinalIgnoreCase));
-                    <a class="card card-pad" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;@(highlighted ? "outline:2px solid var(--brand);" : "")"
+                    <a class="detail-service-btn @(highlighted ? "is-highlighted" : "")"
                        asp-page="/Booking/Index" asp-route-groomerId="@g.Id" asp-route-serviceId="@s.Id" asp-route-service="@Model.Service">
-                        <div>
+                        <span class="detail-service-copy">
                             <strong>@CatalogLocalizer.Text(s.Name)</strong>
-                            <div class="muted small">@CatalogLocalizer.Text(s.Description)</div>
-                        </div>
-                        <span class="price">@L["Home_FromPrice"] $@s.PriceSmall.ToString("0")@CatalogLocalizer.Text(Model.UnitLabel(s.BillingUnit))</span>
+                            @if (!string.IsNullOrWhiteSpace(s.Description))
+                            {
+                                <span class="muted small">@CatalogLocalizer.Text(s.Description)</span>
+                            }
+                        </span>
+                        <span class="detail-service-meta">
+                            <span class="price">@L["Home_FromPrice"] $@s.PriceSmall.ToString("0")@CatalogLocalizer.Text(Model.UnitLabel(s.BillingUnit))</span>
+                            <span class="detail-service-cta" aria-hidden="true">@L["Common_Book"] ›</span>
+                        </span>
                     </a>
                 }
+                </div>
             }
             else
             {
