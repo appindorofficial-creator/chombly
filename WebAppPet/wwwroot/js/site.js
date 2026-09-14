@@ -508,6 +508,33 @@
         }
 
         if (type === 'checkbox') {
+          if (el.name) {
+            var cbGroup = form.querySelectorAll('input[type="checkbox"][name="' + el.name.replace(/"/g, '\\"') + '"]');
+            if (cbGroup.length > 1) {
+              var cbNeedsRequired = false;
+              var cbReqMsg = msgs.required;
+              Array.prototype.forEach.call(cbGroup, function (c) {
+                if (c.required || c.getAttribute('data-msg-required')) {
+                  cbNeedsRequired = true;
+                  if (c.getAttribute('data-msg-required')) cbReqMsg = c.getAttribute('data-msg-required');
+                }
+              });
+              if (cbNeedsRequired) {
+                var cbAny = Array.prototype.some.call(cbGroup, function (c) { return c.checked; });
+                var cbAnchor = null;
+                Array.prototype.forEach.call(cbGroup, function (c) {
+                  if (!cbAnchor && (c.required || c.getAttribute('data-msg-required'))) cbAnchor = c;
+                });
+                if (!cbAnchor) cbAnchor = cbGroup[0];
+                if (!cbAny && el === cbAnchor) {
+                  el.setCustomValidity(el.getAttribute('data-msg-required') || cbReqMsg || msgs.required);
+                } else if (cbAny) {
+                  Array.prototype.forEach.call(cbGroup, function (c) { c.setCustomValidity(''); });
+                }
+              }
+              return;
+            }
+          }
           if (el.required && !el.checked) {
             el.setCustomValidity(el.getAttribute('data-msg-required') || msgs.required);
           }
