@@ -299,6 +299,7 @@
   <data name="Pets_BreedDefault" xml:space="preserve"><value>Mixed / mix</value></data>
   <data name="Pets_Senior" xml:space="preserve"><value>Senior</value></data>
   <data name="Pets_NameRequired" xml:space="preserve"><value>Name is required</value></data>
+  <data name="Pets_Duplicate" xml:space="preserve"><value>You already have a pet with that name, species, and breed.</value></data>
   <data name="Pets_SpeciesRequired" xml:space="preserve"><value>Choose the pet type</value></data>
   <data name="Pets_SpeciesInvalid" xml:space="preserve"><value>Choose a valid pet type.</value></data>
   <data name="Pets_OtherType" xml:space="preserve"><value>What pet do you have?</value></data>
