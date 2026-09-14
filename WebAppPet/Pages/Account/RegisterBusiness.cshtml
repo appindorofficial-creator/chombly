@@ -12,7 +12,7 @@
         0 => L["Biz_Join"].Value,
         1 or 2 or 3 or 4 => string.Format(L["Biz_StepOf"].Value, Model.Step),
         5 => L["Biz_Services"].Value,
-        6 => User.Identity?.IsAuthenticated == true ? L["Biz_ConfirmAccount"].Value : L["Biz_CreateAccount"].Value,
+        6 => L["Biz_SetPassword"].Value,
         7 => L["Register_SuccessTitle"].Value,
         _ => L["Biz_Business"].Value
     };
@@ -316,32 +316,35 @@
                                 <input class="form-control" type="number" step="0.01" name="ServicePrices[@Model.ServiceNames.Count]" value="0" />
                             </div>
                         </div>
+                        @if (Model.IsLoggedIn)
+                        {
+                            <div style="margin-top:14px">
+                                <p class="onboard-auth-lead">@L["Biz_FinishWithAccount"]</p>
+                                <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
+                                @{
+                                    ViewData["TermsChecked"] = Model.AcceptTerms;
+                                }
+                                <partial name="_AcceptTerms" />
+                            </div>
+                        }
                     }
                     else if (Model.Step == 6)
                     {
                         ViewData["TermsChecked"] = Model.AcceptTerms;
-                        if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <h2 class="biz-section-title">@L["Biz_ConfirmAccount"]</h2>
-                            <p class="onboard-auth-lead">@L["Biz_ContinueCurrentAccount"]</p>
-                            <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
-                        }
-                        else
-                        {
-                            <h2 class="biz-section-title">@L["Biz_CreateAccount"]</h2>
-                            <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
-                            <div class="form-group">
-                                <label>@L["Common_Password"]</label>
-                                <input class="form-control" name="Password" type="password" minlength="6" required
-                                       data-password-policy="1" value="" autocomplete="new-password" />
-                                <p class="field-hint">@L["Profile_Edit_PasswordShort"]</p>
-                            </div>
-                            <div class="form-group">
-                                <label>@L["Register_ConfirmPassword"]</label>
-                                <input class="form-control" name="ConfirmPassword" type="password" minlength="6" required
-                                       value="" autocomplete="new-password" />
-                            </div>
-                        }
+                        <h2 class="biz-section-title">@L["Biz_SetPassword"]</h2>
+                        <p class="onboard-auth-lead">@L["Biz_SetPasswordLead"]</p>
+                        <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
+                        <div class="form-group">
+                            <label>@L["Common_Password"]</label>
+                            <input class="form-control" name="Password" type="password" minlength="6" required
+                                   data-password-policy="1" value="" autocomplete="new-password" />
+                            <p class="field-hint">@L["Profile_Edit_PasswordShort"]</p>
+                        </div>
+                        <div class="form-group">
+                            <label>@L["Register_ConfirmPassword"]</label>
+                            <input class="form-control" name="ConfirmPassword" type="password" minlength="6" required
+                                   value="" autocomplete="new-password" />
+                        </div>
                         <partial name="_AcceptTerms" />
                         <img src="~/brand/v2/chombly-mark.png" alt="" class="biz-account-mark" />
                     }
@@ -352,7 +355,9 @@
                     }
 
                     <button class="btn btn-enter btn-block" type="button" id="biz-continue">
-                        @(Model.Step == 6 ? L["Biz_CreateProfile"].Value : L["Common_Continue"].Value)
+                        @(Model.Step == 6 || (Model.Step == 5 && Model.IsLoggedIn)
+                            ? L["Biz_CreateProfile"].Value
+                            : L["Common_Continue"].Value)
                     </button>
                 </form>
             }

@@ -37,6 +37,10 @@
         {
             <input type="hidden" name="ConsultationId" value="@cid" />
         }
+        @if (Model.PetId is int petId)
+        {
+            <input type="hidden" name="PetId" value="@petId" />
+        }
         <button type="submit" class="btn btn-primary btn-block btn-lg">
             @CatalogLocalizer.Loc("Encontrar mi veterinario", "Find my veterinarian")
         </button>

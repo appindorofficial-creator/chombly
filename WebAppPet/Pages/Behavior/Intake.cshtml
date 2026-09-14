@@ -1,5 +1,6 @@
 @page
 @model WebAppPet.Pages.Behavior.IntakeModel
+@using WebAppPet.Models
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Comportamiento canino", "Dog behavior");
     ViewData["LangCompact"] = true;
@@ -18,34 +19,38 @@
         @if (Model.Pets.Count == 0)
         {
             <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
-            <a class="btn btn-primary" asp-page="/Pets/Create">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+            <a class="btn btn-primary" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
         }
         else
         {
-            <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px">
+            <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px" id="behavior-intake-form">
                 <input type="hidden" asp-for="CaseId" />
 
-                @if (Model.Pets.Count == 1)
-                {
-                    <input type="hidden" name="PetId" value="@Model.Pets[0].Id" />
-                    <div class="card card-pad">
-                        <span class="muted small">@CatalogLocalizer.Loc("Mascota", "Pet")</span>
-                        <strong style="display:block">@Model.Pets[0].Name</strong>
-                    </div>
-                }
-                else
-                {
-                    <section>
-                        <h2 class="section-title">@CatalogLocalizer.Loc("Mascota", "Pet")</h2>
+                <section class="behavior-pet-section" aria-label="@CatalogLocalizer.Loc("Mascota", "Pet")">
+                    <h2 class="section-title">@CatalogLocalizer.Loc("¿Para qué mascotas?", "Which pets?")</h2>
+                    <p class="muted small" style="margin:-4px 0 10px">@CatalogLocalizer.Loc("Activa una o varias. El mismo servicio aplica a las que marques.", "Turn on one or more. The same service applies to each selected pet.")</p>
+                    <div class="behavior-pet-list">
                         @foreach (var p in Model.Pets)
                         {
-                            <label class="radio-card">
-                                <input type="radio" name="PetId" value="@p.Id" @(Model.PetId == p.Id ? "checked" : null) />
-                                <span><strong>@p.Name</strong> <span class="muted small">@p.Breed</span></span>
+                            var on = Model.SelectedPetIds.Contains(p.Id);
+                            <label class="behavior-pet-row @(on ? "is-on" : null)">
+                                <span class="care-pet-emoji" aria-hidden="true">@PetSpecies.Emoji(p.Species)</span>
+                                <span class="care-pet-copy">
+                                    <strong>@p.Name</strong>
+                                    <small class="muted">@PetSpecies.Label(p.Species) · @p.Breed</small>
+                                </span>
+                                <span class="biz-switch">
+                                    <input type="checkbox" name="SelectedPetIds" value="@p.Id" @(on ? "checked" : null)
+                                           class="behavior-pet-switch" aria-label="@p.Name" />
+                                    <span class="biz-switch-track" aria-hidden="true"></span>
+                                </span>
                             </label>
                         }
-                    </section>
-                }
+                    </div>
+                    <p class="muted small" style="margin:10px 0 0">
+                        <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">+ @CatalogLocalizer.Loc("Agregar otra mascota", "Add another pet")</a>
+                    </p>
+                </section>
 
                 <section>
                     <h2 class="section-title">@CatalogLocalizer.Loc("Problema principal", "Main problem")</h2>
@@ -73,9 +78,10 @@
                     </div>
                 </section>
 
-                <section>
+                <section class="behavior-details">
                     <h2 class="section-title">@CatalogLocalizer.Loc("Detalle (opcional)", "Details (optional)")</h2>
-                    <textarea class="input" asp-for="ContextNotes" rows="2" placeholder="@CatalogLocalizer.Loc("Cuándo pasa, qué lo dispara…", "When it happens, what triggers it…")"></textarea>
+                    <textarea class="behavior-notes" asp-for="ContextNotes" rows="4"
+                              placeholder="@CatalogLocalizer.Loc("Cuándo pasa, qué lo dispara…", "When it happens, what triggers it…")"></textarea>
                 </section>
 
                 <section class="card card-pad" style="padding:12px 14px">
@@ -88,6 +94,30 @@
 
                 <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
             </form>
+            <script>
+            (() => {
+              const form = document.getElementById('behavior-intake-form');
+              const rows = () => document.querySelectorAll('.behavior-pet-row');
+              const sync = () => {
+                rows().forEach(row => {
+                  const input = row.querySelector('.behavior-pet-switch');
+                  row.classList.toggle('is-on', !!(input && input.checked));
+                });
+              };
+              document.querySelectorAll('.behavior-pet-switch').forEach(sw => {
+                sw.addEventListener('change', sync);
+              });
+              form?.addEventListener('submit', e => {
+                const any = [...document.querySelectorAll('.behavior-pet-switch')].some(s => s.checked);
+                if (!any) {
+                  e.preventDefault();
+                  alert(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    CatalogLocalizer.Loc("Activa al menos una mascota.", "Turn on at least one pet."))));
+                }
+              });
+              sync();
+            })();
+            </script>
         }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>

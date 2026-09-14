@@ -30,7 +30,7 @@ public class IntakeModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int CaseId { get; set; }
 
-    [BindProperty] public int PetId { get; set; }
+    [BindProperty] public List<int> SelectedPetIds { get; set; } = new();
     [BindProperty] public string? ProblemType { get; set; }
     [BindProperty] public string? Frequency { get; set; }
     [BindProperty] public string? ContextNotes { get; set; }
@@ -56,12 +56,15 @@ public class IntakeModel : PageModel
         Case = await _flow.GetOwnedAsync(CaseId);
         if (Case is null) return RedirectToPage("/Care/Services");
 
-        Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId && p.Species == PetSpecies.Dog)
-            .OrderBy(p => p.Name).ToListAsync();
-        if (Pets.Count == 0)
-            Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId).OrderBy(p => p.Name).ToListAsync();
+        Pets = await _db.Pets.AsNoTracking()
+            .Where(p => p.OwnerId == _auth.CurrentUserId)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
 
-        PetId = Case.PetId ?? Pets.FirstOrDefault()?.Id ?? 0;
+        SelectedPetIds = BehaviorFlowService.GetSelectedPetIds(Case);
+        if (SelectedPetIds.Count == 0 && Pets.Count > 0)
+            SelectedPetIds = new List<int> { Pets[0].Id };
+
         ProblemType = Case.ProblemType;
         Frequency = Case.Frequency ?? Frequencies[0];
         ContextNotes = Case.ContextNotes;
@@ -75,11 +78,19 @@ public class IntakeModel : PageModel
         Case = await _flow.GetOwnedAsync(CaseId);
         if (Case is null) return RedirectToPage("/Care/Services");
 
-        Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId).OrderBy(p => p.Name).ToListAsync();
+        Pets = await _db.Pets.AsNoTracking()
+            .Where(p => p.OwnerId == _auth.CurrentUserId)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
 
-        if (PetId <= 0 || !Pets.Any(p => p.Id == PetId))
+        var ownedIds = Pets.Select(p => p.Id).ToHashSet();
+        SelectedPetIds = SelectedPetIds.Where(id => ownedIds.Contains(id)).Distinct().ToList();
+
+        if (SelectedPetIds.Count == 0)
         {
-            ErrorMessage = CatalogLocalizer.Loc("Selecciona una mascota.", "Select a pet.");
+            ErrorMessage = CatalogLocalizer.Loc(
+                "Activa al menos una mascota.",
+                "Turn on at least one pet.");
             return Page();
         }
 
@@ -89,7 +100,7 @@ public class IntakeModel : PageModel
             return Page();
         }
 
-        Case.PetId = PetId;
+        BehaviorFlowService.SetSelectedPetIds(Case, SelectedPetIds);
         Case.ProblemType = ProblemType.Trim();
         Case.Frequency = string.IsNullOrWhiteSpace(Frequency) ? Frequencies[0] : Frequency.Trim();
         Case.ContextNotes = ContextNotes?.Trim();

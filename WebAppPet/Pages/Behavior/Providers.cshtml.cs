@@ -44,6 +44,7 @@ public class ProvidersModel : PageModel
     [BindProperty] public int? PaymentMethodId { get; set; }
 
     public BehaviorCase? Case { get; set; }
+    public List<Pet> SelectedPets { get; set; } = new();
     public ServiceCatalogItem? CatalogItem { get; set; }
     public List<GroomerProfile> Providers { get; set; } = new();
     public List<PaymentMethod> Payments { get; set; } = new();
@@ -70,6 +71,7 @@ public class ProvidersModel : PageModel
             return RedirectToPage("/Behavior/Summary", new { id = CaseId });
 
         if (!await LoadCatalogAsync()) return RedirectToPage("/Care/Services");
+        await LoadSelectedPetsAsync();
         if (ProviderId <= 0 && Providers.Count > 0)
             ProviderId = Providers[0].Id;
 
@@ -91,6 +93,7 @@ public class ProvidersModel : PageModel
             return RedirectToPage("/Behavior/Summary", new { id = CaseId });
 
         if (!await LoadCatalogAsync()) return RedirectToPage("/Care/Services");
+        await LoadSelectedPetsAsync();
 
         if (!AcceptTerms)
         {
@@ -117,7 +120,7 @@ public class ProvidersModel : PageModel
             return Page();
         }
 
-        if (Case.PetId is null || CatalogItem is null)
+        if (SelectedPets.Count == 0 || CatalogItem is null)
         {
             ErrorMessage = CatalogLocalizer.Loc("Faltan datos de la evaluación.", "Evaluation details are incomplete.");
             await RefreshSlotAvailabilityAsync();
@@ -150,21 +153,28 @@ public class ProvidersModel : PageModel
             notes += $" · {Case.Frequency}";
         if (!string.IsNullOrWhiteSpace(Case.ContextNotes))
             notes += $". {Case.ContextNotes}";
+        if (SelectedPets.Count > 1)
+            notes += $" · pets: {string.Join(", ", SelectedPets.Select(p => p.Name))}";
 
-        var appt = new Appointment
+        Appointment? primaryAppt = null;
+        foreach (var pet in SelectedPets)
         {
-            ClientId = _auth.CurrentUserId.Value,
-            PetId = Case.PetId.Value,
-            GroomerId = Case.ProviderId.Value,
-            ServiceId = service.Id,
-            ScheduledAt = Case.ScheduledAt.Value,
-            Status = AppointmentStatus.Pending,
-            TotalPrice = CatalogItem.Price,
-            DepositPaid = CatalogItem.Price,
-            Notes = notes,
-            CreatedAt = DateTime.UtcNow
-        };
-        _db.Appointments.Add(appt);
+            var appt = new Appointment
+            {
+                ClientId = _auth.CurrentUserId.Value,
+                PetId = pet.Id,
+                GroomerId = Case.ProviderId.Value,
+                ServiceId = service.Id,
+                ScheduledAt = Case.ScheduledAt.Value,
+                Status = AppointmentStatus.Pending,
+                TotalPrice = CatalogItem.Price,
+                DepositPaid = CatalogItem.Price,
+                Notes = notes,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Appointments.Add(appt);
+            primaryAppt ??= appt;
+        }
         await _db.SaveChangesAsync();
 
         await _consent.SaveAsync(_auth.CurrentUserId.Value, null, new[]
@@ -173,8 +183,8 @@ public class ProvidersModel : PageModel
             ("behavior_scope", true)
         }, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString());
 
-        Case.AppointmentId = appt.Id;
-        Case.PriceCharged = CatalogItem.Price;
+        Case.AppointmentId = primaryAppt!.Id;
+        Case.PriceCharged = CatalogItem.Price * SelectedPets.Count;
         Case.Status = BehaviorCaseStatus.Scheduled;
         Case.Goals = CatalogLocalizer.Loc(
             $"Reducir: {Case.ProblemType}",
@@ -186,9 +196,34 @@ public class ProvidersModel : PageModel
         await _flow.TouchAsync(Case);
 
         await _audit.LogAsync("behavior_booked", _auth.CurrentUserId, "BehaviorCase", Case.Id,
-            new { price = CatalogItem.Price, providerId = Case.ProviderId, appointmentId = appt.Id, scheduledAt });
+            new
+            {
+                price = Case.PriceCharged,
+                providerId = Case.ProviderId,
+                appointmentId = primaryAppt.Id,
+                petIds = SelectedPets.Select(p => p.Id).ToArray(),
+                scheduledAt
+            });
 
         return RedirectToPage("/Behavior/Summary", new { id = Case.Id });
+    }
+
+    private async Task LoadSelectedPetsAsync()
+    {
+        SelectedPets.Clear();
+        if (Case is null || _auth.CurrentUserId is null) return;
+
+        var ids = BehaviorFlowService.GetSelectedPetIds(Case);
+        if (ids.Count == 0) return;
+
+        var pets = await _db.Pets.AsNoTracking()
+            .Where(p => p.OwnerId == _auth.CurrentUserId && ids.Contains(p.Id))
+            .ToListAsync();
+        SelectedPets = ids
+            .Select(id => pets.FirstOrDefault(p => p.Id == id))
+            .Where(p => p is not null)
+            .Cast<Pet>()
+            .ToList();
     }
 
     private async Task<bool> LoadCatalogAsync()

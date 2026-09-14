@@ -14,6 +14,7 @@ public static class DbInitializer
 
         // SQLite local DBs need additive columns before any Groomers queries.
         await EnsureSqliteExtraCategoryIdsAsync(db);
+        await EnsureSqliteBehaviorExtraPetIdsAsync(db);
 
         // T-SQL ALTERs are SQL Server only (Azure / LocalDB upgrades).
         if (db.Database.IsSqlServer())
@@ -39,6 +40,20 @@ public static class DbInitializer
         {
             await db.Database.ExecuteSqlRawAsync(
                 """ALTER TABLE "Groomers" ADD COLUMN "ExtraCategoryIds" TEXT NULL""");
+        }
+        catch
+        {
+            // Column already exists
+        }
+    }
+
+    private static async Task EnsureSqliteBehaviorExtraPetIdsAsync(AppDbContext db)
+    {
+        if (!db.Database.IsSqlite()) return;
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "BehaviorCases" ADD COLUMN "ExtraPetIds" TEXT NULL""");
         }
         catch
         {
@@ -584,6 +599,7 @@ public static class DbInitializer
                     [Id] int NOT NULL IDENTITY,
                     [ClientId] int NOT NULL,
                     [PetId] int NULL,
+                    [ExtraPetIds] nvarchar(200) NULL,
                     [ProviderId] int NULL,
                     [AppointmentId] int NULL,
                     [Status] int NOT NULL,
@@ -606,6 +622,10 @@ public static class DbInitializer
                     CONSTRAINT [FK_BehaviorCases_Appointments] FOREIGN KEY ([AppointmentId]) REFERENCES [Appointments] ([Id]) ON DELETE NO ACTION
                 );
             END
+            """,
+            """
+            IF OBJECT_ID(N'[BehaviorCases]', N'U') IS NOT NULL AND COL_LENGTH(N'BehaviorCases', N'ExtraPetIds') IS NULL
+                ALTER TABLE [BehaviorCases] ADD [ExtraPetIds] nvarchar(200) NULL;
             """,
             """
             IF OBJECT_ID(N'[Consultations]', N'U') IS NOT NULL AND COL_LENGTH(N'Consultations', N'MatchMode') IS NULL

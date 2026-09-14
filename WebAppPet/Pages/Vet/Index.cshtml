@@ -22,6 +22,10 @@
 
     <div class="vet-modality-grid">
         <form method="post" asp-page-handler="StartVirtual" class="vet-modality-card">
+            @if (Model.PetId is int pid)
+            {
+                <input type="hidden" name="PetId" value="@pid" />
+            }
             <button type="submit" class="vet-modality-btn">
                 <span class="vet-modality-icon" aria-hidden="true">💻</span>
                 <strong>@CatalogLocalizer.Loc("Virtual", "Virtual")</strong>
@@ -29,7 +33,7 @@
             </button>
         </form>
 
-        <a class="vet-modality-card vet-modality-btn" asp-page="/Vet/International/Home">
+        <a class="vet-modality-card vet-modality-btn" asp-page="/Vet/International/Home" asp-route-petId="@Model.PetId">
             <span class="vet-modality-icon" aria-hidden="true">🌍</span>
             <strong>@CatalogLocalizer.Loc("Veterinario como en casa", "Vet like at home")</strong>
             <span class="muted small">@CatalogLocalizer.Loc("Orientación internacional por país e idioma", "International guidance by country & language")</span>

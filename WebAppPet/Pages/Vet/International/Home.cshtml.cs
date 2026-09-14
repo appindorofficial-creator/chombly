@@ -21,6 +21,9 @@ public class HomeModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? ConsultationId { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public int? PetId { get; set; }
+
     public void OnGet() { }
 
     public async Task<IActionResult> OnPostFindAsync()
@@ -33,6 +36,13 @@ public class HomeModel : PageModel
             : null;
         c ??= await _flow.StartVirtualAsync();
         c.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
+
+        if (PetId is int pid && pid > 0 && c.PetId is null)
+        {
+            // Pet ownership validated in Care/Services; still apply when coming from Vet Index.
+            c.PetId = pid;
+        }
+
         await _flow.TouchAsync(c);
         await _audit.LogAsync("intl_landing_view", _auth.CurrentUserId, "Consultation", c.Id);
 
