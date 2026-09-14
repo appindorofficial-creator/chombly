@@ -125,10 +125,11 @@ public class IndexModel : PageModel
         Results = list.Select(g =>
         {
             string? distance = null;
+            double? sortKm = null;
             if (userLat != null && userLng != null && (g.Latitude != 0 || g.Longitude != 0))
             {
-                var miles = GeoHelper.MilesBetween(userLat.Value, userLng.Value, g.Latitude, g.Longitude);
-                distance = GeoHelper.FormatMilesAway(miles);
+                sortKm = GeoHelper.KmBetween(userLat.Value, userLng.Value, g.Latitude, g.Longitude);
+                distance = GeoHelper.FormatDistanceOrPlace(sortKm, g.City, g.Address);
             }
 
             var available = todayMap.GetValueOrDefault(g.Id, false);
@@ -136,6 +137,7 @@ public class IndexModel : PageModel
             {
                 Business = g,
                 DistanceLabel = distance,
+                SortKm = sortKm,
                 AvailableToday = available
             };
         }).ToList();
@@ -144,21 +146,14 @@ public class IndexModel : PageModel
             Results = Results.Where(r => r.AvailableToday).ToList();
 
         if (HasUserLocation)
-            Results = Results.OrderBy(r => r.DistanceLabel == null).ThenBy(r => ParseMiles(r.DistanceLabel)).ToList();
-    }
-
-    private static double ParseMiles(string? label)
-    {
-        if (string.IsNullOrEmpty(label)) return double.MaxValue;
-        var part = label.Replace("A ", "").Replace(" km de ti", "").Replace(" mi de ti", "").Trim();
-        return double.TryParse(part, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out var m) ? m : double.MaxValue;
+            Results = Results.OrderBy(r => r.SortKm ?? double.MaxValue).ToList();
     }
 
     public class BusinessCardVm
     {
         public GroomerProfile Business { get; set; } = null!;
         public string? DistanceLabel { get; set; }
+        public double? SortKm { get; set; }
         public bool AvailableToday { get; set; }
     }
 }
