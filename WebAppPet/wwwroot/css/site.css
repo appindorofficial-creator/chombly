@@ -2326,6 +2326,15 @@ h1, h2, h3,
   place-items: center;
   font-size: 2.1rem;
   border: 3px solid var(--lime);
+  overflow: hidden;
+  padding: 0;
+}
+.profile-card .profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 .profile-card h2 {
   margin: 0 0 14px;
