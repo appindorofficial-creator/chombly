@@ -3,7 +3,8 @@
 @{
     ViewData["Title"] = L["Legal_PageTitle"].Value;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = "javascript:history.back()";
+    ViewData["OnboardBackHref"] = Model.BackHref;
+    ViewData["OnboardBackReplace"] = true;
     var HideNav = ViewData["HideNav"] as bool? == true;
     var isEn = CatalogLocalizer.IsEnglish();
 }

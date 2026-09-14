@@ -86,31 +86,36 @@ public class IndexModel : PageModel
 
         var query = _db.Groomers
             .Include(g => g.Category)
+            .Include(g => g.Services)
             .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved)
             .AsQueryable();
 
+        var list = await query.ToListAsync();
+
         if (ActiveCategory != null)
-            query = query.Where(g => g.CategoryId == ActiveCategory.Id);
+            list = list.Where(g => g.OffersCategory(ActiveCategory.Id)).ToList();
 
         if (!string.IsNullOrWhiteSpace(Q))
-            query = query.Where(g => g.BusinessName.Contains(Q) || g.About.Contains(Q));
+            list = list.Where(g =>
+                g.BusinessName.Contains(Q, StringComparison.OrdinalIgnoreCase)
+                || g.About.Contains(Q, StringComparison.OrdinalIgnoreCase)).ToList();
 
         if (!string.IsNullOrWhiteSpace(City))
-            query = query.Where(g => g.City.Contains(City));
+            list = list.Where(g => g.City.Contains(City, StringComparison.OrdinalIgnoreCase)).ToList();
 
         if (!string.IsNullOrWhiteSpace(Type) && Enum.TryParse<GroomerType>(Type, true, out var t))
-            query = query.Where(g => g.Type == t);
+            list = list.Where(g => g.Type == t).ToList();
 
-        if (Senior) query = query.Where(g => g.AcceptsSeniorPets);
-        if (Anxious) query = query.Where(g => g.AcceptsAnxiousPets);
+        if (Senior) list = list.Where(g => g.AcceptsSeniorPets).ToList();
+        if (Anxious) list = list.Where(g => g.AcceptsAnxiousPets).ToList();
 
         if (!string.IsNullOrWhiteSpace(Service))
-            query = query.Where(g => g.Services.Any(s => s.Name.Contains(Service)));
+            list = list.Where(g => g.Services.Any(s => s.Name.Contains(Service, StringComparison.OrdinalIgnoreCase))).ToList();
 
-        var list = await query
+        list = list
             .OrderByDescending(g => g.Rating)
             .ThenBy(g => g.StartingPrice)
-            .ToListAsync();
+            .ToList();
 
         if (!string.IsNullOrWhiteSpace(Species) && PetSpecies.IsKnown(Species))
             list = list.Where(g => g.AcceptsSpecies(Species)).ToList();
@@ -126,7 +131,7 @@ public class IndexModel : PageModel
                 distance = GeoHelper.FormatMilesAway(miles);
             }
 
-            var available = todayMap.GetValueOrDefault(g.Id, true);
+            var available = todayMap.GetValueOrDefault(g.Id, false);
             return new BusinessCardVm
             {
                 Business = g,
@@ -145,7 +150,7 @@ public class IndexModel : PageModel
     private static double ParseMiles(string? label)
     {
         if (string.IsNullOrEmpty(label)) return double.MaxValue;
-        var part = label.Replace("A ", "").Replace(" mi de ti", "").Trim();
+        var part = label.Replace("A ", "").Replace(" km de ti", "").Replace(" mi de ti", "").Trim();
         return double.TryParse(part, System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture, out var m) ? m : double.MaxValue;
     }

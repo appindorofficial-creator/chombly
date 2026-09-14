@@ -4,6 +4,7 @@
 @inject AuthService Auth
 @{
     var backHref = ViewData["OnboardBackHref"] as string;
+    var backReplace = ViewData["OnboardBackReplace"] as bool? == true;
     var showNotif = ViewData["OnboardShowNotif"] as bool? == true;
     var notifReturn = ViewData["OnboardNotifReturn"] as string ?? "/Index";
     var showLang = ViewData["OnboardShowLang"] as bool? ?? true;
@@ -22,7 +23,14 @@
 <header class="onboard-top">
     @if (!string.IsNullOrWhiteSpace(backHref))
     {
-        <a class="onboard-top-back" href="@backHref" aria-label="Back">←</a>
+        if (backReplace)
+        {
+            <a class="onboard-top-back" href="@backHref" aria-label="Back" data-nav-replace>←</a>
+        }
+        else
+        {
+            <a class="onboard-top-back" href="@backHref" aria-label="Back">←</a>
+        }
     }
     <div class="onboard-brand">
         <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" asp-append-version="true" />

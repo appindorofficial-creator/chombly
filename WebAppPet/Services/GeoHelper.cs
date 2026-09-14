@@ -39,8 +39,18 @@ public static class GeoHelper
         return R * c;
     }
 
+    public static double? KmBetween(double lat1, double lon1, double lat2, double lon2)
+    {
+        var miles = MilesBetween(lat1, lon1, lat2, lon2);
+        return miles is null ? null : miles.Value * 1.609344;
+    }
+
+    /// <summary>Etiqueta de distancia en km (p. ej. "A 12,3 km de ti").</summary>
     public static string? FormatMilesAway(double? miles) =>
-        miles is null ? null : $"A {miles.Value:0.0} mi de ti";
+        miles is null ? null : $"A {miles.Value * 1.609344:0.0} km de ti";
+
+    public static string? FormatKmAway(double? km) =>
+        km is null ? null : $"A {km.Value:0.0} km de ti";
 
     /// <summary>
     /// Infiere un código de estado del selector Vet a partir de lat/lng del usuario.

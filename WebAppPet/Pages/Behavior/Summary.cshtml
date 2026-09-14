@@ -1,55 +1,63 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Behavior.SummaryModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Plan de comportamiento", "Behavior plan");
+    ViewData["Title"] = CatalogLocalizer.Loc("Reserva confirmada", "Booking confirmed");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Care/Services");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Plan de comportamiento", "Behavior plan")</h1>
-        <p class="muted small">#@Model.Id · @(Model.Case?.Pet?.Name)</p>
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-success">@Model.Message</div>
-    }
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reserva confirmada", "Booking confirmed")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Tu evaluación quedó guardada con la cita.", "Your evaluation was saved with the booking.")</p>
 
-    <div class="card card-pad" style="margin-bottom:14px">
-        <strong>@(Model.Case?.Provider?.BusinessName)</strong>
-        <p class="muted small mb-0">
-            @Model.Case?.ProblemType ·
-            @(Model.Case?.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : "—")
-            · $@Model.Case?.PriceCharged.ToString("0.##")
-        </p>
-        <p class="muted small" style="margin-top:8px">
-            @CatalogLocalizer.Loc(
-                "Este plan no se presenta como diagnóstico veterinario.",
-                "This plan is not presented as a veterinary diagnosis.")
-        </p>
-    </div>
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert alert-success">@Model.Message</div>
+        }
 
-    <form method="post" asp-page-handler="Save" class="stack" style="gap:12px">
-        <input type="hidden" name="Id" value="@Model.Id" />
-        <label>
-            <span class="section-title">@CatalogLocalizer.Loc("Objetivos", "Goals")</span>
-            <textarea class="input" asp-for="Goals" rows="2"></textarea>
-        </label>
-        <label>
-            <span class="section-title">@CatalogLocalizer.Loc("Ejercicios", "Exercises")</span>
-            <textarea class="input" asp-for="Exercises" rows="4"></textarea>
-        </label>
-        <label>
-            <span class="section-title">@CatalogLocalizer.Loc("Seguimiento", "Follow-up")</span>
-            <textarea class="input" asp-for="FollowUpNotes" rows="2"></textarea>
-        </label>
-        <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Guardar plan", "Save plan")</button>
-    </form>
+        <div class="card card-pad vet-vcpr-ok" style="margin-bottom:14px">
+            <strong>@(Model.Case?.Provider?.BusinessName ?? "—")</strong>
+            <p class="muted small mb-0">
+                @(Model.Case?.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : "—")
+                · $@Model.Case?.PriceCharged.ToString("0.##")
+            </p>
+        </div>
 
-    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-        <a class="btn btn-outline" asp-page="/Vet/Index">@CatalogLocalizer.Loc("Si hay signos clínicos → Vet", "If clinical signs → Vet")</a>
-        <a class="btn btn-outline" asp-page="/Care/Services">@CatalogLocalizer.Loc("Más servicios", "More services")</a>
-    </div>
+        <div class="card card-pad" style="margin-bottom:14px">
+            <span class="muted small">@CatalogLocalizer.Loc("Lo que nos contaste", "What you shared")</span>
+            <p style="margin:6px 0 0">
+                <strong>@(Model.Case?.Pet?.Name ?? "—")</strong>
+                · @(Model.Case?.ProblemType ?? "—")
+                @if (!string.IsNullOrWhiteSpace(Model.Case?.Frequency))
+                {
+                    <text> · @Model.Case.Frequency</text>
+                }
+            </p>
+            @if (!string.IsNullOrWhiteSpace(Model.Case?.ContextNotes))
+            {
+                <p class="muted small" style="margin-top:8px">@Model.Case.ContextNotes</p>
+            }
+            <p class="muted small" style="margin-top:10px;margin-bottom:0">
+                @CatalogLocalizer.Loc(
+                    "El especialista verá estos datos en la sesión. Los ejercicios se definen juntos ahí.",
+                    "The specialist will see these details in the session. Exercises are defined together there.")
+            </p>
+        </div>
+
+        <form method="post" asp-page-handler="Note" class="stack" style="gap:10px;margin-bottom:16px">
+            <input type="hidden" asp-for="Id" />
+            <label>
+                <span class="section-title">@CatalogLocalizer.Loc("Nota extra (opcional)", "Extra note (optional)")</span>
+                <textarea class="input" asp-for="FollowUpNotes" rows="2" placeholder="@CatalogLocalizer.Loc("Algo más para el especialista…", "Anything else for the specialist…")"></textarea>
+            </label>
+            <button type="submit" class="btn btn-outline btn-block">@CatalogLocalizer.Loc("Guardar nota", "Save note")</button>
+        </form>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn btn-primary" asp-page="/Appointments/Index">@CatalogLocalizer.Loc("Ver mis citas", "View my bookings")</a>
+            <a class="btn btn-outline" asp-page="/Care/Services">@CatalogLocalizer.Loc("Más servicios", "More services")</a>
+        </div>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

@@ -34,12 +34,12 @@ public class LocalModel : PageModel
     [BindProperty] public string LegalName { get; set; } = "";
     [BindProperty] public string ClinicOrPracticeName { get; set; } = "";
     [BindProperty] public string LicenseNumber { get; set; } = "";
-    [BindProperty] public string LicenseJurisdiction { get; set; } = "NC";
+    [BindProperty] public string LicenseJurisdiction { get; set; } = "";
     [BindProperty] public DateTime? LicenseExpiry { get; set; }
-    [BindProperty] public string Languages { get; set; } = "en,es";
+    [BindProperty] public string Languages { get; set; } = "";
     [BindProperty] public string Specialties { get; set; } = "";
-    [BindProperty] public bool HasPhysicalClinic { get; set; } = true;
-    [BindProperty] public bool VcprCapable { get; set; } = true;
+    [BindProperty] public bool HasPhysicalClinic { get; set; }
+    [BindProperty] public bool VcprCapable { get; set; }
     [BindProperty] public string? DocumentsNote { get; set; }
     [BindProperty] public IFormFile? DocumentUpload { get; set; }
 
@@ -49,10 +49,14 @@ public class LocalModel : PageModel
     {
         if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
         var latest = await _onboarding.GetLatestAsync(_auth.CurrentUserId!.Value);
-        if (latest != null && (latest.Track == ProfessionalOnboardingTrack.Local ||
-                               latest.Track == ProfessionalOnboardingTrack.Behavior ||
-                               IsBehavior))
+        if (latest != null
+            && latest.Status is ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected
+            && (latest.Track == ProfessionalOnboardingTrack.Local
+                || latest.Track == ProfessionalOnboardingTrack.Behavior))
         {
+            if (IsBehavior != (latest.Track == ProfessionalOnboardingTrack.Behavior))
+                return Page();
+
             LegalName = latest.LegalName;
             ClinicOrPracticeName = latest.ClinicOrPracticeName;
             LicenseNumber = latest.LicenseNumber;

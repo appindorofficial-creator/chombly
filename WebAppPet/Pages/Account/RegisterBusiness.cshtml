@@ -65,6 +65,7 @@
                 }
 
                 <form method="post" id="biz-reg-form" class="onboard-auth-form" novalidate
+                      enctype="multipart/form-data"
                       action="@Url.Page("/Account/RegisterBusiness")"
                       data-msg-loc-fail="@L["Search_LocationFail"]"
                       data-msg-loc-loading="@L["Register_LocationLoading"]"
@@ -161,12 +162,15 @@
                     else if (Model.Step == 2)
                     {
                         <h2 class="biz-section-title">@L["Biz_ServiceType"]</h2>
+                        <p class="onboard-auth-lead">@L["Biz_ServiceTypeHint"]</p>
                         <div class="biz-cat-grid">
                             @foreach (var c in Model.Categories)
                             {
-                                var on = Model.CategoryId == c.Id || (Model.CategoryId == 0 && c == Model.Categories.First());
+                                var on = Model.CategoryIds.Contains(c.Id)
+                                    || (Model.CategoryIds.Count == 0 && Model.CategoryId == c.Id)
+                                    || (Model.CategoryIds.Count == 0 && Model.CategoryId == 0 && c == Model.Categories.First());
                                 <label class="biz-cat-card @(on ? "active" : "")">
-                                    <input type="radio" name="CategoryId" value="@c.Id" @(on ? "checked" : "") />
+                                    <input type="checkbox" name="CategoryIds" value="@c.Id" @(on ? "checked" : null) />
                                     <img src="/images/categories/cat-@(c.Slug)-v2.png" alt="" />
                                     <strong>@c.DisplayName()</strong>
                                 </label>
@@ -176,7 +180,7 @@
                         @foreach (var (key, labelKey) in new[] { ("local", "Biz_WorkLocal"), ("domicilio", "Biz_WorkHome"), ("ambas", "Biz_WorkBoth") })
                         {
                             <label class="radio-card" style="margin-bottom:8px">
-                                <input type="radio" name="WorkModeKey" value="@key" @(Model.WorkModeKey == key ? "checked" : "") />
+                                <input type="radio" name="WorkModeKey" value="@key" @(Model.WorkModeKey == key ? "checked" : null) />
                                 <div class="inner"><strong>@L[labelKey]</strong></div>
                             </label>
                         }
@@ -226,8 +230,59 @@
                     {
                         <h2 class="biz-section-title">@L["Biz_PhotosTitle"]</h2>
                         <p class="onboard-auth-lead">@L["Biz_PhotosHint"]</p>
-                        <div class="form-group"><label>@L["Biz_LogoUrl"]</label><input class="form-control" name="LogoUrl" value="@Model.LogoUrl" placeholder="https://…" /></div>
-                        <div class="form-group"><label>@L["Biz_CoverUrl"]</label><input class="form-control" name="CoverUrl" value="@Model.CoverUrl" placeholder="https://…" /></div>
+
+                        <div class="form-group pet-photo-field">
+                            <label>@L["Biz_Logo"]</label>
+                            <div class="pet-photo-card biz-photo-card">
+                                <div class="pet-photo-upload">
+                                    <img id="logo-preview" class="pet-photo-preview" alt=""
+                                         src="@(string.IsNullOrWhiteSpace(Model.LogoUrl) ? null : Model.LogoUrl)"
+                                         @(string.IsNullOrWhiteSpace(Model.LogoUrl) ? "hidden" : null) />
+                                    <div class="pet-photo-placeholder" id="logo-placeholder" aria-hidden="true"
+                                         @(string.IsNullOrWhiteSpace(Model.LogoUrl) ? null : "hidden")>
+                                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+                                            <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h2l1.2-1.5A1.5 1.5 0 0 1 10.9 3h2.2a1.5 1.5 0 0 1 1.2.5L15.5 5H17.5A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.7"/>
+                                            <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                                        </svg>
+                                    </div>
+                                    <label class="pet-photo-pick btn btn-outline">
+                                        @L["Biz_PhotoChoose"]
+                                        <input type="file" asp-for="LogoFile" id="logo-file" accept="image/*" />
+                                    </label>
+                                </div>
+                                <details class="pet-photo-url-fallback">
+                                    <summary>@L["Biz_PhotoOrUrl"]</summary>
+                                    <input class="form-control" name="LogoUrl" value="@Model.LogoUrl" placeholder="https://…" />
+                                </details>
+                            </div>
+                        </div>
+
+                        <div class="form-group pet-photo-field">
+                            <label>@L["Biz_Cover"]</label>
+                            <div class="pet-photo-card biz-photo-card">
+                                <div class="pet-photo-upload">
+                                    <img id="cover-preview" class="pet-photo-preview" alt=""
+                                         src="@(string.IsNullOrWhiteSpace(Model.CoverUrl) ? null : Model.CoverUrl)"
+                                         @(string.IsNullOrWhiteSpace(Model.CoverUrl) ? "hidden" : null) />
+                                    <div class="pet-photo-placeholder" id="cover-placeholder" aria-hidden="true"
+                                         @(string.IsNullOrWhiteSpace(Model.CoverUrl) ? null : "hidden")>
+                                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+                                            <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h2l1.2-1.5A1.5 1.5 0 0 1 10.9 3h2.2a1.5 1.5 0 0 1 1.2.5L15.5 5H17.5A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.7"/>
+                                            <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                                        </svg>
+                                    </div>
+                                    <label class="pet-photo-pick btn btn-outline">
+                                        @L["Biz_PhotoChoose"]
+                                        <input type="file" asp-for="CoverFile" id="cover-file" accept="image/*" />
+                                    </label>
+                                </div>
+                                <details class="pet-photo-url-fallback">
+                                    <summary>@L["Biz_PhotoOrUrl"]</summary>
+                                    <input class="form-control" name="CoverUrl" value="@Model.CoverUrl" placeholder="https://…" />
+                                </details>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>@L["Biz_Description"]</label>
                             <textarea class="form-control" name="About" rows="5" maxlength="300" placeholder="@L["Biz_DescriptionPh"]">@Model.About</textarea>
@@ -383,7 +438,33 @@
             var navInput = document.getElementById('biz-nav');
             if (navInput) navInput.value = nav;
             var btn = document.getElementById('biz-continue');
+
+            if (nav === 'next') {
+                var terms = form.querySelector('[data-terms-checkbox], input[name="AcceptTerms"][type="checkbox"]');
+                if (terms && !terms.checked) {
+                    var err = form.querySelector('[data-terms-error]');
+                    if (err) {
+                        var msg = err.getAttribute('data-terms-message');
+                        if (msg) err.textContent = msg;
+                        err.hidden = false;
+                        err.removeAttribute('hidden');
+                        if (typeof err.scrollIntoView === 'function') {
+                            err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }
+                    try { terms.focus(); } catch (_) { }
+                    if (window.ChomblyToast && typeof window.ChomblyToast.show === 'function') {
+                        window.ChomblyToast.show(
+                            (err && err.getAttribute('data-terms-message')) || @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Biz_ErrAcceptTerms"].Value)),
+                            { kind: 'error' }
+                        );
+                    }
+                    return;
+                }
+            }
+
             if (btn && nav === 'next') {
+                if (btn.dataset.idleLabel == null) btn.dataset.idleLabel = btn.textContent;
                 btn.disabled = true;
                 btn.textContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Biz_Loading"].Value));
             }
@@ -415,15 +496,25 @@
             }, true);
         }
 
-        document.querySelectorAll('.biz-type-card, .biz-cat-card').forEach(function (card) {
+        document.querySelectorAll('.biz-type-card').forEach(function (card) {
             card.addEventListener('click', function () {
                 var input = card.querySelector('input[type=radio]');
                 if (!input) return;
                 input.checked = true;
-                var group = card.classList.contains('biz-type-card')
-                    ? document.querySelectorAll('.biz-type-card')
-                    : document.querySelectorAll('.biz-cat-card');
-                group.forEach(function (c) { c.classList.toggle('active', c === card); });
+                document.querySelectorAll('.biz-type-card').forEach(function (c) {
+                    c.classList.toggle('active', c === card);
+                });
+            });
+        });
+
+        document.querySelectorAll('.biz-cat-card').forEach(function (card) {
+            card.addEventListener('click', function (e) {
+                // Let the checkbox toggle itself; sync active class from checked state.
+                setTimeout(function () {
+                    var input = card.querySelector('input[type=checkbox]');
+                    if (!input) return;
+                    card.classList.toggle('active', !!input.checked);
+                }, 0);
             });
         });
 
@@ -518,6 +609,23 @@
                 setStatus((msgOk ? msgOk + ': ' : '') + city.value, true);
             }
         }
+
+        function bindBizPhotoPreview(inputId, previewId, placeholderId) {
+            var input = document.getElementById(inputId);
+            var preview = document.getElementById(previewId);
+            var placeholder = document.getElementById(placeholderId);
+            if (!input || !preview) return;
+            input.addEventListener('change', function () {
+                var file = input.files && input.files[0];
+                if (!file) return;
+                var url = URL.createObjectURL(file);
+                preview.src = url;
+                preview.hidden = false;
+                if (placeholder) placeholder.hidden = true;
+            });
+        }
+        bindBizPhotoPreview('logo-file', 'logo-preview', 'logo-placeholder');
+        bindBizPhotoPreview('cover-file', 'cover-preview', 'cover-placeholder');
     })();
     </script>
 }

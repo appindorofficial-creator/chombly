@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -14,20 +13,17 @@ public class IntakeModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly BehaviorFlowService _flow;
-    private readonly IWebHostEnvironment _env;
     private readonly VetAuditService _audit;
 
     public IntakeModel(
         AppDbContext db,
         AuthService auth,
         BehaviorFlowService flow,
-        IWebHostEnvironment env,
         VetAuditService audit)
     {
         _db = db;
         _auth = auth;
         _flow = flow;
-        _env = env;
         _audit = audit;
     }
 
@@ -38,11 +34,7 @@ public class IntakeModel : PageModel
     [BindProperty] public string? ProblemType { get; set; }
     [BindProperty] public string? Frequency { get; set; }
     [BindProperty] public string? ContextNotes { get; set; }
-    [BindProperty] public IFormFile? Video { get; set; }
-    [BindProperty] public bool SuddenAggression { get; set; }
-    [BindProperty] public bool SeizureLike { get; set; }
-    [BindProperty] public bool PainSuspected { get; set; }
-    [BindProperty] public bool SelfHarm { get; set; }
+    [BindProperty] public bool HasClinicalConcern { get; set; }
 
     public BehaviorCase? Case { get; set; }
     public List<Models.Pet> Pets { get; set; } = new();
@@ -71,8 +63,9 @@ public class IntakeModel : PageModel
 
         PetId = Case.PetId ?? Pets.FirstOrDefault()?.Id ?? 0;
         ProblemType = Case.ProblemType;
-        Frequency = Case.Frequency;
+        Frequency = Case.Frequency ?? Frequencies[0];
         ContextNotes = Case.ContextNotes;
+        HasClinicalConcern = Case.ClinicalRedFlag;
         return Page();
     }
 
@@ -96,20 +89,12 @@ public class IntakeModel : PageModel
             return Page();
         }
 
-        var mediaErr = VetMediaStorage.Validate(Video);
-        if (mediaErr != null)
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Video no válido (≤25MB).", "Invalid video (≤25MB).");
-            return Page();
-        }
-
         Case.PetId = PetId;
         Case.ProblemType = ProblemType.Trim();
-        Case.Frequency = Frequency;
+        Case.Frequency = string.IsNullOrWhiteSpace(Frequency) ? Frequencies[0] : Frequency.Trim();
         Case.ContextNotes = ContextNotes?.Trim();
-        Case.ClinicalRedFlag = BehaviorFlowService.HasClinicalRedFlag(SuddenAggression, SeizureLike, PainSuspected, SelfHarm);
-        if (Video is { Length: > 0 })
-            Case.VideoUrl = await VetMediaStorage.SaveAsync(Video, _auth.CurrentUserId.Value, _env);
+        Case.ClinicalRedFlag = HasClinicalConcern;
+        Case.VideoUrl = null;
 
         if (Case.ClinicalRedFlag)
         {

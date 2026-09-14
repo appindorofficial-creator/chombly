@@ -4,6 +4,7 @@
     ViewData["Title"] = L["Trainers_Title"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
+    var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -31,7 +32,46 @@
             }
         </div>
 
-        <h3 class="section-title">2. ¿Dónde prefieres las clases?</h3>
+        <h3 class="section-title">2. ¿Cuándo?</h3>
+        <div class="when-row">
+            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
+                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
+                Hoy
+            </label>
+            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
+                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
+                Mañana
+            </label>
+            <label class="when-chip @(Model.When == "fecha" ? "active" : "")">
+                <input type="radio" name="When" value="fecha" @(Model.When == "fecha" ? "checked" : "") onchange="this.form.submit()" />
+                Elegir fecha
+            </label>
+        </div>
+        @if (Model.When == "fecha")
+        {
+            <div class="form-group">
+                <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" onchange="this.form.submit()" />
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="Date" value="@Model.Date" />
+        }
+
+        <h3 class="section-title">3. ¿A qué hora?</h3>
+        <div class="when-row" style="flex-wrap:wrap">
+            @foreach (var t in WebAppPet.Pages.Trainers.IndexModel.TimeSlots)
+            {
+                var taken = Model.OccupiedSlots.Contains(t);
+                <label class="when-chip @(Model.Slot == t ? "active" : "") @(taken ? "is-disabled" : "")">
+                    <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : "") @(taken ? "disabled" : null)
+                           onchange="this.form.submit()" />
+                    @t@(taken ? " · ocupado" : "")
+                </label>
+            }
+        </div>
+
+        <h3 class="section-title">4. ¿Dónde prefieres las clases?</h3>
         <div class="filter-bar" style="flex-direction:column;align-items:stretch">
             @foreach (var p in WebAppPet.Pages.Trainers.IndexModel.PlaceOptions)
             {
@@ -43,7 +83,7 @@
             }
         </div>
 
-        <h3 class="section-title">3. ¿Cuántas sesiones?</h3>
+        <h3 class="section-title">5. ¿Cuántas sesiones?</h3>
         <div class="filter-bar" style="flex-direction:column;align-items:stretch">
             @foreach (var pkg in WebAppPet.Pages.Trainers.IndexModel.PackageOptions)
             {
@@ -61,7 +101,7 @@
             }
         </div>
 
-        <h3 class="section-title">4. Selecciona tu mascota</h3>
+        <h3 class="section-title">6. Selecciona tu mascota</h3>
         @if (!Model.Pets.Any())
         {
             <div class="alert alert-info">
@@ -90,7 +130,7 @@
             <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
         }
 
-        <h3 class="section-title">5. Preferencias <span class="muted small">(opcional)</span></h3>
+        <h3 class="section-title">7. Preferencias <span class="muted small">(opcional)</span></h3>
         <div class="filter-bar filter-bar-wrap">
             @foreach (var pref in WebAppPet.Pages.Trainers.IndexModel.PrefOptions)
             {
@@ -102,7 +142,7 @@
             }
         </div>
 
-        <h3 class="section-title" id="trainers-results">@CatalogLocalizer.Loc("6. Entrenadores disponibles cerca de ti", "6. Trainers available near you")</h3>
+        <h3 class="section-title" id="trainers-results">@CatalogLocalizer.Loc("8. Entrenadores disponibles cerca de ti", "8. Trainers available near you")</h3>
         @if (!Model.Results.Any())
         {
             <div class="empty">@CatalogLocalizer.Loc("No hay entrenadores con esos filtros en la base de datos.", "No trainers match these filters.")</div>
@@ -140,6 +180,9 @@
                    asp-route-Need="@Model.Need"
                    asp-route-Place="@Model.Place"
                    asp-route-Sessions="@Model.Sessions"
+                   asp-route-When="@Model.When"
+                   asp-route-Slot="@Model.Slot"
+                   asp-route-Date="@Model.Date"
                    asp-route-PetId="@Model.PetId"
                    asp-route-groomerId="@t.Id"
                    asp-route-Notes="@Model.Notes"
@@ -155,6 +198,9 @@
                asp-route-Need="@Model.Need"
                asp-route-Place="@Model.Place"
                asp-route-Sessions="@Model.Sessions"
+               asp-route-When="@Model.When"
+               asp-route-Slot="@Model.Slot"
+               asp-route-Date="@Model.Date"
                asp-route-PetId="@Model.PetId"
                asp-route-groomerId="@Model.GroomerId"
                asp-route-More="true">@CatalogLocalizer.Loc("Ver más entrenadores", "See more trainers")</a>
@@ -164,7 +210,7 @@
     @if (Model.SelectedTrainer != null && Model.SelectedService != null)
     {
         <div class="card card-pad" style="margin-bottom:14px">
-            <h3 class="section-title" style="margin-top:0">7. Resumen</h3>
+            <h3 class="section-title" style="margin-top:0">9. Resumen</h3>
             <p><strong>@Model.SelectedTrainer.BusinessName</strong> — @Model.NeedLabel — @Model.PackageLabel</p>
             <p class="muted small">@Model.DateLabel</p>
             <p class="muted small">@Model.PlaceLabel · 1 sesión / semana</p>
@@ -183,6 +229,9 @@
             <input type="hidden" name="Need" value="@Model.Need" />
             <input type="hidden" name="Place" value="@Model.Place" />
             <input type="hidden" name="Sessions" value="@Model.Sessions" />
+            <input type="hidden" name="When" value="@Model.When" />
+            <input type="hidden" name="Slot" value="@Model.Slot" />
+            <input type="hidden" name="Date" value="@Model.Date" />
             <input type="hidden" name="PetId" value="@Model.PetId" />
             <input type="hidden" name="groomerId" value="@Model.GroomerId" />
             <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
@@ -191,7 +240,7 @@
                 <input type="hidden" name="Prefs" value="@p" />
             }
 
-            <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para el entrenador", "8. Notes for the trainer") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
+            <h3 class="section-title">@CatalogLocalizer.Loc("10. Notas para el entrenador", "10. Notes for the trainer") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                       placeholder="Objetivos, problemas de conducta, experiencia previa…"
                       onchange="this.form.submit()">@Model.Notes</textarea>
@@ -215,7 +264,7 @@
     ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
     ViewData["PromoDiscount"] = Model.DiscountAmount;
     ViewData["PromoError"] = Model.PromoError;
-    ViewData["TermsStep"] = "10. ";
+    ViewData["TermsStep"] = "12. ";
     ViewData["TermsChecked"] = Model.AcceptTerms;
     <aside class="hotel-summary">
         <div class="hotel-summary-inner">
@@ -236,6 +285,9 @@
                 <input type="hidden" name="Need" value="@Model.Need" />
                 <input type="hidden" name="Place" value="@Model.Place" />
                 <input type="hidden" name="Sessions" value="@Model.Sessions" />
+                <input type="hidden" name="When" value="@Model.When" />
+                <input type="hidden" name="Slot" value="@Model.Slot" />
+                <input type="hidden" name="Date" value="@Model.Date" />
                 <input type="hidden" name="PetId" value="@Model.PetId" />
                 <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
                 <input type="hidden" name="Notes" value="@Model.Notes" />
@@ -246,7 +298,7 @@
 
                 <partial name="_PromoCode" />
 
-                <h4 class="summary-sub">9. Método de pago</h4>
+                <h4 class="summary-sub">11. Método de pago</h4>
                 @if (Model.DefaultPayment != null)
                 {
                     <div class="pay-row">

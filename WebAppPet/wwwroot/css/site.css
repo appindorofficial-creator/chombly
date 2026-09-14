@@ -1525,6 +1525,15 @@ h1, h2, h3,
   color: var(--forest-deep);
   border-color: var(--lime);
 }
+.chip:has(input:checked) {
+  background: var(--lime);
+  color: var(--forest-deep);
+  border-color: var(--lime);
+}
+.chip.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 .chip.chip-species {
   display: inline-flex;
   align-items: center;
@@ -2638,6 +2647,30 @@ h1, h2, h3,
   color: var(--muted);
   margin-bottom: 8px;
 }
+.onboard-biz .biz-photo-card {
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  background: var(--ivory-light, #fafaf7);
+}
+.onboard-biz .biz-photo-card .pet-photo-placeholder {
+  width: 88px;
+  height: 88px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--forest);
+  background: rgba(182, 231, 64, 0.22);
+}
+.onboard-biz .biz-photo-card .pet-photo-placeholder[hidden] {
+  display: none;
+}
+.onboard-biz .biz-photo-card .pet-photo-preview {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 14px;
+}
 .pet-card .pet-info {
   flex: 1;
   min-width: 0;
@@ -3466,6 +3499,10 @@ body.chat-layout .chat-page {
 .when-chip input { display: none; }
 .when-chip.active,
 .when-chip:has(input:checked) { background: var(--brand); color: #fff; border-color: var(--brand); }
+.when-chip.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 .date-row { display: flex; gap: 10px; margin-bottom: 12px; }
 
 .pet-count-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }

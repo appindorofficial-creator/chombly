@@ -13,6 +13,10 @@ public class GroomerProfile
     public int? CategoryId { get; set; }
     public ServiceCategory? Category { get; set; }
 
+    /// <summary>CSV of additional category ids beyond <see cref="CategoryId"/> (multi-service businesses).</summary>
+    [MaxLength(120)]
+    public string? ExtraCategoryIds { get; set; }
+
     [Required, MaxLength(120)]
     public string BusinessName { get; set; } = string.Empty;
 
@@ -111,4 +115,21 @@ public class GroomerProfile
 
     public bool AcceptsSpecies(string? species) => PetSpecies.ListIncludes(AcceptedSpecies, species);
     public IEnumerable<string> AcceptedSpeciesList => PetSpecies.ParseList(AcceptedSpecies);
+
+    public bool OffersCategory(int categoryId)
+    {
+        if (CategoryId == categoryId) return true;
+        if (string.IsNullOrWhiteSpace(ExtraCategoryIds)) return false;
+        foreach (var part in ExtraCategoryIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (int.TryParse(part, out var id) && id == categoryId) return true;
+        }
+        return false;
+    }
+
+    public static string? JoinExtraCategoryIds(IEnumerable<int> ids, int? primaryId)
+    {
+        var extras = ids.Where(id => id > 0 && id != primaryId).Distinct().OrderBy(id => id).ToList();
+        return extras.Count == 0 ? null : string.Join(",", extras);
+    }
 }

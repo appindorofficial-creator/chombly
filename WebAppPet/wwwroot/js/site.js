@@ -402,6 +402,20 @@
     }
   }
 
+  function resetStuckSubmitButtons(form) {
+    if (!form) return;
+    form.querySelectorAll('button[type="submit"], button.is-loading, button[aria-busy="true"], #biz-continue').forEach(function (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      btn.classList.remove('is-loading', 'is-success');
+      if (btn.dataset.feedbackHtml != null) {
+        btn.innerHTML = btn.dataset.feedbackHtml;
+      } else if (btn.dataset.idleLabel != null) {
+        btn.textContent = btn.dataset.idleLabel;
+      }
+    });
+  }
+
   function bindAcceptTerms(root) {
     (root || document).querySelectorAll('form').forEach(function (form) {
       if (form.dataset.termsBound === '1') return;
@@ -409,20 +423,29 @@
       if (!cb) return;
       form.dataset.termsBound = '1';
       var err = form.querySelector('[data-terms-error]');
+      var renewal = form.querySelector('[data-care-renewal], input[name="AcceptRenewal"][type="checkbox"]');
 
-      cb.addEventListener('change', function () {
-        if (cb.checked) setTermsErrorVisible(err, false);
-      });
+      function clearIfReady() {
+        if (cb.checked && (!renewal || renewal.checked)) setTermsErrorVisible(err, false);
+      }
+
+      cb.addEventListener('change', clearIfReady);
+      if (renewal) renewal.addEventListener('change', clearIfReady);
 
       form.addEventListener('submit', function (e) {
-        if (cb.checked) {
+        var ok = cb.checked && (!renewal || renewal.checked);
+        if (ok) {
           setTermsErrorVisible(err, false);
           return;
         }
         e.preventDefault();
         e.stopPropagation();
+        resetStuckSubmitButtons(form);
         setTermsErrorVisible(err, true);
-        try { cb.focus(); } catch (_) { }
+        try {
+          if (!cb.checked) cb.focus();
+          else if (renewal) renewal.focus();
+        } catch (_) { }
         if (err && typeof err.scrollIntoView === 'function') {
           err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -1139,6 +1162,24 @@
     });
   }
 
+  function bindNavReplace(root) {
+    (root || document).querySelectorAll('a[data-nav-replace][href]').forEach(function (a) {
+      if (a.dataset.navReplaceBound === '1') return;
+      a.dataset.navReplaceBound = '1';
+      a.addEventListener('click', function (e) {
+        if (a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var href = a.getAttribute('href') || '';
+        if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+        e.preventDefault();
+        try {
+          window.location.replace(a.href);
+        } catch (_) {
+          window.location.href = a.href;
+        }
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
     bindPasswordToggles(document);
@@ -1159,6 +1200,7 @@
     bindTrustBanner(document);
     bindHowGlow(document);
     bindFeaturedBanner(document);
+    bindNavReplace(document);
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;

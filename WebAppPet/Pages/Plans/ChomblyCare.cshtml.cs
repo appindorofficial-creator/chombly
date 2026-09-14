@@ -31,6 +31,9 @@ public class ChomblyCareModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? ConsultationId { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     [BindProperty]
     public bool AcceptTerms { get; set; }
 
@@ -42,9 +45,11 @@ public class ChomblyCareModel : PageModel
     public int RemainingConsults { get; set; }
     public string? ErrorMessage { get; set; }
     public string? SuccessMessage { get; set; }
+    public string BackHref { get; private set; } = "/Index";
 
     public async Task<IActionResult> OnGetAsync()
     {
+        ResolveBackHref();
         CatalogItem = await _catalog.GetAsync(ServiceCatalogCodes.ChomblyCare);
         if (_auth.CurrentUserId is int uid)
         {
@@ -57,6 +62,7 @@ public class ChomblyCareModel : PageModel
 
     public async Task<IActionResult> OnPostActivateAsync()
     {
+        ResolveBackHref();
         if (_auth.CurrentUserId is null)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Plans/ChomblyCare" });
 
@@ -98,6 +104,7 @@ public class ChomblyCareModel : PageModel
 
     public async Task<IActionResult> OnPostCancelAsync()
     {
+        ResolveBackHref();
         if (_auth.CurrentUserId is null)
             return RedirectToPage("/Account/Login");
 
@@ -111,5 +118,27 @@ public class ChomblyCareModel : PageModel
             "Cancelación programada al final del ciclo actual.",
             "Cancellation scheduled at the end of the current cycle.");
         return Page();
+    }
+
+    private void ResolveBackHref()
+    {
+        if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+        {
+            BackHref = ReturnUrl;
+            return;
+        }
+
+        var referer = Request.Headers.Referer.ToString();
+        if (Uri.TryCreate(referer, UriKind.Absolute, out var uri)
+            && string.Equals(uri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase)
+            && !uri.AbsolutePath.Contains("/Plans/ChomblyCare", StringComparison.OrdinalIgnoreCase)
+            && !uri.AbsolutePath.Contains("/Legal/Terms", StringComparison.OrdinalIgnoreCase)
+            && Url.IsLocalUrl(uri.PathAndQuery))
+        {
+            BackHref = uri.PathAndQuery;
+            return;
+        }
+
+        BackHref = Url.Page("/Pets/Index") ?? "/Pets";
     }
 }

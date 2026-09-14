@@ -5,8 +5,11 @@
     ViewData["Title"] = L["Nav_Home"].Value;
     ViewData["LangCompact"] = true;
     ViewData["BodyClass"] = "page-onboard-home";
-    ViewData["OnboardShowNotif"] = true;
-    ViewData["OnboardNotifReturn"] = "/Index";
+    if (!Model.IsGuest)
+    {
+        ViewData["OnboardShowNotif"] = true;
+        ViewData["OnboardNotifReturn"] = "/Index";
+    }
 }
 <div class="onboard onboard-home">
     <partial name="_OnboardTop" />
