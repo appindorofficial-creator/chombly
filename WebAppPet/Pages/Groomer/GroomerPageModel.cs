@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -19,6 +20,7 @@ public abstract class GroomerPageModel : PageModel
     }
 
     public GroomerProfile? Profile { get; set; }
+    public List<ServiceCategory> OfferedCategories { get; set; } = new();
 
     protected async Task<IActionResult?> LoadGroomerAsync()
     {
@@ -32,7 +34,26 @@ public abstract class GroomerPageModel : PageModel
         if (Profile == null)
             return RedirectToPage("/Account/RegisterBusiness");
 
-        ViewData["ProviderCategory"] = Profile.Category?.Name;
+        await LoadOfferedCategoriesAsync();
         return null;
+    }
+
+    protected async Task LoadOfferedCategoriesAsync()
+    {
+        OfferedCategories = new();
+        if (Profile == null) return;
+
+        var ids = Profile.GetOfferedCategoryIds();
+        if (ids.Count == 0) return;
+
+        OfferedCategories = await Db.Categories.AsNoTracking()
+            .Where(c => ids.Contains(c.Id))
+            .OrderBy(c => c.SortOrder)
+            .ToListAsync();
+
+        ViewData["ProviderCategories"] = OfferedCategories
+            .Select(c => c.DisplayName())
+            .ToList();
+        ViewData["ProviderCategory"] = string.Join(" · ", OfferedCategories.Select(c => c.DisplayName()));
     }
 }

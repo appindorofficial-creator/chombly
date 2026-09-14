@@ -3420,10 +3420,17 @@ body.chat-layout .chat-page {
 .provider-banner {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }
 .provider-banner strong { font-size: 1rem; color: var(--brand-dark); }
+.provider-cat-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
 .tabs-wrap { flex-wrap: wrap; }
 .link-btn {
   background: none; border: none; color: var(--brand); font-weight: 700;

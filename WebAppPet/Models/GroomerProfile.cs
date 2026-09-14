@@ -127,6 +127,22 @@ public class GroomerProfile
         return false;
     }
 
+    public IReadOnlyList<int> GetOfferedCategoryIds()
+    {
+        var ids = new List<int>();
+        if (CategoryId is int primary && primary > 0)
+            ids.Add(primary);
+        if (!string.IsNullOrWhiteSpace(ExtraCategoryIds))
+        {
+            foreach (var part in ExtraCategoryIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (int.TryParse(part, out var id) && id > 0 && !ids.Contains(id))
+                    ids.Add(id);
+            }
+        }
+        return ids;
+    }
+
     public static string? JoinExtraCategoryIds(IEnumerable<int> ids, int? primaryId)
     {
         var extras = ids.Where(id => id > 0 && id != primaryId).Distinct().OrderBy(id => id).ToList();

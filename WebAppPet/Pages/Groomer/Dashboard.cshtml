@@ -58,9 +58,9 @@
     <h2 style="margin:0 0 4px">Hola, @Model.Profile?.User.FullName</h2>
     <p class="muted small" style="margin:0 0 16px">
         @Model.Profile?.BusinessName
-        @if (Model.Profile?.Category != null)
+        @if (Model.OfferedCategories.Count > 0)
         {
-            <span>· @Model.Profile.Category.Emoji @Model.Profile.Category.Name</span>
+            <span>· @string.Join(" · ", Model.OfferedCategories.Select(c => $"{c.Emoji} {c.DisplayName()}"))</span>
         }
     </p>
 
