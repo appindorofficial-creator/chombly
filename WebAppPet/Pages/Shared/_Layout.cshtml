@@ -17,6 +17,7 @@
     var hideNav = ViewData["HideNav"] as bool? == true;
     var path = Context.Request.Path.Value ?? "";
     var isAuthed = User.Identity?.IsAuthenticated == true;
+    var isBiz = User.IsInRole(nameof(WebAppPet.Models.UserRole.Groomer));
     bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase);
     var onNotifications = IsActive("/Account/Notifications");
@@ -26,11 +27,15 @@
         !string.IsNullOrEmpty(notifReturn) &&
         (notifReturn.Equals(prefix, StringComparison.OrdinalIgnoreCase) ||
          notifReturn.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase) ||
-         (prefix == "/Index" && (notifReturn == "/" || notifReturn.Equals("/Index", StringComparison.OrdinalIgnoreCase))));
-    var notifFromHome = NotifFrom("/Index") || (onNotifications && (notifReturn == "/" ));
-    var notifFromAppt = NotifFrom("/Appointments");
+         (prefix == "/Index" && (notifReturn == "/" || notifReturn.Equals("/Index", StringComparison.OrdinalIgnoreCase))) ||
+         (prefix == "/Groomer/Dashboard" && (notifReturn.Equals("/Groomer/Dashboard", StringComparison.OrdinalIgnoreCase)
+            || notifReturn.StartsWith("/Groomer/", StringComparison.OrdinalIgnoreCase))));
+    var notifFromHome = NotifFrom("/Index") || NotifFrom("/Groomer/Dashboard") || (onNotifications && notifReturn == "/");
+    var notifFromAppt = NotifFrom("/Appointments") || NotifFrom("/Groomer/Appointments");
     var notifFromProfile = onNotifications && !notifFromHome && !notifFromAppt;
-    var homeHref = isAuthed ? Url.Page("/Index") : Url.Page("/Index", new { browse = true });
+    var homeHref = isBiz
+        ? Url.Page("/Groomer/Dashboard")
+        : (isAuthed ? Url.Page("/Index") : Url.Page("/Index", new { browse = true }));
 }
 <body class="@(ViewData["BodyClass"] as string)">
 <div class="app-shell">
@@ -40,26 +45,52 @@
     {
         <nav class="bottom-nav" data-bottom-nav>
             <span class="bottom-nav-indicator" aria-hidden="true"></span>
-            <a href="@homeHref" class="@(IsActive("/Index") || path == "/" || notifFromHome ? "active" : "")">
-                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
-                @L["Nav_Home"]
-            </a>
-            <a asp-page="/Groomers/Index" class="@(IsActive("/Groomers") ? "active" : "")">
-                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm8.7 13.3-3.2-3.2a8 8 0 1 0-1.4 1.4l3.2 3.2 1.4-1.4z"/></svg></span>
-                @L["Nav_Search"]
-            </a>
-            <a asp-page="/Appointments/Index" class="@(IsActive("/Appointments") || notifFromAppt ? "active" : "")">
-                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg></span>
-                @L["Nav_Appointments"]
-            </a>
-            <a asp-page="/Pets/Index" class="@(IsActive("/Pets") ? "active" : "")">
-                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm10 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM5 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm14 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM12 21c-3.5 0-6-2.2-6-5.2C6 13 9 11 12 11s6 2 6 4.8C18 18.8 15.5 21 12 21z"/></svg></span>
-                @L["Nav_Pets"]
-            </a>
-            <a asp-page="/Account/Profile" class="@(IsActive("/Account/Profile") || notifFromProfile ? "active" : "")">
-                <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></span>
-                @L["Nav_Profile"]
-            </a>
+            @if (isBiz)
+            {
+                <a href="@homeHref" class="@(IsActive("/Groomer/Dashboard") || path == "/" || notifFromHome ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
+                    @L["Nav_Home"]
+                </a>
+                <a asp-page="/Groomer/Business" class="@(IsActive("/Groomer/Business") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg></span>
+                    @L["Groomer_Business"]
+                </a>
+                <a asp-page="/Groomer/Appointments" class="@(IsActive("/Groomer/Appointments") || notifFromAppt ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg></span>
+                    @L["Groomer_Bookings"]
+                </a>
+                <a asp-page="/Groomer/Availability" class="@(IsActive("/Groomer/Availability") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 10.5V7h-2v7l5 3 1-1.7-4-2.8z"/></svg></span>
+                    @L["Groomer_Schedule"]
+                </a>
+                <a asp-page="/Account/Profile" class="@(IsActive("/Account/Profile") || notifFromProfile ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></span>
+                    @L["Nav_Profile"]
+                </a>
+            }
+            else
+            {
+                <a href="@homeHref" class="@(IsActive("/Index") || path == "/" || notifFromHome ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
+                    @L["Nav_Home"]
+                </a>
+                <a asp-page="/Groomers/Index" class="@(IsActive("/Groomers") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm8.7 13.3-3.2-3.2a8 8 0 1 0-1.4 1.4l3.2 3.2 1.4-1.4z"/></svg></span>
+                    @L["Nav_Search"]
+                </a>
+                <a asp-page="/Appointments/Index" class="@(IsActive("/Appointments") || notifFromAppt ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg></span>
+                    @L["Nav_Appointments"]
+                </a>
+                <a asp-page="/Pets/Index" class="@(IsActive("/Pets") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm10 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM5 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM12 21c-3.5 0-6-2.2-6-5.2C6 13 9 11 12 11s6 2 6 4.8C18 18.8 15.5 21 12 21z"/></svg></span>
+                    @L["Nav_Pets"]
+                </a>
+                <a asp-page="/Account/Profile" class="@(IsActive("/Account/Profile") || notifFromProfile ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></span>
+                    @L["Nav_Profile"]
+                </a>
+            }
         </nav>
     }
 </div>
