@@ -23,13 +23,15 @@
         }
         else
         {
-            <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px" id="behavior-intake-form">
+            <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px" id="behavior-intake-form"
+                  data-pet-required="1"
+                  data-msg-pet-required="@CatalogLocalizer.Loc("Activa al menos una mascota.", "Turn on at least one pet.")">
                 <input type="hidden" asp-for="CaseId" />
 
                 <section class="behavior-pet-section" aria-label="@CatalogLocalizer.Loc("Mascota", "Pet")">
                     <h2 class="section-title">@CatalogLocalizer.Loc("¿Para qué mascotas?", "Which pets?")</h2>
                     <p class="muted small" style="margin:-4px 0 10px">@CatalogLocalizer.Loc("Activa una o varias. El mismo servicio aplica a las que marques.", "Turn on one or more. The same service applies to each selected pet.")</p>
-                    <div class="behavior-pet-list">
+                    <div class="behavior-pet-list" role="group" aria-describedby="behavior-pet-error">
                         @foreach (var p in Model.Pets)
                         {
                             var on = Model.SelectedPetIds.Contains(p.Id);
@@ -47,6 +49,12 @@
                             </label>
                         }
                     </div>
+                    <p id="behavior-pet-error" class="field-error" role="alert"
+                       @(string.IsNullOrEmpty(Model.ErrorMessage) || Model.SelectedPetIds.Count > 0 ? "hidden" : null)>
+                        @(Model.SelectedPetIds.Count == 0 && !string.IsNullOrEmpty(Model.ErrorMessage)
+                            ? Model.ErrorMessage
+                            : CatalogLocalizer.Loc("Activa al menos una mascota.", "Turn on at least one pet."))
+                    </p>
                     <p class="muted small" style="margin:10px 0 0">
                         <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">+ @CatalogLocalizer.Loc("Agregar otra mascota", "Add another pet")</a>
                     </p>
@@ -92,30 +100,54 @@
                     <p class="muted small mb-0" style="margin-top:6px">@CatalogLocalizer.Loc("Si marcas esto, te llevamos a Veterinaria primero.", "If checked, we route you to Veterinary first.")</p>
                 </section>
 
-                <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+                <button type="submit" class="btn btn-primary btn-block" id="behavior-intake-continue">@L["Common_Continue"]</button>
             </form>
             <script>
             (() => {
               const form = document.getElementById('behavior-intake-form');
-              const rows = () => document.querySelectorAll('.behavior-pet-row');
-              const sync = () => {
-                rows().forEach(row => {
+              if (!form) return;
+              const err = document.getElementById('behavior-pet-error');
+              const btn = document.getElementById('behavior-intake-continue');
+              const msg = form.getAttribute('data-msg-pet-required') || 'Activa al menos una mascota.';
+              const switches = () => [...form.querySelectorAll('.behavior-pet-switch')];
+              const anyOn = () => switches().some(s => s.checked);
+
+              const sync = (showError) => {
+                form.querySelectorAll('.behavior-pet-row').forEach(row => {
                   const input = row.querySelector('.behavior-pet-switch');
                   row.classList.toggle('is-on', !!(input && input.checked));
                 });
-              };
-              document.querySelectorAll('.behavior-pet-switch').forEach(sw => {
-                sw.addEventListener('change', sync);
-              });
-              form?.addEventListener('submit', e => {
-                const any = [...document.querySelectorAll('.behavior-pet-switch')].some(s => s.checked);
-                if (!any) {
-                  e.preventDefault();
-                  alert(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                    CatalogLocalizer.Loc("Activa al menos una mascota.", "Turn on at least one pet."))));
+                const ok = anyOn();
+                if (btn) {
+                  btn.disabled = !ok;
+                  btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
                 }
-              });
-              sync();
+                form.classList.toggle('is-pet-missing', !ok);
+                if (err) {
+                  if (ok) {
+                    err.hidden = true;
+                  } else if (showError) {
+                    err.textContent = msg;
+                    err.hidden = false;
+                  }
+                }
+                return ok;
+              };
+
+              switches().forEach(sw => sw.addEventListener('change', () => sync(false)));
+
+              form.addEventListener('submit', e => {
+                if (!sync(true)) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (window.ChomblyToast && typeof window.ChomblyToast.show === 'function') {
+                    window.ChomblyToast.show(msg, { kind: 'error' });
+                  }
+                  err?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+              }, true);
+
+              sync(false);
             })();
             </script>
         }

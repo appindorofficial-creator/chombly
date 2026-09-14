@@ -62,8 +62,7 @@ public class IntakeModel : PageModel
             .ToListAsync();
 
         SelectedPetIds = BehaviorFlowService.GetSelectedPetIds(Case);
-        if (SelectedPetIds.Count == 0 && Pets.Count > 0)
-            SelectedPetIds = new List<int> { Pets[0].Id };
+        // Do not auto-pick a pet — user must explicitly turn one on.
 
         ProblemType = Case.ProblemType;
         Frequency = Case.Frequency ?? Frequencies[0];

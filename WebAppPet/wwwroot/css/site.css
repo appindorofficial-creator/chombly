@@ -4268,6 +4268,19 @@ a.vet-modality-emergency:hover {
 .behavior-pet-row .biz-switch {
   margin-left: auto;
 }
+.behavior-pet-section .field-error {
+  margin: 8px 0 0;
+}
+.behavior-intake-form.is-pet-missing .behavior-pet-list,
+form#behavior-intake-form.is-pet-missing .behavior-pet-list {
+  outline: 1.5px solid rgba(200, 60, 60, 0.45);
+  outline-offset: 4px;
+  border-radius: 16px;
+}
+#behavior-intake-continue:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .care-pet-emoji {
   width: 44px;
   height: 44px;
@@ -4426,6 +4439,204 @@ a.vet-modality-emergency:hover {
 .care-hero {
   background: linear-gradient(160deg, #e8f5e9 0%, #fff 70%);
   border: 1px solid rgba(18, 61, 50, 0.12);
+}
+
+/* Chombly Care plan page */
+.care-plan-page {
+  padding-bottom: 12px;
+}
+.care-plan-kicker {
+  margin: 0 0 2px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #073d26;
+}
+.care-plan-title {
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.care-plan-lead {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: rgba(7, 61, 38, 0.72);
+}
+.care-plan-context {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(182, 231, 64, 0.2);
+  color: #073d26;
+  font-weight: 600;
+}
+.care-plan-hero {
+  position: relative;
+  padding: 16px 14px 12px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(7, 61, 38, 0.14);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(182, 231, 64, 0.32) 0%, transparent 52%),
+    linear-gradient(165deg, #eef8e6 0%, #fff 58%);
+  overflow: hidden;
+}
+.care-plan-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.care-plan-price {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #073d26;
+  line-height: 1;
+}
+.care-plan-price-unit {
+  margin-left: 2px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(7, 61, 38, 0.55);
+}
+.care-plan-badge {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(7, 61, 38, 0.1);
+  color: #073d26;
+}
+.care-plan-includes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.care-plan-includes li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(7, 61, 38, 0.1);
+}
+.care-plan-includes strong {
+  font-size: 0.95rem;
+  color: #073d26;
+}
+.care-plan-includes span {
+  font-size: 0.8rem;
+  color: rgba(7, 61, 38, 0.7);
+  line-height: 1.35;
+}
+.care-plan-excludes {
+  margin-top: 10px;
+  border-radius: 12px;
+  background: rgba(7, 61, 38, 0.05);
+}
+.care-plan-excludes summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #073d26;
+  -webkit-tap-highlight-color: transparent;
+}
+.care-plan-excludes summary::-webkit-details-marker { display: none; }
+.care-plan-excludes summary::after {
+  content: "+";
+  float: right;
+  font-weight: 800;
+  opacity: 0.55;
+}
+.care-plan-excludes[open] summary::after { content: "–"; }
+.care-plan-excludes ul {
+  margin: 0;
+  padding: 0 12px 12px 28px;
+  color: rgba(7, 61, 38, 0.72);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.care-plan-excludes li { margin-bottom: 4px; }
+.care-plan-active {
+  margin-bottom: 14px;
+  border-left: 4px solid var(--lime, #b6e740);
+  background: linear-gradient(160deg, rgba(182, 231, 64, 0.16) 0%, #fff 70%);
+}
+.care-plan-active-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.care-plan-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: var(--lime, #b6e740);
+  color: #073d26;
+}
+.care-plan-checkout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 14px 24px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(7, 61, 38, 0.12);
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(7, 61, 38, 0.06);
+}
+.care-plan-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 2px 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #073d26;
+  cursor: pointer;
+}
+.care-plan-check input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #073d26;
+}
+.care-plan-fineprint {
+  margin: 4px 0 0;
+  padding: 0 6px;
+  line-height: 1.45;
+  position: relative;
+  z-index: 1;
+  background: #fff;
+}
+.care-plan-checkout .btn,
+.care-plan-submit {
+  margin-top: 4px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 0;
+  box-shadow: 0 6px 16px rgba(7, 61, 46, 0.16);
+}
+.care-plan-cancel {
+  margin-top: 12px;
+}
+.care-plan-page ~ .bottom-nav-clearance {
+  height: calc(var(--nav-h, 68px) + 40px + env(safe-area-inset-bottom, 0px));
 }
 
 .vet-modality-btn strong {
