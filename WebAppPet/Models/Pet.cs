@@ -25,7 +25,7 @@ public class Pet
     /// <summary>Optional weight in pounds for clinical context.</summary>
     public decimal? WeightLbs { get; set; }
 
-    [MaxLength(80)]
+    [MaxLength(200)]
     public string Temperament { get; set; } = string.Empty;
 
     [MaxLength(260)]

@@ -300,7 +300,7 @@
   <data name="Pets_Temperament" xml:space="preserve"><value>Temperamento</value></data>
   <data name="Pets_TemperamentDefault" xml:space="preserve"><value>Amigable</value></data>
   <data name="Pets_TemperamentSelect" xml:space="preserve"><value>Elige temperamento</value></data>
-  <data name="Pets_TemperamentRequired" xml:space="preserve"><value>Selecciona un temperamento</value></data>
+  <data name="Pets_TemperamentRequired" xml:space="preserve"><value>Selecciona al menos un temperamento</value></data>
   <data name="Pets_BreedSelect" xml:space="preserve"><value>Elige la raza</value></data>
   <data name="Pets_BreedOther" xml:space="preserve"><value>Otra raza</value></data>
   <data name="Pets_BreedOtherPlaceholder" xml:space="preserve"><value>Escribe la raza</value></data>

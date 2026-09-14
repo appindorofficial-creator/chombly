@@ -53,7 +53,7 @@ public class CreateModel : PageModel
     public PetSize Size { get; set; } = PetSize.Medium;
 
     [BindProperty]
-    public string Temperament { get; set; } = string.Empty;
+    public List<string> Temperaments { get; set; } = new();
 
     [BindProperty]
     public string? PhotoUrl { get; set; }
@@ -95,7 +95,7 @@ public class CreateModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size), nameof(Temperament), nameof(Breed), nameof(CustomBreed));
+        ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size), nameof(Temperaments), nameof(Breed), nameof(CustomBreed));
 
         if (string.IsNullOrWhiteSpace(Name))
             ModelState.AddModelError(nameof(Name), _L["Pets_NameRequired"].Value);
@@ -113,9 +113,15 @@ public class CreateModel : PageModel
         else if (age < 0 || age > 40)
             ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRange"].Value);
 
-        if (string.IsNullOrWhiteSpace(Temperament)
-            || !PetCatalog.Temperaments.Any(t => t.Value.Equals(Temperament, StringComparison.OrdinalIgnoreCase)))
-            ModelState.AddModelError(nameof(Temperament), _L["Pets_TemperamentRequired"].Value);
+        var selectedTemps = (Temperaments ?? new List<string>())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Where(t => PetCatalog.Temperaments.Any(o => o.Value.Equals(t, StringComparison.OrdinalIgnoreCase)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(t => PetCatalog.Temperaments.First(o => o.Value.Equals(t, StringComparison.OrdinalIgnoreCase)).Value)
+            .ToList();
+        if (selectedTemps.Count == 0)
+            ModelState.AddModelError(nameof(Temperaments), _L["Pets_TemperamentRequired"].Value);
 
         var photoError = PetPhotoStorage.Validate(PhotoFile);
         if (photoError is not null)
@@ -154,8 +160,7 @@ public class CreateModel : PageModel
             photoUrl = PhotoUrl.Trim();
         }
 
-        var temperament = PetCatalog.Temperaments
-            .First(t => t.Value.Equals(Temperament, StringComparison.OrdinalIgnoreCase)).Value;
+        var temperament = string.Join(", ", selectedTemps);
 
         _db.Pets.Add(new Pet
         {

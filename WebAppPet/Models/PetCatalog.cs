@@ -122,8 +122,18 @@ public static class PetCatalog
     public static string DisplayTemperament(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return value ?? "";
-        var hit = Temperaments.FirstOrDefault(t => t.Value.Equals(value, StringComparison.OrdinalIgnoreCase));
-        return hit.Value == null ? value : Display(hit.Value, hit.LabelEn);
+        var parts = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length <= 1)
+        {
+            var hit = Temperaments.FirstOrDefault(t => t.Value.Equals(value.Trim(), StringComparison.OrdinalIgnoreCase));
+            return hit.Value == null ? value : Display(hit.Value, hit.LabelEn);
+        }
+
+        return string.Join(", ", parts.Select(p =>
+        {
+            var hit = Temperaments.FirstOrDefault(t => t.Value.Equals(p, StringComparison.OrdinalIgnoreCase));
+            return hit.Value == null ? p : Display(hit.Value, hit.LabelEn);
+        }));
     }
 
     public static string DisplayBreed(string? species, string? value)

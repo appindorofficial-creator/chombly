@@ -96,20 +96,20 @@
 
         <div class="form-group">
             <label>@L["Pets_Temperament"]</label>
+            <p class="field-hint">@CatalogLocalizer.Loc("Puedes marcar varios.", "You can select more than one.")</p>
             <div class="temperament-grid">
-                @{ var tempFirst = true; }
                 @foreach (var t in Model.TemperamentOptions)
                 {
+                    var on = Model.Temperaments.Any(x => x.Equals(t.Value, StringComparison.OrdinalIgnoreCase));
                     <label class="temperament-pick" for="temperament-@t.Value">
-                        <input type="radio" asp-for="Temperament" value="@t.Value" id="temperament-@t.Value"
-                               required="@(tempFirst ? "required" : null)"
+                        <input type="checkbox" name="Temperaments" value="@t.Value" id="temperament-@t.Value"
+                               checked="@(on ? "checked" : null)"
                                data-msg-required="@L["Pets_TemperamentRequired"]" />
                         <span class="temperament-chip">@PetCatalog.Display(t.Value, t.LabelEn)</span>
                     </label>
-                    tempFirst = false;
                 }
             </div>
-            <span asp-validation-for="Temperament" class="field-error"></span>
+            <span asp-validation-for="Temperaments" class="field-error"></span>
         </div>
 
         <div class="form-group pet-photo-field">
@@ -288,7 +288,7 @@
     el.addEventListener('animationend', () => el.classList.remove('pick-anim'), { once: true });
   }
 
-  document.querySelectorAll('input[name="Temperament"]').forEach(r => {
+  document.querySelectorAll('input[name="Temperaments"]').forEach(r => {
     r.addEventListener('change', () => bumpPick(r.closest('.temperament-pick')));
   });
   document.querySelectorAll('.care-flag input[type="checkbox"]').forEach(c => {
