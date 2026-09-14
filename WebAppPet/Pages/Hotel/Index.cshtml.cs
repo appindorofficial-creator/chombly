@@ -271,7 +271,10 @@ public class IndexModel : PageModel
         {
             string? dist = null;
             if (userLat != null && userLng != null && (h.Latitude != 0 || h.Longitude != 0))
-                dist = GeoHelper.FormatMilesAway(GeoHelper.MilesBetween(userLat.Value, userLng.Value, h.Latitude, h.Longitude));
+            {
+                var km = GeoHelper.KmBetween(userLat.Value, userLng.Value, h.Latitude, h.Longitude);
+                dist = GeoHelper.FormatDistanceOrPlace(km, h.City, h.Address);
+            }
 
             var svc = h.Services.OrderBy(s => s.PriceSmall).FirstOrDefault();
             return new HotelCardVm

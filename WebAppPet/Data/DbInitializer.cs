@@ -26,6 +26,7 @@ public static class DbInitializer
         await EnsureCategoriesAsync(db);
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
+        await EnsureNeivaDemoProvidersAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
         await EnsureCompensationDefaultsAsync(db);
         await new Services.AvailabilityService(db).EnsureDefaultWeeklyHoursAsync();
@@ -1254,6 +1255,256 @@ public static class DbInitializer
                 await db.SaveChangesAsync();
             }
         }
+    }
+
+    /// <summary>
+    /// Demo marketplace businesses in Neiva, Huila (Colombia). Inspired by local market coverage;
+    /// names/phones are fictional Chombly seed data — existing Charlotte/intl demos are kept.
+    /// </summary>
+    private static async Task EnsureNeivaDemoProvidersAsync(AppDbContext db)
+    {
+        var cats = await db.Categories.Where(c => c.IsActive).ToListAsync();
+        int? Cat(string slug) => cats.FirstOrDefault(c => c.Slug == slug)?.Id;
+
+        var groomingId = Cat("grooming");
+        var hotelId = Cat("hotel");
+        var vetId = Cat("vet");
+        var daycareId = Cat("daycare");
+        var walkersId = Cat("walkers");
+        var trainersId = Cat("trainers");
+        if (vetId is null && groomingId is null) return;
+
+        async Task<AppUser> EnsureUserAsync(string email, string name)
+        {
+            var u = await db.Users.FirstOrDefaultAsync(x => x.Email == email);
+            if (u != null) return u;
+            u = new AppUser
+            {
+                FullName = name,
+                Email = email,
+                PasswordHash = Services.PasswordHasher.Hash("123456"),
+                City = "Neiva, Huila",
+                Latitude = 2.9275,
+                Longitude = -75.2875,
+                Role = UserRole.Groomer,
+                PreferredLanguage = "es",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Users.Add(u);
+            await db.SaveChangesAsync();
+            return u;
+        }
+
+        async Task EnsureBizAsync(
+            string email,
+            string ownerName,
+            string businessName,
+            string address,
+            double lat,
+            double lng,
+            string about,
+            string phone,
+            int? categoryId,
+            int[]? extraCategoryIds,
+            decimal startingPrice,
+            string priceUnit,
+            string serviceName,
+            string serviceDesc,
+            int durationMin,
+            decimal servicePrice,
+            GroomerType type = GroomerType.Salon,
+            bool emergency24 = false,
+            VetProviderKind vetKind = VetProviderKind.None,
+            BehaviorSpecialistRole? behaviorRole = null,
+            string? species = null,
+            string imageSlug = "vet",
+            double rating = 4.7,
+            int reviews = 24,
+            bool featured = false)
+        {
+            if (categoryId is null) return;
+            species ??= PetSpecies.DefaultAcceptedList;
+
+            var user = await EnsureUserAsync(email, ownerName);
+            var g = await db.Groomers.FirstOrDefaultAsync(x => x.UserId == user.Id);
+            if (g != null) return;
+
+            g = new GroomerProfile
+            {
+                UserId = user.Id,
+                CategoryId = categoryId,
+                ExtraCategoryIds = extraCategoryIds is { Length: > 0 }
+                    ? string.Join(",", extraCategoryIds.Where(id => id != categoryId.Value).Distinct())
+                    : null,
+                BusinessName = businessName,
+                Address = address,
+                City = "Neiva, Huila",
+                Latitude = lat,
+                Longitude = lng,
+                About = about,
+                Phone = phone,
+                ImageUrl = $"/images/categories/cat-{imageSlug}-v2.png",
+                StartingPrice = startingPrice,
+                PriceUnit = priceUnit,
+                Rating = rating,
+                ReviewCount = reviews,
+                Type = type,
+                ProviderKind = ProviderKind.Business,
+                WorkMode = WorkMode.Local,
+                ServiceAreaMiles = 8,
+                IsVerified = true,
+                VerifiedLicense = vetKind != VetProviderKind.None || categoryId == vetId,
+                PublishStatus = BusinessPublishStatus.Approved,
+                IsActive = true,
+                IsFeatured = featured,
+                VetProviderKind = vetKind,
+                BehaviorRole = behaviorRole,
+                SpokenLanguages = "es",
+                LicenseCountry = vetKind == VetProviderKind.InternationalAdvisor ? "CO" : null,
+                OffersEmergency24x7 = emergency24,
+                AcceptedSpecies = species,
+                AcceptsSeniorPets = true,
+                AcceptsAnxiousPets = true
+            };
+            db.Groomers.Add(g);
+            await db.SaveChangesAsync();
+
+            db.Services.Add(new GroomerService
+            {
+                GroomerId = g.Id,
+                Name = serviceName,
+                Description = serviceDesc,
+                DurationMinutes = durationMin,
+                PriceSmall = servicePrice,
+                PriceMedium = servicePrice,
+                PriceLarge = servicePrice,
+                PriceGiant = Math.Round(servicePrice * 1.15m, 0)
+            });
+
+            if (vetKind != VetProviderKind.None)
+            {
+                db.ProviderLicenses.Add(new ProviderLicense
+                {
+                    GroomerId = g.Id,
+                    Jurisdiction = "CO-HUI",
+                    LicenseNumber = $"HUILA-{g.Id:D4}",
+                    IsVerified = true,
+                    IsUsState = false,
+                    ExpiresAt = DateTime.UtcNow.AddYears(2)
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        // Inspired by Clínica Mascotas / Av. La Toma
+        await EnsureBizAsync(
+            "neiva.vet.toma@chombly.com", "Dra. Camila Rojas",
+            "Huila Vet Centro", "Avenida La Toma #12-40",
+            2.9302, -75.2858,
+            "Clínica veterinaria en Neiva: consultas, vacunas y belleza canina. Datos demo Chombly.",
+            "+5786211001", vetId, groomingId is int g1 ? new[] { g1 } : null,
+            45000m, "/ consulta", "Consulta general", "Consulta clínica en Neiva", 30, 45000m,
+            imageSlug: "vet", rating: 4.9, reviews: 128, featured: true);
+
+        // Inspired by Vetcol / La Gaitana — urgencias
+        await EnsureBizAsync(
+            "neiva.vet.gaitana@chombly.com", "Dr. Andrés Peña",
+            "Urgencias Mascotas Gaitana", "Calle 7 #25-50, La Gaitana",
+            2.9348, -75.2912,
+            "Urgencias veterinarias 24/7 en Neiva. Hospitalización y cuidado crítico (demo).",
+            "+573164986100", vetId, null,
+            70000m, "/ urgencia", "Urgencia veterinaria", "Atención de urgencias 24/7", 30, 70000m,
+            emergency24: true, vetKind: VetProviderKind.InternationalAdvisor,
+            imageSlug: "vet", rating: 4.8, reviews: 96, featured: true);
+
+        // Inspired by La Remonta / Rioja — grooming
+        await EnsureBizAsync(
+            "neiva.groom.rioja@chombly.com", "Valentina Cruz",
+            "Spa Canino Rioja", "Carrera 46 #20A-30, La Rioja",
+            2.9415, -75.2745,
+            "Peluquería canina y felina en barrio La Rioja. Baños medicados y estética (demo).",
+            "+5786676701", groomingId, null,
+            35000m, "/ baño", "Baño y corte", "Grooming profesional", 60, 35000m,
+            imageSlug: "grooming", rating: 4.8, reviews: 74);
+
+        // Inspired by Mundo Animal / Centro
+        await EnsureBizAsync(
+            "neiva.groom.centro@chombly.com", "Julián Vargas",
+            "Mundo Peludo Centro", "Calle 10 #8-20, Centro",
+            2.9278, -75.2868,
+            "Peluquería y spa en el centro de Neiva. Perros y gatos (demo).",
+            "+5786670801", groomingId, null,
+            32000m, "/ sesión", "Peluquería completa", "Baño, corte y uñas", 75, 32000m,
+            imageSlug: "grooming", rating: 4.6, reviews: 51);
+
+        // Hotel / overnight near Magdalena
+        await EnsureBizAsync(
+            "neiva.hotel.magdalena@chombly.com", "Hotel Magdalena Pets",
+            "Hotel & Guardería Magdalena", "Carrera 5 #12-18, cerca del río",
+            2.9245, -75.2945,
+            "Hospedaje nocturno y cuidado tipo hotel para mascotas en Neiva (demo).",
+            "+5786212002", hotelId, daycareId is int d1 ? new[] { d1 } : null,
+            55000m, "/ noche", "Hospedaje 1 noche", "Hotel para perros y gatos", 1440, 55000m,
+            imageSlug: "hotel", rating: 4.7, reviews: 63, featured: true,
+            species: $"{PetSpecies.Dog},{PetSpecies.Cat}");
+
+        // Daycare
+        await EnsureBizAsync(
+            "neiva.daycare.ceibas@chombly.com", "Guardería Ceibas",
+            "Guardería Día Ceibas", "Calle 16 #6-55",
+            2.9218, -75.2815,
+            "Guardería diurna con recreación y supervisión en Neiva (demo).",
+            "+5788641102", daycareId, null,
+            28000m, "/ día", "Día completo", "Guardería diurna", 480, 28000m,
+            imageSlug: "daycare", rating: 4.7, reviews: 41,
+            species: PetSpecies.Dog);
+
+        // Walkers
+        await EnsureBizAsync(
+            "neiva.walkers.cacica@chombly.com", "Sebastián Molina",
+            "Paseos Cacica Neiva", "Barrio El Centro — cobertura norte",
+            2.9285, -75.2825,
+            "Paseos profesionales por parques y zonas de Neiva (demo).",
+            "+573153001001", walkersId, null,
+            18000m, "/ paseo", "Paseo 40 min", "Paseo individual o grupal", 40, 18000m,
+            type: GroomerType.Mobile, imageSlug: "walkers", rating: 4.9, reviews: 112,
+            species: PetSpecies.Dog);
+
+        // Trainers / behavior-ish
+        await EnsureBizAsync(
+            "neiva.trainers.huila@chombly.com", "Natalia Gómez",
+            "Adiestra Huila", "Carrera 30 #1B-40, Acacias",
+            2.9325, -75.2778,
+            "Entrenamiento y modificación de conducta en Neiva. Plan educativo (demo).",
+            "+573213609400", trainersId, null,
+            60000m, "/ sesión", "Sesión de entrenamiento", "Obediencia y conducta", 60, 60000m,
+            type: GroomerType.InHome, vetKind: VetProviderKind.BehaviorSpecialist,
+            behaviorRole: BehaviorSpecialistRole.Trainer,
+            imageSlug: "trainers", rating: 4.8, reviews: 37,
+            species: PetSpecies.Dog);
+
+        // Inspired by Zamavet / Manzanares — vet + spa
+        await EnsureBizAsync(
+            "neiva.vet.sur@chombly.com", "Dra. Laura Méndez",
+            "Zama Pet Care Sur", "Calle 20C Sur #29-30, Manzanares",
+            2.9085, -75.2688,
+            "Clínica, spa y pet shop al sur de Neiva, vía Caguán (demo).",
+            "+5787033301", vetId, groomingId is int g2 ? new[] { g2 } : null,
+            40000m, "/ consulta", "Consulta + control", "Consulta veterinaria", 30, 40000m,
+            vetKind: VetProviderKind.InternationalAdvisor,
+            imageSlug: "vet", rating: 4.7, reviews: 58);
+
+        // Inspired by Pet Planet — multi service
+        await EnsureBizAsync(
+            "neiva.pets.planet@chombly.com", "Pet Feliz Neiva",
+            "Pet Feliz Neiva", "Calle 21 #6-90",
+            2.9292, -75.2862,
+            "Baño, peluquería, guardería y tip de adiestramiento en un solo lugar (demo).",
+            "+5788641101", groomingId,
+            new[] { daycareId, trainersId }.Where(x => x.HasValue).Select(x => x!.Value).ToArray(),
+            30000m, "/ servicio", "Baño y secado", "Estética y cuidado diario", 45, 30000m,
+            imageSlug: "grooming", rating: 4.5, reviews: 33);
     }
 
     private static async Task EnsureCountryCatalogSeedAsync(AppDbContext db)

@@ -52,6 +52,24 @@ public static class GeoHelper
     public static string? FormatKmAway(double? km) =>
         km is null ? null : $"A {km.Value:0.0} km de ti";
 
+    /// <summary>Within this radius we show km; beyond that we show city/country text.</summary>
+    public const double LocalDistanceKmMax = 80;
+
+    /// <summary>
+    /// Nearby → "A X km de ti". Far / other city or country → place label (e.g. "Neiva, Huila").
+    /// </summary>
+    public static string? FormatDistanceOrPlace(double? km, string? city, string? addressFallback = null)
+    {
+        if (km is double d && d <= LocalDistanceKmMax)
+            return FormatKmAway(d);
+
+        if (!string.IsNullOrWhiteSpace(city))
+            return city.Trim();
+        if (!string.IsNullOrWhiteSpace(addressFallback))
+            return addressFallback.Trim();
+        return null;
+    }
+
     /// <summary>
     /// Infiere un código de estado del selector Vet a partir de lat/lng del usuario.
     /// Fuera de EE.UU. continental o lejos de los estados listados → "Other".

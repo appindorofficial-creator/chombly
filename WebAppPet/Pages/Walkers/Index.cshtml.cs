@@ -297,7 +297,8 @@ public class IndexModel : PageModel
             if (userLat != null && userLng != null && (w.Latitude != 0 || w.Longitude != 0))
             {
                 miles = GeoHelper.MilesBetween(userLat.Value, userLng.Value, w.Latitude, w.Longitude);
-                dist = GeoHelper.FormatMilesAway(miles);
+                var km = miles is null ? null : miles * 1.609344;
+                dist = GeoHelper.FormatDistanceOrPlace(km, w.City, w.Address);
             }
 
             var svc = PickService(w.Services);
