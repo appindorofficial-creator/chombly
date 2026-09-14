@@ -5002,25 +5002,46 @@ body.celebrate-open {
   display: none;
 }
 .pets-index .pets-tip-orb {
+  --pets-paw-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='43' rx='15.5' ry='12.5' fill='%23000'/%3E%3Ccircle cx='13.5' cy='23' r='7' fill='%23000'/%3E%3Ccircle cx='25.5' cy='14.5' r='7.4' fill='%23000'/%3E%3Ccircle cx='40.5' cy='14.5' r='7.4' fill='%23000'/%3E%3Ccircle cx='52.5' cy='23' r='7' fill='%23000'/%3E%3C/svg%3E");
   position: absolute;
-  width: 132px;
-  height: 132px;
-  border-radius: 50%;
-  right: -34px;
-  top: -42px;
-  background: radial-gradient(circle at 35% 35%, rgba(182, 231, 64, 1), rgba(182, 231, 64, 0.2) 58%, transparent 72%);
+  width: 118px;
+  height: 118px;
+  right: -18px;
+  top: -28px;
+  border-radius: 0;
+  background:
+    linear-gradient(145deg, rgba(182, 231, 64, 0.95) 0%, rgba(182, 231, 64, 0.55) 55%, rgba(182, 231, 64, 0.18) 100%);
+  -webkit-mask-image: var(--pets-paw-mask);
+  mask-image: var(--pets-paw-mask);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  transform: rotate(18deg);
   pointer-events: none;
   animation: pets-tip-float 5.5s var(--ease-emphasized) infinite alternate;
+  filter: drop-shadow(0 6px 14px rgba(182, 231, 64, 0.35));
 }
 .pets-index .pets-tip-orb--2 {
-  width: 78px;
-  height: 78px;
-  right: 48px;
+  width: 72px;
+  height: 72px;
+  right: 54px;
   top: auto;
-  bottom: -32px;
-  opacity: .6;
-  animation-duration: 7s;
-  animation-direction: alternate-reverse;
+  bottom: -22px;
+  opacity: .72;
+  transform: rotate(-28deg);
+  animation: pets-tip-float-2 7s var(--ease-emphasized) infinite alternate;
+  filter: drop-shadow(0 4px 10px rgba(182, 231, 64, 0.28));
+}
+@keyframes pets-tip-float {
+  from { transform: translate(0, 0) scale(1) rotate(18deg); }
+  to { transform: translate(-8px, 6px) scale(1.06) rotate(22deg); }
+}
+@keyframes pets-tip-float-2 {
+  from { transform: translate(0, 0) scale(1) rotate(-28deg); }
+  to { transform: translate(6px, -5px) scale(1.08) rotate(-22deg); }
 }
 .pets-index .pets-tip-kicker {
   position: relative;
@@ -5094,10 +5115,6 @@ body.celebrate-open {
   width: 24px;
   background: var(--pets-tip-ink);
   box-shadow: 0 0 0 3px rgba(182, 231, 64, 0.5);
-}
-@keyframes pets-tip-float {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(-10px, 8px) scale(1.08); }
 }
 @media (prefers-reduced-motion: reduce) {
   .pets-index .pets-tip-orb,
