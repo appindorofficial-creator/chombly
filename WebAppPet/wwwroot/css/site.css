@@ -4909,6 +4909,135 @@ body.celebrate-open {
   transform: scale(0.97);
 }
 
+/* Pets index — Hotel-level motion + microinteractions */
+.pets-index .pets-index-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+}
+.pets-index .pets-index-head-text {
+  min-width: 0;
+  flex: 1;
+}
+.pets-index .app-page-heading {
+  margin: 0;
+}
+.pets-index .pets-index-lead {
+  margin: 4px 0 0;
+}
+.pets-index .pets-index-add {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.pets-index .pets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.pets-index .pet-card {
+  -webkit-tap-highlight-color: transparent;
+  border: 1.5px solid var(--border);
+  background:
+    linear-gradient(165deg, #fbfff3 0%, var(--ivory-light) 55%, #fff 100%);
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+.pets-index .pet-card:hover {
+  border-color: var(--lime);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(7, 61, 46, 0.1);
+}
+.pets-index .pet-card:active {
+  transform: scale(0.985);
+}
+.pets-index .pet-card:hover:active {
+  transform: scale(0.985);
+}
+.pets-index .pet-card .pet-avatar {
+  transition: transform var(--motion-normal) var(--ease-spring), border-color var(--motion-fast) var(--ease-standard);
+}
+.pets-index .pet-card:active .pet-avatar {
+  animation: ch-spring-pop var(--motion-normal) var(--ease-spring) both;
+}
+.pets-index .pet-care-badges {
+  margin: 6px 0 0;
+}
+.pets-index .pet-care-badges .badge {
+  transition: transform var(--motion-fast) var(--ease-spring);
+}
+.pets-index .pet-actions .icon-btn {
+  transition:
+    transform var(--motion-fast) var(--ease-spring),
+    background-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+.pets-index .pet-actions .icon-btn:active {
+  transform: scale(0.9);
+  background: var(--lime);
+}
+.pets-index .pets-trust {
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+  animation-delay: 180ms;
+}
+.pets-index .empty-chombly .btn {
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    filter var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+/* Hotel flow cards — same press / enter language */
+.hotel-card {
+  -webkit-tap-highlight-color: transparent;
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+.hotel-card:hover {
+  border-color: var(--lime);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(7, 61, 46, 0.1);
+}
+.hotel-card:active {
+  transform: scale(0.985);
+}
+.hotel-card.selected {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-soft), 0 12px 28px rgba(7, 61, 46, 0.1);
+}
+.hotel-summary-inner {
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+}
+.hotel-flow .section-title,
+.hotel-flow .app-page-heading {
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+}
+.hotel-flow .when-row,
+.hotel-flow .pet-count-row,
+.hotel-flow .filter-bar,
+.hotel-flow .date-row {
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+  animation-delay: 40ms;
+}
+.stepper-btn {
+  transition:
+    transform var(--motion-fast) var(--ease-spring),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+.stepper-btn:active {
+  transform: scale(0.9);
+}
+
 /* Pets create — progressive reveal + spring select */
 .pets-create .app-page-heading {
   animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
@@ -4925,6 +5054,14 @@ body.celebrate-open {
 .pets-create form > .form-group:nth-of-type(7) { animation-delay: 280ms; }
 .pets-create form > .form-group:nth-of-type(8) { animation-delay: 320ms; }
 .pets-create form > .form-group:nth-of-type(9) { animation-delay: 360ms; }
+.pets-create .pet-care-panel,
+.pets-create .pet-notes-panel,
+.pets-create .btn-primary.btn-block {
+  animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+  animation-delay: 380ms;
+}
+.pets-create .pet-notes-panel { animation-delay: 420ms; }
+.pets-create .btn-primary.btn-block { animation-delay: 460ms; }
 .pets-create .species-opt {
   transition:
     transform var(--motion-fast) var(--ease-standard),
@@ -4937,6 +5074,38 @@ body.celebrate-open {
 }
 .pets-create .species-opt:has(input:checked) .species-img-wrap,
 .pets-create .species-opt.selected .species-img-wrap {
+  animation: ch-spring-pop var(--motion-normal) var(--ease-spring) both;
+}
+.pets-create .temperament-chip {
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+.pets-create .temperament-pick:active .temperament-chip {
+  transform: scale(0.96);
+}
+.pets-create .temperament-pick.pick-anim .temperament-chip {
+  animation: ch-spring-pop var(--motion-normal) var(--ease-spring) both;
+}
+.pets-create .care-flag {
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+.pets-create .care-flag:active {
+  transform: scale(0.985);
+}
+.pets-create .care-flag.pick-anim {
+  animation: ch-spring-pop var(--motion-normal) var(--ease-spring) both;
+}
+.pets-create .pet-photo-card {
+  transition: box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+}
+.pets-create .pet-photo-preview {
   animation: ch-spring-pop var(--motion-normal) var(--ease-spring) both;
 }
 
@@ -5003,9 +5172,26 @@ body.celebrate-open {
   .onboard-home .species-scroll .species-chip,
   .pets-create .app-page-heading,
   .pets-create form > .form-group,
+  .pets-create .pet-care-panel,
+  .pets-create .pet-notes-panel,
+  .pets-create .btn-primary.btn-block,
   .pets-create .species-opt:has(input:checked) .species-img-wrap,
   .pets-create .species-opt.selected .species-img-wrap,
+  .pets-create .temperament-pick.pick-anim .temperament-chip,
+  .pets-create .care-flag.pick-anim,
+  .pets-create .pet-photo-preview,
   .onboard-home .species-chip:active .species-img,
+  .pets-index .pets-index-head,
+  .pets-index .pets-trust,
+  .pets-index .pet-card:active .pet-avatar,
+  .hotel-card,
+  .hotel-summary-inner,
+  .hotel-flow .section-title,
+  .hotel-flow .app-page-heading,
+  .hotel-flow .when-row,
+  .hotel-flow .pet-count-row,
+  .hotel-flow .filter-bar,
+  .hotel-flow .date-row,
   .app-shell > main,
   .onboard-app > .home-body,
   .onboard-home > .home-body,
@@ -5018,16 +5204,24 @@ body.celebrate-open {
   .species-chip,
   .service-pill,
   .groomer-card,
+  .hotel-card,
+  .pets-index .pet-card,
   .btn,
-  .form-control {
+  .form-control,
+  .stepper-btn {
     transition: none !important;
   }
   .category-chip:active,
   .species-chip:active,
   .service-pill:active,
   .groomer-card:active,
+  .hotel-card:active,
+  .hotel-card:hover,
+  .pets-index .pet-card:active,
+  .pets-index .pet-card:hover,
   .home-care-spotlight:active,
   .btn:active,
+  .stepper-btn:active,
   .bottom-nav a:active .nav-pill {
     transform: none !important;
   }
