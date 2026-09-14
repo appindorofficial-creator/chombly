@@ -25,14 +25,23 @@ public class BehaviorFlowService
             .FirstOrDefaultAsync(c => c.Id == id && c.ClientId == uid.Value, ct);
     }
 
-    public async Task<BehaviorCase> StartAsync(CancellationToken ct = default)
+    public async Task<BehaviorCase> StartAsync(int? petId = null, CancellationToken ct = default)
     {
         if (_auth.CurrentUserId is not int uid)
             throw new InvalidOperationException("Login required.");
 
+        int? ownedPetId = null;
+        if (petId is int pid && pid > 0)
+        {
+            var owns = await _db.Pets.AsNoTracking()
+                .AnyAsync(p => p.Id == pid && p.OwnerId == uid, ct);
+            if (owns) ownedPetId = pid;
+        }
+
         var c = new BehaviorCase
         {
             ClientId = uid,
+            PetId = ownedPetId,
             Status = BehaviorCaseStatus.Draft,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -46,6 +55,33 @@ public class BehaviorFlowService
     {
         c.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
+    }
+
+    public static List<int> GetSelectedPetIds(BehaviorCase c)
+    {
+        var ids = new List<int>();
+        if (c.PetId is int primary && primary > 0)
+            ids.Add(primary);
+
+        if (!string.IsNullOrWhiteSpace(c.ExtraPetIds))
+        {
+            foreach (var part in c.ExtraPetIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (int.TryParse(part, out var id) && id > 0 && !ids.Contains(id))
+                    ids.Add(id);
+            }
+        }
+
+        return ids;
+    }
+
+    public static void SetSelectedPetIds(BehaviorCase c, IEnumerable<int> petIds)
+    {
+        var ids = petIds.Where(id => id > 0).Distinct().ToList();
+        c.PetId = ids.Count > 0 ? ids[0] : null;
+        c.ExtraPetIds = ids.Count > 1
+            ? string.Join(",", ids.Skip(1))
+            : null;
     }
 
     /// <summary>Clinical flags that must go to veterinary care first.</summary>

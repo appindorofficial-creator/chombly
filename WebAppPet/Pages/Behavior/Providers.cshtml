@@ -4,13 +4,22 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Reservar especialista", "Book specialist");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Behavior/Intake", new { caseId = Model.CaseId });
-    var price = Model.CatalogItem?.Price ?? 55m;
+    var unit = Model.CatalogItem?.Price ?? 55m;
+    var petCount = Math.Max(1, Model.SelectedPets.Count);
+    var price = unit * petCount;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reservar especialista", "Book specialist")</h1>
-        <p class="muted small">$@price.ToString("0.##") · @CatalogLocalizer.Loc("servicio separado del plan Care", "separate from Care plan")</p>
+        <p class="muted small">
+            $@price.ToString("0.##")
+            @if (petCount > 1)
+            {
+                <text> · @petCount @CatalogLocalizer.Loc("mascotas", "pets") · $@unit.ToString("0.##") @CatalogLocalizer.Loc("c/u", "each")</text>
+            }
+            · @CatalogLocalizer.Loc("servicio separado del plan Care", "separate from Care plan")
+        </p>
 
         @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
@@ -20,7 +29,11 @@
         @if (Model.Case != null)
         {
             <div class="card card-pad" style="margin-bottom:14px">
-                <strong>@(Model.Case.Pet?.Name ?? "—")</strong>
+                <strong>
+                    @(Model.SelectedPets.Count > 0
+                        ? string.Join(", ", Model.SelectedPets.Select(p => p.Name))
+                        : (Model.Case.Pet?.Name ?? "—"))
+                </strong>
                 <p class="muted small mb-0">
                     @Model.Case.ProblemType
                     @if (!string.IsNullOrWhiteSpace(Model.Case.Frequency))

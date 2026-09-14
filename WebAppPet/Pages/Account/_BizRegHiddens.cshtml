@@ -56,7 +56,7 @@
         <input type="hidden" name="ServicePrices[@i]" value="@m.ServicePrices[i].ToString(inv)" />
     }
 }
-@if (exclude != 6)
+@if (exclude != 6 && !(exclude == 5 && m.IsLoggedIn))
 {
     <input type="hidden" name="Password" value="@m.Password" />
     <input type="hidden" name="ConfirmPassword" value="@m.ConfirmPassword" />

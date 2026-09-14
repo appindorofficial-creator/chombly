@@ -12,6 +12,10 @@ public class BehaviorCase
     public int? PetId { get; set; }
     public Pet? Pet { get; set; }
 
+    /// <summary>Comma-separated extra pet ids when the same intake applies to multiple pets.</summary>
+    [MaxLength(200)]
+    public string? ExtraPetIds { get; set; }
+
     public int? ProviderId { get; set; }
     public GroomerProfile? Provider { get; set; }
 

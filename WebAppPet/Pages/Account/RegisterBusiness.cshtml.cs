@@ -87,6 +87,9 @@ public class RegisterBusinessModel : PageModel
     public async Task OnGetAsync()
     {
         if (Step is < 0 or > 7) Step = 0;
+        // Account step is only for guests; signed-in users finish on prices + terms.
+        if (Step == 6 && _auth.IsAuthenticated)
+            Step = 5;
         await PrepareAsync();
         await PrefillFromCurrentUserAsync();
     }
@@ -129,6 +132,10 @@ public class RegisterBusinessModel : PageModel
         if (!ValidateCurrentStep())
             return Page();
 
+        // Logged-in users already have an account — don't send them to "create account".
+        if (Step == 5 && _auth.IsAuthenticated)
+            return await SubmitAsync();
+
         if (Step < 6)
         {
             Step++;
@@ -141,6 +148,9 @@ public class RegisterBusinessModel : PageModel
             }
             if (Step == 5)
                 EnsureDefaultServices(force: ServiceNames.Count == 0 || AreDefaultServicePlaceholders());
+            // Guests never land on step 6 while authenticated; if URL forced it, bounce.
+            if (Step == 6 && _auth.IsAuthenticated)
+                return await SubmitAsync();
             return Page();
         }
 
@@ -314,6 +324,11 @@ public class RegisterBusinessModel : PageModel
                 if (ServiceNames.Count == 0 || ServicePrices.All(p => p <= 0))
                 {
                     ErrorMessage = _L["Biz_ErrServicePrice"].Value;
+                    return false;
+                }
+                if (_auth.IsAuthenticated && !AcceptTerms)
+                {
+                    ErrorMessage = _L["Biz_ErrAcceptTerms"].Value;
                     return false;
                 }
                 break;

@@ -395,6 +395,9 @@
   <data name="Biz_SignIn" xml:space="preserve"><value>Inicia sesión</value></data>
   <data name="Biz_ContinueCurrentAccount" xml:space="preserve"><value>Continuarás con tu cuenta actual</value></data>
   <data name="Biz_ConfirmAccount" xml:space="preserve"><value>Confirmar cuenta</value></data>
+  <data name="Biz_SetPassword" xml:space="preserve"><value>Elige tu contraseña</value></data>
+  <data name="Biz_SetPasswordLead" xml:space="preserve"><value>Tu correo ya está listo. Solo falta una contraseña para entrar.</value></data>
+  <data name="Biz_FinishWithAccount" xml:space="preserve"><value>Usaremos tu cuenta actual para el perfil del negocio.</value></data>
   <data name="Biz_ServiceType" xml:space="preserve"><value>Tipo de servicio</value></data>
   <data name="Biz_ServiceTypeHint" xml:space="preserve"><value>Puedes elegir más de uno si ofreces varios servicios.</value></data>
   <data name="Biz_HowWork" xml:space="preserve"><value>¿Cómo trabajas?</value></data>
@@ -517,7 +520,7 @@
   <data name="Book_AllInOne" xml:space="preserve"><value>Todo en un solo lugar</value></data>
   <data name="Biz_StepOf" xml:space="preserve"><value>Paso {0} de 4</value></data>
   <data name="Biz_Join" xml:space="preserve"><value>Únete a Chombly</value></data>
-  <data name="Biz_CreateAccount" xml:space="preserve"><value>Crea tu cuenta</value></data>
+  <data name="Biz_CreateAccount" xml:space="preserve"><value>Elige tu contraseña</value></data>
   <data name="Biz_CreateProfile" xml:space="preserve"><value>Crear perfil</value></data>
   <data name="Biz_Business" xml:space="preserve"><value>Negocio</value></data>
   <data name="Size_Small" xml:space="preserve"><value>Pequeño</value></data>
