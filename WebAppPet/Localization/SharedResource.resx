@@ -308,6 +308,7 @@
   <data name="Pets_BreedDefault" xml:space="preserve"><value>Mestizo / mixto</value></data>
   <data name="Pets_Senior" xml:space="preserve"><value>Senior</value></data>
   <data name="Pets_NameRequired" xml:space="preserve"><value>El nombre es obligatorio</value></data>
+  <data name="Pets_Duplicate" xml:space="preserve"><value>Ya tienes una mascota con ese nombre, especie y raza.</value></data>
   <data name="Pets_SpeciesRequired" xml:space="preserve"><value>Elige el tipo de mascota</value></data>
   <data name="Pets_SpeciesInvalid" xml:space="preserve"><value>Elige un tipo de mascota válido.</value></data>
   <data name="Pets_OtherType" xml:space="preserve"><value>¿Cuál es tu mascota?</value></data>

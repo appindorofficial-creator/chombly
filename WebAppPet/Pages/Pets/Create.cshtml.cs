@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -130,6 +131,7 @@ public class CreateModel : PageModel
         if (!ModelState.IsValid) return Page();
 
         var species = Species.Trim();
+        var name = Name.Trim();
         var breedDefault = _L["Pets_BreedDefault"].Value;
         string breed;
         if (species == PetSpecies.Other)
@@ -150,6 +152,17 @@ public class CreateModel : PageModel
             breed = string.IsNullOrWhiteSpace(Breed) ? breedDefault : Breed.Trim();
         }
 
+        var duplicate = await _db.Pets.AsNoTracking().AnyAsync(p =>
+            p.OwnerId == userId
+            && p.Species == species
+            && p.Name.ToLower() == name.ToLower()
+            && p.Breed.ToLower() == breed.ToLower(), cancellationToken);
+        if (duplicate)
+        {
+            ModelState.AddModelError(nameof(Name), _L["Pets_Duplicate"].Value);
+            return Page();
+        }
+
         string? photoUrl = null;
         if (PhotoFile is { Length: > 0 })
         {
@@ -165,7 +178,7 @@ public class CreateModel : PageModel
         _db.Pets.Add(new Pet
         {
             OwnerId = userId,
-            Name = Name.Trim(),
+            Name = name,
             Species = species,
             Breed = breed,
             AgeYears = age!.Value,
@@ -179,7 +192,7 @@ public class CreateModel : PageModel
         });
         await _db.SaveChangesAsync(cancellationToken);
         TempData["CelebratePet"] = "1";
-        TempData["CelebratePetName"] = Name.Trim();
+        TempData["CelebratePetName"] = name;
         return RedirectToPage("./Index");
     }
 
