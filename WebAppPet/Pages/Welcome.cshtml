@@ -6,9 +6,23 @@
     ViewData["LangCompact"] = true;
     Layout = "_Layout";
     var loggedIn = User.Identity?.IsAuthenticated == true;
+    var rawReturn = ViewContext.HttpContext.Request.Query["returnUrl"].ToString();
+    string? backHref = null;
+    if (!string.IsNullOrWhiteSpace(rawReturn) && Url.IsLocalUrl(rawReturn))
+        backHref = rawReturn;
+    else if (loggedIn)
+        backHref = Url.Page("/Account/Profile");
+    var backLabel = !string.IsNullOrWhiteSpace(backHref)
+        && backHref.Contains("/Account/Profile", StringComparison.OrdinalIgnoreCase)
+        ? L["Welcome_BackProfile"].Value
+        : L["Welcome_BackHome"].Value;
 }
 <div class="onboard" data-audience="families">
     <header class="onboard-top">
+        @if (!string.IsNullOrWhiteSpace(backHref))
+        {
+            <a class="onboard-top-back" href="@backHref" aria-label="@backLabel">←</a>
+        }
         <div class="onboard-brand">
             <img src="~/brand/v2/chombly-mark-lime.png" alt="Chombly" class="onboard-mark" />
             <strong class="onboard-word">Chombly</strong>
@@ -59,6 +73,10 @@
             @if (loggedIn)
             {
                 <a class="btn btn-enter btn-block" asp-page="/Index">@L["Onboard_EnterFamilies"]</a>
+                @if (!string.IsNullOrWhiteSpace(backHref))
+                {
+                    <a class="onboard-secondary" href="@backHref">@backLabel</a>
+                }
             }
             else
             {

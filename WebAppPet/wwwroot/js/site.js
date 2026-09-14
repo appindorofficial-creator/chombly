@@ -226,6 +226,7 @@
   function openConfirm(opts) {
     opts = opts || {};
     var overlay = ensureConfirmOverlay();
+    overlay.classList.remove('ch-confirm-overlay--apple');
     overlay.querySelector('#ch-confirm-title').textContent = opts.title || '';
     overlay.querySelector('#ch-confirm-msg').textContent = opts.message || '';
     overlay.querySelector('[data-ch-confirm="no"]').textContent = opts.cancelLabel || 'No';

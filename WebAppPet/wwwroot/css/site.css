@@ -2662,17 +2662,55 @@ h1, h2, h3,
 
 .notif-page-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 4px;
 }
 .notif-page-head .app-page-heading { margin-bottom: 0; }
-.notif-clear-btn {
+.notif-page-head form {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+button.notif-clear-btn,
+.notif-clear-btn,
+a.notif-clear-btn,
+.link-btn.notif-clear-btn {
+  appearance: none;
+  -webkit-appearance: none;
   flex-shrink: 0;
-  font-size: .88rem;
-  color: var(--forest);
-  text-underline-offset: 3px;
+  margin: 0;
+  padding: 6px 2px;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", var(--font), sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  color: #ff3b30 !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+.notif-clear-btn:hover,
+.link-btn.notif-clear-btn:hover {
+  color: #ff3b30 !important;
+  text-decoration: none !important;
+  opacity: .85;
+}
+.notif-clear-btn:active,
+.link-btn.notif-clear-btn:active {
+  opacity: .35;
+  transform: none;
+}
+.notif-clear-btn:focus-visible {
+  outline: 2px solid rgba(255, 59, 48, 0.35);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 .notif-swipe-hint {
   margin: 0 0 10px;
@@ -3933,6 +3971,7 @@ body.chat-layout .chat-page {
   outline: 3px solid rgba(182, 231, 64, 0.55);
   outline-offset: 2px;
 }
+
 body.ch-confirm-open {
   overflow: hidden;
 }
