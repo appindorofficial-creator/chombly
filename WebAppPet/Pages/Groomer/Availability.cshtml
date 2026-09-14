@@ -59,8 +59,8 @@
                                 <strong>@day.Label</strong>
                                 <span class="agenda-day-status">@(day.IsOpen ? "Abierto" : "Cerrado")</span>
                             </span>
+                            <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
                             <span class="agenda-switch">
-                                <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
                                 <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true"
                                        @(day.IsOpen ? "checked" : null)
                                        data-agenda-switch

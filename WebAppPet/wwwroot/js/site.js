@@ -891,6 +891,10 @@
 
     scope.querySelectorAll('.hotel-flow form, form[data-soft-filter]').forEach(function (form) {
       if (form.dataset.softFilterBound === '1') return;
+      // Soft-update is for filter GET navigations. POST forms (Agenda, etc.) must not lock the UI.
+      var method = (form.getAttribute('method') || 'get').toLowerCase();
+      var isSoftFilter = form.hasAttribute('data-soft-filter');
+      if (method !== 'get' && !isSoftFilter) return;
       form.dataset.softFilterBound = '1';
       form.addEventListener('change', function () {
         markUpdating(form);

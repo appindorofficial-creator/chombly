@@ -5517,7 +5517,7 @@ body.celebrate-open {
   height: 28px;
   flex-shrink: 0;
 }
-.agenda-switch input {
+.agenda-switch input[type="checkbox"] {
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -5533,6 +5533,7 @@ body.celebrate-open {
   border-radius: 999px;
   background: #d7ddd8;
   border: 1.5px solid rgba(15, 61, 47, 0.1);
+  pointer-events: none;
   transition:
     background-color var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard);
@@ -5549,17 +5550,17 @@ body.celebrate-open {
   box-shadow: 0 2px 6px rgba(7, 61, 46, 0.18);
   transition: transform var(--motion-fast) var(--ease-spring);
 }
-.agenda-switch input:checked + .agenda-switch-track {
+.agenda-switch input[type="checkbox"]:checked + .agenda-switch-track {
   background: var(--lime);
   border-color: rgba(7, 61, 46, 0.2);
 }
-.agenda-switch input:checked + .agenda-switch-track::after {
+.agenda-switch input[type="checkbox"]:checked + .agenda-switch-track::after {
   transform: translateX(20px);
 }
-.agenda-switch input:active + .agenda-switch-track::after {
+.agenda-switch input[type="checkbox"]:active + .agenda-switch-track::after {
   transform: scale(0.92);
 }
-.agenda-switch input:checked:active + .agenda-switch-track::after {
+.agenda-switch input[type="checkbox"]:checked:active + .agenda-switch-track::after {
   transform: translateX(20px) scale(0.92);
 }
 .agenda-day-times {
