@@ -78,31 +78,10 @@ public class OnboardingModel : PageModel
             BodyEn: "Country, languages, and expertise. No US license / VCPR.",
             Emphasized: market == BusinessMarket.Colombia);
 
-        var international = new TrackCard(
-            Page: "/Professional/Onboarding/International",
-            Track: null,
-            Icon: "🌍",
-            TitleEs: "Asesor internacional",
-            TitleEn: "International advisor",
-            BodyEs: "Otro país (MX, SV…), idiomas y expertise de raza.",
-            BodyEn: "Another country (MX, SV…), languages, and breed expertise.",
-            Emphasized: false);
-
-        var behavior = new TrackCard(
-            Page: "/Professional/Onboarding/Local",
-            Track: "behavior",
-            Icon: "🧠",
-            TitleEs: "Especialista en conducta",
-            TitleEn: "Behavior specialist",
-            BodyEs: "Entrenamiento / consultoría conductual.",
-            BodyEn: "Training / behavior consulting.",
-            Emphasized: false);
-
         return market switch
         {
-            BusinessMarket.Colombia => new List<TrackCard> { colombiaLocal, behavior, usLocal },
-            BusinessMarket.UnitedStates => new List<TrackCard> { usLocal, behavior, international },
-            _ => new List<TrackCard> { colombiaLocal, usLocal, behavior, international }
+            BusinessMarket.UnitedStates => new List<TrackCard> { usLocal, colombiaLocal },
+            _ => new List<TrackCard> { colombiaLocal, usLocal }
         };
     }
 

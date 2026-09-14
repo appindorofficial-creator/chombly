@@ -9,14 +9,14 @@
     var lead = Model.Market switch
     {
         BusinessMarket.Colombia => CatalogLocalizer.Loc(
-            "Detectamos tu negocio en Colombia. Elige la trayectoria que aplica a tu práctica.",
-            "We detected your business in Colombia. Choose the track that fits your practice."),
+            "Detectamos tu negocio en Colombia. Elige: veterinario en Colombia o EE.UU.",
+            "We detected your business in Colombia. Choose: veterinarian in Colombia or the US."),
         BusinessMarket.UnitedStates => CatalogLocalizer.Loc(
-            "Detectamos tu negocio en EE.UU. Elige la trayectoria que aplica a tu práctica.",
-            "We detected your business in the US. Choose the track that fits your practice."),
+            "Detectamos tu negocio en EE.UU. Elige: veterinario EE.UU. o Colombia.",
+            "We detected your business in the US. Choose: US or Colombia veterinarian."),
         _ => CatalogLocalizer.Loc(
-            "Elige tu trayectoria según tu mercado (Colombia, EE.UU. u otro).",
-            "Choose your track for your market (Colombia, US, or other).")
+            "Elige tu trayectoria: Veterinario en Colombia o Veterinario EE.UU.",
+            "Choose your track: Veterinarian in Colombia or US veterinarian.")
     };
 }
 <div class="onboard onboard-app">
