@@ -4,78 +4,156 @@
     ViewData["Title"] = "Disponibilidad";
     ViewData["GroomerTab"] = "availability";
     ViewData["LangCompact"] = true;
+    var openWeek = Model.WeekEdit.Count(d => d.IsOpen);
+    var openDays = Model.Days.Count(d => d.IsAvailable);
+    var closedDays = Model.Days.Count(d => !d.IsAvailable);
 }
-<div class="onboard onboard-app">
+<div class="onboard onboard-app agenda-page">
     <partial name="_OnboardTop" />
-    <div class="home-body">
-    <partial name="_GroomerNav" />
+    <div class="home-body hotel-flow">
+        <partial name="_GroomerNav" />
 
-    <h2 style="margin:0 0 8px">Disponibilidad</h2>
-    <p class="muted small">Define tu horario semanal. La agenda de citas se genera a partir de él.</p>
+        <header class="agenda-head">
+            <h1 class="app-page-heading">Agenda</h1>
+            <p class="muted small agenda-lead">Define tu horario semanal. La agenda de citas se genera a partir de él.</p>
+        </header>
 
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-info">@Model.Message</div>
-    }
+        <div class="agenda-tip" aria-hidden="false">
+            <span class="agenda-tip-cal" aria-hidden="true">
+                @* Hollow frame: tip green shows through the center *@
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+                    <ellipse cx="60" cy="110" rx="28" ry="5" fill="#073D2E" opacity=".12"/>
+                    <path fill="#073D2E" fill-rule="evenodd" d="M22 28c0-8.837 7.163-16 16-16h44c8.837 0 16 7.163 16 16v56c0 8.837-7.163 16-16 16H38c-8.837 0-16-7.163-16-16V28Zm14 20c0-4.418 3.582-8 8-8h32c4.418 0 8 3.582 8 8v36c0 4.418-3.582 8-8 8H44c-4.418 0-8-3.582-8-8V48Z"/>
+                    <rect x="22" y="20" width="76" height="24" rx="12" fill="#073D2E"/>
+                    <rect x="26" y="24" width="68" height="16" rx="8" fill="#B6E740"/>
+                    <circle cx="42" cy="32" r="4.2" fill="none" stroke="#073D2E" stroke-width="2.4"/>
+                    <circle cx="60" cy="32" r="4.2" fill="none" stroke="#073D2E" stroke-width="2.4"/>
+                    <circle cx="78" cy="32" r="4.2" fill="none" stroke="#073D2E" stroke-width="2.4"/>
+                    <g fill="#073D2E" opacity=".4">
+                        <rect x="40" y="54" width="9" height="9" rx="2"/>
+                        <rect x="55" y="54" width="9" height="9" rx="2"/>
+                        <rect x="70" y="54" width="9" height="9" rx="2"/>
+                        <rect x="40" y="68" width="9" height="9" rx="2"/>
+                        <rect x="55" y="68" width="9" height="9" rx="2"/>
+                        <rect x="40" y="82" width="9" height="9" rx="2"/>
+                        <rect x="55" y="82" width="9" height="9" rx="2"/>
+                    </g>
+                    <rect x="70" y="68" width="9" height="9" rx="2" fill="#B6E740"/>
+                    <rect x="70" y="82" width="9" height="9" rx="2" fill="#9ED42A"/>
+                </svg>
+            </span>
+            <p class="agenda-tip-kicker">Tu ritmo</p>
+            <p class="agenda-tip-copy">@openWeek días abiertos esta semana · @openDays disponibles en los próximos 30</p>
+        </div>
 
-    <h3 class="section-title">Horario semanal</h3>
-    <form method="post" asp-page-handler="SaveWeek">
-        @for (var i = 0; i < Model.WeekEdit.Count; i++)
+        @if (!string.IsNullOrEmpty(Model.Message))
         {
-            <div class="card card-pad" style="margin-bottom:8px">
-                <input type="hidden" name="WeekEdit[@i].DayOfWeek" value="@Model.WeekEdit[i].DayOfWeek" />
-                <input type="hidden" name="WeekEdit[@i].Label" value="@Model.WeekEdit[i].Label" />
-                <label class="toggle-row" style="cursor:pointer;margin-bottom:8px">
-                    <strong>@Model.WeekEdit[i].Label</strong>
-                    <span>
-                        <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
-                        <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true" @(Model.WeekEdit[i].IsOpen ? "checked" : "") />
-                        Abierto
-                    </span>
-                </label>
-                <div style="display:flex;gap:10px">
-                    <div class="form-group" style="flex:1;margin:0">
-                        <label class="small muted">Abre</label>
-                        <input class="form-control" type="time" name="WeekEdit[@i].OpenTime" value="@Model.WeekEdit[i].OpenTime" />
-                    </div>
-                    <div class="form-group" style="flex:1;margin:0">
-                        <label class="small muted">Cierra</label>
-                        <input class="form-control" type="time" name="WeekEdit[@i].CloseTime" value="@Model.WeekEdit[i].CloseTime" />
-                    </div>
-                </div>
+            <div class="alert alert-info agenda-flash">@Model.Message</div>
+        }
+
+        <div class="agenda-stats">
+            <div class="agenda-stat">
+                <strong>@openWeek</strong>
+                <span>Abiertos / sem</span>
+            </div>
+            <div class="agenda-stat">
+                <strong>@openDays</strong>
+                <span>Disponibles</span>
+            </div>
+            <div class="agenda-stat">
+                <strong>@closedDays</strong>
+                <span>Cerrados</span>
+            </div>
+        </div>
+
+        <h3 class="section-title agenda-section-title">Horario semanal</h3>
+        <form method="post" asp-page-handler="SaveWeek" class="agenda-week-form">
+            <div class="agenda-week-list">
+                @for (var i = 0; i < Model.WeekEdit.Count; i++)
+                {
+                    var day = Model.WeekEdit[i];
+                    <article class="agenda-day-card @(day.IsOpen ? "is-open" : "is-closed")" style="--i:@i">
+                        <input type="hidden" name="WeekEdit[@i].DayOfWeek" value="@day.DayOfWeek" />
+                        <input type="hidden" name="WeekEdit[@i].Label" value="@day.Label" />
+                        <label class="agenda-day-toggle">
+                            <span class="agenda-day-meta">
+                                <strong>@day.Label</strong>
+                                <span class="agenda-day-status">@(day.IsOpen ? "Abierto" : "Cerrado")</span>
+                            </span>
+                            <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
+                            <span class="agenda-switch">
+                                <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true"
+                                       @(day.IsOpen ? "checked" : null)
+                                       data-agenda-switch
+                                       aria-label="@day.Label abierto" />
+                                <span class="agenda-switch-track" aria-hidden="true"></span>
+                            </span>
+                        </label>
+                        <div class="agenda-day-times">
+                            <div class="form-group">
+                                <label class="small muted">Abre</label>
+                                <input class="form-control" type="time" name="WeekEdit[@i].OpenTime" value="@day.OpenTime" />
+                            </div>
+                            <div class="form-group">
+                                <label class="small muted">Cierra</label>
+                                <input class="form-control" type="time" name="WeekEdit[@i].CloseTime" value="@day.CloseTime" />
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+            <button class="btn btn-primary btn-block agenda-primary-btn" type="submit">
+                Guardar horario y regenerar 60 días
+            </button>
+        </form>
+
+        <form method="post" asp-page-handler="Regenerate" class="agenda-regen-form">
+            <button class="btn btn-outline btn-block agenda-secondary-btn" type="submit">
+                Solo regenerar agenda (sin cambiar horario)
+            </button>
+        </form>
+
+        <h3 class="section-title agenda-section-title">Próximos 30 días</h3>
+        <p class="muted small agenda-cal-lead">Toca un día para abrirlo o cerrarlo (vacaciones, lleno, etc.).</p>
+
+        @if (!Model.Days.Any())
+        {
+            <div class="empty agenda-empty">Aún no hay días. Guarda el horario semanal primero.</div>
+        }
+        else
+        {
+            <div class="agenda-cal-grid">
+                @for (var i = 0; i < Model.Days.Count; i++)
+                {
+                    var d = Model.Days[i];
+                    <form method="post" asp-page-handler="Toggle" class="agenda-cal-cell @(d.IsAvailable ? "is-open" : "is-closed")" style="--i:@Math.Min(i, 11)">
+                        <input type="hidden" name="id" value="@d.Id" />
+                        <button type="submit" class="agenda-cal-btn" title="@(d.Note ?? (d.IsAvailable ? "Disponible" : "Cerrado"))">
+                            <span class="agenda-cal-dow">@d.Day.ToString("ddd")</span>
+                            <span class="agenda-cal-num">@d.Day.Day</span>
+                            <span class="agenda-cal-state">@(d.IsAvailable ? "Abierto" : "Cerrado")</span>
+                        </button>
+                    </form>
+                }
             </div>
         }
-        <button class="btn btn-primary btn-block" type="submit" style="margin-bottom:10px">Guardar horario y regenerar 60 días</button>
-    </form>
-
-    <form method="post" asp-page-handler="Regenerate" style="margin-bottom:18px">
-        <button class="btn btn-outline btn-block" type="submit">Solo regenerar agenda (sin cambiar horario)</button>
-    </form>
-
-    <h3 class="section-title">Próximos 30 días</h3>
-    <p class="muted small">Toca para abrir/cerrar un día concreto (vacaciones, lleno, etc.).</p>
-    @if (!Model.Days.Any())
-    {
-        <div class="empty">Aún no hay días. Guarda el horario semanal primero.</div>
-    }
-    else
-    {
-        @foreach (var d in Model.Days)
-        {
-            <div class="card card-pad" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-                <div>
-                    <strong>@d.Day.ToString("ddd d MMM")</strong>
-                    <div class="muted small">@(d.Note ?? "")</div>
-                </div>
-                <form method="post" asp-page-handler="Toggle">
-                    <input type="hidden" name="id" value="@d.Id" />
-                    <button type="submit" class="badge @(d.IsAvailable ? "badge-green" : "badge-gray")" style="border:none;cursor:pointer">
-                        @(d.IsAvailable ? "Disponible" : "Cerrado")
-                    </button>
-                </form>
-            </div>
-        }
-    }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+
+@section Scripts {
+<script>
+(function () {
+    document.querySelectorAll('[data-agenda-switch]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var card = input.closest('.agenda-day-card');
+            if (!card) return;
+            card.classList.toggle('is-open', input.checked);
+            card.classList.toggle('is-closed', !input.checked);
+            var status = card.querySelector('.agenda-day-status');
+            if (status) status.textContent = input.checked ? 'Abierto' : 'Cerrado';
+        });
+    });
+})();
+</script>
+}

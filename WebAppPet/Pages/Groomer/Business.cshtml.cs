@@ -19,6 +19,7 @@ public class BusinessModel : GroomerPageModel
 
     [BindProperty] public string BusinessName { get; set; } = "";
     [BindProperty] public int? CategoryId { get; set; }
+    [BindProperty] public List<int> CategoryIds { get; set; } = new();
     [BindProperty] public string Address { get; set; } = "";
     [BindProperty] public string City { get; set; } = "";
     [BindProperty] public double Latitude { get; set; }
@@ -53,8 +54,26 @@ public class BusinessModel : GroomerPageModel
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
         var g = Profile!;
+        Categories = await Db.Categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder).ToListAsync();
+
+        var selected = (CategoryIds ?? new List<int>())
+            .Where(id => id > 0 && Categories.Any(c => c.Id == id))
+            .Distinct()
+            .ToList();
+        if (selected.Count == 0)
+        {
+            Message = "Selecciona al menos una categoría de servicio.";
+            await FillAsync();
+            return Page();
+        }
+
+        var primary = CategoryId is int keep && selected.Contains(keep)
+            ? keep
+            : Categories.Where(c => selected.Contains(c.Id)).OrderBy(c => c.SortOrder).Select(c => c.Id).First();
+
         g.BusinessName = BusinessName.Trim();
-        g.CategoryId = CategoryId;
+        g.CategoryId = primary;
+        g.ExtraCategoryIds = GroomerProfile.JoinExtraCategoryIds(selected, primary);
         g.Address = Address.Trim();
         g.City = City.Trim();
         g.Latitude = Latitude;
@@ -142,9 +161,11 @@ public class BusinessModel : GroomerPageModel
     {
         Categories = await Db.Categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder).ToListAsync();
         Profile = await Db.Groomers.Include(g => g.Category).Include(g => g.User).FirstAsync(g => g.Id == Profile!.Id);
+        await LoadOfferedCategoriesAsync();
         var g = Profile;
         BusinessName = g.BusinessName;
         CategoryId = g.CategoryId;
+        CategoryIds = g.GetOfferedCategoryIds().ToList();
         Address = g.Address;
         City = g.City;
         Latitude = g.Latitude;

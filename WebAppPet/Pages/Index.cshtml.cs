@@ -37,6 +37,8 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGetAsync(string? city)
     {
         IsGuest = !_auth.IsAuthenticated;
+        if (_auth.IsGroomer)
+            return RedirectToPage("/Groomer/Dashboard");
         if (IsGuest && !Browse)
             return Redirect("/Welcome");
 
