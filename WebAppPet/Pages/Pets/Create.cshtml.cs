@@ -173,6 +173,8 @@ public class CreateModel : PageModel
             Notes = Notes
         });
         await _db.SaveChangesAsync(cancellationToken);
+        TempData["CelebratePet"] = "1";
+        TempData["CelebratePetName"] = Name.Trim();
         return RedirectToPage("./Index");
     }
 

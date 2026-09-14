@@ -566,6 +566,7 @@
       function showInvalidFeedback(invalid) {
         if (!invalid) {
           form.reportValidity();
+          if (msgs.required) showAppToast(msgs.required, { kind: 'error' });
           return;
         }
         var msg = invalid.validationMessage
@@ -576,7 +577,10 @@
           || invalid.closest('.pet-care-panel')
           || invalid.closest('fieldset');
         var err = group ? group.querySelector('.field-error') : null;
-        if (err && msg) err.textContent = msg;
+        if (err && msg) {
+          err.textContent = msg;
+          err.hidden = false;
+        }
 
         var scrollEl = invalid.closest('.temperament-pick, .species-opt, .size-pick, .care-flag, label')
           || group
@@ -585,31 +589,36 @@
           scrollEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        if (isVisuallyHiddenControl(invalid)) {
-          if (msg) showAppToast(msg, { kind: 'error' });
-          return;
-        }
-        if (typeof invalid.reportValidity === 'function') {
-          invalid.reportValidity();
-        } else {
-          form.reportValidity();
+        // Always toast — native bubbles often fail on hidden radios / custom UI.
+        if (msg) showAppToast(msg, { kind: 'error' });
+
+        if (!isVisuallyHiddenControl(invalid) && typeof invalid.reportValidity === 'function') {
+          try { invalid.reportValidity(); } catch (_) { /* ignore */ }
         }
       }
 
       form.addEventListener('input', function (e) {
-        if (e.target) apply(e.target);
+        if (!e.target) return;
+        apply(e.target);
+        var group = e.target.closest('.form-group');
+        var err = group && group.querySelector('.field-error');
+        if (err && e.target.validity && e.target.validity.valid) err.textContent = '';
       }, true);
       form.addEventListener('change', function (e) {
-        if (e.target) apply(e.target);
+        if (!e.target) return;
+        apply(e.target);
+        var group = e.target.closest('.form-group');
+        var err = group && group.querySelector('.field-error');
+        if (err && e.target.validity && e.target.validity.valid) err.textContent = '';
       }, true);
       form.addEventListener('submit', function (e) {
         validateAll();
         if (!form.checkValidity()) {
           e.preventDefault();
-          e.stopPropagation();
+          e.stopImmediatePropagation();
           showInvalidFeedback(form.querySelector(':invalid'));
         }
-      });
+      }, true);
     });
   }
 

@@ -240,8 +240,14 @@
     if (otherGroup) otherGroup.hidden = !isOther;
     if (breedGroup) breedGroup.hidden = isOther;
     if (breedSelect) {
-      breedSelect.required = !isOther;
       breedSelect.disabled = isOther;
+      if (isOther) {
+        breedSelect.removeAttribute('required');
+        breedSelect.required = false;
+      } else {
+        breedSelect.setAttribute('required', 'required');
+        breedSelect.required = true;
+      }
     }
     if (customType) {
       customType.required = isOther;

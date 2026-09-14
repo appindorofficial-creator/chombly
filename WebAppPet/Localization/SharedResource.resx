@@ -180,6 +180,10 @@
   <data name="Pets_Years" xml:space="preserve"><value>años</value></data>
   <data name="Pets_EmptyTitle" xml:space="preserve"><value>Aún no tienes mascotas</value></data>
   <data name="Pets_EmptySub" xml:space="preserve"><value>Agrega perros, gatos, conejos u otras mascotas para agendar servicios.</value></data>
+  <data name="Pets_CelebrateTitle" xml:space="preserve"><value>Chombly cuidará de tu mascota</value></data>
+  <data name="Pets_CelebrateBody" xml:space="preserve"><value>Su perfil ya está listo para agendar con cariño.</value></data>
+  <data name="Pets_CelebrateBodyNamed" xml:space="preserve"><value>{0} ya está en tu manada. Su perfil quedó listo para agendar.</value></data>
+  <data name="Pets_CelebrateCta" xml:space="preserve"><value>Continuar</value></data>
   <data name="Pets_GuestTitle" xml:space="preserve"><value>Inicia sesión para ver tus mascotas</value></data>
   <data name="Pets_GuestSub" xml:space="preserve"><value>Guarda el perfil de tus mascotas y agenda servicios más rápido.</value></data>
   <data name="Pets_Anxious" xml:space="preserve"><value>Ansioso</value></data>
