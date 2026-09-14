@@ -1,83 +1,94 @@
 @page
 @model WebAppPet.Pages.Behavior.IntakeModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation");
+    ViewData["Title"] = CatalogLocalizer.Loc("Comportamiento canino", "Dog behavior");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Care/Services");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Evaluación de comportamiento", "Behavior evaluation")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("Problema, frecuencia y contexto", "Problem, frequency, and context")</p>
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Comportamiento canino", "Dog behavior")</h1>
+        <p class="muted small">@CatalogLocalizer.Loc("Cuéntanos el problema en un solo paso.", "Tell us the problem in one step.")</p>
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
 
-    @if (Model.Pets.Count == 0)
-    {
-        <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
-        <a class="btn btn-primary" asp-page="/Pets/Create">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
-    }
-    else
-    {
-        <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px">
-            <input type="hidden" asp-for="CaseId" />
+        @if (Model.Pets.Count == 0)
+        {
+            <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
+            <a class="btn btn-primary" asp-page="/Pets/Create">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+        }
+        else
+        {
+            <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px">
+                <input type="hidden" asp-for="CaseId" />
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Mascota", "Pet")</h2>
-                @foreach (var p in Model.Pets)
+                @if (Model.Pets.Count == 1)
                 {
-                    <label class="radio-card">
-                        <input type="radio" name="PetId" value="@p.Id" checked="@(Model.PetId == p.Id)" />
-                        <span><strong>@p.Name</strong> <span class="muted small">@p.Breed</span></span>
-                    </label>
+                    <input type="hidden" name="PetId" value="@Model.Pets[0].Id" />
+                    <div class="card card-pad">
+                        <span class="muted small">@CatalogLocalizer.Loc("Mascota", "Pet")</span>
+                        <strong style="display:block">@Model.Pets[0].Name</strong>
+                    </div>
                 }
-            </section>
+                else
+                {
+                    <section>
+                        <h2 class="section-title">@CatalogLocalizer.Loc("Mascota", "Pet")</h2>
+                        @foreach (var p in Model.Pets)
+                        {
+                            <label class="radio-card">
+                                <input type="radio" name="PetId" value="@p.Id" @(Model.PetId == p.Id ? "checked" : null) />
+                                <span><strong>@p.Name</strong> <span class="muted small">@p.Breed</span></span>
+                            </label>
+                        }
+                    </section>
+                }
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Problema principal", "Main problem")</h2>
-                <select class="input" asp-for="ProblemType">
-                    <option value="">@CatalogLocalizer.Loc("Selecciona…", "Select…")</option>
-                    @foreach (var p in IntakeModel.Problems)
-                    {
-                        <option value="@p">@CatalogLocalizer.Text(p)</option>
-                    }
-                </select>
-            </section>
+                <section>
+                    <h2 class="section-title">@CatalogLocalizer.Loc("Problema principal", "Main problem")</h2>
+                    <div class="filter-bar filter-bar-wrap">
+                        @foreach (var p in IntakeModel.Problems)
+                        {
+                            <label class="chip @(Model.ProblemType == p ? "active" : null)">
+                                <input type="radio" name="ProblemType" value="@p" @(Model.ProblemType == p ? "checked" : null) required />
+                                @CatalogLocalizer.Text(p)
+                            </label>
+                        }
+                    </div>
+                </section>
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Frecuencia", "Frequency")</h2>
-                <div class="filter-bar filter-bar-wrap">
-                    @foreach (var f in IntakeModel.Frequencies)
-                    {
-                        <label class="chip @(Model.Frequency == f ? "active" : "")">
-                            <input type="radio" name="Frequency" value="@f" checked="@(Model.Frequency == f)" /> @CatalogLocalizer.Text(f)
-                        </label>
-                    }
-                </div>
-            </section>
+                <section>
+                    <h2 class="section-title">@CatalogLocalizer.Loc("Frecuencia", "Frequency")</h2>
+                    <div class="filter-bar filter-bar-wrap">
+                        @foreach (var f in IntakeModel.Frequencies)
+                        {
+                            <label class="chip @(Model.Frequency == f ? "active" : null)">
+                                <input type="radio" name="Frequency" value="@f" @(Model.Frequency == f ? "checked" : null) />
+                                @CatalogLocalizer.Text(f)
+                            </label>
+                        }
+                    </div>
+                </section>
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Contexto del hogar", "Home context")</h2>
-                <textarea class="input" asp-for="ContextNotes" rows="3" placeholder="@CatalogLocalizer.Loc("Notas del hogar, rutina…", "Home notes, routine…")"></textarea>
-                <label class="muted small" style="display:block;margin-top:8px">@CatalogLocalizer.Loc("Video corto (opcional)", "Short video (optional)")</label>
-                <input class="input" type="file" asp-for="Video" accept="video/mp4,video/webm,video/quicktime,image/*" />
-            </section>
+                <section>
+                    <h2 class="section-title">@CatalogLocalizer.Loc("Detalle (opcional)", "Details (optional)")</h2>
+                    <textarea class="input" asp-for="ContextNotes" rows="2" placeholder="@CatalogLocalizer.Loc("Cuándo pasa, qué lo dispara…", "When it happens, what triggers it…")"></textarea>
+                </section>
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("¿Hay signos clínicos?", "Any clinical signs?")</h2>
-                <p class="muted small">@CatalogLocalizer.Loc("Si marcas alguna, te llevamos a Veterinaria.", "If you check any, we route you to Veterinary.")</p>
-                <label class="check-row"><input type="checkbox" asp-for="SuddenAggression" /> <span>@CatalogLocalizer.Loc("Agresión súbita sin gatillo claro", "Sudden aggression without clear trigger")</span></label>
-                <label class="check-row"><input type="checkbox" asp-for="SeizureLike" /> <span>@CatalogLocalizer.Loc("Episodios tipo convulsión", "Seizure-like episodes")</span></label>
-                <label class="check-row"><input type="checkbox" asp-for="PainSuspected" /> <span>@CatalogLocalizer.Loc("Sospecha de dolor", "Suspected pain")</span></label>
-                <label class="check-row"><input type="checkbox" asp-for="SelfHarm" /> <span>@CatalogLocalizer.Loc("Autolesión grave", "Severe self-harm")</span></label>
-            </section>
+                <section class="card card-pad" style="padding:12px 14px">
+                    <label class="check-row" style="margin:0">
+                        <input type="checkbox" asp-for="HasClinicalConcern" />
+                        <span>@CatalogLocalizer.Loc("Sospecho causa médica (dolor, convulsiones, agresión súbita).", "I suspect a medical cause (pain, seizures, sudden aggression).")</span>
+                    </label>
+                    <p class="muted small mb-0" style="margin-top:6px">@CatalogLocalizer.Loc("Si marcas esto, te llevamos a Veterinaria primero.", "If checked, we route you to Veterinary first.")</p>
+                </section>
 
-            <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
-        </form>
-    }
+                <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
+            </form>
+        }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

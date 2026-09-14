@@ -45,8 +45,8 @@ else
         }
         else
         {
-            <p><strong>Fecha:</strong> @a.ScheduledAt.ToString("dddd, d MMMM yyyy")</p>
-            <p><strong>Hora:</strong> @a.ScheduledAt.ToString("h:mm tt")</p>
+            <p><strong>Fecha:</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>Hora:</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("h:mm tt")</p>
         }
         <p><strong>Mascota:</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@a.Pet.Species · @a.Pet.Breed)</p>
         @if (a.Extras.Any())

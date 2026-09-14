@@ -311,7 +311,7 @@ public class IndexModel : PageModel
                 PriceUnitLabel = CatalogLocalizer.Loc(
                     Schedule == "medio" ? "/ medio día" : "/ día completo",
                     Schedule == "medio" ? "/ half day" : "/ full day"),
-                AvailableToday = todayMap.GetValueOrDefault(d.Id, true),
+                AvailableToday = todayMap.GetValueOrDefault(d.Id, false),
                 Features = d.Amenities.OrderBy(a => a.SortOrder).Select(a => a.Label).Take(3).ToList()
             };
         }).ToList();

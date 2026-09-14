@@ -47,7 +47,7 @@
 
             <p class="onboard-auth-links">
                 @L["Login_NoAccount"]
-                <a asp-page="/Account/Register">@L["Login_Register"]</a>
+                <a asp-page="/Account/Register" asp-route-returnUrl="/Welcome">@L["Login_Register"]</a>
             </p>
             <a class="onboard-secondary" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
         </div>

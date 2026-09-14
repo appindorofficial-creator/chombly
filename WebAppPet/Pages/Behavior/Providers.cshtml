@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Behavior.ProvidersModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Especialista en comportamiento", "Behavior specialist");
+    ViewData["Title"] = CatalogLocalizer.Loc("Reservar especialista", "Book specialist");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Behavior/Intake", new { caseId = Model.CaseId });
     var price = Model.CatalogItem?.Price ?? 55m;
@@ -9,41 +9,61 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Especialista en comportamiento", "Behavior specialist")</h1>
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reservar especialista", "Book specialist")</h1>
         <p class="muted small">$@price.ToString("0.##") · @CatalogLocalizer.Loc("servicio separado del plan Care", "separate from Care plan")</p>
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
 
-    <div class="alert alert-warn">
-        @CatalogLocalizer.Loc(
-            "Este plan no es un diagnóstico veterinario ni incluye medicación.",
-            "This plan is not a veterinary diagnosis and does not include medication.")
-    </div>
-
-    <form method="post" class="stack" style="gap:14px">
-        <input type="hidden" asp-for="CaseId" />
-        <input type="hidden" asp-for="Step" />
-
-        @if (Model.Step == "pick")
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
+
+        @if (Model.Case != null)
+        {
+            <div class="card card-pad" style="margin-bottom:14px">
+                <strong>@(Model.Case.Pet?.Name ?? "—")</strong>
+                <p class="muted small mb-0">
+                    @Model.Case.ProblemType
+                    @if (!string.IsNullOrWhiteSpace(Model.Case.Frequency))
+                    {
+                        <text> · @Model.Case.Frequency</text>
+                    }
+                </p>
+                @if (!string.IsNullOrWhiteSpace(Model.Case.ContextNotes))
+                {
+                    <p class="muted small" style="margin-top:6px">@Model.Case.ContextNotes</p>
+                }
+            </div>
+        }
+
+        <form method="post" class="stack" style="gap:14px" data-care-activate>
+            <input type="hidden" asp-for="CaseId" />
+
             <section>
                 <h2 class="section-title">@CatalogLocalizer.Loc("¿Cuándo?", "When?")</h2>
                 <div class="filter-bar filter-bar-wrap">
-                    <label class="chip"><input type="radio" name="When" value="hoy" checked="@(Model.When == "hoy")" /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
-                    <label class="chip"><input type="radio" name="When" value="mañana" checked="@(Model.When == "mañana")" /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
+                    <label class="chip @(Model.When == "hoy" ? "active" : null)">
+                        <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : null) />
+                        @CatalogLocalizer.Loc("Hoy", "Today")
+                    </label>
+                    <label class="chip @(Model.When == "manana" ? "active" : null)">
+                        <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : null) />
+                        @CatalogLocalizer.Loc("Mañana", "Tomorrow")
+                    </label>
                 </div>
                 <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
                     @foreach (var t in Model.TimeSlots)
                     {
-                        <label class="chip"><input type="radio" name="Slot" value="@t" checked="@(Model.Slot == t)" /> @t</label>
+                        var taken = Model.OccupiedSlots.Contains(t);
+                        <label class="chip @(Model.Slot == t ? "active" : null) @(taken ? "is-disabled" : null)">
+                            <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : null) @(taken ? "disabled" : null) />
+                            @t@(taken ? CatalogLocalizer.Loc(" · ocupado", " · taken") : null)
+                        </label>
                     }
                 </div>
             </section>
 
             <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Especialistas", "Specialists")</h2>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Especialista", "Specialist")</h2>
                 @if (Model.Providers.Count == 0)
                 {
                     <p class="muted">@CatalogLocalizer.Loc("No hay especialistas publicados aún.", "No specialists published yet.")</p>
@@ -53,7 +73,7 @@
                     @foreach (var p in Model.Providers)
                     {
                         <label class="radio-card">
-                            <input type="radio" name="ProviderId" value="@p.Id" checked="@(Model.ProviderId == p.Id)" />
+                            <input type="radio" name="ProviderId" value="@p.Id" @(Model.ProviderId == p.Id ? "checked" : null) required />
                             <span>
                                 <strong>@p.BusinessName</strong>
                                 <span class="muted small" style="display:block">@ProvidersModel.RoleLabel(p.BehaviorRole) · ★ @p.Rating.ToString("0.0")</span>
@@ -63,27 +83,15 @@
                     }
                 }
             </section>
-            <button type="submit" class="btn btn-primary btn-block" disabled="@(Model.Providers.Count == 0)">@CatalogLocalizer.Loc("Reservar", "Book")</button>
-        }
-        else
-        {
-            <input type="hidden" name="ProviderId" value="@Model.Case?.ProviderId" />
-            <input type="hidden" name="When" value="@Model.When" />
-            <input type="hidden" name="Slot" value="@Model.Slot" />
-            <div class="card card-pad">
-                <strong>@(Model.Providers.FirstOrDefault(p => p.Id == Model.Case?.ProviderId)?.BusinessName ?? Model.Case?.Provider?.BusinessName)</strong>
-                <p class="muted small">@(Model.Case?.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : "—")</p>
-                <p><strong>@ServiceCatalogService.DisplayName(Model.CatalogItem!)</strong> <span class="price-tag">$@price.ToString("0.##")</span></p>
-            </div>
 
             @if (Model.Payments.Count > 0)
             {
                 <section>
-                    <h2 class="section-title">@CatalogLocalizer.Loc("Método de pago", "Payment method")</h2>
+                    <h2 class="section-title">@CatalogLocalizer.Loc("Pago", "Payment")</h2>
                     @foreach (var p in Model.Payments)
                     {
                         <label class="radio-card">
-                            <input type="radio" name="PaymentMethodId" value="@p.Id" checked="@p.IsDefault" />
+                            <input type="radio" name="PaymentMethodId" value="@p.Id" @(p.IsDefault || Model.PaymentMethodId == p.Id ? "checked" : null) />
                             <span>@p.Brand ·••• @p.Last4</span>
                         </label>
                     }
@@ -91,18 +99,30 @@
             }
 
             <label class="check-row">
-                <input type="checkbox" asp-for="AcceptTerms" />
-                <span>@CatalogLocalizer.Loc("Acepto los", "I accept the") <a class="legal-link" asp-page="/Legal/Terms" target="_blank">@L["Legal_TermsConditions"]</a></span>
+                <input type="checkbox" asp-for="AcceptTerms" data-terms-checkbox />
+                <span>
+                    @CatalogLocalizer.Loc("Acepto los", "I accept the")
+                    <a class="legal-link"
+                       asp-page="/Legal/Terms"
+                       asp-route-returnUrl="@(Url.Page("/Behavior/Providers", new { caseId = Model.CaseId }) ?? "/Behavior/Providers")"
+                       asp-fragment="terms"
+                       onclick="event.stopPropagation()">@L["Legal_TermsConditions"]</a>
+                    @CatalogLocalizer.Loc("y que esto es un plan educativo, no un diagnóstico veterinario.", "and that this is an educational plan, not a veterinary diagnosis.")
+                </span>
             </label>
-            <label class="check-row">
-                <input type="checkbox" asp-for="AcceptScope" />
-                <span>@CatalogLocalizer.Loc("Entiendo que es un plan educativo de conducta, no un diagnóstico veterinario.", "I understand this is an educational behavior plan, not a veterinary diagnosis.")</span>
-            </label>
+            <input type="hidden" name="AcceptScope" value="true" />
 
-            <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc($"Pagar ${price:0.##}", $"Pay ${price:0.##}")</button>
-            <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado", "Simulated payment")</p>
-        }
-    </form>
+            <p class="field-error terms-error"
+               data-terms-error
+               data-terms-message="@CatalogLocalizer.Loc("Debes aceptar los términos para reservar.", "You must accept the terms to book.")"
+               role="alert"
+               @(string.IsNullOrEmpty(Model.ErrorMessage) ? "hidden" : null)>@(Model.ErrorMessage ?? CatalogLocalizer.Loc("Debes aceptar los términos para reservar.", "You must accept the terms to book."))</p>
+
+            <button type="submit" class="btn btn-primary btn-block" disabled="@(Model.Providers.Count == 0)">
+                @CatalogLocalizer.Loc($"Confirmar · ${price:0.##}", $"Confirm · ${price:0.##}")
+            </button>
+            <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>
+        </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

@@ -4,7 +4,9 @@
     ViewData["Title"] = "Chombly Care";
     var price = Model.CatalogItem?.Price ?? 14.99m;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = "javascript:history.back()";
+    ViewData["OnboardBackHref"] = Model.BackHref;
+    var careReturn = Url.Page("/Plans/ChomblyCare", new { consultationId = Model.ConsultationId, returnUrl = Model.ReturnUrl })
+        ?? "/Plans/ChomblyCare";
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -71,27 +73,37 @@
     }
     else
     {
-        <form method="post" asp-page-handler="Activate" class="stack" style="gap:12px">
+        <form method="post" asp-page-handler="Activate" class="stack" style="gap:12px" data-care-activate>
             @if (Model.ConsultationId is int)
             {
                 <input type="hidden" asp-for="ConsultationId" />
             }
+            <input type="hidden" asp-for="ReturnUrl" />
             <label class="check-row">
-                <input type="checkbox" asp-for="AcceptTerms" />
+                <input type="checkbox" asp-for="AcceptTerms" data-terms-checkbox />
                 <span>
                     @CatalogLocalizer.Loc("Acepto los", "I accept the")
-                    <a class="legal-link" asp-page="/Legal/Terms" target="_blank" rel="noopener">@L["Legal_TermsConditions"]</a>
+                    <a class="legal-link"
+                       asp-page="/Legal/Terms"
+                       asp-route-returnUrl="@careReturn"
+                       asp-fragment="terms"
+                       onclick="event.stopPropagation()">@L["Legal_TermsConditions"]</a>
                     @CatalogLocalizer.Loc("y entiendo que no es un seguro médico.", "and understand this is not pet insurance.")
                 </span>
             </label>
             <label class="check-row">
-                <input type="checkbox" asp-for="AcceptRenewal" />
+                <input type="checkbox" asp-for="AcceptRenewal" data-care-renewal />
                 <span>
                     @CatalogLocalizer.Loc(
                         $"Autorizo el cobro simulado de ${price:0.00}/mes con renovación automática hasta cancelar.",
                         $"I authorize the simulated ${price:0.00}/mo charge with auto-renewal until I cancel.")
                 </span>
             </label>
+            <p class="field-error terms-error"
+               data-terms-error
+               data-terms-message="@CatalogLocalizer.Loc("Debes aceptar los términos y la renovación automática para activar Chombly Care.", "You must accept the terms and auto-renewal to activate Chombly Care.")"
+               role="alert"
+               @(string.IsNullOrEmpty(Model.ErrorMessage) ? "hidden" : null)>@(Model.ErrorMessage ?? CatalogLocalizer.Loc("Debes aceptar los términos y la renovación automática para activar Chombly Care.", "You must accept the terms and auto-renewal to activate Chombly Care."))</p>
             <button type="submit" class="btn btn-primary btn-block">
                 @CatalogLocalizer.Loc($"Suscribirme por ${price:0.00}/mes", $"Subscribe for ${price:0.00}/mo")
             </button>

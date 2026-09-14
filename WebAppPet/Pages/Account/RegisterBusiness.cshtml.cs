@@ -20,6 +20,7 @@ public class RegisterBusinessModel : PageModel
     private readonly SmtpOptions _smtp;
     private readonly GoogleMapsOptions _maps;
     private readonly IStringLocalizer<SharedResource> _L;
+    private readonly IWebHostEnvironment _env;
 
     public RegisterBusinessModel(
         AppDbContext db,
@@ -28,7 +29,8 @@ public class RegisterBusinessModel : PageModel
         IEmailService email,
         IOptions<SmtpOptions> smtp,
         IOptions<GoogleMapsOptions> maps,
-        IStringLocalizer<SharedResource> L)
+        IStringLocalizer<SharedResource> L,
+        IWebHostEnvironment env)
     {
         _db = db;
         _auth = auth;
@@ -37,6 +39,7 @@ public class RegisterBusinessModel : PageModel
         _smtp = smtp.Value;
         _maps = maps.Value;
         _L = L;
+        _env = env;
     }
 
     public List<ServiceCategory> Categories { get; set; } = new();
@@ -57,12 +60,15 @@ public class RegisterBusinessModel : PageModel
     [BindProperty] public double Latitude { get; set; }
     [BindProperty] public double Longitude { get; set; }
     [BindProperty] public int CategoryId { get; set; }
+    [BindProperty] public List<int> CategoryIds { get; set; } = new();
     [BindProperty] public string WorkModeKey { get; set; } = "local";
     [BindProperty] public List<WeekDayInput> Week { get; set; } = WeekDayInput.DefaultWeek();
     [BindProperty] public int ServiceAreaMiles { get; set; } = 10;
     [BindProperty, MaxLength(800)] public string About { get; set; } = string.Empty;
     [BindProperty] public string? LogoUrl { get; set; }
     [BindProperty] public string? CoverUrl { get; set; }
+    [BindProperty] public IFormFile? LogoFile { get; set; }
+    [BindProperty] public IFormFile? CoverFile { get; set; }
     [BindProperty] public List<string> ServiceNames { get; set; } = new();
     [BindProperty] public List<decimal> ServicePrices { get; set; } = new();
     [BindProperty] public string Password { get; set; } = string.Empty;
@@ -110,6 +116,16 @@ public class RegisterBusinessModel : PageModel
     {
         await PrepareAsync();
 
+        if (Step == 4)
+        {
+            var uploadErr = await TrySavePhotoUploadsAsync();
+            if (uploadErr != null)
+            {
+                ErrorMessage = uploadErr;
+                return Page();
+            }
+        }
+
         if (!ValidateCurrentStep())
             return Page();
 
@@ -118,14 +134,43 @@ public class RegisterBusinessModel : PageModel
             Step++;
             if (Step == 1)
                 await PrefillFromCurrentUserAsync();
-            if (Step == 2 && CategoryId <= 0 && Categories.Count > 0)
+            if (Step == 2 && CategoryIds.Count == 0 && Categories.Count > 0)
+            {
+                CategoryIds = new List<int> { Categories[0].Id };
                 CategoryId = Categories[0].Id;
+            }
             if (Step == 5)
                 EnsureDefaultServices(force: ServiceNames.Count == 0 || AreDefaultServicePlaceholders());
             return Page();
         }
 
         return await SubmitAsync();
+    }
+
+    private async Task<string?> TrySavePhotoUploadsAsync()
+    {
+        var logoErr = BusinessPhotoStorage.Validate(LogoFile);
+        if (logoErr != null)
+            return _L["Biz_PhotoInvalid"].Value;
+
+        var coverErr = BusinessPhotoStorage.Validate(CoverFile);
+        if (coverErr != null)
+            return _L["Biz_PhotoInvalid"].Value;
+
+        var uid = _auth.CurrentUserId;
+        try
+        {
+            if (LogoFile is { Length: > 0 })
+                LogoUrl = await BusinessPhotoStorage.SaveAsync(LogoFile, uid, _env);
+            if (CoverFile is { Length: > 0 })
+                CoverUrl = await BusinessPhotoStorage.SaveAsync(CoverFile, uid, _env);
+        }
+        catch
+        {
+            return _L["Biz_PhotoInvalid"].Value;
+        }
+
+        return null;
     }
 
     private bool AreDefaultServicePlaceholders()
@@ -148,8 +193,26 @@ public class RegisterBusinessModel : PageModel
         Categories = await _db.Categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder).ToListAsync();
         EnsureWeek();
         EnsureDefaultServices();
-        if (CategoryId <= 0 && Categories.Count > 0 && Step >= 2)
+        SyncPrimaryCategoryId();
+        if (CategoryIds.Count == 0 && CategoryId > 0)
+            CategoryIds = new List<int> { CategoryId };
+        if (CategoryIds.Count == 0 && Categories.Count > 0 && Step >= 2)
+        {
+            CategoryIds = new List<int> { Categories[0].Id };
             CategoryId = Categories[0].Id;
+        }
+    }
+
+    private void SyncPrimaryCategoryId()
+    {
+        CategoryIds = (CategoryIds ?? new List<int>())
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+        if (CategoryIds.Count > 0)
+            CategoryId = CategoryIds[0];
+        else if (CategoryId > 0)
+            CategoryIds = new List<int> { CategoryId };
     }
 
     /// <summary>Prefills contact fields from the signed-in client converting to a business.</summary>
@@ -219,15 +282,16 @@ public class RegisterBusinessModel : PageModel
                 Phone = phoneNorm!;
                 break;
             case 2:
-                if (CategoryId <= 0)
+                SyncPrimaryCategoryId();
+                if (CategoryIds.Count == 0)
                 {
-                    if (Categories.Count > 0)
-                        CategoryId = Categories[0].Id;
-                    else
-                    {
-                        ErrorMessage = _L["Biz_ErrNoCategories"].Value;
-                        return false;
-                    }
+                    ErrorMessage = _L["Biz_ErrPickService"].Value;
+                    return false;
+                }
+                if (!CategoryIds.All(id => Categories.Any(c => c.Id == id)))
+                {
+                    ErrorMessage = _L["Biz_ErrPickService"].Value;
+                    return false;
                 }
                 break;
             case 3:
@@ -335,6 +399,9 @@ public class RegisterBusinessModel : PageModel
             _db.Users.Add(user);
         }
 
+        await _db.SaveChangesAsync();
+
+        SyncPrimaryCategoryId();
         var cat = await _db.Categories.FirstOrDefaultAsync(c => c.Id == CategoryId);
         if (cat == null)
         {
@@ -358,8 +425,6 @@ public class RegisterBusinessModel : PageModel
             _ => GroomerType.Salon
         };
 
-        await _db.SaveChangesAsync();
-
         var firstPrice = ServicePrices.FirstOrDefault(p => p > 0);
         if (firstPrice <= 0) firstPrice = 35;
         var unit = cat.IsOvernight ? "/ noche" : "/ sesión";
@@ -368,6 +433,7 @@ public class RegisterBusinessModel : PageModel
         {
             UserId = user.Id,
             CategoryId = cat.Id,
+            ExtraCategoryIds = GroomerProfile.JoinExtraCategoryIds(CategoryIds, cat.Id),
             BusinessName = BusinessName.Trim(),
             ProviderKind = kind,
             WorkMode = work,
@@ -478,31 +544,60 @@ public class RegisterBusinessModel : PageModel
     private void EnsureDefaultServices(bool force = false)
     {
         if (!force && ServiceNames.Count > 0) return;
-        var cat = Categories.FirstOrDefault(c => c.Id == CategoryId);
-        var slug = cat?.Slug ?? "grooming";
-        var en = CultureCookie.IsEnglish();
-        (ServiceNames, ServicePrices) = slug switch
+        SyncPrimaryCategoryId();
+        var selected = Categories.Where(c => CategoryIds.Contains(c.Id)).ToList();
+        if (selected.Count == 0)
         {
-            "hotel" => en
-                ? (new List<string> { "Standard night", "Premium night" }, new List<decimal> { 45, 60 })
-                : (new List<string> { "Noche estándar", "Noche premium" }, new List<decimal> { 45, 60 }),
-            "vet" => en
-                ? (new List<string> { "General checkup", "Vaccines" }, new List<decimal> { 50, 35 })
-                : (new List<string> { "Consulta general", "Vacunas" }, new List<decimal> { 50, 35 }),
-            "daycare" => en
-                ? (new List<string> { "Full day", "Half day" }, new List<decimal> { 35, 25 })
-                : (new List<string> { "Día completo", "Medio día" }, new List<decimal> { 35, 25 }),
-            "walkers" => en
-                ? (new List<string> { "30-min walk", "60-min walk" }, new List<decimal> { 15, 25 })
-                : (new List<string> { "Paseo 30 min", "Paseo 60 min" }, new List<decimal> { 15, 25 }),
-            "trainers" => en
-                ? (new List<string> { "Basic obedience", "Advanced session" }, new List<decimal> { 45, 60 })
-                : (new List<string> { "Obediencia básica", "Sesión avanzada" }, new List<decimal> { 45, 60 }),
-            _ => en
-                ? (new List<string> { "Basic bath", "Haircut", "Full grooming" }, new List<decimal> { 35, 45, 55 })
-                : (new List<string> { "Baño básico", "Corte de pelo", "Grooming completo" }, new List<decimal> { 35, 45, 55 })
-        };
+            var cat = Categories.FirstOrDefault(c => c.Id == CategoryId);
+            if (cat != null) selected.Add(cat);
+        }
+
+        var names = new List<string>();
+        var prices = new List<decimal>();
+        var en = CultureCookie.IsEnglish();
+        foreach (var cat in selected)
+        {
+            var (n, p) = DefaultsForSlug(cat.Slug, en);
+            for (var i = 0; i < n.Count; i++)
+            {
+                if (names.Contains(n[i], StringComparer.OrdinalIgnoreCase)) continue;
+                names.Add(n[i]);
+                prices.Add(p[i]);
+            }
+        }
+
+        if (names.Count == 0)
+        {
+            var (n, p) = DefaultsForSlug("grooming", en);
+            names = n;
+            prices = p;
+        }
+
+        ServiceNames = names;
+        ServicePrices = prices;
     }
+
+    private static (List<string> Names, List<decimal> Prices) DefaultsForSlug(string slug, bool en) => slug switch
+    {
+        "hotel" => en
+            ? (new List<string> { "Standard night", "Premium night" }, new List<decimal> { 45, 60 })
+            : (new List<string> { "Noche estándar", "Noche premium" }, new List<decimal> { 45, 60 }),
+        "vet" => en
+            ? (new List<string> { "General checkup", "Vaccines" }, new List<decimal> { 50, 35 })
+            : (new List<string> { "Consulta general", "Vacunas" }, new List<decimal> { 50, 35 }),
+        "daycare" => en
+            ? (new List<string> { "Full day", "Half day" }, new List<decimal> { 35, 25 })
+            : (new List<string> { "Día completo", "Medio día" }, new List<decimal> { 35, 25 }),
+        "walkers" => en
+            ? (new List<string> { "30-min walk", "60-min walk" }, new List<decimal> { 15, 25 })
+            : (new List<string> { "Paseo 30 min", "Paseo 60 min" }, new List<decimal> { 15, 25 }),
+        "trainers" => en
+            ? (new List<string> { "Basic obedience", "Advanced session" }, new List<decimal> { 45, 60 })
+            : (new List<string> { "Obediencia básica", "Sesión avanzada" }, new List<decimal> { 45, 60 }),
+        _ => en
+            ? (new List<string> { "Basic bath", "Haircut", "Full grooming" }, new List<decimal> { 35, 45, 55 })
+            : (new List<string> { "Baño básico", "Corte de pelo", "Grooming completo" }, new List<decimal> { 35, 45, 55 })
+    };
 
     private void NormalizeServices()
     {

@@ -310,7 +310,7 @@ public class IndexModel : PageModel
                 DistanceLabel = dist,
                 Miles = miles,
                 Price = price,
-                AvailableToday = todayMap.GetValueOrDefault(w.Id, true)
+                AvailableToday = todayMap.GetValueOrDefault(w.Id, false)
             };
         }).ToList();
 

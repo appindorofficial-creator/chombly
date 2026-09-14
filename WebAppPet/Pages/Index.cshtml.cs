@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -21,15 +22,27 @@ public class IndexModel : PageModel
         _L = L;
     }
 
+    /// <summary>Guest browse from Welcome “Explorar”. Without this, anonymous /Index goes to Welcome.</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool Browse { get; set; }
+
     public string City { get; set; } = string.Empty;
     public string? GreetingName { get; set; }
+    public bool IsGuest { get; set; }
     public List<ServiceCategory> Categories { get; set; } = new();
     public List<GroomerProfile> Featured { get; set; } = new();
     public List<string> PopularServices { get; set; } = new();
     public HashSet<int> FavoriteIds { get; set; } = new();
 
-    public async Task OnGetAsync(string? city)
+    public async Task<IActionResult> OnGetAsync(string? city)
     {
+        IsGuest = !_auth.IsAuthenticated;
+        if (IsGuest && !Browse)
+            return Redirect("/Welcome");
+
+        if (IsGuest)
+            ViewData["OnboardShowNotif"] = false;
+
         City = city ?? string.Empty;
         GreetingName = FirstName(_auth.IsAuthenticated ? User.Identity?.Name : null);
 
@@ -75,7 +88,6 @@ public class IndexModel : PageModel
 
         if (PopularServices.Count == 0)
         {
-            // Claves en español (valor en BD); CatalogLocalizer.Text las traduce en UI.
             PopularServices = new List<string>
             {
                 "Baño y cepillado",
@@ -86,6 +98,8 @@ public class IndexModel : PageModel
                 "Día completo"
             };
         }
+
+        return Page();
     }
 
     public string TypeLabel(GroomerType t) => t switch

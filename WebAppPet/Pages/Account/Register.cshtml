@@ -17,7 +17,7 @@
 
     <div class="onboard-stage">
         <div class="onboard-card onboard-auth-card">
-            <a class="onboard-back" asp-page="/Account/Login">← @L["Register_Login"]</a>
+            <a class="onboard-back" href="@Model.BackHref">← @L["Common_Back"]</a>
             <h1>@L["Register_Title"]</h1>
             <p class="onboard-auth-lead">@L["Home_HeroSubtitle"]</p>
 
@@ -37,6 +37,7 @@
                   data-msg-loc-fail="@L["Search_LocationFail"]"
                   data-msg-loc-loading="@L["Register_LocationLoading"]"
                   data-msg-loc-ok="@L["Register_LocationOk"]">
+                <input type="hidden" asp-for="ReturnUrl" />
                 <div class="form-group">
                     <label>@L["Register_FullName"]</label>
                     <input class="form-control" asp-for="FullName" required autocomplete="name" />

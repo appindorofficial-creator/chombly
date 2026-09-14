@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -24,9 +23,8 @@ public class SummaryModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int Id { get; set; }
 
-    [BindProperty] public string? Goals { get; set; }
-    [BindProperty] public string? Exercises { get; set; }
-    [BindProperty] public string? FollowUpNotes { get; set; }
+    [BindProperty]
+    public string? FollowUpNotes { get; set; }
 
     public BehaviorCase? Case { get; set; }
     public string? Message { get; set; }
@@ -39,22 +37,20 @@ public class SummaryModel : PageModel
         Case = await _flow.GetOwnedAsync(Id);
         if (Case is null) return RedirectToPage("/Care/Services");
 
-        Goals = Case.Goals;
-        Exercises = Case.Exercises;
         FollowUpNotes = Case.FollowUpNotes;
         return Page();
     }
 
-    public async Task<IActionResult> OnPostSaveAsync()
+    public async Task<IActionResult> OnPostNoteAsync()
     {
         if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+
         Case = await _flow.GetOwnedAsync(Id);
         if (Case is null) return RedirectToPage("/Care/Services");
 
-        Case.Goals = Goals?.Trim();
-        Case.Exercises = Exercises?.Trim();
         Case.FollowUpNotes = FollowUpNotes?.Trim();
-        Case.Status = BehaviorCaseStatus.PlanActive;
+        if (Case.Status < BehaviorCaseStatus.PlanActive)
+            Case.Status = BehaviorCaseStatus.PlanActive;
         await _flow.TouchAsync(Case);
 
         _db.Notifications.Add(new AppNotification
@@ -62,14 +58,15 @@ public class SummaryModel : PageModel
             UserId = _auth.CurrentUserId.Value,
             Title = CatalogLocalizer.Loc("Plan de conducta", "Behavior plan"),
             Message = CatalogLocalizer.Loc(
-                $"Plan guardado para {Case.Pet?.Name}. Completa los ejercicios acordados.",
-                $"Plan saved for {Case.Pet?.Name}. Complete the agreed exercises."),
+                $"Nota guardada para {Case.Pet?.Name}.",
+                $"Note saved for {Case.Pet?.Name}."),
             Type = "behavior-plan",
             CreatedAt = DateTime.UtcNow
         });
         await _db.SaveChangesAsync();
 
-        Message = CatalogLocalizer.Loc("Plan guardado.", "Plan saved.");
+        Message = CatalogLocalizer.Loc("Nota guardada.", "Note saved.");
+        FollowUpNotes = Case.FollowUpNotes;
         return Page();
     }
 }

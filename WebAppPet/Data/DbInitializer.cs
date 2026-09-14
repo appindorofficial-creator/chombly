@@ -12,6 +12,9 @@ public static class DbInitializer
     {
         await db.Database.EnsureCreatedAsync();
 
+        // SQLite local DBs need additive columns before any Groomers queries.
+        await EnsureSqliteExtraCategoryIdsAsync(db);
+
         // T-SQL ALTERs are SQL Server only (Azure / LocalDB upgrades).
         if (db.Database.IsSqlServer())
         {
@@ -25,6 +28,21 @@ public static class DbInitializer
         await EnsureVetEcosystemSeedAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
         await EnsureCompensationDefaultsAsync(db);
+        await new Services.AvailabilityService(db).EnsureDefaultWeeklyHoursAsync();
+    }
+
+    private static async Task EnsureSqliteExtraCategoryIdsAsync(AppDbContext db)
+    {
+        if (!db.Database.IsSqlite()) return;
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "Groomers" ADD COLUMN "ExtraCategoryIds" TEXT NULL""");
+        }
+        catch
+        {
+            // Column already exists
+        }
     }
 
     private static async Task EnsureCategoriesAsync(AppDbContext db)
@@ -159,6 +177,9 @@ public static class DbInitializer
             """
             IF OBJECT_ID(N'[Groomers]', N'U') IS NOT NULL AND COL_LENGTH(N'Groomers', N'CoverUrl') IS NULL
                 ALTER TABLE [Groomers] ADD [CoverUrl] nvarchar(260) NULL;
+
+            IF OBJECT_ID(N'[Groomers]', N'U') IS NOT NULL AND COL_LENGTH(N'Groomers', N'ExtraCategoryIds') IS NULL
+                ALTER TABLE [Groomers] ADD [ExtraCategoryIds] nvarchar(120) NULL;
             """,
             """
             IF OBJECT_ID(N'[Groomers]', N'U') IS NOT NULL AND COL_LENGTH(N'Groomers', N'VerifiedIdentity') IS NULL

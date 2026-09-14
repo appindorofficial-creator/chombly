@@ -125,7 +125,7 @@
             <div class="hotel-card @(selected ? "selected" : "")">
                 @if (item.AvailableToday)
                 {
-                    <span class="badge badge-green hotel-reco">Disponible hoy</span>
+                    <span class="badge badge-green hotel-reco">@L["Search_AvailableToday"]</span>
                 }
                 <div class="hotel-card-main">
                     <img src="@(w.ImageUrl ?? "/images/categories/cat-walkers-v2.png")" alt="@w.BusinessName" />

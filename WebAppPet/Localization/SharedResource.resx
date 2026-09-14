@@ -395,6 +395,7 @@
   <data name="Biz_ContinueCurrentAccount" xml:space="preserve"><value>Continuarás con tu cuenta actual</value></data>
   <data name="Biz_ConfirmAccount" xml:space="preserve"><value>Confirmar cuenta</value></data>
   <data name="Biz_ServiceType" xml:space="preserve"><value>Tipo de servicio</value></data>
+  <data name="Biz_ServiceTypeHint" xml:space="preserve"><value>Puedes elegir más de uno si ofreces varios servicios.</value></data>
   <data name="Biz_HowWork" xml:space="preserve"><value>¿Cómo trabajas?</value></data>
   <data name="Biz_WorkLocal" xml:space="preserve"><value>Tengo un local</value></data>
   <data name="Biz_WorkHome" xml:space="preserve"><value>Voy al domicilio del cliente</value></data>
@@ -412,9 +413,14 @@
   <data name="Biz_ServiceArea" xml:space="preserve"><value>Área de servicio</value></data>
   <data name="Biz_WholeCity" xml:space="preserve"><value>Toda la ciudad</value></data>
   <data name="Biz_PhotosTitle" xml:space="preserve"><value>Fotos y descripción</value></data>
-  <data name="Biz_PhotosHint" xml:space="preserve"><value>Por ahora pega URLs de imagen (luego subiremos archivos).</value></data>
+  <data name="Biz_PhotosHint" xml:space="preserve"><value>Sube el logo y la portada desde tu galería (máx. 5 MB), o pega una URL.</value></data>
+  <data name="Biz_Logo" xml:space="preserve"><value>Logo</value></data>
+  <data name="Biz_Cover" xml:space="preserve"><value>Foto de portada</value></data>
   <data name="Biz_LogoUrl" xml:space="preserve"><value>Logo (URL)</value></data>
   <data name="Biz_CoverUrl" xml:space="preserve"><value>Foto de portada (URL)</value></data>
+  <data name="Biz_PhotoChoose" xml:space="preserve"><value>Elegir de la galería</value></data>
+  <data name="Biz_PhotoOrUrl" xml:space="preserve"><value>O pegar URL</value></data>
+  <data name="Biz_PhotoInvalid" xml:space="preserve"><value>Imagen no válida. Usa JPG, PNG, WEBP o GIF de hasta 5 MB.</value></data>
   <data name="Biz_Description" xml:space="preserve"><value>Descripción</value></data>
   <data name="Biz_DescriptionPh" xml:space="preserve"><value>Cuéntales a tus clientes qué ofreces…</value></data>
   <data name="Biz_DescriptionMax" xml:space="preserve"><value>Máx. 300 caracteres (mín. 20)</value></data>
@@ -444,6 +450,7 @@
   <data name="Biz_ErrChooseType" xml:space="preserve"><value>Elige cómo quieres usar Chombly.</value></data>
   <data name="Biz_ErrBasicRequired" xml:space="preserve"><value>Completa nombre, negocio, email y ciudad.</value></data>
   <data name="Biz_ErrNoCategories" xml:space="preserve"><value>No hay categorías disponibles. Intenta más tarde.</value></data>
+  <data name="Biz_ErrPickService" xml:space="preserve"><value>Elige al menos un tipo de servicio.</value></data>
   <data name="Biz_ErrOpenDay" xml:space="preserve"><value>Abre al menos un día en tu horario.</value></data>
   <data name="Biz_ErrDescription" xml:space="preserve"><value>Escribe una descripción de al menos 20 caracteres.</value></data>
   <data name="Biz_ErrServicePrice" xml:space="preserve"><value>Agrega al menos un servicio con precio mayor a 0.</value></data>
@@ -494,8 +501,8 @@
 
   <data name="Search_Pet" xml:space="preserve"><value>Mascota</value></data>
   <data name="Search_AllPets" xml:space="preserve"><value>Todas</value></data>
-  <data name="Search_AvailableToday" xml:space="preserve"><value>Disponible hoy</value></data>
-  <data name="Search_NotAvailableToday" xml:space="preserve"><value>No disponible hoy</value></data>
+  <data name="Search_AvailableToday" xml:space="preserve"><value>Abierto ahora</value></data>
+  <data name="Search_NotAvailableToday" xml:space="preserve"><value>Cerrado ahora</value></data>
   <data name="Search_Results" xml:space="preserve"><value>{0} resultados</value></data>
   <data name="Search_Empty" xml:space="preserve"><value>No hay negocios con estos filtros.</value></data>
   <data name="Search_EnableLocation" xml:space="preserve"><value>Activa ubicación para ver distancias.</value></data>

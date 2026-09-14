@@ -25,6 +25,10 @@
 {
     <input type="hidden" name="CategoryId" value="@m.CategoryId" />
     <input type="hidden" name="WorkModeKey" value="@m.WorkModeKey" />
+    @foreach (var id in m.CategoryIds.DefaultIfEmpty(m.CategoryId).Where(x => x > 0).Distinct())
+    {
+        <input type="hidden" name="CategoryIds" value="@id" />
+    }
 }
 @if (exclude != 3)
 {

@@ -47,10 +47,24 @@ public class RegisterModel : PageModel
 
     public string? ErrorMessage { get; set; }
 
-    public void OnGet() { }
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    public string BackHref { get; set; } = "/Welcome";
+
+    public IActionResult OnGet()
+    {
+        if (_auth.IsAuthenticated)
+            return RedirectToPage("/Index");
+
+        BackHref = SafeLocalUrl(ReturnUrl) ?? "/Welcome";
+        return Page();
+    }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        BackHref = SafeLocalUrl(ReturnUrl) ?? "/Welcome";
+
         FullName = (FullName ?? "").Trim();
         Email = (Email ?? "").Trim().ToLowerInvariant();
         Phone = (Phone ?? "").Trim();
@@ -129,6 +143,13 @@ public class RegisterModel : PageModel
         await _auth.SignInAsync(user);
         TempData["CelebrateRegister"] = "1";
         return RedirectToPage("/Index");
+    }
+
+    private string? SafeLocalUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        if (Url.IsLocalUrl(url)) return url;
+        return null;
     }
 
     private bool TryParseCoords(out double lat, out double lng)

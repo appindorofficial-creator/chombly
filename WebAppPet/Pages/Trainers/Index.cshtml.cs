@@ -65,6 +65,15 @@ public class IndexModel : PageModel
     public int Sessions { get; set; } = 4;
 
     [BindProperty(SupportsGet = true)]
+    public string When { get; set; } = "manana";
+
+    [BindProperty(SupportsGet = true)]
+    public string Slot { get; set; } = "10:00 AM";
+
+    [BindProperty(SupportsGet = true)]
+    public string? Date { get; set; }
+
+    [BindProperty(SupportsGet = true)]
     public int PetId { get; set; }
 
     [BindProperty(SupportsGet = true)]
@@ -78,6 +87,13 @@ public class IndexModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public bool More { get; set; }
+
+    public static readonly string[] TimeSlots =
+    {
+        "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "5:00 PM"
+    };
+
+    public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     [BindProperty]
     public bool AcceptTerms { get; set; }
@@ -155,7 +171,12 @@ public class IndexModel : PageModel
 
         if (Sessions is not (1 or 4 or 8)) Sessions = 1;
 
-        var start = NextAvailableSlot();
+        if (!TryResolveSchedule(SelectedTrainer.Id, out var start, out var scheduleError))
+        {
+            ErrorMessage = scheduleError;
+            return Page();
+        }
+
         var subtotal = UnitPrice * Sessions;
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
@@ -234,8 +255,23 @@ public class IndexModel : PageModel
         if (Sessions is not (1 or 4 or 8)) Sessions = 4;
 
         Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "trainers" && c.IsActive);
-        var start = NextAvailableSlot();
-        DateLabel = start.ToString("ddd, d MMM yyyy");
+        NormalizeWhen();
+        if (!TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
+            Slot = "10:00 AM";
+
+        var day = ResolveDay();
+        Date = day.ToString("yyyy-MM-dd");
+        if (GroomerId is int bookedGroomerId)
+            await LoadOccupiedSlotsAsync(bookedGroomerId, day);
+
+        if (OccupiedSlots.Contains(Slot))
+        {
+            var free = TimeSlots.FirstOrDefault(t => !OccupiedSlots.Contains(t));
+            if (free != null) Slot = free;
+        }
+
+        TryResolveSchedule(GroomerId, out var start, out _);
+        DateLabel = $"{FormatWhenLabel(day)} · {start:h:mm tt}";
 
         double? userLat = null, userLng = null;
         if (_auth.CurrentUserId is int userId)
@@ -302,8 +338,8 @@ public class IndexModel : PageModel
                 DistanceLabel = dist,
                 Miles = miles,
                 UnitPrice = unit,
-                AvailableToday = todayMap.GetValueOrDefault(t.Id, true),
-                AvailabilityLabel = todayMap.GetValueOrDefault(t.Id, true) ? "Disponible hoy" : "Disponible pronto"
+                AvailableToday = todayMap.GetValueOrDefault(t.Id, false),
+                AvailabilityLabel = todayMap.GetValueOrDefault(t.Id, false) ? "Abierto ahora" : "Cerrado ahora"
             };
         }).ToList();
 
@@ -407,12 +443,126 @@ public class IndexModel : PageModel
         return list.OrderBy(s => s.PriceSmall).First();
     }
 
-    private static DateTime NextAvailableSlot()
+    private void NormalizeWhen()
     {
-        var d = DateTime.Today.AddDays(1);
-        while (d.DayOfWeek is DayOfWeek.Sunday)
-            d = d.AddDays(1);
-        return d.AddHours(10);
+        When = When?.Trim().ToLowerInvariant() switch
+        {
+            "hoy" or "today" => "hoy",
+            "manana" or "mañana" or "tomorrow" => "manana",
+            "fecha" => "fecha",
+            _ => "manana"
+        };
+    }
+
+    private DateTime ResolveDay()
+    {
+        var today = AppTimeZones.TodayLocalDate();
+        if (When == "hoy") return today;
+        if (When == "manana")
+        {
+            var d = today.AddDays(1);
+            while (d.DayOfWeek == DayOfWeek.Sunday)
+                d = d.AddDays(1);
+            return d;
+        }
+
+        if (When == "fecha" && DateTime.TryParse(Date, out var parsed) && parsed.Date >= today)
+        {
+            var d = parsed.Date;
+            while (d.DayOfWeek == DayOfWeek.Sunday)
+                d = d.AddDays(1);
+            return d;
+        }
+
+        return today.AddDays(1);
+    }
+
+    private static string FormatWhenLabel(DateTime day)
+    {
+        var today = AppTimeZones.TodayLocalDate();
+        if (day.Date == today) return $"Hoy, {day:d MMM yyyy}";
+        if (day.Date == today.AddDays(1)) return $"Mañana, {day:d MMM yyyy}";
+        return day.ToString("ddd, d MMM yyyy");
+    }
+
+    private async Task LoadOccupiedSlotsAsync(int groomerId, DateTime day)
+    {
+        OccupiedSlots.Clear();
+        var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
+        var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
+        var taken = await _db.Appointments.AsNoTracking()
+            .Where(a => a.GroomerId == groomerId
+                        && a.Status != AppointmentStatus.Cancelled
+                        && a.ScheduledAt >= from
+                        && a.ScheduledAt < to)
+            .Select(a => a.ScheduledAt)
+            .ToListAsync();
+
+        foreach (var utc in taken)
+        {
+            var local = AppTimeZones.ToAppLocal(utc);
+            foreach (var label in TimeSlots)
+            {
+                if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var slotTod)) continue;
+                if (slotTod == local.TimeOfDay)
+                    OccupiedSlots.Add(label);
+            }
+        }
+    }
+
+    private bool TryResolveSchedule(int? groomerId, out DateTime startUtc, out string? error)
+    {
+        error = null;
+        var day = ResolveDay();
+        if (!AppTimeZones.TryParseSlotToTimeSpan(Slot, out var tod))
+        {
+            error = CatalogLocalizer.Loc("Elige un horario.", "Choose a time slot.");
+            startUtc = default;
+            return false;
+        }
+
+        startUtc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+
+        if (groomerId is not int gid)
+            return true;
+
+        var preferredIndex = Array.FindIndex(TimeSlots, t => string.Equals(t, Slot, StringComparison.OrdinalIgnoreCase));
+        if (preferredIndex < 0) preferredIndex = 0;
+
+        for (var dayOffset = 0; dayOffset < 14; dayOffset++)
+        {
+            var tryDay = day.AddDays(dayOffset);
+            if (tryDay.DayOfWeek == DayOfWeek.Sunday) continue;
+
+            var ordered = dayOffset == 0
+                ? TimeSlots.Skip(preferredIndex).ToArray()
+                : TimeSlots;
+
+            foreach (var t in ordered)
+            {
+                if (!AppTimeZones.TryParseSlotToTimeSpan(t, out var slotTod)) continue;
+                var candidate = AppTimeZones.LocalDateAndTimeToUtc(tryDay, slotTod);
+                var busy = _db.Appointments.AsNoTracking().Any(a =>
+                    a.GroomerId == gid
+                    && a.Status != AppointmentStatus.Cancelled
+                    && a.ScheduledAt == candidate);
+                if (busy) continue;
+
+                startUtc = candidate;
+                Slot = t;
+                var today = AppTimeZones.TodayLocalDate();
+                When = tryDay.Date == today ? "hoy"
+                    : tryDay.Date == today.AddDays(1) ? "manana"
+                    : "fecha";
+                Date = tryDay.ToString("yyyy-MM-dd");
+                return true;
+            }
+        }
+
+        error = CatalogLocalizer.Loc(
+            "Ese horario ya no está disponible. Elige otro día u hora.",
+            "That time is no longer available. Choose another day or time.");
+        return false;
     }
 
     public class TrainerCardVm

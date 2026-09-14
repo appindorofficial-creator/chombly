@@ -11,6 +11,7 @@ public class AvailabilityService
 
     public AvailabilityService(AppDbContext db) => _db = db;
 
+    /// <summary>Day-level availability (booking calendar). Does not check wall-clock time.</summary>
     public async Task<bool> IsAvailableOnAsync(int groomerId, DateTime day)
     {
         var d = day.Date;
@@ -23,15 +24,31 @@ public class AvailabilityService
             .FirstOrDefaultAsync(h => h.GroomerId == groomerId && h.DayOfWeek == (int)d.DayOfWeek);
         if (weekly != null) return weekly.IsOpen;
 
-        // Legacy sin agenda configurada
-        return true;
+        // Sin agenda: no asumir abierto
+        return false;
     }
 
+    /// <summary>
+    /// Open-now map for search badges. Uses Eastern local time, weekly hours,
+    /// day overrides, and OffersEmergency24x7.
+    /// </summary>
     public async Task<Dictionary<int, bool>> TodayMapAsync(IEnumerable<int> groomerIds)
     {
         var ids = groomerIds.Distinct().ToList();
-        var today = DateTime.Today;
+        var map = ids.ToDictionary(id => id, _ => false);
+        if (ids.Count == 0) return map;
+
+        var now = AppTimeZones.NowLocal();
+        var today = now.Date;
         var dow = (int)today.DayOfWeek;
+        var nowMinutes = now.Hour * 60 + now.Minute;
+
+        var emergencyIds = await _db.Groomers.AsNoTracking()
+            .Where(g => ids.Contains(g.Id) && g.OffersEmergency24x7)
+            .Select(g => g.Id)
+            .ToListAsync();
+        foreach (var id in emergencyIds)
+            map[id] = true;
 
         var dayRows = await _db.DayAvailabilities
             .AsNoTracking()
@@ -43,20 +60,45 @@ public class AvailabilityService
             .Where(h => ids.Contains(h.GroomerId) && h.DayOfWeek == dow)
             .ToListAsync();
 
-        var map = ids.ToDictionary(id => id, _ => true);
         foreach (var id in ids)
         {
+            if (map[id]) continue; // 24/7
+
             var day = dayRows.FirstOrDefault(r => r.GroomerId == id);
-            if (day != null)
+            if (day != null && !day.IsAvailable)
             {
-                map[id] = day.IsAvailable;
+                map[id] = false;
                 continue;
             }
+
             var week = weekRows.FirstOrDefault(r => r.GroomerId == id);
-            if (week != null)
-                map[id] = week.IsOpen;
+            if (week == null || !week.IsOpen)
+            {
+                map[id] = false;
+                continue;
+            }
+
+            map[id] = IsWithinOpenWindow(nowMinutes, week.OpenMinutes, week.CloseMinutes);
         }
+
         return map;
+    }
+
+    /// <summary>True if current minutes fall in [open, close). Supports overnight and 24h (open==close).</summary>
+    public static bool IsWithinOpenWindow(int nowMinutes, int openMinutes, int closeMinutes)
+    {
+        nowMinutes = ((nowMinutes % (24 * 60)) + (24 * 60)) % (24 * 60);
+        openMinutes = Math.Clamp(openMinutes, 0, 24 * 60);
+        closeMinutes = Math.Clamp(closeMinutes, 0, 24 * 60);
+
+        if (openMinutes == closeMinutes)
+            return true; // 24 horas ese día
+
+        if (closeMinutes > openMinutes)
+            return nowMinutes >= openMinutes && nowMinutes < closeMinutes;
+
+        // Cruza medianoche (ej. 22:00–06:00)
+        return nowMinutes >= openMinutes || nowMinutes < closeMinutes;
     }
 
     /// <summary>Guarda horario semanal y genera días abiertos/cerrados según esa regla.</summary>
@@ -92,7 +134,7 @@ public class AvailabilityService
             return 0;
 
         var openByDow = weekly.ToDictionary(h => h.DayOfWeek, h => h);
-        var start = DateTime.Today;
+        var start = AppTimeZones.TodayLocalDate();
         var end = start.AddDays(days);
 
         var existing = await _db.DayAvailabilities
@@ -140,7 +182,7 @@ public class AvailabilityService
     /// <summary>Legacy: disponibilidad aleatoria (solo panel, si no hay horario semanal).</summary>
     public async Task<int> GenerateRandomAsync(int groomerId, int days = 30, bool keepExisting = true)
     {
-        var start = DateTime.Today;
+        var start = AppTimeZones.TodayLocalDate();
         var existing = await _db.DayAvailabilities
             .Where(a => a.GroomerId == groomerId && a.Day >= start && a.Day < start.AddDays(days))
             .ToListAsync();
@@ -177,5 +219,55 @@ public class AvailabilityService
 
         await _db.SaveChangesAsync();
         return added;
+    }
+
+    /// <summary>Seeds Mon–Sat 08:00–18:00 (Sun closed) for businesses without weekly hours.</summary>
+    public async Task EnsureDefaultWeeklyHoursAsync(CancellationToken ct = default)
+    {
+        var missingIds = await _db.Groomers.AsNoTracking()
+            .Where(g => g.IsActive && !g.OffersEmergency24x7)
+            .Where(g => !_db.WeeklyHours.Any(h => h.GroomerId == g.Id))
+            .Select(g => g.Id)
+            .ToListAsync(ct);
+
+        foreach (var id in missingIds)
+        {
+            for (var dow = 0; dow < 7; dow++)
+            {
+                _db.WeeklyHours.Add(new BusinessWeeklyHour
+                {
+                    GroomerId = id,
+                    DayOfWeek = dow,
+                    IsOpen = dow is >= 1 and <= 6,
+                    OpenMinutes = 8 * 60,
+                    CloseMinutes = 18 * 60
+                });
+            }
+        }
+
+        // 24/7 clinics: every day open all day
+        var erIds = await _db.Groomers.AsNoTracking()
+            .Where(g => g.OffersEmergency24x7)
+            .Where(g => !_db.WeeklyHours.Any(h => h.GroomerId == g.Id))
+            .Select(g => g.Id)
+            .ToListAsync(ct);
+
+        foreach (var id in erIds)
+        {
+            for (var dow = 0; dow < 7; dow++)
+            {
+                _db.WeeklyHours.Add(new BusinessWeeklyHour
+                {
+                    GroomerId = id,
+                    DayOfWeek = dow,
+                    IsOpen = true,
+                    OpenMinutes = 0,
+                    CloseMinutes = 0 // mismo valor = 24h
+                });
+            }
+        }
+
+        if (missingIds.Count > 0 || erIds.Count > 0)
+            await _db.SaveChangesAsync(ct);
     }
 }

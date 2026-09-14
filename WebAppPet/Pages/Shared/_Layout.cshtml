@@ -16,6 +16,7 @@
 @{
     var hideNav = ViewData["HideNav"] as bool? == true;
     var path = Context.Request.Path.Value ?? "";
+    var isAuthed = User.Identity?.IsAuthenticated == true;
     bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase);
     var onNotifications = IsActive("/Account/Notifications");
@@ -29,6 +30,7 @@
     var notifFromHome = NotifFrom("/Index") || (onNotifications && (notifReturn == "/" ));
     var notifFromAppt = NotifFrom("/Appointments");
     var notifFromProfile = onNotifications && !notifFromHome && !notifFromAppt;
+    var homeHref = isAuthed ? Url.Page("/Index") : Url.Page("/Index", new { browse = true });
 }
 <body class="@(ViewData["BodyClass"] as string)">
 <div class="app-shell">
@@ -38,7 +40,7 @@
     {
         <nav class="bottom-nav" data-bottom-nav>
             <span class="bottom-nav-indicator" aria-hidden="true"></span>
-            <a asp-page="/Index" class="@(IsActive("/Index") || path == "/" || notifFromHome ? "active" : "")">
+            <a href="@homeHref" class="@(IsActive("/Index") || path == "/" || notifFromHome ? "active" : "")">
                 <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
                 @L["Nav_Home"]
             </a>

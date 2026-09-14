@@ -38,11 +38,20 @@ public class LoginModel : PageModel
     public string? ErrorMessage { get; set; }
     public string BackPage { get; set; } = "/Index";
 
-    public void OnGet()
+    public IActionResult OnGet()
     {
+        if (_auth.IsAuthenticated)
+        {
+            var dest = SafeLocalUrl(ReturnUrl);
+            if (dest != null)
+                return LocalRedirect(dest);
+            return RedirectToPage("/Index");
+        }
+
         BackPage = SafeLocalUrl(ReturnUrl) ?? "/Index";
         var feature = HttpContext.Features.Get<IRequestCultureFeature>();
         Culture = CultureCookie.Normalize(feature?.RequestCulture.UICulture.TwoLetterISOLanguageName);
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()

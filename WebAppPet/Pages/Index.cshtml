@@ -5,8 +5,11 @@
     ViewData["Title"] = L["Nav_Home"].Value;
     ViewData["LangCompact"] = true;
     ViewData["BodyClass"] = "page-onboard-home";
-    ViewData["OnboardShowNotif"] = true;
-    ViewData["OnboardNotifReturn"] = "/Index";
+    if (!Model.IsGuest)
+    {
+        ViewData["OnboardShowNotif"] = true;
+        ViewData["OnboardNotifReturn"] = "/Index";
+    }
 }
 <div class="onboard onboard-home">
     <partial name="_OnboardTop" />
@@ -20,6 +23,13 @@
             </p>
             <h1>@L["Home_HeroTitle"]</h1>
             <p>@L["Home_HeroSubtitle"]</p>
+            @if (Model.IsGuest)
+            {
+                <div class="home-guest-cta" style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px">
+                    <a class="btn btn-enter" asp-page="/Account/Login" asp-route-returnUrl="/Index?browse=true">@L["Login_Title"]</a>
+                    <a class="btn btn-outline" asp-page="/Account/Register" asp-route-returnUrl="/Welcome">@L["Register_Title"]</a>
+                </div>
+            }
             <form method="get" asp-page="/Groomers/Index" class="home-search">
                 <input class="form-control" name="city" value="@Model.City" data-places="city" data-places-fill="city"
                        placeholder="@L["Home_LocationPlaceholder"]" autocomplete="off" />
