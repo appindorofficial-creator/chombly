@@ -481,6 +481,182 @@ h1, h2, h3,
   font-weight: 800;
   font-size: .78rem;
 }
+
+/* Featured banner — 2 cards per slide, then Chombly, loop */
+.featured-banner {
+  position: relative;
+  margin: 0 0 18px;
+}
+.featured-banner-stage {
+  position: relative;
+}
+.featured-banner-sizer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  visibility: hidden;
+  pointer-events: none;
+}
+.featured-banner-viewport {
+  position: absolute;
+  inset: 0;
+}
+.featured-slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: stretch;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition:
+    opacity var(--motion-normal) var(--ease-emphasized),
+    transform var(--motion-slow) var(--ease-emphasized),
+    visibility 0s linear var(--motion-normal);
+  z-index: 0;
+}
+.featured-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    opacity var(--motion-normal) var(--ease-emphasized),
+    transform var(--motion-slow) var(--ease-emphasized),
+    visibility 0s linear 0s;
+  z-index: 2;
+}
+.featured-slide.is-leaving {
+  opacity: 0;
+  visibility: visible;
+  pointer-events: none;
+  transform: translateY(-6px);
+  z-index: 1;
+}
+.featured-banner .featured-card {
+  margin: 0;
+  min-width: 0;
+}
+.featured-banner .featured-card--spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+.featured-banner .groomer-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0;
+  height: 100%;
+  padding: 8px;
+  border-radius: 16px;
+  background: #fbfff3;
+}
+.featured-banner .featured-thumb {
+  display: block;
+  height: 150px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fbfff3;
+}
+.featured-banner .groomer-card > img,
+.featured-banner .featured-thumb img {
+  width: 100%;
+  height: 150px;
+  border-radius: 12px;
+  background: transparent;
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  object-position: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+.featured-banner .featured-thumb img {
+  height: 100%;
+  border-radius: 0;
+}
+.featured-banner .groomer-card .info {
+  gap: 3px;
+  padding: 6px 4px 2px;
+  background: #fff;
+  border-radius: 10px;
+}
+.featured-banner .groomer-card h3 {
+  font-size: .78rem;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.featured-banner .groomer-card .meta-row {
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: .68rem;
+}
+.featured-banner .groomer-card .badge {
+  font-size: .62rem;
+  padding: 2px 6px;
+}
+.featured-banner .groomer-card .price {
+  font-size: .72rem;
+}
+.featured-banner .groomer-card-wrap .fav-btn {
+  top: 6px;
+  right: 6px;
+  transform: scale(0.88);
+  transform-origin: top right;
+}
+.featured-slide--mascot {
+  grid-template-columns: 1fr;
+  place-items: stretch;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #1a1a1a;
+  border: 1px solid rgba(15, 61, 47, 0.08);
+  box-shadow: 0 10px 28px rgba(7, 61, 46, 0.08);
+}
+.featured-slide--mascot img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  background: #1a1a1a;
+}
+.featured-banner-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 12px;
+}
+.featured-banner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--forest, #1b3a1d) 22%, transparent);
+  cursor: pointer;
+  transition:
+    width var(--motion-fast) var(--ease-emphasized),
+    background var(--motion-fast) var(--ease-emphasized);
+}
+.featured-banner-dot.is-active {
+  width: 16px;
+  background: var(--forest, #1b3a1d);
+}
+@media (prefers-reduced-motion: reduce) {
+  .featured-slide {
+    transition: none;
+    transform: none;
+  }
+}
+
 .onboard-home .home-biz-cta {
   margin: 28px 0 12px;
   padding: 22px 18px 18px;
@@ -2150,6 +2326,15 @@ h1, h2, h3,
   place-items: center;
   font-size: 2.1rem;
   border: 3px solid var(--lime);
+  overflow: hidden;
+  padding: 0;
+}
+.profile-card .profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 .profile-card h2 {
   margin: 0 0 14px;

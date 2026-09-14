@@ -1,0 +1,36 @@
+@model (WebAppPet.Models.GroomerProfile Groomer, bool IsFavorite, string FromPriceLabel, string TypeLabel)
+@{
+    var g = Model.Groomer;
+    var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
+}
+<div class="groomer-card-wrap featured-card">
+    <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
+        <span class="featured-thumb">
+            <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+        </span>
+        <div class="info">
+            <h3>@g.BusinessName</h3>
+            <div class="meta-row">
+                @if (g.Category != null)
+                {
+                    <span class="badge badge-purple">@g.Category.DisplayName()</span>
+                }
+                else
+                {
+                    <span class="badge badge-purple">@Model.TypeLabel</span>
+                }
+                @if (g.ReviewCount > 0)
+                {
+                    <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
+                }
+            </div>
+            @if (g.StartingPrice > 0)
+            {
+                <div class="meta-row">
+                    <span class="price">@Model.FromPriceLabel $@g.StartingPrice.ToString("0")</span>
+                </div>
+            }
+        </div>
+    </a>
+    <partial name="_FavoriteHeart" model="(g.Id, Model.IsFavorite, (string?)null)" />
+</div>

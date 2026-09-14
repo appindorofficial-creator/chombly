@@ -30,7 +30,9 @@
         else
         {
             <div class="profile-card">
-                <div class="profile-avatar">👤</div>
+                <div class="profile-avatar" aria-hidden="true">
+                    <img src="~/images/chombly-profile-avatar.png" asp-append-version="true" alt="" />
+                </div>
                 <h2>@Model.UserEntity.FullName</h2>
                 <ul class="profile-facts">
                     <li class="profile-fact">

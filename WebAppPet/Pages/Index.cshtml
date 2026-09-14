@@ -143,42 +143,44 @@
         <h2 class="home-section-title">@L["Home_Featured"]</h2>
         @if (Model.Featured.Any())
         {
-            @foreach (var g in Model.Featured)
-            {
-                var isFav = Model.FavoriteIds.Contains(g.Id);
-                var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
-                <div class="groomer-card-wrap">
-                    <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-                        <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
-                        <div class="info">
-                            <h3>@g.BusinessName</h3>
-                            <div class="meta-row">
-                                @if (g.Category != null)
+            var featuredItems = Model.Featured.ToList();
+            var firstPair = featuredItems.Take(2).ToList();
+            var fromPriceLabel = L["Home_FromPrice"].Value;
+            <section class="featured-banner" data-featured-banner aria-roledescription="carousel" aria-label="@L["Home_Featured"]">
+                <div class="featured-banner-stage">
+                    <div class="featured-banner-sizer" aria-hidden="true">
+                        @foreach (var g in firstPair)
+                        {
+                            <partial name="_FeaturedCard" model="(g, Model.FavoriteIds.Contains(g.Id), fromPriceLabel, Model.TypeLabel(g.Type))" />
+                        }
+                        @if (firstPair.Count == 1)
+                        {
+                            <div class="featured-card featured-card--spacer"></div>
+                        }
+                    </div>
+                    <div class="featured-banner-viewport">
+                        @for (var fi = 0; fi < featuredItems.Count; fi += 2)
+                        {
+                            var pair = featuredItems.Skip(fi).Take(2).ToList();
+                            var slideActive = fi == 0;
+                            <div class="featured-slide @(slideActive ? "is-active" : "")" data-featured-slide aria-hidden="@(slideActive ? "false" : "true")">
+                                @foreach (var g in pair)
                                 {
-                                    <span class="badge badge-purple">@g.Category.DisplayName()</span>
+                                    <partial name="_FeaturedCard" model="(g, Model.FavoriteIds.Contains(g.Id), fromPriceLabel, Model.TypeLabel(g.Type))" />
                                 }
-                                else
+                                @if (pair.Count == 1)
                                 {
-                                    <span class="badge badge-purple">@Model.TypeLabel(g.Type)</span>
-                                }
-                                @if (g.ReviewCount > 0)
-                                {
-                                    <span class="stars">&#9733; @g.Rating.ToString("0.0")</span>
-                                    <span>(@g.ReviewCount)</span>
+                                    <div class="featured-card featured-card--spacer" aria-hidden="true"></div>
                                 }
                             </div>
-                            <div class="meta-row">
-                                <span>@g.City</span>
-                                @if (g.StartingPrice > 0)
-                                {
-                                    <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
-                                }
-                            </div>
+                        }
+                        <div class="featured-slide featured-slide--mascot" data-featured-slide aria-hidden="true">
+                            <img src="~/images/chombly-featured-banner.png" asp-append-version="true" alt="Chombly" />
                         </div>
-                    </a>
-                    <partial name="_FavoriteHeart" model="(g.Id, isFav, (string?)null)" />
+                    </div>
                 </div>
-            }
+                <div class="featured-banner-dots" data-featured-dots aria-hidden="true"></div>
+            </section>
         }
         else
         {
