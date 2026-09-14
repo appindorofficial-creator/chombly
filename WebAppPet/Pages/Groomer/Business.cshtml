@@ -182,7 +182,7 @@
             <button class="btn btn-primary btn-block biz-primary-btn" type="submit">Guardar negocio</button>
         </form>
 
-        <h3 class="section-title biz-section-title">Servicios</h3>
+        <h3 id="biz-services" class="section-title biz-section-title">Servicios</h3>
         <div class="biz-list">
             @foreach (var s in Model.Services)
             {
@@ -209,7 +209,7 @@
             <button class="btn btn-outline btn-block biz-secondary-btn" type="submit">Agregar servicio</button>
         </form>
 
-        <h3 class="section-title biz-section-title">Amenities</h3>
+        <h3 id="biz-amenities" class="section-title biz-section-title">Amenities</h3>
         <div class="amenity-grid biz-amenity-grid">
             @foreach (var a in Model.Amenities)
             {
@@ -222,7 +222,7 @@
             <button class="btn btn-outline biz-icon-btn" type="submit">+</button>
         </form>
 
-        <h3 class="section-title biz-section-title">Extras</h3>
+        <h3 id="biz-extras" class="section-title biz-section-title">Extras</h3>
         <div class="biz-list">
             @foreach (var e in Model.Extras)
             {

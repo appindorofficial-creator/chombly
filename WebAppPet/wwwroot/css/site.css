@@ -4026,6 +4026,32 @@ body.ch-confirm-open {
   flex-direction: column;
   gap: 12px;
 }
+.onboard-market-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(15, 61, 47, 0.14);
+  background: rgba(182, 231, 64, 0.22);
+  font-size: .78rem;
+  color: var(--forest-deep);
+}
+.onboard-market-pill span {
+  font-weight: 650;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: .68rem;
+}
+.onboard-market-pill strong {
+  font-weight: 850;
+}
+.vet-modality-card.is-primary-track .vet-modality-btn {
+  border-color: var(--forest-deep);
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.45), 3px 4px 0 rgba(7, 61, 38, 0.12);
+}
 .vet-modality-card {
   display: block;
   text-decoration: none;
@@ -5598,6 +5624,12 @@ body.celebrate-open {
 }
 .biz-page .biz-section-title {
   animation: ch-fade-up var(--motion-normal) var(--ease-emphasized) both;
+  scroll-margin-top: 96px;
+}
+#biz-services,
+#biz-amenities,
+#biz-extras {
+  scroll-margin-top: 96px;
 }
 .biz-list {
   display: flex;
