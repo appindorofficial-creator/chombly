@@ -29,7 +29,7 @@ public class InternationalModel : PageModel
     [BindProperty] public string LegalName { get; set; } = "";
     [BindProperty] public string ClinicOrPracticeName { get; set; } = "";
     [BindProperty] public string LicenseNumber { get; set; } = "";
-    [BindProperty] public string LicenseJurisdiction { get; set; } = "CO";
+    [BindProperty] public string LicenseJurisdiction { get; set; } = "";
     [BindProperty] public DateTime? LicenseExpiry { get; set; }
     [BindProperty] public string Languages { get; set; } = "es,en";
     [BindProperty] public string Specialties { get; set; } = "";
@@ -43,13 +43,21 @@ public class InternationalModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
+        var profile = await _db.Groomers.AsNoTracking()
+            .FirstOrDefaultAsync(g => g.UserId == _auth.CurrentUserId);
+        var market = BusinessMarketResolver.Resolve(profile);
+        if (string.IsNullOrWhiteSpace(LicenseJurisdiction))
+            LicenseJurisdiction = BusinessMarketResolver.DefaultInternationalIso(market);
+
         var latest = await _onboarding.GetLatestAsync(_auth.CurrentUserId!.Value);
         if (latest is { Track: ProfessionalOnboardingTrack.International })
         {
             LegalName = latest.LegalName;
             ClinicOrPracticeName = latest.ClinicOrPracticeName;
             LicenseNumber = latest.LicenseNumber;
-            LicenseJurisdiction = latest.LicenseJurisdiction;
+            LicenseJurisdiction = string.IsNullOrWhiteSpace(latest.LicenseJurisdiction)
+                ? BusinessMarketResolver.DefaultInternationalIso(market)
+                : latest.LicenseJurisdiction;
             LicenseExpiry = latest.LicenseExpiry;
             Languages = latest.Languages;
             Specialties = latest.Specialties;

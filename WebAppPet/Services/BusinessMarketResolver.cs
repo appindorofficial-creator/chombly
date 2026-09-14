@@ -1,0 +1,99 @@
+using WebAppPet.Models;
+
+namespace WebAppPet.Services;
+
+/// <summary>Primary launch markets for professional onboarding UX.</summary>
+public enum BusinessMarket
+{
+    Unknown = 0,
+    UnitedStates = 1,
+    Colombia = 2
+}
+
+/// <summary>
+/// Infers US vs Colombia from business profile text + coordinates.
+/// Used to order Professional Onboarding tracks (not a hard legal gate).
+/// </summary>
+public static class BusinessMarketResolver
+{
+    private static readonly string[] ColombiaPlaceHints =
+    {
+        "colombia", "colombiano", "colombiana",
+        "bogota", "bogotá", "medellin", "medellín", "cali", "neiva", "cartagena",
+        "barranquilla", "bucaramanga", "pereira", "manizales", "ibague", "ibagué",
+        "huila", "antioquia", "cundinamarca", "valle del cauca", "atlantico", "atlántico",
+        "santander", "tolima", "risaralda", "quindio", "quindío", "narino", "nariño"
+    };
+
+    private static readonly string[] UsPlaceHints =
+    {
+        "united states", "usa", "u.s.a", "u.s.", "ee.uu", "eeuu", "estados unidos",
+        "north carolina", "south carolina", "california", "florida", "texas", "new york",
+        "georgia", "virginia", "tennessee", "charlotte", "miami", "houston", "los angeles"
+    };
+
+    public static BusinessMarket Resolve(GroomerProfile? profile)
+    {
+        if (profile is null) return BusinessMarket.Unknown;
+
+        var fromLicense = FromIso(profile.LicenseCountry);
+        if (fromLicense != BusinessMarket.Unknown) return fromLicense;
+
+        var blob = $"{profile.City} {profile.Address}".Trim();
+        var fromText = FromText(blob);
+        if (fromText != BusinessMarket.Unknown) return fromText;
+
+        return FromCoordinates(profile.Latitude, profile.Longitude);
+    }
+
+    public static BusinessMarket FromIso(string? iso)
+    {
+        if (string.IsNullOrWhiteSpace(iso)) return BusinessMarket.Unknown;
+        var t = iso.Trim().ToUpperInvariant();
+        if (t is "CO" or "COL") return BusinessMarket.Colombia;
+        if (t is "US" or "USA" or "UM") return BusinessMarket.UnitedStates;
+        return BusinessMarket.Unknown;
+    }
+
+    public static BusinessMarket FromText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return BusinessMarket.Unknown;
+        var lower = text.Trim().ToLowerInvariant();
+
+        foreach (var hint in ColombiaPlaceHints)
+        {
+            if (lower.Contains(hint, StringComparison.Ordinal))
+                return BusinessMarket.Colombia;
+        }
+
+        foreach (var hint in UsPlaceHints)
+        {
+            if (lower.Contains(hint, StringComparison.Ordinal))
+                return BusinessMarket.UnitedStates;
+        }
+
+        var usState = GeoHelper.GuessUsStateFromCity(text);
+        if (usState is not null and not "Other")
+            return BusinessMarket.UnitedStates;
+
+        return BusinessMarket.Unknown;
+    }
+
+    public static BusinessMarket FromCoordinates(double lat, double lng)
+    {
+        if (lat == 0 && lng == 0) return BusinessMarket.Unknown;
+
+        // Colombia mainland approx
+        if (lat is >= -4.5 and <= 13.5 && lng is >= -79.5 and <= -66.5)
+            return BusinessMarket.Colombia;
+
+        // Continental US approx
+        if (lat is >= 24 and <= 49.5 && lng is >= -125 and <= -66)
+            return BusinessMarket.UnitedStates;
+
+        return BusinessMarket.Unknown;
+    }
+
+    public static string DefaultInternationalIso(BusinessMarket market) =>
+        market == BusinessMarket.UnitedStates ? "MX" : "CO";
+}

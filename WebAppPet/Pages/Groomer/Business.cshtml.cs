@@ -114,7 +114,7 @@ public class BusinessModel : GroomerPageModel
             });
             await Db.SaveChangesAsync();
         }
-        return RedirectToPage();
+        return RedirectToPage((string?)null, (string?)null, "biz-amenities");
     }
 
     public async Task<IActionResult> OnPostAddExtraAsync()
@@ -131,7 +131,7 @@ public class BusinessModel : GroomerPageModel
             });
             await Db.SaveChangesAsync();
         }
-        return RedirectToPage();
+        return RedirectToPage((string?)null, (string?)null, "biz-extras");
     }
 
     public async Task<IActionResult> OnPostAddServiceAsync()
@@ -154,7 +154,7 @@ public class BusinessModel : GroomerPageModel
             });
             await Db.SaveChangesAsync();
         }
-        return RedirectToPage();
+        return RedirectToPage((string?)null, (string?)null, "biz-services");
     }
 
     private async Task FillAsync()

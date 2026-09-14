@@ -1,40 +1,51 @@
 @page
 @model WebAppPet.Pages.Professional.OnboardingModel
 @using WebAppPet.Localization
+@using WebAppPet.Services
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding");
     ViewData["GroomerTab"] = "onboarding";
     ViewData["LangCompact"] = true;
+    var lead = Model.Market switch
+    {
+        BusinessMarket.Colombia => CatalogLocalizer.Loc(
+            "Detectamos tu negocio en Colombia. Elige: veterinario en Colombia o EE.UU.",
+            "We detected your business in Colombia. Choose: veterinarian in Colombia or the US."),
+        BusinessMarket.UnitedStates => CatalogLocalizer.Loc(
+            "Detectamos tu negocio en EE.UU. Elige: veterinario EE.UU. o Colombia.",
+            "We detected your business in the US. Choose: US or Colombia veterinarian."),
+        _ => CatalogLocalizer.Loc(
+            "Elige tu trayectoria: Veterinario en Colombia o Veterinario EE.UU.",
+            "Choose your track: Veterinarian in Colombia or US veterinarian.")
+    };
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
     <h1 class="page-title">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
-    <p class="muted small">@CatalogLocalizer.Loc("Elige tu trayectoria: local (EE.UU.), internacional o conducta.", "Choose your track: local (US), international, or behavior.")</p>
+    <p class="muted small">@lead</p>
+    @if (!string.IsNullOrEmpty(Model.MarketLabel))
+    {
+        <p class="onboard-market-pill" aria-label="@Model.MarketLabel">
+            <span>@CatalogLocalizer.Loc("Mercado", "Market")</span>
+            <strong>@Model.MarketLabel</strong>
+        </p>
+    }
 
     <div class="vet-modality-grid">
-        <a class="vet-modality-card" asp-page="/Professional/Onboarding/Local">
-            <div class="vet-modality-btn">
-                <span class="vet-modality-icon">🇺🇸</span>
-                <strong>@CatalogLocalizer.Loc("Veterinario local", "Local veterinarian")</strong>
-                <span class="muted small">@CatalogLocalizer.Loc("Licencia estatal, clínica y VCPR.", "State license, clinic, and VCPR.")</span>
-            </div>
-        </a>
-        <a class="vet-modality-card" asp-page="/Professional/Onboarding/International">
-            <div class="vet-modality-btn">
-                <span class="vet-modality-icon">🌍</span>
-                <strong>@CatalogLocalizer.Loc("Asesor internacional", "International advisor")</strong>
-                <span class="muted small">@CatalogLocalizer.Loc("País, idiomas y expertise de raza. Sin licencia US.", "Country, languages, breed expertise. No US license claim.")</span>
-            </div>
-        </a>
-        <a class="vet-modality-card" asp-page="/Professional/Onboarding/Local" asp-route-track="behavior">
-            <div class="vet-modality-btn">
-                <span class="vet-modality-icon">🧠</span>
-                <strong>@CatalogLocalizer.Loc("Especialista en conducta", "Behavior specialist")</strong>
-                <span class="muted small">@CatalogLocalizer.Loc("Entrenamiento / consultoría conductual.", "Training / behavior consulting.")</span>
-            </div>
-        </a>
+        @foreach (var t in Model.Tracks)
+        {
+            <a class="vet-modality-card @(t.Emphasized ? "is-primary-track" : "")"
+               asp-page="@t.Page"
+               asp-route-track="@t.Track">
+                <div class="vet-modality-btn">
+                    <span class="vet-modality-icon">@t.Icon</span>
+                    <strong>@CatalogLocalizer.Loc(t.TitleEs, t.TitleEn)</strong>
+                    <span class="muted small">@CatalogLocalizer.Loc(t.BodyEs, t.BodyEn)</span>
+                </div>
+            </a>
+        }
     </div>
 
     <p style="margin-top:16px">
