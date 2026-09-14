@@ -9,20 +9,24 @@
         : L["Search_ServicesTitle"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
+    ViewData["BodyClass"] = "page-groomers";
 }
-<div class="onboard onboard-app">
+<div class="onboard onboard-app groomers-index">
     <partial name="_OnboardTop" />
-    <div class="home-body">
-        <h1 class="app-page-heading">@title</h1>
-    @if (Model.ActiveCategory != null)
-    {
-        <p class="muted small" style="margin-top:-8px">@Model.ActiveCategory.DisplaySubtitle()</p>
-    }
+    <div class="home-body hotel-flow">
+        <header class="groomers-head">
+            <h1 class="app-page-heading">@title</h1>
+            <p class="muted small groomers-lead">
+                @(Model.ActiveCategory != null
+                    ? Model.ActiveCategory.DisplaySubtitle()
+                    : CatalogLocalizer.Loc("Encuentra el cuidado ideal cerca de ti", "Find the right care near you"))
+            </p>
+        </header>
 
-    <form method="get" class="search-box" style="flex-wrap:wrap">
-        <input class="form-control" name="q" value="@Model.Q" placeholder="@L["Search_Businesses"]" style="flex:1;min-width:140px" />
+    <form method="get" class="search-box" data-soft-filter>
+        <input class="form-control" name="q" value="@Model.Q" placeholder="@L["Search_Businesses"]" autocomplete="off" />
         <input class="form-control" name="city" value="@Model.City" data-places="city" data-places-fill="city"
-               placeholder="@L["Search_CityMaps"]" style="flex:1;min-width:140px" autocomplete="off" />
+               placeholder="@L["Search_CityMaps"]" autocomplete="off" />
         <input type="hidden" name="category" value="@Model.Category" />
         <input type="hidden" name="species" value="@Model.Species" />
         <input type="hidden" name="customType" value="@Model.CustomType" />
@@ -30,7 +34,7 @@
         <button class="btn btn-primary" type="submit">@L["Search_Go"]</button>
     </form>
 
-    <div class="filter-bar">
+    <div class="filter-bar groomers-filters">
         <a class="chip @(string.IsNullOrEmpty(Model.Category) ? "active" : "")"
            asp-page="./Index" asp-route-q="@Model.Q" asp-route-species="@Model.Species" asp-route-customType="@Model.CustomType" asp-route-city="@Model.City">@L["Search_AllCategories"]</a>
         @foreach (var c in Model.Categories)
@@ -54,7 +58,7 @@
         }
     </div>
 
-    <div class="filter-bar">
+    <div class="filter-bar groomers-filters">
         <span class="filter-label">@L["Search_Pet"]</span>
         <a class="chip @(string.IsNullOrEmpty(Model.Species) ? "active" : "")"
            asp-page="./Index" asp-route-category="@Model.Category" asp-route-q="@Model.Q" asp-route-city="@Model.City">@L["Search_AllPets"]</a>
@@ -89,11 +93,12 @@
 
     @if (!Model.HasUserLocation)
     {
-        <p class="muted small" id="loc-hint">@L["Search_EnableLocation"] <button type="button" class="link-btn" id="btn-loc">@L["Search_UseMyLocation"]</button></p>
+        <p class="muted small groomers-loc" id="loc-hint">@L["Search_EnableLocation"] <button type="button" class="link-btn" id="btn-loc">@L["Search_UseMyLocation"]</button></p>
     }
 
-    <p class="results-count">@string.Format(L["Search_Results"].Value, Model.Results.Count)</p>
+    <h3 class="section-title groomers-results-title">@string.Format(L["Search_Results"].Value, Model.Results.Count)</h3>
 
+    <div class="groomers-list">
     @foreach (var item in Model.Results)
     {
         var g = item.Business;
@@ -141,11 +146,52 @@
             <partial name="_FavoriteHeart" model="(g.Id, isFav, (string?)null)" />
         </div>
     }
+    </div>
 
     @if (!Model.Results.Any())
     {
-        <div class="empty">@L["Search_Empty"]</div>
+        <div class="empty empty-chombly groomers-empty">
+            <h2>@L["Search_Empty"]</h2>
+            <p class="muted small">@CatalogLocalizer.Loc("Prueba otra categoría, ciudad o mascota.", "Try another category, city, or pet.")</p>
+        </div>
     }
+
+    <aside class="trust-banner pets-trust" data-trust-banner aria-label="@CatalogLocalizer.Loc("Confianza Chombly", "Chombly trust")">
+        <div class="pets-tip-orb" aria-hidden="true"></div>
+        <div class="pets-tip-orb pets-tip-orb--2" aria-hidden="true"></div>
+        <p class="pets-tip-kicker">@CatalogLocalizer.Loc("Tip Chombly", "Chombly tip")</p>
+        <div class="trust-banner-viewport">
+            <div class="trust-banner-item is-active" data-trust-item aria-hidden="false">
+                <span class="trust-banner-ico" aria-hidden="true">✂️</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Peluqueros verificados", "Verified groomers")</strong>
+                    <small>@CatalogLocalizer.Loc("Negocios revisados por Chombly", "Businesses reviewed by Chombly")</small>
+                </span>
+            </div>
+            <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                <span class="trust-banner-ico" aria-hidden="true">🔒</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Reservas seguras", "Secure bookings")</strong>
+                    <small>@CatalogLocalizer.Loc("Tu pago y datos están protegidos", "Your payment and data stay protected")</small>
+                </span>
+            </div>
+            <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                <span class="trust-banner-ico" aria-hidden="true">📅</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Disponibilidad clara", "Clear availability")</strong>
+                    <small>@CatalogLocalizer.Loc("Filtra por hoy y agenda más rápido", "Filter by today and book faster")</small>
+                </span>
+            </div>
+            <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                <span class="trust-banner-ico" aria-hidden="true">💚</span>
+                <span class="trust-banner-copy">
+                    <strong>@CatalogLocalizer.Loc("Cuidado con cariño", "Care with heart")</strong>
+                    <small>@CatalogLocalizer.Loc("Elige por especie, ciudad y reseñas", "Choose by species, city, and reviews")</small>
+                </span>
+            </div>
+        </div>
+        <div class="trust-banner-dots" data-trust-dots aria-hidden="true"></div>
+    </aside>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

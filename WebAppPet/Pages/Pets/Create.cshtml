@@ -55,11 +55,13 @@
         <div class="form-group" id="breed-group" @(Model.Species == PetSpecies.Other ? "hidden" : null)>
             <label for="breed-select">@L["Pets_Breed"]</label>
             <select class="form-control" id="breed-select" name="Breed"
+                    required
                     data-msg-required="@L["Pets_BreedSelect"]">
                 <option value="">@L["Pets_BreedSelect"]</option>
             </select>
             <input class="form-control" asp-for="CustomBreed" maxlength="80" id="custom-breed-input"
-                   placeholder="@L["Pets_BreedOtherPlaceholder"]" hidden style="margin-top:8px" />
+                   placeholder="@L["Pets_BreedOtherPlaceholder"]" hidden style="margin-top:8px"
+                   data-msg-required="@L["Pets_BreedOtherPlaceholder"]" />
             <span asp-validation-for="Breed" class="field-error"></span>
             <span asp-validation-for="CustomBreed" class="field-error"></span>
         </div>
@@ -229,6 +231,7 @@
     if (!customBreed || !breedSelect) return;
     const show = breedSelect.value === otherBreedValue;
     customBreed.hidden = !show;
+    customBreed.required = show;
     if (!show) customBreed.value = '';
   }
 
@@ -236,7 +239,20 @@
     const isOther = species === otherValue;
     if (otherGroup) otherGroup.hidden = !isOther;
     if (breedGroup) breedGroup.hidden = isOther;
-    if (!isOther && customType) customType.value = '';
+    if (breedSelect) {
+      breedSelect.disabled = isOther;
+      if (isOther) {
+        breedSelect.removeAttribute('required');
+        breedSelect.required = false;
+      } else {
+        breedSelect.setAttribute('required', 'required');
+        breedSelect.required = true;
+      }
+    }
+    if (customType) {
+      customType.required = isOther;
+      if (!isOther) customType.value = '';
+    }
     document.querySelectorAll('.species-opt').forEach(el => {
       el.classList.remove('selected', 'pick-anim');
     });
@@ -251,12 +267,34 @@
       }
     }
     if (!isOther) fillBreeds(species, keepBreed ? keepBreed : '');
+    else if (customBreed) {
+      customBreed.hidden = true;
+      customBreed.required = false;
+      customBreed.value = '';
+    }
   }
 
   breedSelect?.addEventListener('change', syncCustomBreed);
 
   document.querySelectorAll('input[name="Species"]').forEach(r => {
     r.addEventListener('change', () => syncSpecies(r.value, '', true));
+  });
+
+  function bumpPick(el) {
+    if (!el) return;
+    el.classList.remove('pick-anim');
+    void el.offsetWidth;
+    el.classList.add('pick-anim');
+    el.addEventListener('animationend', () => el.classList.remove('pick-anim'), { once: true });
+  }
+
+  document.querySelectorAll('input[name="Temperament"]').forEach(r => {
+    r.addEventListener('change', () => bumpPick(r.closest('.temperament-pick')));
+  });
+  document.querySelectorAll('.care-flag input[type="checkbox"]').forEach(c => {
+    c.addEventListener('change', () => {
+      if (c.checked) bumpPick(c.closest('.care-flag'));
+    });
   });
 
   const checked = document.querySelector('input[name="Species"]:checked');

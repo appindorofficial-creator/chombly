@@ -226,6 +226,7 @@
   function openConfirm(opts) {
     opts = opts || {};
     var overlay = ensureConfirmOverlay();
+    overlay.classList.remove('ch-confirm-overlay--apple');
     overlay.querySelector('#ch-confirm-title').textContent = opts.title || '';
     overlay.querySelector('#ch-confirm-msg').textContent = opts.message || '';
     overlay.querySelector('[data-ch-confirm="no"]').textContent = opts.cancelLabel || 'No';
@@ -462,6 +463,34 @@
         var name = (el.name || '').toLowerCase();
         var isPhone = el.getAttribute('data-phone') === '1' || name === 'phone';
 
+        // Radio groups: .value is set even when unchecked; check the group instead.
+        if (type === 'radio') {
+          if (!el.name) return;
+          var group = form.querySelectorAll('input[type="radio"][name="' + el.name.replace(/"/g, '\\"') + '"]');
+          var needsRequired = false;
+          var reqMsg = msgs.required;
+          Array.prototype.forEach.call(group, function (r) {
+            if (r.required || r.getAttribute('data-msg-required')) {
+              needsRequired = needsRequired || !!r.required;
+              if (r.getAttribute('data-msg-required')) reqMsg = r.getAttribute('data-msg-required');
+            }
+          });
+          if (needsRequired) {
+            var anyChecked = Array.prototype.some.call(group, function (r) { return r.checked; });
+            if (!anyChecked && el.required) {
+              el.setCustomValidity(el.getAttribute('data-msg-required') || reqMsg || msgs.required);
+            }
+          }
+          return;
+        }
+
+        if (type === 'checkbox') {
+          if (el.required && !el.checked) {
+            el.setCustomValidity(el.getAttribute('data-msg-required') || msgs.required);
+          }
+          return;
+        }
+
         if (el.required && !v) {
           el.setCustomValidity(el.getAttribute('data-msg-required') || msgs.required);
           return;
@@ -524,20 +553,73 @@
         form.querySelectorAll('input, select, textarea').forEach(apply);
       }
 
+      function isVisuallyHiddenControl(el) {
+        if (!el || !el.getBoundingClientRect) return false;
+        var rect = el.getBoundingClientRect();
+        if (rect.width < 2 || rect.height < 2) return true;
+        try {
+          var style = window.getComputedStyle(el);
+          if (style.opacity === '0' || style.visibility === 'hidden') return true;
+        } catch (_) { /* ignore */ }
+        return false;
+      }
+
+      function showInvalidFeedback(invalid) {
+        if (!invalid) {
+          form.reportValidity();
+          if (msgs.required) showAppToast(msgs.required, { kind: 'error' });
+          return;
+        }
+        var msg = invalid.validationMessage
+          || invalid.getAttribute('data-msg-required')
+          || msgs.required
+          || '';
+        var group = invalid.closest('.form-group')
+          || invalid.closest('.pet-care-panel')
+          || invalid.closest('fieldset');
+        var err = group ? group.querySelector('.field-error') : null;
+        if (err && msg) {
+          err.textContent = msg;
+          err.hidden = false;
+        }
+
+        var scrollEl = invalid.closest('.temperament-pick, .species-opt, .size-pick, .care-flag, label')
+          || group
+          || invalid;
+        if (scrollEl && typeof scrollEl.scrollIntoView === 'function') {
+          scrollEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Always toast — native bubbles often fail on hidden radios / custom UI.
+        if (msg) showAppToast(msg, { kind: 'error' });
+
+        if (!isVisuallyHiddenControl(invalid) && typeof invalid.reportValidity === 'function') {
+          try { invalid.reportValidity(); } catch (_) { /* ignore */ }
+        }
+      }
+
       form.addEventListener('input', function (e) {
-        if (e.target) apply(e.target);
+        if (!e.target) return;
+        apply(e.target);
+        var group = e.target.closest('.form-group');
+        var err = group && group.querySelector('.field-error');
+        if (err && e.target.validity && e.target.validity.valid) err.textContent = '';
       }, true);
       form.addEventListener('change', function (e) {
-        if (e.target) apply(e.target);
+        if (!e.target) return;
+        apply(e.target);
+        var group = e.target.closest('.form-group');
+        var err = group && group.querySelector('.field-error');
+        if (err && e.target.validity && e.target.validity.valid) err.textContent = '';
       }, true);
       form.addEventListener('submit', function (e) {
         validateAll();
         if (!form.checkValidity()) {
           e.preventDefault();
-          e.stopPropagation();
-          form.reportValidity();
+          e.stopImmediatePropagation();
+          showInvalidFeedback(form.querySelector(':invalid'));
         }
-      });
+      }, true);
     });
   }
 
@@ -661,10 +743,12 @@
     (root || document).querySelectorAll('form[data-feedback]').forEach(function (form) {
       if (form.dataset.feedbackBound === '1') return;
       form.dataset.feedbackBound = '1';
-      form.addEventListener('submit', function () {
-        if (form.dataset.chConfirmBound === '1' && form.dataset.chConfirmReady !== '1') {
-          // confirm modal will re-submit later
-        }
+      form.addEventListener('submit', function (e) {
+        // Validation / confirm handlers may cancel submit; never leave the button stuck.
+        if (e.defaultPrevented) return;
+        if (form.dataset.chConfirmBound === '1' && form.dataset.chConfirmReady !== '1') return;
+        if (typeof form.checkValidity === 'function' && !form.checkValidity()) return;
+
         var kind = form.getAttribute('data-feedback') || 'save';
         var btn = form.querySelector('button[type="submit"], .btn-primary, .btn-enter, .app-btn');
         var loading = feedbackLabel(form, 'data-feedback-loading',

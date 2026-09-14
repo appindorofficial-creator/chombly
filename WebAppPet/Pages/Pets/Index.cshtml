@@ -3,17 +3,21 @@
 @{
     ViewData["Title"] = L["Pets_Title"].Value;
     ViewData["LangCompact"] = true;
+    ViewData["BodyClass"] = "page-pets";
 }
-<div class="onboard onboard-app">
+<div class="onboard onboard-app pets-index">
     <partial name="_OnboardTop" />
     <div class="home-body">
-        <div class="page-title-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
-            <h1 class="page-title" style="margin:0">@L["Pets_Title"]</h1>
+        <header class="pets-index-head">
+            <div class="pets-index-head-text">
+                <h1 class="app-page-heading">@L["Pets_Title"]</h1>
+                <p class="muted small pets-index-lead">@CatalogLocalizer.Loc("Tu manada en un solo lugar", "Your pack in one place")</p>
+            </div>
             @if (!Model.IsGuest && Model.Pets.Any())
             {
-                <a class="btn btn-primary btn-sm" asp-page="./Create">+ @L["Pets_AddShort"]</a>
+                <a class="btn btn-primary btn-sm pets-index-add" asp-page="./Create">+ @L["Pets_AddShort"]</a>
             }
-        </div>
+        </header>
 
         @if (Model.IsGuest)
         {
@@ -27,9 +31,10 @@
         }
         else if (Model.Pets.Any())
         {
+            <div class="pets-list">
             @foreach (var p in Model.Pets)
             {
-                <div class="pet-card">
+                <article class="pet-card">
                     <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
                     <div class="pet-info">
                         <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
@@ -37,7 +42,7 @@
                         <div class="muted small">@PetCatalog.DisplayTemperament(p.Temperament)</div>
                         @if (p.IsSenior || p.IsAnxious || p.HasSpecialNeeds)
                         {
-                            <div class="chip-row" style="margin:6px 0 0">
+                            <div class="chip-row pet-care-badges">
                                 @if (p.IsSenior) { <span class="badge badge-orange">@L["Pets_Senior"]</span> }
                                 @if (p.IsAnxious) { <span class="badge badge-orange">@L["Pets_Anxious"]</span> }
                                 @if (p.HasSpecialNeeds) { <span class="badge badge-orange">@L["Pets_SpecialNeeds"]</span> }
@@ -58,8 +63,39 @@
                             <button type="submit" class="icon-btn" title="@L["Common_Delete"]">🗑️</button>
                         </form>
                     </div>
-                </div>
+                </article>
             }
+            </div>
+
+            <aside class="trust-banner pets-trust" data-trust-banner aria-label="@CatalogLocalizer.Loc("Cuidado Chombly", "Chombly care")">
+                <div class="pets-tip-orb" aria-hidden="true"></div>
+                <div class="pets-tip-orb pets-tip-orb--2" aria-hidden="true"></div>
+                <p class="pets-tip-kicker">@CatalogLocalizer.Loc("Tip Chombly", "Chombly tip")</p>
+                <div class="trust-banner-viewport">
+                    <div class="trust-banner-item is-active" data-trust-item aria-hidden="false">
+                        <span class="trust-banner-ico" aria-hidden="true">🩺</span>
+                        <span class="trust-banner-copy">
+                            <strong>@CatalogLocalizer.Loc("Control al día", "Care up to date")</strong>
+                            <small>@CatalogLocalizer.Loc("Revisa historial y próximos cuidados", "Check history and upcoming care")</small>
+                        </span>
+                    </div>
+                    <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                        <span class="trust-banner-ico" aria-hidden="true">⏰</span>
+                        <span class="trust-banner-copy">
+                            <strong>@CatalogLocalizer.Loc("Recordatorios útiles", "Helpful reminders")</strong>
+                            <small>@CatalogLocalizer.Loc("Vacunas, baños y citas sin olvidar", "Vaccines, baths, and visits on time")</small>
+                        </span>
+                    </div>
+                    <div class="trust-banner-item" data-trust-item aria-hidden="true">
+                        <span class="trust-banner-ico" aria-hidden="true">🌿</span>
+                        <span class="trust-banner-copy">
+                            <strong>@CatalogLocalizer.Loc("Perfil listo para agendar", "Profile ready to book")</strong>
+                            <small>@CatalogLocalizer.Loc("Temperamento y cuidados llegan al negocio", "Temperament and care notes reach the provider")</small>
+                        </span>
+                    </div>
+                </div>
+                <div class="trust-banner-dots" data-trust-dots aria-hidden="true"></div>
+            </aside>
         }
         else
         {

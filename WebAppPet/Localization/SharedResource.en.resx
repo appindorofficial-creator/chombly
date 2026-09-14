@@ -174,6 +174,10 @@
   <data name="Pets_Years" xml:space="preserve"><value>years</value></data>
   <data name="Pets_EmptyTitle" xml:space="preserve"><value>No pets yet</value></data>
   <data name="Pets_EmptySub" xml:space="preserve"><value>Add dogs, cats, rabbits or other pets to book services.</value></data>
+  <data name="Pets_CelebrateTitle" xml:space="preserve"><value>Chombly will care for your pet</value></data>
+  <data name="Pets_CelebrateBody" xml:space="preserve"><value>Their profile is ready to book with care.</value></data>
+  <data name="Pets_CelebrateBodyNamed" xml:space="preserve"><value>{0} is now in your pack. Their profile is ready to book.</value></data>
+  <data name="Pets_CelebrateCta" xml:space="preserve"><value>Continue</value></data>
   <data name="Pets_GuestTitle" xml:space="preserve"><value>Sign in to see your pets</value></data>
   <data name="Pets_GuestSub" xml:space="preserve"><value>Save your pets' profiles and book services faster.</value></data>
   <data name="Pets_Anxious" xml:space="preserve"><value>Anxious</value></data>
@@ -193,6 +197,7 @@
   <data name="Welcome_HeroSub" xml:space="preserve"><value>{0}, {1}, {2}, {3} and {4} near you.</value></data>
   <data name="Welcome_Explore" xml:space="preserve"><value>Explore services</value></data>
   <data name="Welcome_BackHome" xml:space="preserve"><value>← Back to home</value></data>
+  <data name="Welcome_BackProfile" xml:space="preserve"><value>← Back to profile</value></data>
   <data name="Closing_Title" xml:space="preserve"><value>Is your pet family too?</value></data>
   <data name="Closing_Body" xml:space="preserve"><value>Then Chombly is for you.</value></data>
   <data name="Closing_CtaOwner" xml:space="preserve"><value>I want Chombly for my pet</value></data>
@@ -226,9 +231,10 @@
   <data name="Notif_Delete" xml:space="preserve"><value>Delete notification</value></data>
   <data name="Notif_DeleteTitle" xml:space="preserve"><value>Delete notification</value></data>
   <data name="Notif_DeleteConfirm" xml:space="preserve"><value>Delete this notification?</value></data>
-  <data name="Notif_ClearAll" xml:space="preserve"><value>Clear all</value></data>
-  <data name="Notif_ClearAllTitle" xml:space="preserve"><value>Clear all</value></data>
-  <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>Delete all notifications?</value></data>
+  <data name="Notif_ClearAll" xml:space="preserve"><value>Clear All</value></data>
+  <data name="Notif_ClearAllTitle" xml:space="preserve"><value>Clear All Notifications?</value></data>
+  <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>You can’t undo this action.</value></data>
+  <data name="Notif_ClearAllOk" xml:space="preserve"><value>Clear All</value></data>
   <data name="Notif_SwipeHint" xml:space="preserve"><value>Swipe left to delete</value></data>
   <data name="Profile_MyPets" xml:space="preserve"><value>My pets</value></data>
   <data name="Profile_MyAppointments" xml:space="preserve"><value>My bookings</value></data>
