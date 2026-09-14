@@ -5,7 +5,9 @@
 }
 <div class="groomer-card-wrap featured-card">
     <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
-        <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+        <span class="featured-thumb">
+            <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+        </span>
         <div class="info">
             <h3>@g.BusinessName</h3>
             <div class="meta-row">

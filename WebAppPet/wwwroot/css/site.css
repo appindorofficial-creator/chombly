@@ -552,16 +552,36 @@ h1, h2, h3,
   height: 100%;
   padding: 8px;
   border-radius: 16px;
+  background: #fbfff3;
 }
-.featured-banner .groomer-card img {
-  width: 100%;
-  height: 92px;
+.featured-banner .featured-thumb {
+  display: block;
+  height: 150px;
   border-radius: 12px;
-  mix-blend-mode: normal;
+  overflow: hidden;
+  background: #fbfff3;
+}
+.featured-banner .groomer-card > img,
+.featured-banner .featured-thumb img {
+  width: 100%;
+  height: 150px;
+  border-radius: 12px;
+  background: transparent;
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  object-position: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+.featured-banner .featured-thumb img {
+  height: 100%;
+  border-radius: 0;
 }
 .featured-banner .groomer-card .info {
   gap: 3px;
-  padding: 0 2px 2px;
+  padding: 6px 4px 2px;
+  background: #fff;
+  border-radius: 10px;
 }
 .featured-banner .groomer-card h3 {
   font-size: .78rem;
