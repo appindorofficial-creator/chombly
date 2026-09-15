@@ -891,20 +891,6 @@
       var body = (fromEl && fromEl.closest) ? (fromEl.closest('.home-body') || fromEl.closest('.app-shell')) : document.querySelector('.home-body');
       if (!body) return;
       body.classList.add('is-soft-updating');
-      var sk = body.querySelector('.app-soft-skeleton');
-      if (!sk) {
-        sk = document.createElement('div');
-        sk.className = 'app-soft-skeleton';
-        sk.innerHTML = '<app-skeleton></app-skeleton>';
-        // plain HTML skeleton (tag helpers won't run client-side)
-        sk.innerHTML =
-          '<div class="app-skeleton app-skeleton--text" aria-hidden="true">' +
-          '<span class="app-skeleton-line" style="width:100%"></span>' +
-          '<span class="app-skeleton-line" style="width:92%"></span>' +
-          '<span class="app-skeleton-line" style="width:70%"></span>' +
-          '</div>';
-        body.appendChild(sk);
-      }
     }
 
     scope.querySelectorAll('.filter-bar a, .chip-row a, a.chip, .hotel-flow a[href]').forEach(function (a) {
@@ -1255,6 +1241,51 @@
     });
   }
 
+  function bindToggleSingleChips(root) {
+    var scope = root || document;
+    scope.querySelectorAll('.hotel-flow form').forEach(function (form) {
+      if (form.dataset.toggleChipsBound === '1') return;
+      form.dataset.toggleChipsBound = '1';
+
+      form.addEventListener('change', function (e) {
+        var input = e.target;
+        if (!input || input.type !== 'radio' || !input.name) return;
+        if (!input.closest('label.when-chip, label.radio-card')) return;
+        form.querySelectorAll('input[type="radio"][name="' + input.name + '"]').forEach(function (radio) {
+          var lab = radio.closest('label.when-chip, label.radio-card');
+          if (lab) lab.classList.toggle('active', radio.checked);
+        });
+      });
+
+      form.addEventListener('click', function (e) {
+        var label = e.target.closest('label.when-chip, label.radio-card');
+        if (!label || !form.contains(label) || label.classList.contains('is-disabled') || label.classList.contains('disabled')) {
+          return;
+        }
+
+        var input = label.querySelector('input[type="radio"]');
+        if (!input || input.disabled || !input.name) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        var wasChecked = !!input.checked;
+        form.querySelectorAll('input[type="radio"][name="' + input.name + '"]').forEach(function (radio) {
+          radio.checked = false;
+          var lab = radio.closest('label.when-chip, label.radio-card');
+          if (lab) lab.classList.remove('active');
+        });
+        if (!wasChecked) {
+          input.checked = true;
+          label.classList.add('active');
+        }
+
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+      }, true);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
     bindPasswordToggles(document);
@@ -1267,6 +1298,7 @@
     bindFeedbackForms(document);
     bindCopyActions(document);
     bindDownloadProgress(document);
+    bindToggleSingleChips(document);
     bindSoftFilters(document);
     bindRoutePending();
     bindFlashAndAlerts();

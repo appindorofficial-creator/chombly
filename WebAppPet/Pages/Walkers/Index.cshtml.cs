@@ -104,6 +104,20 @@ public class IndexModel : PageModel
     /// <summary>Minutes shown on cards/estimates; 60 until the user picks a duration.</summary>
     public int DisplayDuration => HasDuration ? Duration : 60;
 
+    /// <summary>Steps 1–4 complete: when, time, duration, and pet.</summary>
+    public bool HasBookingBasics =>
+        !string.IsNullOrWhiteSpace(When)
+        && (!When.Equals("fecha", StringComparison.OrdinalIgnoreCase)
+            || (!string.IsNullOrWhiteSpace(Date) && DateTime.TryParse(Date, out _)))
+        && !string.IsNullOrWhiteSpace(Slot)
+        && AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase))
+        && HasDuration
+        && PetId > 0
+        && SelectedPet != null;
+
+    /// <summary>Walker cards can be chosen only after steps 1–4.</summary>
+    public bool CanSelectWalker => HasBookingBasics;
+
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadAsync();
@@ -340,6 +354,10 @@ public class IndexModel : PageModel
         HasMore = !More && Results.Count > 3;
         if (HasMore)
             Results = Results.Take(3).ToList();
+
+        // Don't keep a walker selection (or confirm sheet) until when/time/duration/pet are set.
+        if (GroomerId.HasValue && !HasBookingBasics)
+            GroomerId = null;
 
         if (GroomerId.HasValue)
         {
