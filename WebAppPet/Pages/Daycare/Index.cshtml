@@ -17,34 +17,11 @@
     }
 
     <form method="get" id="daycare-filter-form">
-        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="groomerId" value="@(Model.CanSelectDaycare ? Model.GroomerId : null)" />
         <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
 
-        <h3 class="section-title" style="margin-top:0">1. ¿Cuándo necesitas el servicio?</h3>
-        <div class="when-row">
-            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
-                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
-                Hoy
-            </label>
-            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
-                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
-                Mañana
-            </label>
-            <label class="when-chip @(Model.When == "fecha" ? "active" : "")">
-                <input type="radio" name="When" value="fecha" @(Model.When == "fecha" ? "checked" : "") onchange="this.form.submit()" />
-                Elegir fecha
-            </label>
-        </div>
-        @if (Model.When == "fecha")
-        {
-            <div class="form-group">
-                <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" onchange="this.form.submit()" />
-            </div>
-        }
-        else
-        {
-            <input type="hidden" name="Date" value="@Model.Date" />
-        }
+        <h3 class="section-title" style="margin-top:0">1. ¿Qué fecha necesitas?</h3>
+        <partial name="_BookingDateField" model="new BookingDateFieldModel { Date = Model.Date, MinDate = minDate }" />
 
         <h3 class="section-title">2. Horario</h3>
         <div class="filter-bar" style="flex-direction:column;align-items:stretch">
@@ -81,33 +58,7 @@
         }
 
         <h3 class="section-title">3. Selecciona tu mascota</h3>
-        @if (!Model.Pets.Any())
-        {
-            <div class="alert alert-info">
-                Agrega una mascota para continuar.
-                <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">+ Agregar mascota</a>
-            </div>
-        }
-        else
-        {
-            @foreach (var p in Model.Pets)
-            {
-                var on = p.Id == Model.PetId;
-                <label class="radio-card">
-                    <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
-                    <div class="inner">
-                        <div class="pet-select" style="border:none;padding:0;flex:1">
-                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
-                            <div>
-                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                                <div class="muted small">@p.Breed · @p.AgeYears años</div>
-                            </div>
-                        </div>
-                    </div>
-                </label>
-            }
-            <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
-        }
+        <partial name="_BookingPetPicker" model="new BookingPetPickerModel { Pets = Model.Pets, PetId = Model.PetId }" />
 
         <h3 class="section-title">4. Preferencias <span class="muted small">(opcional)</span></h3>
         <div class="filter-bar">
@@ -121,7 +72,17 @@
             }
         </div>
 
-        <h3 class="section-title">5. Daycares disponibles cerca de ti</h3>
+        <h3 class="section-title" id="daycare-results">5. Daycares disponibles cerca de ti</h3>
+        @if (!Model.CanSelectDaycare)
+        {
+            var daycareGate = new BookingGateNoteModel
+            {
+                Id = "daycare-need-basics",
+                TextEs = "Completa fecha, horario y mascota (pasos 1–3) para poder elegir un daycare.",
+                TextEn = "Complete date, schedule, and pet (steps 1–3) before choosing a daycare."
+            };
+            <partial name="_BookingGateNote" model="daycareGate" />
+        }
         @if (!Model.Results.Any())
         {
             <div class="empty">No hay daycares con esos filtros en la base de datos.</div>
@@ -129,8 +90,8 @@
         @foreach (var item in Model.Results)
         {
             var d = item.Daycare;
-            var selected = Model.GroomerId == d.Id;
-            <div class="hotel-card @(selected ? "selected" : "")">
+            var selected = Model.CanSelectDaycare && Model.GroomerId == d.Id;
+            <div class="hotel-card @(selected ? "selected" : "") @(Model.CanSelectDaycare ? "" : "is-locked")">
                 @if (item.AvailableToday)
                 {
                     <span class="badge badge-green hotel-reco">@L["Search_AvailableToday"]</span>
@@ -162,19 +123,29 @@
                         <div class="price">$@item.StartingPrice.ToString("0") <span class="muted small">@item.PriceUnitLabel</span></div>
                     </div>
                 </div>
-                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
-                   asp-page="./Index"
-                   asp-route-When="@Model.When"
-                   asp-route-Date="@Model.Date"
-                   asp-route-Schedule="@Model.Schedule"
-                   asp-route-CustomStart="@Model.CustomStart"
-                   asp-route-CustomEnd="@Model.CustomEnd"
-                   asp-route-PetId="@Model.PetId"
-                   asp-route-groomerId="@d.Id"
-                   asp-route-Notes="@Model.Notes"
-                   asp-route-More="@Model.More">
-                    @(selected ? "Seleccionado ✓" : "Elegir daycare")
-                </a>
+                @{
+                    var daycareChoose = new BookingChooseActionModel
+                    {
+                        CanSelect = Model.CanSelectDaycare,
+                        Selected = selected,
+                        ChooseUrl = Url.Page("./Index", new
+                        {
+                            When = Model.When,
+                            Date = Model.Date,
+                            Schedule = Model.Schedule,
+                            CustomStart = Model.CustomStart,
+                            CustomEnd = Model.CustomEnd,
+                            PetId = Model.PetId,
+                            groomerId = d.Id,
+                            Notes = Model.Notes,
+                            More = Model.More
+                        }),
+                        GateAnchorId = "daycare-need-basics",
+                        ChooseLabelEs = "Elegir daycare",
+                        ChooseLabelEn = "Choose daycare"
+                    };
+                }
+                <partial name="_BookingChooseAction" model="daycareChoose" />
             </div>
         }
         @if (Model.HasMore)
@@ -242,12 +213,7 @@
         </form>
     }
 
-    <div class="trust-bar">
-        <div><span>🔒</span><small>Pago seguro</small></div>
-        <div><span>⚡</span><small>Menos clics</small></div>
-        <div><span>✓</span><small>Todo en una pantalla</small></div>
-        <div><span>💳</span><small>Tarjetas guardadas</small></div>
-    </div>
+    <partial name="_TrustBanner" />
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

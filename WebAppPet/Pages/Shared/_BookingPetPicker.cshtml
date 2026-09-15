@@ -1,0 +1,29 @@
+@model WebAppPet.Pages.Shared.BookingPetPickerModel
+@* Shared pet picker for Walkers / Daycare / Trainers booking flows. *@
+@if (!Model.Pets.Any())
+{
+    <div class="alert alert-info">
+        @CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")
+        <a class="apple-text-link" asp-page="/Pets/Create" style="margin:0">@CatalogLocalizer.Loc("+ Agregar mascota", "+ Add pet")</a>
+    </div>
+}
+else
+{
+    @foreach (var p in Model.Pets)
+    {
+        var on = p.Id == Model.PetId;
+        <label class="radio-card">
+            <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+            <div class="inner">
+                <div class="pet-select" style="border:none;padding:0;flex:1">
+                    <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
+                    <div>
+                        <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                        <div class="muted small">@p.Breed · @p.AgeYears años</div>
+                    </div>
+                </div>
+            </div>
+        </label>
+    }
+    <a class="apple-text-link" asp-page="/Pets/Create">@CatalogLocalizer.Loc("+ Agregar otra mascota", "+ Add another pet")</a>
+}

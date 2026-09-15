@@ -87,9 +87,12 @@ public static class CatalogLocalizer
 
         // Booking UI options
         ["Ahora"] = "Now",
-        ["Mañana 9:00 AM"] = "Tomorrow 9:00 AM",
-        ["Tarde 1:00 PM"] = "Afternoon 1:00 PM",
-        ["Noche 6:00 PM"] = "Evening 6:00 PM",
+        ["9:00 AM"] = "9:00 AM",
+        ["1:00 PM"] = "1:00 PM",
+        ["6:00 PM"] = "6:00 PM",
+        ["Mañana 9:00 AM"] = "9:00 AM",
+        ["Tarde 1:00 PM"] = "1:00 PM",
+        ["Noche 6:00 PM"] = "6:00 PM",
         ["Enfermedad / Síntomas"] = "Illness / Symptoms",
         ["Emergencia"] = "Emergency",
         ["Dermatología"] = "Dermatology",

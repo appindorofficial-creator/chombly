@@ -8,7 +8,7 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")@(!string.IsNullOrEmpty(Model.ErrorMessage) && Model.GroomerId.HasValue ? " is-summary-collapsed" : "")">
         <h1 class="app-page-heading">@L["Walkers_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -17,48 +17,29 @@
     }
 
     <form method="get" id="walkers-filter-form">
-        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="groomerId" value="@(Model.CanSelectWalker ? Model.GroomerId : null)" />
         <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
 
-        <h3 class="section-title" style="margin-top:0">1. ¿Cuándo necesitas el paseo?</h3>
-        <div class="when-row">
-            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
-                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
-                Hoy
-            </label>
-            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
-                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
-                Mañana
-            </label>
-            <label class="when-chip @(Model.When == "fecha" ? "active" : "")">
-                <input type="radio" name="When" value="fecha" @(Model.When == "fecha" ? "checked" : "") onchange="this.form.submit()" />
-                Elegir fecha
-            </label>
-        </div>
-        @if (Model.When == "fecha")
-        {
-            <div class="form-group">
-                <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" onchange="this.form.submit()" />
-            </div>
-        }
-        else
-        {
-            <input type="hidden" name="Date" value="@Model.Date" />
-        }
+        <h3 class="section-title" style="margin-top:0">1. ¿Qué fecha necesitas?</h3>
+        <partial name="_BookingDateField" model="new BookingDateFieldModel { Date = Model.Date, MinDate = minDate }" />
 
         <h3 class="section-title">2. ¿A qué hora?</h3>
         <div class="when-row">
-            @foreach (var t in WebAppPet.Pages.Walkers.IndexModel.TimeOptions)
+            @foreach (var t in Model.AvailableTimeOptions)
             {
                 <label class="when-chip @(Model.Slot == t.Key ? "active" : "")">
                     <input type="radio" name="Slot" value="@t.Key" @(Model.Slot == t.Key ? "checked" : "") onchange="this.form.submit()" />
-                    @CatalogLocalizer.Text(t.Label)
+                    @(t.Key == "ahora" ? CatalogLocalizer.Loc("Ahora", "Now") : t.Label)
                 </label>
             }
         </div>
+        @if (Model.HasDate && Model.AvailableTimeOptions.Count == 0)
+        {
+            <p class="field-error" role="alert">@CatalogLocalizer.Loc("No quedan horarios para esa fecha. Elige otro día.", "No times left for that date. Choose another day.")</p>
+        }
         @if (!string.IsNullOrEmpty(Model.SuggestedTime))
         {
-            <p class="muted small">Hora sugerida: @Model.SuggestedTime</p>
+            <p class="muted small">@CatalogLocalizer.Loc("Hora sugerida:", "Suggested time:") @Model.SuggestedTime</p>
         }
 
         <h3 class="section-title">3. ¿Cuánto tiempo?</h3>
@@ -73,33 +54,7 @@
         </div>
 
         <h3 class="section-title">4. Selecciona tu mascota</h3>
-        @if (!Model.Pets.Any())
-        {
-            <div class="alert alert-info">
-                Agrega una mascota para continuar.
-                <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">+ Agregar mascota</a>
-            </div>
-        }
-        else
-        {
-            @foreach (var p in Model.Pets)
-            {
-                var on = p.Id == Model.PetId;
-                <label class="radio-card">
-                    <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
-                    <div class="inner">
-                        <div class="pet-select" style="border:none;padding:0;flex:1">
-                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
-                            <div>
-                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                                <div class="muted small">@p.Breed · @p.AgeYears años</div>
-                            </div>
-                        </div>
-                    </div>
-                </label>
-            }
-            <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
-        }
+        <partial name="_BookingPetPicker" model="new BookingPetPickerModel { Pets = Model.Pets, PetId = Model.PetId }" />
 
         <h3 class="section-title">5. Preferencias <span class="muted small">(opcional)</span></h3>
         <div class="filter-bar">
@@ -114,6 +69,16 @@
         </div>
 
         <h3 class="section-title" id="walkers-results">@CatalogLocalizer.Loc("6. Paseadores disponibles cerca de ti", "6. Walkers available near you")</h3>
+        @if (!Model.CanSelectWalker)
+        {
+            var walkersGate = new BookingGateNoteModel
+            {
+                Id = "walkers-need-basics",
+                TextEs = "Completa fecha, hora, duración y mascota (pasos 1–4) para poder elegir un paseador.",
+                TextEn = "Complete date, time, duration, and pet (steps 1–4) before choosing a walker."
+            };
+            <partial name="_BookingGateNote" model="walkersGate" />
+        }
         @if (!Model.Results.Any())
         {
             <div class="empty">@CatalogLocalizer.Loc("No hay paseadores con esos filtros en la base de datos.", "No walkers match these filters.")</div>
@@ -121,8 +86,8 @@
         @foreach (var item in Model.Results)
         {
             var w = item.Walker;
-            var selected = Model.GroomerId == w.Id;
-            <div class="hotel-card @(selected ? "selected" : "")">
+            var selected = Model.CanSelectWalker && Model.GroomerId == w.Id;
+            <div class="hotel-card @(selected ? "selected" : "") @(Model.CanSelectWalker ? "" : "is-locked")">
                 @if (item.AvailableToday)
                 {
                     <span class="badge badge-green hotel-reco">@L["Search_AvailableToday"]</span>
@@ -145,18 +110,28 @@
                         <div class="price">$@item.Price.ToString("0") <span class="muted small">/ @Model.DisplayDuration min</span></div>
                     </div>
                 </div>
-                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
-                   asp-page="./Index"
-                   asp-route-When="@Model.When"
-                   asp-route-Date="@Model.Date"
-                   asp-route-Slot="@Model.Slot"
-                   asp-route-Duration="@Model.Duration"
-                   asp-route-PetId="@Model.PetId"
-                   asp-route-groomerId="@w.Id"
-                   asp-route-Notes="@Model.Notes"
-                   asp-route-More="@Model.More">
-                    @(selected ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓") : CatalogLocalizer.Loc("Elegir paseador", "Choose walker"))
-                </a>
+                @{
+                    var walkerChoose = new BookingChooseActionModel
+                    {
+                        CanSelect = Model.CanSelectWalker,
+                        Selected = selected,
+                        ChooseUrl = Url.Page("./Index", new
+                        {
+                            When = Model.When,
+                            Date = Model.Date,
+                            Slot = Model.Slot,
+                            Duration = Model.Duration,
+                            PetId = Model.PetId,
+                            groomerId = w.Id,
+                            Notes = Model.Notes,
+                            More = Model.More
+                        }),
+                        GateAnchorId = "walkers-need-basics",
+                        ChooseLabelEs = "Elegir paseador",
+                        ChooseLabelEn = "Choose walker"
+                    };
+                }
+                <partial name="_BookingChooseAction" model="walkerChoose" />
             </div>
         }
         @if (Model.HasMore)
@@ -210,12 +185,7 @@
         </form>
     }
 
-    <div class="trust-bar">
-        <div><span>🔒</span><small>Pago seguro</small></div>
-        <div><span>⚡</span><small>Menos clics</small></div>
-        <div><span>✓</span><small>Todo en una pantalla</small></div>
-        <div><span>📸</span><small>Actualizaciones</small></div>
-    </div>
+    <partial name="_TrustBanner" />
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
@@ -228,9 +198,40 @@
     ViewData["PromoError"] = Model.PromoError;
     ViewData["TermsStep"] = "10. ";
     ViewData["TermsChecked"] = Model.AcceptTerms;
-    <aside class="hotel-summary">
+    var startCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage);
+    <aside class="hotel-summary @(startCollapsed ? "is-collapsed" : null)"
+           data-hotel-summary
+           @(startCollapsed ? "data-summary-start-collapsed=1" : null)>
         <div class="hotel-summary-inner">
-            <h3>Confirmar paseo</h3>
+            <div class="hotel-summary-toolbar">
+                <h3>@CatalogLocalizer.Loc("Confirmar paseo", "Confirm walk")</h3>
+                <button type="button"
+                        class="hotel-summary-toggle"
+                        data-summary-toggle
+                        aria-expanded="@(startCollapsed ? "false" : "true")"
+                        aria-controls="walkers-summary-body">
+                    <span data-label-min @(startCollapsed ? "hidden" : null)>▾ @CatalogLocalizer.Loc("Minimizar", "Minimize")</span>
+                    <span data-label-max @(startCollapsed ? null : "hidden")>▴ @CatalogLocalizer.Loc("Expandir", "Expand")</span>
+                </button>
+            </div>
+            <button type="button"
+                    class="hotel-summary-peek"
+                    data-summary-toggle
+                    aria-controls="walkers-summary-body">
+                <div class="hotel-summary-peek-row">
+                    <div>
+                        <strong>@Model.SelectedWalker.BusinessName</strong>
+                        <small>@CatalogLocalizer.Loc("Toca para expandir el resumen", "Tap to expand the summary")</small>
+                    </div>
+                    <strong>$@Model.Estimate.ToString("0")</strong>
+                </div>
+            </button>
+            <div class="hotel-summary-body" id="walkers-summary-body" data-summary-body>
+            <p class="hotel-summary-edit-hint">
+                <button type="button" class="hotel-summary-edit-link" data-summary-toggle>
+                    ← @CatalogLocalizer.Loc("Seguir editando el paseo", "Keep editing the walk")
+                </button>
+            </p>
             <div class="summary-hotel">
                 <img src="@(Model.SelectedWalker.ImageUrl ?? "/images/categories/cat-walkers-v2.png")" alt="" />
                 <div>
@@ -280,6 +281,7 @@
                 </button>
                 <p class="muted small" style="text-align:center;margin-top:8px">Pago seguro y encriptado</p>
             </form>
+            </div>
         </div>
     </aside>
 }

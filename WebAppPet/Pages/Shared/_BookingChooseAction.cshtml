@@ -1,0 +1,19 @@
+@model WebAppPet.Pages.Shared.BookingChooseActionModel
+@* Shared choose/locked CTA for provider cards in booking flows. *@
+@if (Model.CanSelect && !string.IsNullOrEmpty(Model.ChooseUrl))
+{
+    <a class="btn @(Model.Selected ? "btn-primary" : "btn-outline") btn-block"
+       href="@Model.ChooseUrl">
+        @(Model.Selected
+            ? CatalogLocalizer.Loc(Model.SelectedLabelEs, Model.SelectedLabelEn)
+            : CatalogLocalizer.Loc(Model.ChooseLabelEs, Model.ChooseLabelEn))
+    </a>
+}
+else
+{
+    <a class="btn btn-outline btn-block is-disabled"
+       href="#@Model.GateAnchorId"
+       aria-disabled="true">
+        @CatalogLocalizer.Loc(Model.ChooseLabelEs, Model.ChooseLabelEn)
+    </a>
+}

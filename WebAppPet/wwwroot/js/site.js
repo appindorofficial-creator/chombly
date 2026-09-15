@@ -891,20 +891,6 @@
       var body = (fromEl && fromEl.closest) ? (fromEl.closest('.home-body') || fromEl.closest('.app-shell')) : document.querySelector('.home-body');
       if (!body) return;
       body.classList.add('is-soft-updating');
-      var sk = body.querySelector('.app-soft-skeleton');
-      if (!sk) {
-        sk = document.createElement('div');
-        sk.className = 'app-soft-skeleton';
-        sk.innerHTML = '<app-skeleton></app-skeleton>';
-        // plain HTML skeleton (tag helpers won't run client-side)
-        sk.innerHTML =
-          '<div class="app-skeleton app-skeleton--text" aria-hidden="true">' +
-          '<span class="app-skeleton-line" style="width:100%"></span>' +
-          '<span class="app-skeleton-line" style="width:92%"></span>' +
-          '<span class="app-skeleton-line" style="width:70%"></span>' +
-          '</div>';
-        body.appendChild(sk);
-      }
     }
 
     scope.querySelectorAll('.filter-bar a, .chip-row a, a.chip, .hotel-flow a[href]').forEach(function (a) {
@@ -1211,6 +1197,98 @@
     });
   }
 
+  function bindHotelSummaryToggle(root) {
+    var scope = root || document;
+    var sheets = scope.querySelectorAll('[data-hotel-summary]');
+    if (!sheets.length) return;
+
+    sheets.forEach(function (sheet) {
+      if (sheet.dataset.summaryBound === '1') return;
+      sheet.dataset.summaryBound = '1';
+
+      var flow = document.querySelector('.hotel-flow');
+      var storageKey = 'chombly.summaryCollapsed:' + (location.pathname || '');
+      var startCollapsed = sheet.hasAttribute('data-summary-start-collapsed');
+      var stored = null;
+      try { stored = sessionStorage.getItem(storageKey); } catch (_) { }
+
+      function apply(collapsed) {
+        sheet.classList.toggle('is-collapsed', collapsed);
+        if (flow) flow.classList.toggle('is-summary-collapsed', collapsed);
+        sheet.querySelectorAll('[data-summary-toggle]').forEach(function (btn) {
+          if (btn.classList.contains('hotel-summary-toggle')) {
+            btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            var min = btn.querySelector('[data-label-min]');
+            var max = btn.querySelector('[data-label-max]');
+            if (min) min.hidden = collapsed;
+            if (max) max.hidden = !collapsed;
+          }
+        });
+        try { sessionStorage.setItem(storageKey, collapsed ? '1' : '0'); } catch (_) { }
+      }
+
+      var collapsed = startCollapsed || stored === '1';
+      // If user just got a validation error, force collapse so the form is usable.
+      if (startCollapsed) collapsed = true;
+      apply(collapsed);
+
+      sheet.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-summary-toggle]') : null;
+        if (!btn || !sheet.contains(btn)) return;
+        e.preventDefault();
+        apply(!sheet.classList.contains('is-collapsed'));
+      });
+    });
+  }
+
+  function bindToggleSingleChips(root) {
+    var scope = root || document;
+    scope.querySelectorAll('.hotel-flow form').forEach(function (form) {
+      if (form.dataset.toggleChipsBound === '1') return;
+      form.dataset.toggleChipsBound = '1';
+
+      function radioLabel(el) {
+        var label = el && el.closest ? el.closest('label') : null;
+        if (!label || !form.contains(label) || label.classList.contains('filter-check')) return null;
+        var input = label.querySelector('input[type="radio"]');
+        if (!input || input.disabled) return null;
+        if (label.classList.contains('is-disabled') || label.classList.contains('disabled')) return null;
+        return { label: label, input: input };
+      }
+
+      form.addEventListener('change', function (e) {
+        var hit = radioLabel(e.target);
+        if (!hit) return;
+        form.querySelectorAll('input[type="radio"][name="' + hit.input.name + '"]').forEach(function (radio) {
+          var lab = radio.closest('label');
+          if (lab) lab.classList.toggle('active', radio.checked);
+        });
+      });
+
+      form.addEventListener('click', function (e) {
+        var hit = radioLabel(e.target);
+        if (!hit) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        var wasChecked = !!hit.input.checked;
+        form.querySelectorAll('input[type="radio"][name="' + hit.input.name + '"]').forEach(function (radio) {
+          radio.checked = false;
+          var lab = radio.closest('label');
+          if (lab) lab.classList.remove('active');
+        });
+        if (!wasChecked) {
+          hit.input.checked = true;
+          hit.label.classList.add('active');
+        }
+
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+      }, true);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
     bindPasswordToggles(document);
@@ -1223,6 +1301,7 @@
     bindFeedbackForms(document);
     bindCopyActions(document);
     bindDownloadProgress(document);
+    bindToggleSingleChips(document);
     bindSoftFilters(document);
     bindRoutePending();
     bindFlashAndAlerts();
@@ -1232,6 +1311,7 @@
     bindHowGlow(document);
     bindFeaturedBanner(document);
     bindNavReplace(document);
+    bindHotelSummaryToggle(document);
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;
