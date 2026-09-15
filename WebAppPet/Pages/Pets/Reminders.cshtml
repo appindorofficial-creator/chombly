@@ -1,12 +1,20 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Pets.RemindersModel
 @using WebAppPet.Localization
+@using WebAppPet.Models
 @using WebAppPet.Services
 @{
     ViewData["Title"] = CatalogLocalizer.Loc($"Recordatorios · {Model.Pet?.Name}", $"Reminders · {Model.Pet?.Name}");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Pets/Care", new { id = Model.Id });
     var HideNav = ViewData["HideNav"] as bool? == true;
+    string ReminderTypeLabel(ReminderType t) => t switch
+    {
+        ReminderType.Vaccine => CatalogLocalizer.Loc("Vacuna", "Vaccine"),
+        ReminderType.Medication => CatalogLocalizer.Loc("Medicamento", "Medication"),
+        ReminderType.Appointment => CatalogLocalizer.Loc("Cita", "Appointment"),
+        _ => CatalogLocalizer.Loc("Personalizado", "Custom")
+    };
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -30,7 +38,7 @@
             {
                 <div class="card card-pad" style="margin-bottom:8px">
                     <strong>@s.Title</strong>
-                    <span class="badge badge-green" style="margin-left:6px">@s.Type</span>
+                    <span class="badge badge-green" style="margin-left:6px">@ReminderTypeLabel(s.Type)</span>
                     <span class="muted small" style="display:block">
                         @CatalogLocalizer.Loc("Próximo", "Next"): @AppTimeZones.FormatShort(s.NextDueUtc)
                         @if (s.FrequencyDays is int d) { <text>· @CatalogLocalizer.Loc($"cada {d} días", $"every {d} days")</text> }
@@ -57,7 +65,12 @@
             <input type="hidden" name="Id" value="@Model.Id" />
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Tipo", "Type")</label>
-                <select class="form-control" asp-for="Type" asp-items="Html.GetEnumSelectList<WebAppPet.Models.ReminderType>()"></select>
+                <select class="form-control" asp-for="Type">
+                    <option value="@((int)ReminderType.Vaccine)">@ReminderTypeLabel(ReminderType.Vaccine)</option>
+                    <option value="@((int)ReminderType.Medication)">@ReminderTypeLabel(ReminderType.Medication)</option>
+                    <option value="@((int)ReminderType.Appointment)">@ReminderTypeLabel(ReminderType.Appointment)</option>
+                    <option value="@((int)ReminderType.Custom)">@ReminderTypeLabel(ReminderType.Custom)</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Título", "Title")</label>

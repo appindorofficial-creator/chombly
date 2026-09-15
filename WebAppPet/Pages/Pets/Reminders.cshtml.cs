@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -54,9 +55,10 @@ public class RemindersModel : PageModel
         {
             Title = Type switch
             {
-                ReminderType.Vaccine => "Vaccine reminder",
-                ReminderType.Medication => "Medication reminder",
-                _ => "Care reminder"
+                ReminderType.Vaccine => CatalogLocalizer.Loc("Recordatorio de vacuna", "Vaccine reminder"),
+                ReminderType.Medication => CatalogLocalizer.Loc("Recordatorio de medicamento", "Medication reminder"),
+                ReminderType.Appointment => CatalogLocalizer.Loc("Recordatorio de cita", "Appointment reminder"),
+                _ => CatalogLocalizer.Loc("Recordatorio de cuidado", "Care reminder")
             };
         }
 
@@ -79,7 +81,7 @@ public class RemindersModel : PageModel
             Channel = ReminderChannel.InApp
         });
 
-        Message = "Reminder created.";
+        Message = CatalogLocalizer.Loc("Recordatorio creado.", "Reminder created.");
         Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId.Value, Id);
         return Page();
     }
@@ -88,7 +90,7 @@ public class RemindersModel : PageModel
     {
         if (!await LoadPetAsync()) return RedirectToPage("/Pets/Index");
         await _reminders.DeactivateAsync(scheduleId, _auth.CurrentUserId!.Value);
-        Message = "Reminder deactivated.";
+        Message = CatalogLocalizer.Loc("Recordatorio desactivado.", "Reminder deactivated.");
         Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId.Value, Id);
         return Page();
     }
