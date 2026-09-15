@@ -1247,37 +1247,40 @@
       if (form.dataset.toggleChipsBound === '1') return;
       form.dataset.toggleChipsBound = '1';
 
+      function radioLabel(el) {
+        var label = el && el.closest ? el.closest('label') : null;
+        if (!label || !form.contains(label) || label.classList.contains('filter-check')) return null;
+        var input = label.querySelector('input[type="radio"]');
+        if (!input || input.disabled) return null;
+        if (label.classList.contains('is-disabled') || label.classList.contains('disabled')) return null;
+        return { label: label, input: input };
+      }
+
       form.addEventListener('change', function (e) {
-        var input = e.target;
-        if (!input || input.type !== 'radio' || !input.name) return;
-        if (!input.closest('label.when-chip, label.radio-card')) return;
-        form.querySelectorAll('input[type="radio"][name="' + input.name + '"]').forEach(function (radio) {
-          var lab = radio.closest('label.when-chip, label.radio-card');
+        var hit = radioLabel(e.target);
+        if (!hit) return;
+        form.querySelectorAll('input[type="radio"][name="' + hit.input.name + '"]').forEach(function (radio) {
+          var lab = radio.closest('label');
           if (lab) lab.classList.toggle('active', radio.checked);
         });
       });
 
       form.addEventListener('click', function (e) {
-        var label = e.target.closest('label.when-chip, label.radio-card');
-        if (!label || !form.contains(label) || label.classList.contains('is-disabled') || label.classList.contains('disabled')) {
-          return;
-        }
-
-        var input = label.querySelector('input[type="radio"]');
-        if (!input || input.disabled || !input.name) return;
+        var hit = radioLabel(e.target);
+        if (!hit) return;
 
         e.preventDefault();
         e.stopPropagation();
 
-        var wasChecked = !!input.checked;
-        form.querySelectorAll('input[type="radio"][name="' + input.name + '"]').forEach(function (radio) {
+        var wasChecked = !!hit.input.checked;
+        form.querySelectorAll('input[type="radio"][name="' + hit.input.name + '"]').forEach(function (radio) {
           radio.checked = false;
-          var lab = radio.closest('label.when-chip, label.radio-card');
+          var lab = radio.closest('label');
           if (lab) lab.classList.remove('active');
         });
         if (!wasChecked) {
-          input.checked = true;
-          label.classList.add('active');
+          hit.input.checked = true;
+          hit.label.classList.add('active');
         }
 
         if (typeof form.requestSubmit === 'function') form.requestSubmit();

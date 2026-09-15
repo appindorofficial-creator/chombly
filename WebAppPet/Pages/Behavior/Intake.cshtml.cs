@@ -56,12 +56,12 @@ public class IntakeModel : PageModel
         Case = await _flow.GetOwnedAsync(CaseId);
         if (Case is null) return RedirectToPage("/Care/Services");
 
-        Pets = await _db.Pets.AsNoTracking()
-            .Where(p => p.OwnerId == _auth.CurrentUserId)
-            .OrderBy(p => p.Name)
-            .ToListAsync();
+        Pets = await LoadDogPetsAsync();
 
-        SelectedPetIds = BehaviorFlowService.GetSelectedPetIds(Case);
+        var dogIds = Pets.Select(p => p.Id).ToHashSet();
+        SelectedPetIds = BehaviorFlowService.GetSelectedPetIds(Case)
+            .Where(id => dogIds.Contains(id))
+            .ToList();
         // Do not auto-pick a pet — user must explicitly turn one on.
 
         ProblemType = Case.ProblemType;
@@ -77,19 +77,16 @@ public class IntakeModel : PageModel
         Case = await _flow.GetOwnedAsync(CaseId);
         if (Case is null) return RedirectToPage("/Care/Services");
 
-        Pets = await _db.Pets.AsNoTracking()
-            .Where(p => p.OwnerId == _auth.CurrentUserId)
-            .OrderBy(p => p.Name)
-            .ToListAsync();
+        Pets = await LoadDogPetsAsync();
 
-        var ownedIds = Pets.Select(p => p.Id).ToHashSet();
-        SelectedPetIds = SelectedPetIds.Where(id => ownedIds.Contains(id)).Distinct().ToList();
+        var dogIds = Pets.Select(p => p.Id).ToHashSet();
+        SelectedPetIds = SelectedPetIds.Where(id => dogIds.Contains(id)).Distinct().ToList();
 
         if (SelectedPetIds.Count == 0)
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                "Activa al menos una mascota.",
-                "Turn on at least one pet.");
+                "Activa al menos un perro.",
+                "Turn on at least one dog.");
             return Page();
         }
 
@@ -117,5 +114,15 @@ public class IntakeModel : PageModel
         Case.Status = BehaviorCaseStatus.IntakeComplete;
         await _flow.TouchAsync(Case);
         return RedirectToPage("/Behavior/Providers", new { caseId = CaseId });
+    }
+
+    /// <summary>Comportamiento canino: solo perros (no gatos u otras especies).</summary>
+    private async Task<List<Models.Pet>> LoadDogPetsAsync()
+    {
+        return await _db.Pets.AsNoTracking()
+            .Where(p => p.OwnerId == _auth.CurrentUserId
+                        && p.Species == PetSpecies.Dog)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
     }
 }

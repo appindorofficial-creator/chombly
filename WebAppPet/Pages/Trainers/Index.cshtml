@@ -17,7 +17,7 @@
     }
 
     <form method="get" id="trainers-filter-form">
-        <input type="hidden" name="groomerId" value="@Model.GroomerId" />
+        <input type="hidden" name="groomerId" value="@(Model.CanSelectTrainer ? Model.GroomerId : null)" />
         <input type="hidden" name="More" value="@(Model.More ? "true" : "false")" />
 
         <h3 class="section-title" style="margin-top:0">1. ¿Qué tipo de entrenamiento necesitas?</h3>
@@ -32,31 +32,8 @@
             }
         </div>
 
-        <h3 class="section-title">2. ¿Cuándo?</h3>
-        <div class="when-row">
-            <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
-                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
-                Hoy
-            </label>
-            <label class="when-chip @(Model.When == "manana" ? "active" : "")">
-                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
-                Mañana
-            </label>
-            <label class="when-chip @(Model.When == "fecha" ? "active" : "")">
-                <input type="radio" name="When" value="fecha" @(Model.When == "fecha" ? "checked" : "") onchange="this.form.submit()" />
-                Elegir fecha
-            </label>
-        </div>
-        @if (Model.When == "fecha")
-        {
-            <div class="form-group">
-                <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" onchange="this.form.submit()" />
-            </div>
-        }
-        else
-        {
-            <input type="hidden" name="Date" value="@Model.Date" />
-        }
+        <h3 class="section-title">2. ¿Qué fecha?</h3>
+        <partial name="_BookingDateField" model="new BookingDateFieldModel { Date = Model.Date, MinDate = minDate }" />
 
         <h3 class="section-title">3. ¿A qué hora?</h3>
         <div class="when-row" style="flex-wrap:wrap">
@@ -102,33 +79,7 @@
         </div>
 
         <h3 class="section-title">6. Selecciona tu mascota</h3>
-        @if (!Model.Pets.Any())
-        {
-            <div class="alert alert-info">
-                Agrega una mascota para continuar.
-                <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">+ Agregar mascota</a>
-            </div>
-        }
-        else
-        {
-            @foreach (var p in Model.Pets)
-            {
-                var on = p.Id == Model.PetId;
-                <label class="radio-card">
-                    <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
-                    <div class="inner">
-                        <div class="pet-select" style="border:none;padding:0;flex:1">
-                            <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
-                            <div>
-                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                                <div class="muted small">@p.Breed · @p.AgeYears años</div>
-                            </div>
-                        </div>
-                    </div>
-                </label>
-            }
-            <a class="link-btn" asp-page="/Pets/Create" style="display:inline-block;margin-bottom:12px">+ Agregar otra mascota</a>
-        }
+        <partial name="_BookingPetPicker" model="new BookingPetPickerModel { Pets = Model.Pets, PetId = Model.PetId }" />
 
         <h3 class="section-title">7. Preferencias <span class="muted small">(opcional)</span></h3>
         <div class="filter-bar filter-bar-wrap">
@@ -143,6 +94,16 @@
         </div>
 
         <h3 class="section-title" id="trainers-results">@CatalogLocalizer.Loc("8. Entrenadores disponibles cerca de ti", "8. Trainers available near you")</h3>
+        @if (!Model.CanSelectTrainer)
+        {
+            var trainersGate = new BookingGateNoteModel
+            {
+                Id = "trainers-need-basics",
+                TextEs = "Completa tipo, fecha, hora, lugar, sesiones y mascota (pasos 1–6) para poder elegir un entrenador.",
+                TextEn = "Complete type, date, time, place, sessions, and pet (steps 1–6) before choosing a trainer."
+            };
+            <partial name="_BookingGateNote" model="trainersGate" />
+        }
         @if (!Model.Results.Any())
         {
             <div class="empty">@CatalogLocalizer.Loc("No hay entrenadores con esos filtros en la base de datos.", "No trainers match these filters.")</div>
@@ -150,8 +111,8 @@
         @foreach (var item in Model.Results)
         {
             var t = item.Trainer;
-            var selected = Model.GroomerId == t.Id;
-            <div class="hotel-card @(selected ? "selected" : "")">
+            var selected = Model.CanSelectTrainer && Model.GroomerId == t.Id;
+            <div class="hotel-card @(selected ? "selected" : "") @(Model.CanSelectTrainer ? "" : "is-locked")">
                 @if (item.AvailableToday)
                 {
                     <span class="badge badge-green hotel-reco">@item.AvailabilityLabel</span>
@@ -175,20 +136,30 @@
                         <div class="price">Desde $@item.UnitPrice.ToString("0") <span class="muted small">/ sesión</span></div>
                     </div>
                 </div>
-                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
-                   asp-page="./Index"
-                   asp-route-Need="@Model.Need"
-                   asp-route-Place="@Model.Place"
-                   asp-route-Sessions="@Model.Sessions"
-                   asp-route-When="@Model.When"
-                   asp-route-Slot="@Model.Slot"
-                   asp-route-Date="@Model.Date"
-                   asp-route-PetId="@Model.PetId"
-                   asp-route-groomerId="@t.Id"
-                   asp-route-Notes="@Model.Notes"
-                   asp-route-More="@Model.More">
-                    @(selected ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓") : CatalogLocalizer.Loc("Elegir entrenador", "Choose trainer"))
-                </a>
+                @{
+                    var trainerChoose = new BookingChooseActionModel
+                    {
+                        CanSelect = Model.CanSelectTrainer,
+                        Selected = selected,
+                        ChooseUrl = Url.Page("./Index", new
+                        {
+                            Need = Model.Need,
+                            Place = Model.Place,
+                            Sessions = Model.Sessions,
+                            When = Model.When,
+                            Slot = Model.Slot,
+                            Date = Model.Date,
+                            PetId = Model.PetId,
+                            groomerId = t.Id,
+                            Notes = Model.Notes,
+                            More = Model.More
+                        }),
+                        GateAnchorId = "trainers-need-basics",
+                        ChooseLabelEs = "Elegir entrenador",
+                        ChooseLabelEn = "Choose trainer"
+                    };
+                }
+                <partial name="_BookingChooseAction" model="trainerChoose" />
             </div>
         }
         @if (Model.HasMore)

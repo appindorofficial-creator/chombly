@@ -217,7 +217,9 @@ public class ProvidersModel : PageModel
         if (ids.Count == 0) return;
 
         var pets = await _db.Pets.AsNoTracking()
-            .Where(p => p.OwnerId == _auth.CurrentUserId && ids.Contains(p.Id))
+            .Where(p => p.OwnerId == _auth.CurrentUserId
+                        && ids.Contains(p.Id)
+                        && p.Species == PetSpecies.Dog)
             .ToListAsync();
         SelectedPets = ids
             .Select(id => pets.FirstOrDefault(p => p.Id == id))

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
+using WebAppPet.Pages.Shared;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Daycare;
@@ -39,13 +40,13 @@ public class IndexModel : PageModel
     };
 
     [BindProperty(SupportsGet = true)]
-    public string When { get; set; } = "hoy";
+    public string When { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
     public string? Date { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string Schedule { get; set; } = "completo";
+    public string Schedule { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
     public string CustomStart { get; set; } = "09:00";
@@ -97,6 +98,23 @@ public class IndexModel : PageModel
     public string? ScheduleLabel { get; set; }
     public string? ErrorMessage { get; set; }
     public bool HasMore { get; set; }
+
+    public bool HasDate => BookingDate.TryParseSelected(Date, out _);
+
+    public bool HasSchedule =>
+        Schedule is "medio" or "completo"
+        || (Schedule == "personalizado"
+            && TimeSpan.TryParse(CustomStart, out _)
+            && TimeSpan.TryParse(CustomEnd, out _));
+
+    /// <summary>Steps 1–3 complete: date, schedule, and pet.</summary>
+    public bool HasBookingBasics =>
+        HasDate
+        && HasSchedule
+        && PetId > 0
+        && SelectedPet != null;
+
+    public bool CanSelectDaycare => HasBookingBasics;
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -223,22 +241,16 @@ public class IndexModel : PageModel
     private async Task LoadAsync()
     {
         Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "daycare" && c.IsActive);
+        (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
         ResolveDate(out var day);
-        Date = day.ToString("yyyy-MM-dd");
-        DateLabel = When switch
-        {
-            "hoy" => $"Hoy, {day:d MMM yyyy}",
-            "manana" => $"Mañana, {day:d MMM yyyy}",
-            _ => day.ToString("ddd d MMM yyyy")
-        };
+        DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
 
-        var sched = ScheduleOptions.FirstOrDefault(s => s.Key == Schedule);
         ScheduleLabel = Schedule switch
         {
             "medio" => CatalogLocalizer.Loc("Medio día (hasta 5 h)", "Half day (up to 5 h)"),
             "completo" => CatalogLocalizer.Loc("Día completo (7 AM – 7 PM)", "Full day (7 AM – 7 PM)"),
             "personalizado" => CatalogLocalizer.Loc($"Personalizado {CustomStart} – {CustomEnd}", $"Custom {CustomStart} – {CustomEnd}"),
-            _ => CatalogLocalizer.Text(sched.Label ?? "Día completo")
+            _ => null
         };
 
         double? userLat = null, userLng = null;
@@ -249,8 +261,7 @@ public class IndexModel : PageModel
             userLng = user?.Longitude;
 
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-            if (PetId == 0 && Pets.Count > 0) PetId = Pets[0].Id;
-            SelectedPet = Pets.FirstOrDefault(p => p.Id == PetId);
+            SelectedPet = PetId > 0 ? Pets.FirstOrDefault(p => p.Id == PetId) : null;
 
             Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.IsDefault).ToListAsync();
@@ -270,7 +281,7 @@ public class IndexModel : PageModel
 
         var todayMap = await _availability.TodayMapAsync(daycares.Select(d => d.Id));
 
-        if (When.Equals("hoy", StringComparison.OrdinalIgnoreCase))
+        if (HasDate && day.Date == DateTime.Today)
             daycares = daycares.Where(d => todayMap.GetValueOrDefault(d.Id, true)).ToList();
 
         if (Prefs.Contains("grandes"))
@@ -324,6 +335,9 @@ public class IndexModel : PageModel
         HasMore = !More && Results.Count > 3;
         if (HasMore)
             Results = Results.Take(3).ToList();
+
+        if (GroomerId.HasValue && !HasBookingBasics)
+            GroomerId = null;
 
         if (GroomerId.HasValue)
         {
@@ -417,13 +431,9 @@ public class IndexModel : PageModel
 
     private void ResolveDate(out DateTime day)
     {
-        var today = DateTime.Today;
-        if (When.Equals("hoy", StringComparison.OrdinalIgnoreCase))
-            day = today;
-        else if (When.Equals("manana", StringComparison.OrdinalIgnoreCase))
-            day = today.AddDays(1);
-        else if (!DateTime.TryParse(Date, out day))
-            day = today.AddDays(1);
+        if (BookingDate.TryParseSelected(Date, out day))
+            return;
+        day = DateTime.Today;
     }
 
     private void ResolveWindow(DateTime day, out DateTime start, out DateTime end)

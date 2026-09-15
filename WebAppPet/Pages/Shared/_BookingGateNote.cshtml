@@ -1,0 +1,5 @@
+@model WebAppPet.Pages.Shared.BookingGateNoteModel
+@* Shared Apple-style gate note shown until booking basics are complete. *@
+<p class="booking-gate-note" id="@Model.Id" role="status">
+    @CatalogLocalizer.Loc(Model.TextEs, Model.TextEn)
+</p>

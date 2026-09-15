@@ -18,19 +18,19 @@
 
         @if (Model.Pets.Count == 0)
         {
-            <p class="muted">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
-            <a class="btn btn-primary" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+            <p class="muted">@CatalogLocalizer.Loc("Agrega un perro para continuar.", "Add a dog to continue.")</p>
+            <a class="btn btn-primary" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">@CatalogLocalizer.Loc("Agregar perro", "Add dog")</a>
         }
         else
         {
             <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px" id="behavior-intake-form"
                   data-pet-required="1"
-                  data-msg-pet-required="@CatalogLocalizer.Loc("Activa al menos una mascota.", "Turn on at least one pet.")">
+                  data-msg-pet-required="@CatalogLocalizer.Loc("Activa al menos un perro.", "Turn on at least one dog.")">
                 <input type="hidden" asp-for="CaseId" />
 
-                <section class="behavior-pet-section" aria-label="@CatalogLocalizer.Loc("Mascota", "Pet")">
-                    <h2 class="section-title">@CatalogLocalizer.Loc("¿Para qué mascotas?", "Which pets?")</h2>
-                    <p class="muted small" style="margin:-4px 0 10px">@CatalogLocalizer.Loc("Activa una o varias. El mismo servicio aplica a las que marques.", "Turn on one or more. The same service applies to each selected pet.")</p>
+                <section class="behavior-pet-section" aria-label="@CatalogLocalizer.Loc("Perros", "Dogs")">
+                    <h2 class="section-title">@CatalogLocalizer.Loc("¿Para qué perros?", "Which dogs?")</h2>
+                    <p class="muted small" style="margin:-4px 0 10px">@CatalogLocalizer.Loc("Activa uno o varios. Este servicio es solo para perros.", "Turn on one or more. This service is for dogs only.")</p>
                     <div class="behavior-pet-list" role="group" aria-describedby="behavior-pet-error">
                         @foreach (var p in Model.Pets)
                         {
@@ -53,10 +53,10 @@
                        @(string.IsNullOrEmpty(Model.ErrorMessage) || Model.SelectedPetIds.Count > 0 ? "hidden" : null)>
                         @(Model.SelectedPetIds.Count == 0 && !string.IsNullOrEmpty(Model.ErrorMessage)
                             ? Model.ErrorMessage
-                            : CatalogLocalizer.Loc("Activa al menos una mascota.", "Turn on at least one pet."))
+                            : CatalogLocalizer.Loc("Activa al menos un perro.", "Turn on at least one dog."))
                     </p>
                     <p class="muted small" style="margin:10px 0 0">
-                        <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">+ @CatalogLocalizer.Loc("Agregar otra mascota", "Add another pet")</a>
+                        <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Behavior/Intake?caseId={Model.CaseId}")">+ @CatalogLocalizer.Loc("Agregar otro perro", "Add another dog")</a>
                     </p>
                 </section>
 

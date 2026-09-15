@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
+using WebAppPet.Pages.Shared;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Trainers;
@@ -56,19 +57,19 @@ public class IndexModel : PageModel
     };
 
     [BindProperty(SupportsGet = true)]
-    public string Need { get; set; } = "obediencia";
+    public string Need { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
-    public string Place { get; set; } = "domicilio";
+    public string Place { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
-    public int Sessions { get; set; } = 4;
+    public int Sessions { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string When { get; set; } = "manana";
+    public string When { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
-    public string Slot { get; set; } = "10:00 AM";
+    public string Slot { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
     public string? Date { get; set; }
@@ -120,6 +121,24 @@ public class IndexModel : PageModel
     public string? DateLabel { get; set; }
     public string? ErrorMessage { get; set; }
     public bool HasMore { get; set; }
+
+    public bool HasNeed => TrainingTypes.Any(t => string.Equals(t.Key, Need, StringComparison.OrdinalIgnoreCase));
+    public bool HasPlace => PlaceOptions.Any(p => string.Equals(p.Key, Place, StringComparison.OrdinalIgnoreCase));
+    public bool HasSessions => Sessions is 1 or 4 or 8;
+    public bool HasSlot => TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase);
+    public bool HasDate => BookingDate.TryParseSelected(Date, out _);
+
+    /// <summary>Steps 1–6 complete: need, date, time, place, sessions, and pet.</summary>
+    public bool HasBookingBasics =>
+        HasNeed
+        && HasDate
+        && HasSlot
+        && HasPlace
+        && HasSessions
+        && PetId > 0
+        && SelectedPet != null;
+
+    public bool CanSelectTrainer => HasBookingBasics;
 
     public string NeedLabel => CatalogLocalizer.Text(TrainingTypes.FirstOrDefault(t => t.Key == Need).Label ?? "Entrenamiento");
     public string PlaceLabel => CatalogLocalizer.Text(PlaceOptions.FirstOrDefault(p => p.Key == Place).Label ?? Place);
@@ -252,26 +271,27 @@ public class IndexModel : PageModel
 
     private async Task LoadAsync()
     {
-        if (Sessions is not (1 or 4 or 8)) Sessions = 4;
+        if (Sessions is not (0 or 1 or 4 or 8)) Sessions = 0;
 
         Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "trainers" && c.IsActive);
-        NormalizeWhen();
-        if (!TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
-            Slot = "10:00 AM";
+        (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
+        if (!string.IsNullOrWhiteSpace(Slot) && !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
+            Slot = "";
 
         var day = ResolveDay();
-        Date = day.ToString("yyyy-MM-dd");
-        if (GroomerId is int bookedGroomerId)
+        if (GroomerId is int bookedGroomerId && HasDate)
             await LoadOccupiedSlotsAsync(bookedGroomerId, day);
 
-        if (OccupiedSlots.Contains(Slot))
+        if (!string.IsNullOrWhiteSpace(Slot) && OccupiedSlots.Contains(Slot))
         {
             var free = TimeSlots.FirstOrDefault(t => !OccupiedSlots.Contains(t));
-            if (free != null) Slot = free;
+            Slot = free ?? "";
         }
 
-        TryResolveSchedule(GroomerId, out var start, out _);
-        DateLabel = $"{FormatWhenLabel(day)} · {start:h:mm tt}";
+        if (HasSlot && HasDate && TryResolveSchedule(GroomerId, out var start, out _))
+            DateLabel = $"{BookingDate.FormatLabel(day)} · {start:h:mm tt}";
+        else
+            DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
 
         double? userLat = null, userLng = null;
         if (_auth.CurrentUserId is int userId)
@@ -281,8 +301,7 @@ public class IndexModel : PageModel
             userLng = user?.Longitude;
 
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-            if (PetId == 0 && Pets.Count > 0) PetId = Pets[0].Id;
-            SelectedPet = Pets.FirstOrDefault(p => p.Id == PetId);
+            SelectedPet = PetId > 0 ? Pets.FirstOrDefault(p => p.Id == PetId) : null;
 
             Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.IsDefault).ToListAsync();
@@ -352,6 +371,9 @@ public class IndexModel : PageModel
         if (HasMore)
             Results = Results.Take(3).ToList();
 
+        if (GroomerId.HasValue && !HasBookingBasics)
+            GroomerId = null;
+
         if (GroomerId.HasValue)
         {
             SelectedTrainer = await _db.Groomers
@@ -367,7 +389,7 @@ public class IndexModel : PageModel
                     UnitPrice = SelectedPet != null
                         ? SelectedService.PriceFor(SelectedPet.Size)
                         : SelectedService.PriceSmall;
-                    Estimate = UnitPrice * Sessions;
+                    Estimate = UnitPrice * (HasSessions ? Sessions : 1);
                     await ApplyPromoAsync();
                 }
             }
@@ -444,46 +466,11 @@ public class IndexModel : PageModel
         return list.OrderBy(s => s.PriceSmall).First();
     }
 
-    private void NormalizeWhen()
-    {
-        When = When?.Trim().ToLowerInvariant() switch
-        {
-            "hoy" or "today" => "hoy",
-            "manana" or "mañana" or "tomorrow" => "manana",
-            "fecha" => "fecha",
-            _ => "manana"
-        };
-    }
-
     private DateTime ResolveDay()
     {
-        var today = AppTimeZones.TodayLocalDate();
-        if (When == "hoy") return today;
-        if (When == "manana")
-        {
-            var d = today.AddDays(1);
-            while (d.DayOfWeek == DayOfWeek.Sunday)
-                d = d.AddDays(1);
-            return d;
-        }
-
-        if (When == "fecha" && DateTime.TryParse(Date, out var parsed) && parsed.Date >= today)
-        {
-            var d = parsed.Date;
-            while (d.DayOfWeek == DayOfWeek.Sunday)
-                d = d.AddDays(1);
-            return d;
-        }
-
-        return today.AddDays(1);
-    }
-
-    private static string FormatWhenLabel(DateTime day)
-    {
-        var today = AppTimeZones.TodayLocalDate();
-        if (day.Date == today) return $"Hoy, {day:d MMM yyyy}";
-        if (day.Date == today.AddDays(1)) return $"Mañana, {day:d MMM yyyy}";
-        return day.ToString("ddd, d MMM yyyy");
+        if (BookingDate.TryParseSelected(Date, out var day))
+            return day;
+        return AppTimeZones.TodayLocalDate();
     }
 
     private async Task LoadOccupiedSlotsAsync(int groomerId, DateTime day)
@@ -562,11 +549,8 @@ public class IndexModel : PageModel
 
                 startUtc = candidate;
                 Slot = t;
-                var today = AppTimeZones.TodayLocalDate();
-                When = tryDay.Date == today ? "hoy"
-                    : tryDay.Date == today.AddDays(1) ? "manana"
-                    : "fecha";
                 Date = tryDay.ToString("yyyy-MM-dd");
+                When = "";
                 return true;
             }
         }

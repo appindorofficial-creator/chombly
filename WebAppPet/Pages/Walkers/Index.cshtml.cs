@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
+using WebAppPet.Pages.Shared;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Walkers;
@@ -98,17 +99,18 @@ public class IndexModel : PageModel
     /// <summary>True when the user has explicitly chosen a duration chip.</summary>
     public bool HasDuration => DurationOptions.Contains(Duration);
 
-    /// <summary>Time chips still valid for the selected day (hides past slots on "hoy").</summary>
+    /// <summary>True when the user picked a valid booking date (today or later).</summary>
+    public bool HasDate => BookingDate.TryParseSelected(Date, out _);
+
+    /// <summary>Time chips still valid for the selected day (hides past slots on today).</summary>
     public List<(string Key, string Label)> AvailableTimeOptions { get; private set; } = new();
 
     /// <summary>Minutes shown on cards/estimates; 60 until the user picks a duration.</summary>
     public int DisplayDuration => HasDuration ? Duration : 60;
 
-    /// <summary>Steps 1–4 complete: when, time, duration, and pet.</summary>
+    /// <summary>Steps 1–4 complete: date, time, duration, and pet.</summary>
     public bool HasBookingBasics =>
-        !string.IsNullOrWhiteSpace(When)
-        && (!When.Equals("fecha", StringComparison.OrdinalIgnoreCase)
-            || (!string.IsNullOrWhiteSpace(Date) && DateTime.TryParse(Date, out _)))
+        HasDate
         && !string.IsNullOrWhiteSpace(Slot)
         && AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase))
         && HasDuration
@@ -141,11 +143,11 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (string.IsNullOrWhiteSpace(When) || string.IsNullOrWhiteSpace(Slot) || !DurationOptions.Contains(Duration))
+        if (!HasDate || string.IsNullOrWhiteSpace(Slot) || !DurationOptions.Contains(Duration))
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                "Elige cuándo, a qué hora y cuánto tiempo dura el paseo.",
-                "Choose when, what time, and how long the walk should be.");
+                "Elige fecha, a qué hora y cuánto tiempo dura el paseo.",
+                "Choose a date, what time, and how long the walk should be.");
             return Page();
         }
 
@@ -249,18 +251,11 @@ public class IndexModel : PageModel
         if (Duration != 0 && !DurationOptions.Contains(Duration)) Duration = 0;
 
         Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "walkers" && c.IsActive);
+        (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
         ResolveDate(out var day);
-        if (!string.IsNullOrWhiteSpace(When) || !string.IsNullOrWhiteSpace(Date))
-            Date = day.ToString("yyyy-MM-dd");
-        DateLabel = When switch
-        {
-            "hoy" => $"Hoy, {day:d MMM yyyy}",
-            "manana" => $"Mañana, {day:d MMM yyyy}",
-            "fecha" => day.ToString("ddd d MMM yyyy"),
-            _ => null
-        };
+        DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
 
-        AvailableTimeOptions = GetAvailableTimeOptions(day);
+        AvailableTimeOptions = HasDate ? GetAvailableTimeOptions(day) : new();
         if (!string.IsNullOrWhiteSpace(Slot) &&
             !AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase)))
         {
@@ -306,7 +301,7 @@ public class IndexModel : PageModel
 
         var todayMap = await _availability.TodayMapAsync(walkers.Select(w => w.Id));
 
-        if (When.Equals("hoy", StringComparison.OrdinalIgnoreCase))
+        if (HasDate && day.Date == AppTimeZones.TodayLocalDate())
             walkers = walkers.Where(w => todayMap.GetValueOrDefault(w.Id, true)).ToList();
 
         if (Prefs.Contains("individual"))
@@ -440,17 +435,9 @@ public class IndexModel : PageModel
 
     private void ResolveDate(out DateTime day)
     {
-        var today = AppTimeZones.TodayLocalDate();
-        if (When.Equals("hoy", StringComparison.OrdinalIgnoreCase))
-            day = today;
-        else if (When.Equals("manana", StringComparison.OrdinalIgnoreCase))
-            day = today.AddDays(1);
-        else if (When.Equals("fecha", StringComparison.OrdinalIgnoreCase) && DateTime.TryParse(Date, out day))
-            day = day.Date;
-        else if (!string.IsNullOrWhiteSpace(When) && DateTime.TryParse(Date, out day))
-            day = day.Date;
-        else
-            day = today;
+        if (BookingDate.TryParseSelected(Date, out day))
+            return;
+        day = AppTimeZones.TodayLocalDate();
     }
 
     private List<(string Key, string Label)> GetAvailableTimeOptions(DateTime day)

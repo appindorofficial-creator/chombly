@@ -1,0 +1,10 @@
+@model WebAppPet.Pages.Shared.BookingDateFieldModel
+@* Shared date picker for booking flows (replaces Hoy / Mañana / Elegir fecha chips). *@
+<div class="form-group booking-date-field">
+    <input class="form-control"
+           type="date"
+           name="Date"
+           value="@Model.Date"
+           min="@Model.MinDate"
+           onchange="this.form.submit()" />
+</div>
