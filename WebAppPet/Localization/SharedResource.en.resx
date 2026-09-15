@@ -315,7 +315,8 @@
   <data name="Booking_CheckDates" xml:space="preserve"><value>Check your check-in and check-out dates.</value></data>
   <data name="Booking_InvalidDates" xml:space="preserve"><value>Invalid dates.</value></data>
   <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Invalid date or time.</value></data>
-  <data name="Booking_DateNotPast" xml:space="preserve"><value>You can't select a past date.</value></data>
+  <data name="Booking_DateNotPast" xml:space="preserve"><value>You can't select a past date or time.</value></data>
+  <data name="Booking_NoFutureSlots" xml:space="preserve"><value>No times left for that day. Choose another date.</value></data>
   <data name="Booking_MissingData" xml:space="preserve"><value>Booking details are incomplete.</value></data>
   <data name="Booking_SpeciesNotAccepted" xml:space="preserve"><value>This business does not serve {0}.</value></data>
 

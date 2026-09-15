@@ -68,6 +68,9 @@ public class IndexModel : PageModel
         "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
     };
 
+    /// <summary>Slots still in the future for the selected (or today) date.</summary>
+    public List<string> AvailableTimeSlots => GetAvailableTimeSlots(Date);
+
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
     public List<ServiceExtra> SelectedExtras { get; set; } = new();
@@ -130,6 +133,8 @@ public class IndexModel : PageModel
         {
             Step = Math.Max(1, Step - 1);
             ModelState.Remove(nameof(Step));
+            if (Step == 2)
+                EnsureScheduleDefaults();
             await PrepareConfirmAsync(applyPromo: Step == 4);
             return Page();
         }
@@ -139,6 +144,14 @@ public class IndexModel : PageModel
             Step = 4;
             ModelState.Remove(nameof(Step));
             await PrepareConfirmAsync(applyPromo: true);
+            return Page();
+        }
+
+        if (handler == "RefreshSchedule")
+        {
+            Step = 2;
+            ModelState.Remove(nameof(Step));
+            EnsureScheduleDefaults();
             return Page();
         }
 
@@ -156,6 +169,7 @@ public class IndexModel : PageModel
 
             if (Step == 2)
             {
+                EnsureScheduleDefaults();
                 if (IsOvernight)
                 {
                     if (!DateTime.TryParse(Date, out var cin) || !DateTime.TryParse(EndDate, out var cout) || cout <= cin)
@@ -163,7 +177,7 @@ public class IndexModel : PageModel
                         ErrorMessage = _L["Booking_CheckDates"].Value;
                         return Page();
                     }
-                    if (cin.Date < AppTimeZones.TodayLocalDate())
+                    if (IsOvernightCheckInInPast(cin.Date))
                     {
                         ErrorMessage = _L["Booking_DateNotPast"].Value;
                         return Page();
@@ -174,7 +188,12 @@ public class IndexModel : PageModel
                     ErrorMessage = _L["Booking_SelectDateTime"].Value;
                     return Page();
                 }
-                else if (DateTime.TryParse(Date, out var day) && day.Date < AppTimeZones.TodayLocalDate())
+                else if (!TryResolveDayServiceStartUtc(out var startUtc, out var scheduleError))
+                {
+                    ErrorMessage = scheduleError;
+                    return Page();
+                }
+                else if (startUtc <= DateTime.UtcNow)
                 {
                     ErrorMessage = _L["Booking_DateNotPast"].Value;
                     return Page();
@@ -198,6 +217,8 @@ public class IndexModel : PageModel
 
             Step = Math.Min(4, Step + 1);
             ModelState.Remove(nameof(Step));
+            if (Step == 2)
+                EnsureScheduleDefaults();
             await PrepareConfirmAsync(applyPromo: Step == 4);
             return Page();
         }
@@ -241,27 +262,27 @@ public class IndexModel : PageModel
                     ModelState.Remove(nameof(Step));
                     return Page();
                 }
-                if (cin.Date < AppTimeZones.TodayLocalDate())
+                if (IsOvernightCheckInInPast(cin.Date))
                 {
                     ErrorMessage = _L["Booking_DateNotPast"].Value;
                     Step = 2;
                     ModelState.Remove(nameof(Step));
                     return Page();
                 }
-                scheduled = cin.Date.AddHours(14); // check-in default 2pm
-                endAt = cout.Date.AddHours(11);    // check-out default 11am
+                scheduled = AppTimeZones.LocalDateAndTimeToUtc(cin.Date, TimeSpan.FromHours(14)); // check-in 2pm local
+                endAt = AppTimeZones.LocalDateAndTimeToUtc(cout.Date, TimeSpan.FromHours(11));    // check-out 11am local
                 nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
             }
             else
             {
-                if (!DateTime.TryParse($"{Date} {Time}", out scheduled))
+                if (!TryResolveDayServiceStartUtc(out scheduled, out var scheduleError))
                 {
-                    ErrorMessage = _L["Booking_InvalidDateTime"].Value;
+                    ErrorMessage = scheduleError ?? _L["Booking_InvalidDateTime"].Value;
                     Step = 2;
                     ModelState.Remove(nameof(Step));
                     return Page();
                 }
-                if (scheduled.Date < AppTimeZones.TodayLocalDate())
+                if (scheduled <= DateTime.UtcNow)
                 {
                     ErrorMessage = _L["Booking_DateNotPast"].Value;
                     Step = 2;
@@ -388,5 +409,104 @@ public class IndexModel : PageModel
             Deposit = Math.Round(EstimatedTotal * 0.35m, 2);
             if (Deposit < 15) Deposit = Math.Min(15, EstimatedTotal);
         }
+    }
+
+    private List<string> GetAvailableTimeSlots(string? dateValue)
+    {
+        var day = AppTimeZones.TodayLocalDate();
+        if (!string.IsNullOrWhiteSpace(dateValue) && DateTime.TryParse(dateValue, out var parsed))
+            day = parsed.Date;
+
+        var nowUtc = DateTime.UtcNow;
+        var available = new List<string>();
+        foreach (var label in TimeSlots)
+        {
+            if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var tod)) continue;
+            var utc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+            if (utc > nowUtc)
+                available.Add(label);
+        }
+        return available;
+    }
+
+    private void EnsureScheduleDefaults()
+    {
+        if (string.IsNullOrWhiteSpace(Date))
+            Date = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
+
+        if (IsOvernight)
+        {
+            if (string.IsNullOrWhiteSpace(EndDate) && DateTime.TryParse(Date, out var cin))
+                EndDate = cin.Date.AddDays(1).ToString("yyyy-MM-dd");
+            return;
+        }
+
+        var available = GetAvailableTimeSlots(Date);
+        if (available.Count == 0)
+        {
+            Time = "";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Time) || !available.Contains(Time, StringComparer.OrdinalIgnoreCase))
+            Time = available[0];
+    }
+
+    private bool TryResolveDayServiceStartUtc(out DateTime startUtc, out string? error)
+    {
+        startUtc = default;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(Date) || string.IsNullOrWhiteSpace(Time))
+        {
+            error = _L["Booking_SelectDateTime"].Value;
+            return false;
+        }
+
+        if (!DateTime.TryParse(Date, out var day))
+        {
+            error = _L["Booking_InvalidDateTime"].Value;
+            return false;
+        }
+
+        if (day.Date < AppTimeZones.TodayLocalDate())
+        {
+            error = _L["Booking_DateNotPast"].Value;
+            return false;
+        }
+
+        var available = GetAvailableTimeSlots(Date);
+        if (available.Count == 0)
+        {
+            error = _L["Booking_NoFutureSlots"].Value;
+            return false;
+        }
+
+        if (!available.Contains(Time, StringComparer.OrdinalIgnoreCase))
+        {
+            error = _L["Booking_DateNotPast"].Value;
+            return false;
+        }
+
+        if (!AppTimeZones.TryParseSlotToTimeSpan(Time, out var tod))
+        {
+            error = _L["Booking_InvalidDateTime"].Value;
+            return false;
+        }
+
+        startUtc = AppTimeZones.LocalDateAndTimeToUtc(day.Date, tod);
+        return true;
+    }
+
+    /// <summary>
+    /// Overnight check-in is treated as 2pm local; same-day check-in after 2pm is past.
+    /// </summary>
+    private static bool IsOvernightCheckInInPast(DateTime checkInDate)
+    {
+        var today = AppTimeZones.TodayLocalDate();
+        if (checkInDate.Date < today) return true;
+        if (checkInDate.Date > today) return false;
+        var checkInUtc = AppTimeZones.LocalDateAndTimeToUtc(checkInDate.Date, TimeSpan.FromHours(14));
+        return checkInUtc <= DateTime.UtcNow;
     }
 }

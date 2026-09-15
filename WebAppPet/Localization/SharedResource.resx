@@ -325,7 +325,8 @@
   <data name="Booking_CheckDates" xml:space="preserve"><value>Revisa check-in y check-out.</value></data>
   <data name="Booking_InvalidDates" xml:space="preserve"><value>Fechas inválidas.</value></data>
   <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Fecha u hora inválida.</value></data>
-  <data name="Booking_DateNotPast" xml:space="preserve"><value>No puedes elegir una fecha en el pasado.</value></data>
+  <data name="Booking_DateNotPast" xml:space="preserve"><value>No puedes elegir una fecha u hora en el pasado.</value></data>
+  <data name="Booking_NoFutureSlots" xml:space="preserve"><value>No quedan horarios disponibles para ese día. Elige otra fecha.</value></data>
   <data name="Booking_MissingData" xml:space="preserve"><value>Faltan datos de la reserva.</value></data>
   <data name="Booking_SpeciesNotAccepted" xml:space="preserve"><value>Este negocio no atiende {0}.</value></data>
 

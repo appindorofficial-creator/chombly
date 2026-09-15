@@ -525,10 +525,20 @@ public class IndexModel : PageModel
         startUtc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
 
         if (groomerId is not int gid)
+        {
+            if (startUtc <= DateTime.UtcNow)
+            {
+                error = CatalogLocalizer.Loc(
+                    "No puedes elegir una fecha u hora en el pasado.",
+                    "You can't select a past date or time.");
+                return false;
+            }
             return true;
+        }
 
         var preferredIndex = Array.FindIndex(TimeSlots, t => string.Equals(t, Slot, StringComparison.OrdinalIgnoreCase));
         if (preferredIndex < 0) preferredIndex = 0;
+        var nowUtc = DateTime.UtcNow;
 
         for (var dayOffset = 0; dayOffset < 14; dayOffset++)
         {
@@ -543,6 +553,7 @@ public class IndexModel : PageModel
             {
                 if (!AppTimeZones.TryParseSlotToTimeSpan(t, out var slotTod)) continue;
                 var candidate = AppTimeZones.LocalDateAndTimeToUtc(tryDay, slotTod);
+                if (candidate <= nowUtc) continue;
                 var busy = _db.Appointments.AsNoTracking().Any(a =>
                     a.GroomerId == gid
                     && a.Status != AppointmentStatus.Cancelled

@@ -326,6 +326,7 @@ public class ProvidersModel : PageModel
             {
                 if (!AppTimeZones.TryParseSlotToTimeSpan(t, out var slotTod)) continue;
                 var candidate = AppTimeZones.LocalDateAndTimeToUtc(tryDay, slotTod);
+                if (candidate <= DateTime.UtcNow) continue;
                 var busy = _db.Appointments.AsNoTracking().Any(a =>
                     a.GroomerId == providerId
                     && a.Status != AppointmentStatus.Cancelled
