@@ -8,7 +8,7 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")@(!string.IsNullOrEmpty(Model.ErrorMessage) && Model.GroomerId.HasValue ? " is-summary-collapsed" : "")">
         <h1 class="app-page-heading">@L["Walkers_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -48,17 +48,21 @@
 
         <h3 class="section-title">2. ¿A qué hora?</h3>
         <div class="when-row">
-            @foreach (var t in WebAppPet.Pages.Walkers.IndexModel.TimeOptions)
+            @foreach (var t in Model.AvailableTimeOptions)
             {
                 <label class="when-chip @(Model.Slot == t.Key ? "active" : "")">
                     <input type="radio" name="Slot" value="@t.Key" @(Model.Slot == t.Key ? "checked" : "") onchange="this.form.submit()" />
-                    @CatalogLocalizer.Text(t.Label)
+                    @(t.Key == "ahora" ? CatalogLocalizer.Loc("Ahora", "Now") : t.Label)
                 </label>
             }
         </div>
+        @if (Model.AvailableTimeOptions.Count == 0 && string.Equals(Model.When, "hoy", StringComparison.OrdinalIgnoreCase))
+        {
+            <p class="field-error" role="alert">@CatalogLocalizer.Loc("No quedan horarios para hoy. Elige mañana u otra fecha.", "No times left for today. Choose tomorrow or another date.")</p>
+        }
         @if (!string.IsNullOrEmpty(Model.SuggestedTime))
         {
-            <p class="muted small">Hora sugerida: @Model.SuggestedTime</p>
+            <p class="muted small">@CatalogLocalizer.Loc("Hora sugerida:", "Suggested time:") @Model.SuggestedTime</p>
         }
 
         <h3 class="section-title">3. ¿Cuánto tiempo?</h3>
@@ -228,9 +232,40 @@
     ViewData["PromoError"] = Model.PromoError;
     ViewData["TermsStep"] = "10. ";
     ViewData["TermsChecked"] = Model.AcceptTerms;
-    <aside class="hotel-summary">
+    var startCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage);
+    <aside class="hotel-summary @(startCollapsed ? "is-collapsed" : null)"
+           data-hotel-summary
+           @(startCollapsed ? "data-summary-start-collapsed=1" : null)>
         <div class="hotel-summary-inner">
-            <h3>Confirmar paseo</h3>
+            <div class="hotel-summary-toolbar">
+                <h3>@CatalogLocalizer.Loc("Confirmar paseo", "Confirm walk")</h3>
+                <button type="button"
+                        class="hotel-summary-toggle"
+                        data-summary-toggle
+                        aria-expanded="@(startCollapsed ? "false" : "true")"
+                        aria-controls="walkers-summary-body">
+                    <span data-label-min @(startCollapsed ? "hidden" : null)>▾ @CatalogLocalizer.Loc("Minimizar", "Minimize")</span>
+                    <span data-label-max @(startCollapsed ? null : "hidden")>▴ @CatalogLocalizer.Loc("Expandir", "Expand")</span>
+                </button>
+            </div>
+            <button type="button"
+                    class="hotel-summary-peek"
+                    data-summary-toggle
+                    aria-controls="walkers-summary-body">
+                <div class="hotel-summary-peek-row">
+                    <div>
+                        <strong>@Model.SelectedWalker.BusinessName</strong>
+                        <small>@CatalogLocalizer.Loc("Toca para expandir el resumen", "Tap to expand the summary")</small>
+                    </div>
+                    <strong>$@Model.Estimate.ToString("0")</strong>
+                </div>
+            </button>
+            <div class="hotel-summary-body" id="walkers-summary-body" data-summary-body>
+            <p class="hotel-summary-edit-hint">
+                <button type="button" class="hotel-summary-edit-link" data-summary-toggle>
+                    ← @CatalogLocalizer.Loc("Seguir editando el paseo", "Keep editing the walk")
+                </button>
+            </p>
             <div class="summary-hotel">
                 <img src="@(Model.SelectedWalker.ImageUrl ?? "/images/categories/cat-walkers-v2.png")" alt="" />
                 <div>
@@ -280,6 +315,7 @@
                 </button>
                 <p class="muted small" style="text-align:center;margin-top:8px">Pago seguro y encriptado</p>
             </form>
+            </div>
         </div>
     </aside>
 }

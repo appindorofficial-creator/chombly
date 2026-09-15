@@ -26,9 +26,9 @@ public class IndexModel : PageModel
     public static readonly (string Key, string Label)[] TimeOptions =
     {
         ("ahora", "Ahora"),
-        ("manana9", "Mañana 9:00 AM"),
-        ("tarde", "Tarde 1:00 PM"),
-        ("noche", "Noche 6:00 PM")
+        ("manana9", "9:00 AM"),
+        ("tarde", "1:00 PM"),
+        ("noche", "6:00 PM")
     };
 
     public static readonly int[] DurationOptions = { 30, 60, 90, 120 };
@@ -98,6 +98,9 @@ public class IndexModel : PageModel
     /// <summary>True when the user has explicitly chosen a duration chip.</summary>
     public bool HasDuration => DurationOptions.Contains(Duration);
 
+    /// <summary>Time chips still valid for the selected day (hides past slots on "hoy").</summary>
+    public List<(string Key, string Label)> AvailableTimeOptions { get; private set; } = new();
+
     /// <summary>Minutes shown on cards/estimates; 60 until the user picks a duration.</summary>
     public int DisplayDuration => HasDuration ? Duration : 60;
 
@@ -129,6 +132,14 @@ public class IndexModel : PageModel
             ErrorMessage = CatalogLocalizer.Loc(
                 "Elige cuándo, a qué hora y cuánto tiempo dura el paseo.",
                 "Choose when, what time, and how long the walk should be.");
+            return Page();
+        }
+
+        if (!AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase)))
+        {
+            ErrorMessage = CatalogLocalizer.Loc(
+                "Esa hora ya no está disponible. Elige otro horario.",
+                "That time is no longer available. Choose another slot.");
             return Page();
         }
 
@@ -235,11 +246,18 @@ public class IndexModel : PageModel
             _ => null
         };
 
+        AvailableTimeOptions = GetAvailableTimeOptions(day);
+        if (!string.IsNullOrWhiteSpace(Slot) &&
+            !AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase)))
+        {
+            Slot = "";
+        }
+
         ResolveStart(day, out var start);
         SuggestedTime = string.IsNullOrWhiteSpace(Slot) ? null : start.ToString("h:mm tt");
         TimeLabel = Slot switch
         {
-            "ahora" => $"Ahora (~{SuggestedTime})",
+            "ahora" => SuggestedTime != null ? $"Ahora (~{SuggestedTime})" : "Ahora",
             "manana9" => "9:00 AM",
             "tarde" => "1:00 PM",
             "noche" => "6:00 PM",
@@ -404,7 +422,7 @@ public class IndexModel : PageModel
 
     private void ResolveDate(out DateTime day)
     {
-        var today = DateTime.Today;
+        var today = AppTimeZones.TodayLocalDate();
         if (When.Equals("hoy", StringComparison.OrdinalIgnoreCase))
             day = today;
         else if (When.Equals("manana", StringComparison.OrdinalIgnoreCase))
@@ -417,24 +435,53 @@ public class IndexModel : PageModel
             day = today;
     }
 
+    private List<(string Key, string Label)> GetAvailableTimeOptions(DateTime day)
+    {
+        var today = AppTimeZones.TodayLocalDate();
+        var nowLocal = AppTimeZones.NowLocal();
+        var list = new List<(string Key, string Label)>();
+
+        foreach (var opt in TimeOptions)
+        {
+            if (opt.Key == "ahora")
+            {
+                if (day.Date == today)
+                    list.Add(opt);
+                continue;
+            }
+
+            // Build the slot on the selected calendar day and drop it if already past.
+            var probe = day.Date;
+            ResolveStartForSlot(opt.Key, probe, nowLocal, out var start);
+            if (day.Date > today || start > nowLocal)
+                list.Add(opt);
+        }
+
+        return list;
+    }
+
     private void ResolveStart(DateTime day, out DateTime start)
     {
-        var now = DateTime.Now;
-        if (Slot == "ahora")
+        ResolveStartForSlot(Slot, day, AppTimeZones.NowLocal(), out start);
+    }
+
+    private static void ResolveStartForSlot(string? slot, DateTime day, DateTime nowLocal, out DateTime start)
+    {
+        if (slot == "ahora")
         {
-            if (day.Date == DateTime.Today)
+            if (day.Date == AppTimeZones.TodayLocalDate())
             {
-                start = now.AddMinutes(15);
+                start = nowLocal.AddMinutes(15);
                 start = new DateTime(start.Year, start.Month, start.Day, start.Hour, (start.Minute / 5) * 5, 0);
             }
             else
                 start = day.Date.AddHours(9);
         }
-        else if (Slot == "manana9")
+        else if (slot == "manana9")
             start = day.Date.AddHours(9);
-        else if (Slot == "noche")
+        else if (slot == "noche")
             start = day.Date.AddHours(18);
-        else if (Slot == "tarde")
+        else if (slot == "tarde")
             start = day.Date.AddHours(13);
         else
             start = day.Date.AddHours(13); // listing fallback only; booking requires Slot

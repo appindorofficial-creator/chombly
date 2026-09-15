@@ -1211,6 +1211,50 @@
     });
   }
 
+  function bindHotelSummaryToggle(root) {
+    var scope = root || document;
+    var sheets = scope.querySelectorAll('[data-hotel-summary]');
+    if (!sheets.length) return;
+
+    sheets.forEach(function (sheet) {
+      if (sheet.dataset.summaryBound === '1') return;
+      sheet.dataset.summaryBound = '1';
+
+      var flow = document.querySelector('.hotel-flow');
+      var storageKey = 'chombly.summaryCollapsed:' + (location.pathname || '');
+      var startCollapsed = sheet.hasAttribute('data-summary-start-collapsed');
+      var stored = null;
+      try { stored = sessionStorage.getItem(storageKey); } catch (_) { }
+
+      function apply(collapsed) {
+        sheet.classList.toggle('is-collapsed', collapsed);
+        if (flow) flow.classList.toggle('is-summary-collapsed', collapsed);
+        sheet.querySelectorAll('[data-summary-toggle]').forEach(function (btn) {
+          if (btn.classList.contains('hotel-summary-toggle')) {
+            btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            var min = btn.querySelector('[data-label-min]');
+            var max = btn.querySelector('[data-label-max]');
+            if (min) min.hidden = collapsed;
+            if (max) max.hidden = !collapsed;
+          }
+        });
+        try { sessionStorage.setItem(storageKey, collapsed ? '1' : '0'); } catch (_) { }
+      }
+
+      var collapsed = startCollapsed || stored === '1';
+      // If user just got a validation error, force collapse so the form is usable.
+      if (startCollapsed) collapsed = true;
+      apply(collapsed);
+
+      sheet.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-summary-toggle]') : null;
+        if (!btn || !sheet.contains(btn)) return;
+        e.preventDefault();
+        apply(!sheet.classList.contains('is-collapsed'));
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindPhoneInputs(document);
     bindPasswordToggles(document);
@@ -1232,6 +1276,7 @@
     bindHowGlow(document);
     bindFeaturedBanner(document);
     bindNavReplace(document);
+    bindHotelSummaryToggle(document);
     scrollToVisibleTermsError();
   });
   window.ChomblyBindPhones = bindPhoneInputs;
