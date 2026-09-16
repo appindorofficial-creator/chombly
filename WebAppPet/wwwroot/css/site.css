@@ -3603,15 +3603,28 @@ body.chat-layout .chat-page {
 .date-row { display: flex; gap: 10px; margin-bottom: 12px; }
 
 .pet-count-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
-.stepper {
+.pet-count-row .stepper {
   display: flex; align-items: center; gap: 12px;
-  background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 8px 12px;
+  margin: 0; /* override booking .stepper margin-bottom that misaligns this row */
+  height: 48px;
+  box-sizing: border-box;
+  background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 0 12px;
 }
 .stepper-btn {
   width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
   background: var(--brand-soft); color: var(--brand-dark); font-weight: 900; text-decoration: none;
+  flex-shrink: 0;
 }
-.pet-select-inline { flex: 1; margin: 0; }
+.pet-select-inline {
+  flex: 1;
+  margin: 0;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: #fff;
+  line-height: normal;
+}
 
 .filter-check input { display: none; }
 
