@@ -1221,6 +1221,7 @@
         sheet.querySelectorAll('[data-summary-toggle]').forEach(function (btn) {
           if (btn.classList.contains('hotel-summary-toggle')) {
             btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            btn.setAttribute('aria-label', collapsed ? 'Expand' : 'Minimize');
             var min = btn.querySelector('[data-label-min]');
             var max = btn.querySelector('[data-label-max]');
             if (min) min.hidden = collapsed;
@@ -1241,6 +1242,15 @@
         e.preventDefault();
         apply(!sheet.classList.contains('is-collapsed'));
       });
+
+      // Grabber tap collapses when expanded (Apple sheet habit).
+      var grabber = sheet.querySelector('.hotel-summary-grabber');
+      if (grabber) {
+        grabber.style.cursor = 'pointer';
+        grabber.addEventListener('click', function () {
+          if (!sheet.classList.contains('is-collapsed')) apply(true);
+        });
+      }
     });
   }
 

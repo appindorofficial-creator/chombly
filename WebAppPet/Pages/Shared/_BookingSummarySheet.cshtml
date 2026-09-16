@@ -12,16 +12,23 @@
 <aside class="hotel-summary @(startCollapsed ? "is-collapsed" : null)"
        data-hotel-summary
        @(startCollapsed ? "data-summary-start-collapsed=1" : null)>
+    <button type="button"
+            class="hotel-summary-scrim"
+            data-summary-toggle
+            aria-label="@CatalogLocalizer.Loc("Cerrar resumen", "Close summary")"
+            tabindex="-1"></button>
     <div class="hotel-summary-inner">
+        <div class="hotel-summary-grabber" aria-hidden="true"><span></span></div>
         <div class="hotel-summary-toolbar">
             <h3>@CatalogLocalizer.Loc(Model.TitleEs, Model.TitleEn)</h3>
             <button type="button"
                     class="hotel-summary-toggle"
                     data-summary-toggle
                     aria-expanded="@(startCollapsed ? "false" : "true")"
-                    aria-controls="@Model.BodyId">
-                <span data-label-min @(startCollapsed ? "hidden" : null)>▾ @CatalogLocalizer.Loc("Minimizar", "Minimize")</span>
-                <span data-label-max @(startCollapsed ? null : "hidden")>▴ @CatalogLocalizer.Loc("Expandir", "Expand")</span>
+                    aria-controls="@Model.BodyId"
+                    aria-label="@CatalogLocalizer.Loc("Minimizar", "Minimize")">
+                <span data-label-min @(startCollapsed ? "hidden" : null) class="hotel-summary-chevron" aria-hidden="true">▾</span>
+                <span data-label-max @(startCollapsed ? null : "hidden") class="hotel-summary-chevron" aria-hidden="true">▴</span>
             </button>
         </div>
         <button type="button"
@@ -29,11 +36,11 @@
                 data-summary-toggle
                 aria-controls="@Model.BodyId">
             <div class="hotel-summary-peek-row">
-                <div>
+                <div class="hotel-summary-peek-copy">
                     <strong>@Model.BusinessName</strong>
-                    <small>@CatalogLocalizer.Loc("Toca para expandir el resumen", "Tap to expand the summary")</small>
+                    <small>@CatalogLocalizer.Loc("Toca para expandir", "Tap to expand")</small>
                 </div>
-                <strong>$@estimate</strong>
+                <strong class="hotel-summary-peek-price">$@estimate</strong>
             </div>
         </button>
         <div class="hotel-summary-body" id="@Model.BodyId" data-summary-body>
