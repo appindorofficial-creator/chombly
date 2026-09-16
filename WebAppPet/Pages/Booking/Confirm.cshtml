@@ -1,12 +1,13 @@
 @page
 @model WebAppPet.Pages.Booking.ConfirmModel
 @{
-    ViewData["Title"] = "Confirmación";
+    ViewData["Title"] = CatalogLocalizer.Loc("Confirmación", "Confirmation");
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Appointments/Index");
     var a = Model.Appointment;
 }
+
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body no-nav">
@@ -15,8 +16,8 @@
             <div class="success-check" aria-hidden="true">
                 <span class="success-check-mark">✓</span>
             </div>
-            <h2 class="success-title">¡Reserva enviada!</h2>
-            <p class="muted success-sub">El negocio confirmará tu solicitud. Te avisaremos por notificación.</p>
+            <h2 class="success-title">@CatalogLocalizer.Loc("¡Reserva enviada!", "Booking submitted!")</h2>
+            <p class="muted success-sub">@CatalogLocalizer.Loc("El negocio confirmará tu solicitud. Te avisaremos por notificación.", "The business will confirm your request. We'll notify you.")</p>
         </div>
 
         @if (a != null)
@@ -30,21 +31,21 @@
                         <div class="muted small">@(a.Groomer.Category != null ? a.Groomer.Category.DisplayName() : "") · @a.Groomer.Address</div>
                     </div>
                 </div>
-                <p><strong>@(CatalogLocalizer.Loc("Servicio", "Service")):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
+                <p><strong>@CatalogLocalizer.Loc("Servicio", "Service"):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
                 @if (a.Nights > 0 && a.EndAt.HasValue)
                 {
-                    <p><strong>Check-in:</strong> @a.ScheduledAt.ToString("ddd d MMM yyyy")</p>
-                    <p><strong>Check-out:</strong> @a.EndAt.Value.ToString("ddd d MMM yyyy")</p>
-                    <p><strong>Noches:</strong> @a.Nights</p>
+                    <p><strong>@CatalogLocalizer.Loc("Check-in", "Check-in"):</strong> @a.ScheduledAt.ToString("ddd d MMM yyyy")</p>
+                    <p><strong>@CatalogLocalizer.Loc("Check-out", "Check-out"):</strong> @a.EndAt.Value.ToString("ddd d MMM yyyy")</p>
+                    <p><strong>@CatalogLocalizer.Loc("Noches", "Nights"):</strong> @a.Nights</p>
                 }
                 else
                 {
-                    <p><strong>Fecha:</strong> @a.ScheduledAt.ToString("dddd, MMM d, yyyy · h:mm tt")</p>
+                    <p><strong>@CatalogLocalizer.Loc("Fecha", "Date"):</strong> @a.ScheduledAt.ToString("dddd, MMM d, yyyy · h:mm tt")</p>
                 }
-                <p><strong>Mascota:</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@a.Pet.Species)</p>
+                <p><strong>@CatalogLocalizer.Loc("Mascota", "Pet"):</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species))</p>
                 @if (a.Extras.Any())
                 {
-                    <p><strong>Extras:</strong> @string.Join(", ", a.Extras.Select(e => e.Name))</p>
+                    <p><strong>@CatalogLocalizer.Loc("Extras", "Extras"):</strong> @string.Join(", ", a.Extras.Select(e => CatalogLocalizer.Text(e.Name)))</p>
                 }
                 @if (a.DiscountAmount > 0 && !string.IsNullOrEmpty(a.PromoCode))
                 {
@@ -53,17 +54,18 @@
                         <span class="price">−$@a.DiscountAmount.ToString("0.00")</span>
                     </p>
                 }
-                <p><strong>Total:</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
-                <p class="muted small">Anticipo: $@a.DepositPaid.ToString("0.00")</p>
+                <p><strong>@CatalogLocalizer.Loc("Total", "Total"):</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
+                <p class="muted small">@CatalogLocalizer.Loc("Anticipo", "Deposit"): $@a.DepositPaid.ToString("0.00")</p>
             </div>
 
-            <a class="btn btn-outline btn-block" asp-page="/Appointments/Details" asp-route-id="@a.Id">Ver detalles de la reserva</a>
-            <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@Url.Page("/Booking/Confirm", new { id = a.Id })" style="margin-top:10px">Enviar mensaje al negocio</a>
+            var confirmReturn = Url.Page("/Booking/Confirm", new { id = a.Id });
+            <a class="btn btn-outline btn-block" asp-page="/Appointments/Details" asp-route-id="@a.Id" asp-route-returnUrl="@confirmReturn">@CatalogLocalizer.Loc("Ver detalles de la reserva", "View booking details")</a>
+            <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@confirmReturn" style="margin-top:10px">@CatalogLocalizer.Loc("Enviar mensaje al negocio", "Message the business")</a>
             @if (!string.IsNullOrEmpty(a.Groomer.Address))
             {
-                <a class="btn btn-outline btn-block" href="https://maps.google.com/?q=@Uri.EscapeDataString(a.Groomer.Address)" target="_blank" rel="noopener" style="margin-top:10px">Cómo llegar</a>
+                <a class="btn btn-outline btn-block" href="https://maps.google.com/?q=@Uri.EscapeDataString(a.Groomer.Address)" target="_blank" rel="noopener" style="margin-top:10px">@CatalogLocalizer.Loc("Cómo llegar", "Get directions")</a>
             }
-            <a class="btn btn-primary btn-block" asp-page="/Appointments/Index" style="margin-top:10px">Ver mis citas</a>
+            <a class="btn btn-primary btn-block" asp-page="/Appointments/Index" style="margin-top:10px">@CatalogLocalizer.Loc("Ver mis citas", "View my appointments")</a>
         }
     </div>
 </div>

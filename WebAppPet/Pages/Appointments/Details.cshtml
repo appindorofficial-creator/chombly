@@ -1,19 +1,20 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Appointments.DetailsModel
 @{
-    ViewData["Title"] = "Detalle de cita";
+    ViewData["Title"] = CatalogLocalizer.Loc("Detalle de cita", "Appointment details");
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("./Index");
+    ViewData["OnboardBackHref"] = Model.BackHref;
     var HideNav = true;
 }
+
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body @(HideNav ? "no-nav" : "")">
-    <h1 class="app-page-heading">Detalle de cita</h1>
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Detalle de cita", "Appointment details")</h1>
 @if (Model.Appointment == null)
 {
-    <div class="empty">Cita no encontrada.</div>
+    <div class="empty">@CatalogLocalizer.Loc("Cita no encontrada.", "Appointment not found.")</div>
 }
 else
 {
@@ -36,22 +37,22 @@ else
     </div>
 
     <div class="card card-pad" style="margin-bottom:14px">
-        <p><strong>@(CatalogLocalizer.Loc("Servicio", "Service")):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
+        <p><strong>@CatalogLocalizer.Loc("Servicio", "Service"):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
         @if (a.Nights > 0 && a.EndAt.HasValue)
         {
-            <p><strong>Check-in:</strong> @a.ScheduledAt.ToString("dddd, d MMMM yyyy")</p>
-            <p><strong>Check-out:</strong> @a.EndAt.Value.ToString("dddd, d MMMM yyyy")</p>
-            <p><strong>Noches:</strong> @a.Nights</p>
+            <p><strong>@CatalogLocalizer.Loc("Check-in", "Check-in"):</strong> @a.ScheduledAt.ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>@CatalogLocalizer.Loc("Check-out", "Check-out"):</strong> @a.EndAt.Value.ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>@CatalogLocalizer.Loc("Noches", "Nights"):</strong> @a.Nights</p>
         }
         else
         {
-            <p><strong>Fecha:</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("dddd, d MMMM yyyy")</p>
-            <p><strong>Hora:</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("h:mm tt")</p>
+            <p><strong>@CatalogLocalizer.Loc("Fecha", "Date"):</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("dddd, d MMMM yyyy")</p>
+            <p><strong>@CatalogLocalizer.Loc("Hora", "Time"):</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("h:mm tt")</p>
         }
-        <p><strong>Mascota:</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@a.Pet.Species · @a.Pet.Breed)</p>
+        <p><strong>@CatalogLocalizer.Loc("Mascota", "Pet"):</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species) · @a.Pet.Breed)</p>
         @if (a.Extras.Any())
         {
-            <p><strong>Extras:</strong> @string.Join(", ", a.Extras.Select(e => $"{e.Name} (+${e.Price:0})"))</p>
+            <p><strong>@CatalogLocalizer.Loc("Extras", "Extras"):</strong> @string.Join(", ", a.Extras.Select(e => $"{CatalogLocalizer.Text(e.Name)} (+${e.Price:0})"))</p>
         }
         @if (a.DiscountAmount > 0 && !string.IsNullOrEmpty(a.PromoCode))
         {
@@ -60,17 +61,17 @@ else
                 <span class="price">−$@a.DiscountAmount.ToString("0.00")</span>
             </p>
         }
-        <p><strong>Total:</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
+        <p><strong>@CatalogLocalizer.Loc("Total", "Total"):</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
         @if (!string.IsNullOrWhiteSpace(a.Notes))
         {
-            <p><strong>Notas:</strong> @a.Notes</p>
+            <p><strong>@CatalogLocalizer.Loc("Notas", "Notes"):</strong> @CatalogLocalizer.Notes(a.Notes)</p>
         }
     </div>
 
-    <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@Url.Page("/Appointments/Details", new { id = a.Id })">Mensaje al negocio</a>
+    <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@(Model.ReturnUrl ?? Url.Page("/Appointments/Details", new { id = a.Id }))">@CatalogLocalizer.Loc("Mensaje al negocio", "Message the business")</a>
     @if (!string.IsNullOrEmpty(a.Groomer.Phone))
     {
-        <a class="btn btn-outline btn-block" href="tel:@a.Groomer.Phone" style="margin-top:10px">Contactar</a>
+        <a class="btn btn-outline btn-block" href="tel:@a.Groomer.Phone" style="margin-top:10px">@CatalogLocalizer.Loc("Contactar", "Contact")</a>
     }
 
     @if (a.Status is AppointmentStatus.Pending or AppointmentStatus.Confirmed)

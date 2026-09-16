@@ -9,6 +9,10 @@
         modelErr = te;
     var showError = !string.IsNullOrWhiteSpace(modelErr);
     if (showError) errMsg = modelErr!;
+
+    var termsReturn = $"{Context.Request.Path}{Context.Request.QueryString}";
+    if (string.IsNullOrWhiteSpace(termsReturn) || termsReturn == "/")
+        termsReturn = "/Index";
 }
 <div class="terms-block" data-terms-block>
     <label class="terms-row" for="AcceptTerms">
@@ -21,7 +25,7 @@
             {
                 @stepPrefix
             }
-            @L["Legal_AcceptPrefix"]<a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_Terms"]</a>@L["Legal_TermsSep"]<a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_Conditions"]</a>@L["Legal_AndPrivacy"]<a class="legal-link" asp-page="/Legal/Terms" asp-fragment="privacy" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_PrivacyPolicy"]</a>
+            @L["Legal_AcceptPrefix"]<a class="legal-link" asp-page="/Legal/Terms" asp-route-returnUrl="@termsReturn" asp-fragment="terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_Terms"]</a>@L["Legal_TermsSep"]<a class="legal-link" asp-page="/Legal/Terms" asp-route-returnUrl="@termsReturn" asp-fragment="terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_Conditions"]</a>@L["Legal_AndPrivacy"]<a class="legal-link" asp-page="/Legal/Terms" asp-route-returnUrl="@termsReturn" asp-fragment="privacy" target="_blank" rel="noopener" onclick="event.stopPropagation()">@L["Legal_PrivacyPolicy"]</a>
         </span>
     </label>
     <p id="AcceptTerms-error" class="field-error terms-error" data-terms-error

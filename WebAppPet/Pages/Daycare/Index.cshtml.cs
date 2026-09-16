@@ -177,12 +177,16 @@ public class IndexModel : PageModel
         var deposit = Math.Round(total * 0.35m, 2);
         if (deposit < 15) deposit = Math.Min(15, total);
 
-        var noteParts = new List<string> { $"Horario: {ScheduleLabel}" };
+        var noteParts = new List<string>
+        {
+            $"{CatalogLocalizer.Loc("Horario:", "Schedule:")} {ScheduleLabel}"
+        };
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
         if (PaymentMethodId.HasValue || DefaultPayment != null)
         {
             var pm = Payments.FirstOrDefault(p => p.Id == PaymentMethodId) ?? DefaultPayment;
-            if (pm != null) noteParts.Add($"Pago: {pm.Brand} •••• {pm.Last4}");
+            if (pm != null)
+                noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
         var appt = new Appointment

@@ -4,7 +4,7 @@
     ViewData["Title"] = L["Legal_PageTitle"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Model.BackHref;
-    ViewData["OnboardBackReplace"] = true;
+    // Normal navigation (no data-nav-replace): replace()+preventDefault can leave the user stuck on #terms.
     var HideNav = ViewData["HideNav"] as bool? == true;
     var isEn = CatalogLocalizer.IsEnglish();
 }

@@ -254,7 +254,7 @@
                 }
 
                 <partial name="_AcceptTerms" />
-                <a class="legal-link small" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" style="display:block;margin:4px 0 12px">@L["Legal_TermsConditions"] — @CatalogLocalizer.Loc("Ver aquí", "View here")</a>
+                <a class="legal-link small" asp-page="/Legal/Terms" asp-route-returnUrl="/Hotel" asp-fragment="terms" target="_blank" rel="noopener" style="display:block;margin:4px 0 12px">@L["Legal_TermsConditions"] — @CatalogLocalizer.Loc("Ver aquí", "View here")</a>
 
                 <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book"
                         aria-describedby="AcceptTerms-error">🔒 @CatalogLocalizer.Loc("Reservar ahora — Pago seguro", "Book now — Secure payment")</button>

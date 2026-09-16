@@ -143,12 +143,14 @@ public class IndexModel : PageModel
         if (deposit < 15) deposit = Math.Min(15, total);
 
         var noteParts = new List<string>();
-        if (PetCount > 1) noteParts.Add($"{PetCount} mascotas");
+        if (PetCount > 1)
+            noteParts.Add(CatalogLocalizer.Loc($"{PetCount} mascotas", $"{PetCount} pets"));
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
         if (PaymentMethodId.HasValue)
         {
             var pm = Payments.FirstOrDefault(p => p.Id == PaymentMethodId) ?? DefaultPayment;
-            if (pm != null) noteParts.Add($"Pago: {pm.Brand} •••• {pm.Last4}");
+            if (pm != null)
+                noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
         var appt = new Appointment
