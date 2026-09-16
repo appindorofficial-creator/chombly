@@ -7,38 +7,129 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Seguridad y VCPR", "Safety & VCPR")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("Cuestionario de banderas rojas", "Red-flag screening questionnaire")</p>
-    <div class="card card-pad @(Model.HasVcpr ? "vet-vcpr-ok" : "vet-vcpr-missing")" style="margin-bottom:16px">
-        @if (Model.HasVcpr)
-        {
-            <strong>@CatalogLocalizer.Loc("VCPR activa registrada", "Active VCPR on file")</strong>
-            <p class="muted small mb-0">@CatalogLocalizer.Loc("Hay evidencia de revisión presencial en este estado (últimos 12 meses).", "There is evidence of an in-person exam in this state (last 12 months).")</p>
-        }
-        else
-        {
-            <strong>@CatalogLocalizer.Loc("Sin VCPR verificable", "No verifiable VCPR")</strong>
-            <p class="muted small mb-0">@CatalogLocalizer.Loc("En NC la telemedicina clínica local requiere relación veterinario-cliente-paciente previa presencial.", "In NC, local clinical telemedicine requires a prior in-person VCPR.")</p>
-        }
-    </div>
+    <div class="home-body hotel-flow vet-safety-page">
+        <header class="vet-safety-hero">
+            <p class="vet-safety-kicker">@CatalogLocalizer.Loc("Paso de seguridad", "Safety step")</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Antes de continuar", "Before you continue")</h1>
+            <p class="muted small vet-safety-lead">
+                @CatalogLocalizer.Loc(
+                    "Revisamos signos graves y tu VCPR para orientar la consulta virtual.",
+                    "We screen for red flags and your VCPR before virtual care.")
+            </p>
+        </header>
 
-    <form method="post" class="stack" style="gap:12px">
-        <input type="hidden" asp-for="ConsultationId" />
-        <h2 class="section-title">@CatalogLocalizer.Loc("¿Presenta alguno de estos signos?", "Does your pet show any of these?")</h2>
+        <div class="vet-safety-vcpr @(Model.HasVcpr ? "is-ok" : "is-missing")" role="status">
+            <span class="vet-safety-vcpr-ico" aria-hidden="true">@(Model.HasVcpr ? "✓" : "!")</span>
+            <div class="vet-safety-vcpr-copy">
+                @if (Model.HasVcpr)
+                {
+                    <strong>@CatalogLocalizer.Loc("VCPR activa registrada", "Active VCPR on file")</strong>
+                    <p class="muted small mb-0">@CatalogLocalizer.Loc("Hay evidencia de revisión presencial en este estado (últimos 12 meses).", "There is evidence of an in-person exam in this state (last 12 months).")</p>
+                }
+                else
+                {
+                    <strong>@CatalogLocalizer.Loc("Sin VCPR verificable", "No verifiable VCPR")</strong>
+                    <p class="muted small mb-0">@CatalogLocalizer.Loc("En NC la telemedicina clínica local requiere relación veterinario-cliente-paciente previa presencial.", "In NC, local clinical telemedicine requires a prior in-person VCPR.")</p>
+                }
+            </div>
+        </div>
 
-        <label class="check-row"><input type="checkbox" asp-for="BreathingTrouble" /> <span>@CatalogLocalizer.Loc("Dificultad para respirar", "Breathing trouble")</span></label>
-        <label class="check-row"><input type="checkbox" asp-for="Seizures" /> <span>@CatalogLocalizer.Loc("Convulsiones", "Seizures")</span></label>
-        <label class="check-row"><input type="checkbox" asp-for="Unconscious" /> <span>@CatalogLocalizer.Loc("Inconsciente o colapso", "Unconscious or collapsed")</span></label>
-        <label class="check-row"><input type="checkbox" asp-for="SevereBleeding" /> <span>@CatalogLocalizer.Loc("Sangrado severo", "Severe bleeding")</span></label>
-        <label class="check-row"><input type="checkbox" asp-for="ToxinIngestion" /> <span>@CatalogLocalizer.Loc("Ingesta de tóxico / veneno", "Toxin / poison ingestion")</span></label>
-        <label class="check-row"><input type="checkbox" asp-for="ExtremePain" /> <span>@CatalogLocalizer.Loc("Dolor extremo", "Extreme pain")</span></label>
-        <label class="check-row"><input type="checkbox" asp-for="CannotUrinate" /> <span>@CatalogLocalizer.Loc("No puede orinar", "Cannot urinate")</span></label>
+        <form method="post" class="vet-safety-form" data-vet-safety>
+            <input type="hidden" asp-for="ConsultationId" />
 
-        <textarea class="input" asp-for="SafetyNotes" rows="2" placeholder="@CatalogLocalizer.Loc("Notas adicionales (opcional)", "Additional notes (optional)")"></textarea>
+            <div class="vet-safety-section-head">
+                <h2 class="section-title">@CatalogLocalizer.Loc("¿Hay alguna bandera roja ahora?", "Any red flags right now?")</h2>
+                <p class="muted small">
+                    @CatalogLocalizer.Loc(
+                        "Marca solo lo que está ocurriendo. Si hay una bandera roja, te llevamos a emergencia (sin cobro en la app).",
+                        "Check only what is happening now. A red flag sends you to emergency care (no in-app charge).")
+                </p>
+            </div>
 
-        <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Buscar veterinario", "Find a veterinarian")</button>
-    </form>
+            <div class="vet-safety-flags" role="group" aria-label="@CatalogLocalizer.Loc("Signos de alerta", "Warning signs")">
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="BreathingTrouble" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">😮‍💨</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dificultad para respirar", "Breathing trouble")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="Seizures" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">⚡</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Convulsiones", "Seizures")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="Unconscious" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">💫</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Inconsciente o colapso", "Unconscious or collapsed")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="SevereBleeding" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">🩸</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Sangrado severo", "Severe bleeding")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="ToxinIngestion" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">☠️</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Ingesta de tóxico / veneno", "Toxin / poison ingestion")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="ExtremePain" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">😣</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dolor extremo", "Extreme pain")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+                <label class="vet-safety-flag">
+                    <input type="checkbox" asp-for="CannotUrinate" />
+                    <span class="vet-safety-flag-ico" aria-hidden="true">🚫</span>
+                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("No puede orinar", "Cannot urinate")</span>
+                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                </label>
+            </div>
+
+            <div class="vet-safety-notes">
+                <label class="vet-safety-notes-label" for="SafetyNotes">@CatalogLocalizer.Loc("Notas adicionales", "Additional notes") <span class="muted">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></label>
+                <textarea class="vet-safety-notes-input" asp-for="SafetyNotes" id="SafetyNotes" rows="3"
+                          placeholder="@CatalogLocalizer.Loc("Algo más que deba saber el equipo…", "Anything else the care team should know…")"></textarea>
+            </div>
+
+            <div class="vet-safety-emergency-hint" data-safety-emergency-hint hidden role="status">
+                <strong>@CatalogLocalizer.Loc("Atención inmediata", "Immediate care")</strong>
+                <p class="muted small mb-0">@CatalogLocalizer.Loc("Con una bandera roja te llevamos a emergencia: llamada y ruta, sin reserva ni pago en la app.", "A red flag routes you to emergency: call and directions, with no in-app booking or payment.")</p>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary btn-block vet-safety-submit"
+                    data-safety-submit
+                    data-label-continue="@CatalogLocalizer.Loc("Continuar con la consulta", "Continue to consultation")"
+                    data-label-emergency="@CatalogLocalizer.Loc("Ir a emergencia", "Go to emergency")">
+                @CatalogLocalizer.Loc("Continuar con la consulta", "Continue to consultation")
+            </button>
+        </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+<script>
+(function () {
+  var form = document.querySelector('[data-vet-safety]');
+  if (!form) return;
+  var btn = form.querySelector('[data-safety-submit]');
+  var hint = form.querySelector('[data-safety-emergency-hint]');
+  if (!btn) return;
+  var labelContinue = btn.getAttribute('data-label-continue') || btn.textContent;
+  var labelEmergency = btn.getAttribute('data-label-emergency') || btn.textContent;
+  function sync() {
+    var any = Array.prototype.some.call(form.querySelectorAll('input[type="checkbox"]'), function (c) { return c.checked; });
+    btn.textContent = any ? labelEmergency : labelContinue;
+    btn.classList.toggle('is-emergency', any);
+    form.classList.toggle('has-red-flag', any);
+    if (hint) hint.hidden = !any;
+  }
+  form.addEventListener('change', sync);
+  sync();
+})();
+</script>

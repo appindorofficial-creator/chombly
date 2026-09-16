@@ -4521,6 +4521,253 @@ a.vet-modality-emergency:hover {
 .vet-vcpr-missing {
   border-left: 4px solid #f59e0b;
 }
+
+/* Vet Virtual — Safety screening */
+.vet-safety-page {
+  padding-bottom: 8px;
+}
+.vet-safety-hero {
+  margin-bottom: 14px;
+}
+.vet-safety-kicker {
+  margin: 0 0 6px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--brand-mid);
+}
+.vet-safety-lead {
+  margin: 4px 0 0;
+  max-width: 34rem;
+}
+.vet-safety-vcpr {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 14px 14px 12px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1.5px solid rgba(15, 61, 47, 0.1);
+  box-shadow: 0 6px 18px rgba(7, 61, 38, 0.05);
+  animation: vet-safety-in .4s ease both;
+}
+.vet-safety-vcpr.is-ok {
+  border-color: rgba(15, 61, 47, 0.16);
+  background: linear-gradient(165deg, #f4fbef 0%, #fff 68%);
+}
+.vet-safety-vcpr.is-missing {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(165deg, #fff8eb 0%, #fff 70%);
+}
+.vet-safety-vcpr-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: .95rem;
+  font-weight: 900;
+}
+.vet-safety-vcpr.is-ok .vet-safety-vcpr-ico {
+  background: rgba(182, 231, 64, 0.35);
+  color: var(--forest-deep);
+}
+.vet-safety-vcpr.is-missing .vet-safety-vcpr-ico {
+  background: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+}
+.vet-safety-vcpr-copy strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--forest-deep);
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+.vet-safety-section-head {
+  margin-bottom: 12px;
+}
+.vet-safety-section-head .section-title {
+  margin: 0 0 6px;
+}
+.vet-safety-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.vet-safety-flag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(15, 61, 47, 0.12);
+  background: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color .18s ease,
+    background-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+  animation: vet-safety-in .45s ease both;
+}
+.vet-safety-flag:nth-child(1) { animation-delay: .03s; }
+.vet-safety-flag:nth-child(2) { animation-delay: .06s; }
+.vet-safety-flag:nth-child(3) { animation-delay: .09s; }
+.vet-safety-flag:nth-child(4) { animation-delay: .12s; }
+.vet-safety-flag:nth-child(5) { animation-delay: .15s; }
+.vet-safety-flag:nth-child(6) { animation-delay: .18s; }
+.vet-safety-flag:nth-child(7) { animation-delay: .21s; }
+.vet-safety-flag:active {
+  transform: scale(0.985);
+}
+.vet-safety-flag input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.vet-safety-flag-ico {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  background: rgba(15, 61, 47, 0.06);
+  flex-shrink: 0;
+}
+.vet-safety-flag-text {
+  flex: 1;
+  min-width: 0;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--forest-deep);
+  line-height: 1.3;
+}
+.vet-safety-flag-tick {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(15, 61, 47, 0.22);
+  background: #fff;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color .18s ease, background .18s ease;
+}
+.vet-safety-flag-tick::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 3px;
+  background: transparent;
+  transform: scale(0.4);
+  opacity: 0;
+  transition: transform .16s ease, opacity .16s ease, background .16s ease;
+}
+.vet-safety-flag:has(input:checked),
+.vet-safety-flag:has(input:checked):focus-within {
+  border-color: #dc6b2f;
+  background: linear-gradient(165deg, #fff4ec 0%, #fff 72%);
+  box-shadow: 0 0 0 2px rgba(220, 107, 47, 0.18);
+}
+.vet-safety-flag:has(input:checked) .vet-safety-flag-ico {
+  background: rgba(220, 107, 47, 0.14);
+}
+.vet-safety-flag:has(input:checked) .vet-safety-flag-tick {
+  border-color: #dc6b2f;
+  background: #dc6b2f;
+}
+.vet-safety-flag:has(input:checked) .vet-safety-flag-tick::after {
+  background: #fff;
+  opacity: 1;
+  transform: scale(1);
+  clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 22%, 80% 0, 36% 58%);
+}
+.vet-safety-notes {
+  margin-bottom: 14px;
+}
+.vet-safety-notes-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: .88rem;
+  font-weight: 750;
+  color: var(--forest-deep);
+}
+.vet-safety-notes-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 96px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 14px;
+  resize: vertical;
+  background: #f2f2f7;
+  color: var(--forest-deep);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.vet-safety-notes-input:focus {
+  outline: 2px solid rgba(182, 231, 64, 0.75);
+  outline-offset: 1px;
+  background: #fff;
+}
+.vet-safety-emergency-hint {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(220, 107, 47, 0.35);
+  background: linear-gradient(165deg, #fff1e8 0%, #fff 75%);
+  animation: vet-safety-in .28s ease both;
+}
+.vet-safety-emergency-hint strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #9a3412;
+  font-weight: 800;
+}
+.vet-safety-submit.is-emergency {
+  background: #c2410c;
+  border-color: #c2410c;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(194, 65, 12, 0.28);
+}
+.vet-safety-submit.is-emergency:hover {
+  background: #9a3412;
+  border-color: #9a3412;
+}
+@keyframes vet-safety-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vet-safety-vcpr,
+  .vet-safety-flag,
+  .vet-safety-emergency-hint {
+    animation: none;
+  }
+  .vet-safety-flag:active {
+    transform: none;
+  }
+}
+
 .care-upsell {
   position: relative;
   border: 1.5px solid rgba(182, 231, 64, 0.65);
