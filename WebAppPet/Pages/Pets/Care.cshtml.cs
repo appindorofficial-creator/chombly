@@ -13,12 +13,14 @@ public class CareModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ChomblyCareService _care;
+    private readonly ReminderEngineService _reminders;
 
-    public CareModel(AppDbContext db, AuthService auth, ChomblyCareService care)
+    public CareModel(AppDbContext db, AuthService auth, ChomblyCareService care, ReminderEngineService reminders)
     {
         _db = db;
         _auth = auth;
         _care = care;
+        _reminders = reminders;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -71,18 +73,31 @@ public class CareModel : PageModel
             .FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == _auth.CurrentUserId);
         if (Pet is null) return RedirectToPage("/Pets/Index");
 
-        _db.Notifications.Add(new AppNotification
+        var nextLocal = AppTimeZones.TodayLocalDate().AddDays(7);
+        var nextUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9));
+
+        await _reminders.CreateScheduleAsync(new ReminderSchedule
         {
             UserId = _auth.CurrentUserId.Value,
-            Title = CatalogLocalizer.Loc("Recordatorio de cuidado", "Care reminder"),
-            Message = CatalogLocalizer.Loc(
-                $"Revisa vacunas y chequeo de {Pet.Name}.",
-                $"Review vaccines and checkup for {Pet.Name}."),
-            Type = "care-reminder",
-            CreatedAt = DateTime.UtcNow
+            PetId = Id,
+            Type = ReminderType.Vaccine,
+            Title = CatalogLocalizer.Loc(
+                $"Vacunas / chequeo · {Pet.Name}",
+                $"Vaccines / checkup · {Pet.Name}"),
+            Notes = CatalogLocalizer.Loc(
+                "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
+                "Created from Care. Adjust the date or frequency if needed."),
+            FrequencyDays = 365,
+            NextDueUtc = nextUtc,
+            QuietHoursStartLocal = TimeSpan.FromHours(21),
+            QuietHoursEndLocal = TimeSpan.FromHours(8),
+            TimeZoneId = "America/New_York",
+            Channel = ReminderChannel.InApp
         });
-        await _db.SaveChangesAsync();
 
-        return RedirectToPage(new { id = Id });
+        TempData["Flash"] = CatalogLocalizer.Loc(
+            "Recordatorio de vacunas/chequeo creado.",
+            "Vaccine/checkup reminder created.");
+        return RedirectToPage("/Pets/Reminders", new { id = Id });
     }
 }

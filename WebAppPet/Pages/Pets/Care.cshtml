@@ -77,15 +77,17 @@
         }
     </section>
 
-    <a class="btn btn-primary btn-block" asp-page="/Pets/Reminders" asp-route-id="@Model.Id" style="margin-bottom:8px">
-        @CatalogLocalizer.Loc("Recordatorios (vacunas / medicinas)", "Reminders (vaccines / meds)")
-    </a>
-    <form method="post" asp-page-handler="Remind">
-        <input type="hidden" name="Id" value="@Model.Id" />
-        <button type="submit" class="btn btn-outline btn-block">
-            @CatalogLocalizer.Loc("Crear aviso rápido de vacunas/chequeo", "Create quick vaccine/checkup notice")
-        </button>
-    </form>
+    <div style="display:flex;flex-direction:column;gap:8px">
+        <a class="btn btn-outline btn-block" asp-page="/Pets/History" asp-route-id="@Model.Id">
+            @CatalogLocalizer.Loc("Ver historial de servicios", "View service history")
+        </a>
+        <form method="post" asp-page-handler="Remind">
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <button type="submit" class="btn btn-primary btn-block">
+                @CatalogLocalizer.Loc("Crear aviso de vacunas/chequeo", "Create vaccine/checkup reminder")
+            </button>
+        </form>
+    </div>
     </div>
     @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
 </div>

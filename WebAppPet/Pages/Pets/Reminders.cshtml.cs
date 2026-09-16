@@ -44,6 +44,8 @@ public class RemindersModel : PageModel
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Pets/Reminders/{Id}" });
         if (!await LoadPetAsync()) return RedirectToPage("/Pets/Index");
         Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId.Value, Id);
+        if (TempData["Flash"] is string flash)
+            Message = flash;
         return Page();
     }
 
