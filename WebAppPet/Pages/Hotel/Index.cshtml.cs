@@ -67,6 +67,9 @@ public class IndexModel : PageModel
     public GroomerProfile? SelectedHotel { get; set; }
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
+
+    /// <summary>Hotel cards can be chosen only after a pet is selected.</summary>
+    public bool CanSelectHotel => SelectedPet != null;
     public PaymentMethod? DefaultPayment { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
     public int Nights { get; set; } = 1;
@@ -104,15 +107,31 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedHotel == null || SelectedService == null || SelectedPet == null)
+        if (SelectedHotel == null || SelectedService == null)
         {
-            ErrorMessage = "Elige hotel y mascota para continuar.";
+            ErrorMessage = CatalogLocalizer.Loc(
+                "Elige un hotel para continuar.",
+                "Choose a hotel to continue.");
+            return Page();
+        }
+
+        if (SelectedPet == null)
+        {
+            ErrorMessage = Pets.Count == 0
+                ? CatalogLocalizer.Loc(
+                    "Agrega una mascota para continuar.",
+                    "Add a pet to continue.")
+                : CatalogLocalizer.Loc(
+                    "Elige una mascota para continuar.",
+                    "Choose a pet to continue.");
             return Page();
         }
 
         if (!SelectedHotel.AcceptsSpecies(SelectedPet.Species))
         {
-            ErrorMessage = $"Este hotel no atiende {SelectedPet.Species}.";
+            ErrorMessage = CatalogLocalizer.Loc(
+                $"Este hotel no atiende {SelectedPet.Species}.",
+                $"This hotel does not accept {SelectedPet.Species}.");
             return Page();
         }
 
@@ -238,6 +257,10 @@ public class IndexModel : PageModel
                 PaymentMethodId = DefaultPayment.Id;
         }
 
+        // Don't keep a hotel selection (or confirm sheet) until a pet is chosen.
+        if (GroomerId.HasValue && !CanSelectHotel)
+            GroomerId = null;
+
         var hotelsQuery = _db.Groomers
             .Include(g => g.Category)
             .Include(g => g.Amenities)
@@ -248,6 +271,12 @@ public class IndexModel : PageModel
             .OrderByDescending(g => g.IsFeatured)
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
+
+        // Results are pet-specific (dog hotel vs bird hotel, etc.).
+        if (SelectedPet != null)
+            hotels = hotels.Where(h => h.AcceptsSpecies(SelectedPet.Species)).ToList();
+        else
+            hotels = new List<GroomerProfile>();
 
         AllFilterLabels = hotels
             .SelectMany(h => h.Amenities.Select(a => a.Label))
@@ -263,6 +292,10 @@ public class IndexModel : PageModel
                     !string.IsNullOrEmpty(a.Label)
                     && a.Label.Equals(f, StringComparison.OrdinalIgnoreCase)))).ToList();
         }
+
+        // Drop a prior hotel pick if it no longer matches the selected pet.
+        if (GroomerId.HasValue && (SelectedPet == null || hotels.All(h => h.Id != GroomerId)))
+            GroomerId = null;
 
         var todayMap = await _availability.TodayMapAsync(hotels.Select(h => h.Id));
         // Para "hoy" filtrar disponibles hoy
