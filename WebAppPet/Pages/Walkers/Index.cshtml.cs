@@ -266,7 +266,9 @@ public class IndexModel : PageModel
         SuggestedTime = string.IsNullOrWhiteSpace(Slot) ? null : start.ToString("h:mm tt");
         TimeLabel = Slot switch
         {
-            "ahora" => SuggestedTime != null ? $"Ahora (~{SuggestedTime})" : "Ahora",
+            "ahora" => SuggestedTime != null
+                ? CatalogLocalizer.Loc($"Ahora (~{SuggestedTime})", $"Now (~{SuggestedTime})")
+                : CatalogLocalizer.Loc("Ahora", "Now"),
             "manana9" => "9:00 AM",
             "tarde" => "1:00 PM",
             "noche" => "6:00 PM",

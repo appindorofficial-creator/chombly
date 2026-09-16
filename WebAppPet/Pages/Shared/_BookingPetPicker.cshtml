@@ -19,7 +19,7 @@ else
                     <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
                     <div>
                         <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                        <div class="muted small">@p.Breed · @p.AgeYears años</div>
+                        <div class="muted small">@p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "years")</div>
                     </div>
                 </div>
             </div>
