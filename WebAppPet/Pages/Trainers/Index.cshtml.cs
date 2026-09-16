@@ -142,12 +142,12 @@ public class IndexModel : PageModel
 
     public string NeedLabel => CatalogLocalizer.Text(TrainingTypes.FirstOrDefault(t => t.Key == Need).Label ?? "Entrenamiento");
     public string PlaceLabel => CatalogLocalizer.Text(PlaceOptions.FirstOrDefault(p => p.Key == Place).Label ?? Place);
-    public string PackageLabel => Sessions switch
+    public string PackageLabel => CatalogLocalizer.Text(Sessions switch
     {
         4 => "Paquete 4 sesiones",
         8 => "Paquete 8 sesiones",
         _ => "1 sesión"
-    };
+    });
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -183,8 +183,8 @@ public class IndexModel : PageModel
         if (!SelectedTrainer.AcceptsSpecies(SelectedPet.Species))
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                $"Este entrenador no atiende {SelectedPet.Species}.",
-                $"This trainer does not serve {SelectedPet.Species}.");
+                $"Este entrenador no atiende {PetSpecies.Label(SelectedPet.Species)}.",
+                $"This trainer does not serve {PetSpecies.Label(SelectedPet.Species)}.");
             return Page();
         }
 

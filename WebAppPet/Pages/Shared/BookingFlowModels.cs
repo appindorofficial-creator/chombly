@@ -1,3 +1,4 @@
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -51,8 +52,11 @@ public static class BookingDate
     public static string FormatLabel(DateTime day)
     {
         var today = AppTimeZones.TodayLocalDate();
-        if (day.Date == today) return $"Hoy, {day:d MMM yyyy}";
-        if (day.Date == today.AddDays(1)) return $"Mañana, {day:d MMM yyyy}";
+        var datePart = day.ToString("d MMM yyyy");
+        if (day.Date == today)
+            return $"{CatalogLocalizer.Loc("Hoy", "Today")}, {datePart}";
+        if (day.Date == today.AddDays(1))
+            return $"{CatalogLocalizer.Loc("Mañana", "Tomorrow")}, {datePart}";
         return day.ToString("ddd d MMM yyyy");
     }
 

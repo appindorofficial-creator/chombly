@@ -41,11 +41,11 @@
         {
             <div class="date-row">
                 <div class="form-group" style="flex:1;margin:0">
-                    <label class="muted small">Check-in</label>
+                    <label class="muted small">@L["Book_CheckIn"]</label>
                     <input class="form-control" type="date" name="CheckIn" value="@Model.CheckIn" min="@minDate" onchange="this.form.submit()" />
                 </div>
                 <div class="form-group" style="flex:1;margin:0">
-                    <label class="muted small">Check-out</label>
+                    <label class="muted small">@L["Book_CheckOut"]</label>
                     <input class="form-control" type="date" name="CheckOut" value="@Model.CheckOut" min="@minCheckout" onchange="this.form.submit()" />
                 </div>
             </div>
@@ -54,10 +54,10 @@
         {
             <input type="hidden" name="CheckIn" value="@Model.CheckIn" />
             <input type="hidden" name="CheckOut" value="@Model.CheckOut" />
-            <p class="muted small">@Model.CheckIn → @Model.CheckOut · @Model.Nights noche(s)</p>
+            <p class="muted small">@Model.CheckIn → @Model.CheckOut · @Model.Nights @L["Book_Nights"]</p>
         }
 
-        <h3 class="section-title">¿Cuántas mascotas?</h3>
+        <h3 class="section-title">@CatalogLocalizer.Loc("¿Cuántas mascotas?", "How many pets?")</h3>
         <div class="pet-count-row">
             <div class="stepper">
                 <a class="stepper-btn" href="?When=@Model.When&CheckIn=@Model.CheckIn&CheckOut=@Model.CheckOut&PetCount=@(Math.Max(1, Model.PetCount-1))&PetId=@Model.PetId&groomerId=@Model.GroomerId@string.Concat(Model.Filters.Select(f => "&Filters=" + Uri.EscapeDataString(f)))">−</a>
@@ -82,14 +82,14 @@
             }
             else
             {
-                <a class="btn btn-outline btn-sm" asp-page="/Pets/Create">+ Mascota</a>
+                <a class="btn btn-outline btn-sm" asp-page="/Pets/Create">@CatalogLocalizer.Loc("+ Mascota", "+ Pet")</a>
             }
         </div>
         <input type="hidden" name="PetCount" value="@Model.PetCount" />
 
         @if (Model.AllFilterLabels.Any())
         {
-            <h3 class="section-title">Filtros <span class="muted small">(opcional)</span></h3>
+            <h3 class="section-title">@CatalogLocalizer.Loc("Filtros", "Filters") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <div class="filter-bar">
                 @foreach (var f in Model.AllFilterLabels.Take(6))
                 {
@@ -102,10 +102,10 @@
             </div>
         }
 
-        <h3 class="section-title">Resultados</h3>
+        <h3 class="section-title">@CatalogLocalizer.Loc("Resultados", "Results")</h3>
         @if (!Model.Results.Any())
         {
-            <div class="empty">No hay hoteles con esos filtros en la base de datos.</div>
+            <div class="empty">@CatalogLocalizer.Loc("No hay hoteles con esos filtros en la base de datos.", "No hotels match these filters.")</div>
         }
         @foreach (var item in Model.Results)
         {
@@ -114,7 +114,7 @@
             <div class="hotel-card @(selected ? "selected" : "")">
                 @if (item.Recommended)
                 {
-                    <span class="badge badge-green hotel-reco">Recomendado</span>
+                    <span class="badge badge-green hotel-reco">@CatalogLocalizer.Text("Recomendado")</span>
                 }
                 <div class="hotel-card-main">
                     <img src="@(h.ImageUrl ?? "/images/pet-other.svg")" alt="@h.BusinessName" />
@@ -150,19 +150,21 @@
                    asp-route-groomerId="@h.Id"
                    asp-route-Notes="@Model.Notes"
                    asp-route-more="@Model.More">
-                    @(selected ? "Seleccionado ✓" : "Reservar")
+                    @(selected
+                        ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓")
+                        : CatalogLocalizer.Loc("Reservar", "Book"))
                 </a>
             </div>
         }
 
         @if (!Model.More && Model.Results.Count >= 3)
         {
-            <button type="submit" class="link-btn" name="more" value="true" style="display:block;margin:8px auto 16px">Ver más opciones ▾</button>
+            <button type="submit" class="link-btn" name="more" value="true" style="display:block;margin:8px auto 16px">@CatalogLocalizer.Loc("Ver más opciones ▾", "See more options ▾")</button>
         }
 
         @if (Model.Extras.Any())
         {
-            <h3 class="section-title">Extras <span class="muted small">(opcional)</span></h3>
+            <h3 class="section-title">@CatalogLocalizer.Loc("Extras", "Extras") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <div class="extras-grid">
                 @foreach (var e in Model.Extras)
                 {
@@ -176,10 +178,10 @@
             </div>
         }
 
-        <h3 class="section-title">Notas</h3>
+        <h3 class="section-title">@CatalogLocalizer.Loc("Notas", "Notes")</h3>
         <div class="form-group">
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
-                      placeholder="¿Hay algo que debamos saber?">@Model.Notes</textarea>
+                      placeholder="@CatalogLocalizer.Loc("¿Hay algo que debamos saber?", "Is there anything we should know?")">@Model.Notes</textarea>
             <div class="muted small" style="text-align:right">@(Model.Notes?.Length ?? 0)/200</div>
         </div>
     </form>
@@ -198,7 +200,7 @@
     ViewData["TermsChecked"] = Model.AcceptTerms;
     <aside class="hotel-summary">
         <div class="hotel-summary-inner">
-            <h3>Resumen</h3>
+            <h3>@CatalogLocalizer.Loc("Resumen", "Summary")</h3>
             <div class="summary-hotel">
                 <img src="@(Model.SelectedHotel.ImageUrl ?? "/images/pet-other.svg")" alt="" />
                 <div>
@@ -207,16 +209,16 @@
                 </div>
             </div>
             <div class="summary-lines">
-                <div><span>Fechas</span><strong>@Model.CheckIn → @Model.CheckOut</strong></div>
-                <div><span>Noches</span><strong>@Model.Nights</strong></div>
-                <div><span>Mascota</span><strong>@(Model.SelectedPet != null ? $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}" : "—") × @Model.PetCount</strong></div>
-                <div><span>Extras</span><strong>@Model.ExtraIds.Count seleccionados</strong></div>
+                <div><span>@CatalogLocalizer.Loc("Fechas", "Dates")</span><strong>@Model.CheckIn → @Model.CheckOut</strong></div>
+                <div><span>@CatalogLocalizer.Loc("Noches", "Nights")</span><strong>@Model.Nights</strong></div>
+                <div><span>@CatalogLocalizer.Loc("Mascota", "Pet")</span><strong>@(Model.SelectedPet != null ? $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}" : "—") × @Model.PetCount</strong></div>
+                <div><span>@CatalogLocalizer.Loc("Extras", "Extras")</span><strong>@Model.ExtraIds.Count @CatalogLocalizer.Loc("seleccionados", "selected")</strong></div>
             </div>
             <div class="summary-total">
-                <span>Total estimado</span>
+                <span>@CatalogLocalizer.Loc("Total estimado", "Estimated total")</span>
                 <strong>$@Model.Estimate.ToString("0")</strong>
             </div>
-            <p class="summary-note">Precio final puede variar según impuestos y extras seleccionados.</p>
+            <p class="summary-note">@CatalogLocalizer.Loc("Precio final puede variar según impuestos y extras seleccionados.", "Final price may vary with taxes and selected extras.")</p>
 
             <form method="post">
                 <input type="hidden" name="When" value="@Model.When" />
@@ -237,25 +239,25 @@
 
                 <partial name="_PromoCode" />
 
-                <h4 class="summary-sub">Pago</h4>
+                <h4 class="summary-sub">@CatalogLocalizer.Loc("Pago", "Payment")</h4>
                 @if (Model.DefaultPayment != null)
                 {
                     <div class="pay-row">
                         <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
-                        <a asp-page="/Account/PaymentMethods">Cambiar</a>
+                        <a asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("Cambiar", "Change")</a>
                     </div>
                     <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
                 }
                 else
                 {
-                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods">Agregar método de pago</a>
+                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")</a>
                 }
 
                 <partial name="_AcceptTerms" />
                 <a class="legal-link small" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener" style="display:block;margin:4px 0 12px">@L["Legal_TermsConditions"] — @CatalogLocalizer.Loc("Ver aquí", "View here")</a>
 
                 <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book"
-                        aria-describedby="AcceptTerms-error">🔒 Reservar ahora — Pago seguro</button>
+                        aria-describedby="AcceptTerms-error">🔒 @CatalogLocalizer.Loc("Reservar ahora — Pago seguro", "Book now — Secure payment")</button>
             </form>
         </div>
     </aside>
