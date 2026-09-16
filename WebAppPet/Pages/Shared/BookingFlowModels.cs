@@ -71,6 +71,7 @@ public sealed class BookingSummarySheetModel
     public required string Subtitle { get; init; }
 
     public IReadOnlyList<BookingSummaryLine>? Lines { get; init; }
+    public string? CustomerNotes { get; init; }
     public string TotalLabelEs { get; init; } = "Total";
     public string TotalLabelEn { get; init; } = "Total";
     public decimal Estimate { get; init; }

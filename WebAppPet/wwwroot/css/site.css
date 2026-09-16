@@ -1003,6 +1003,7 @@ h1, h2, h3,
   border: 1.5px solid var(--forest);
 }
 .btn-outline:hover { background: var(--lime-soft); }
+.btn-block { width: 100%; }
 .btn-primary:disabled,
 .btn-primary[disabled],
 button[data-terms-submit]:disabled {
@@ -5140,6 +5141,13 @@ form#behavior-intake-form.is-pet-missing .behavior-pet-list {
 }
 .care-plan-cancel {
   margin-top: 12px;
+  width: 100%;
+}
+.care-plan-page > .btn.btn-block,
+.care-plan-cancel .btn {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
 }
 .care-plan-page ~ .bottom-nav-clearance {
   height: calc(var(--nav-h, 68px) + 40px + env(safe-area-inset-bottom, 0px));

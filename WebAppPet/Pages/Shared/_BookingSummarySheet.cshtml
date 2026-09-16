@@ -68,6 +68,15 @@
                     }
                 </div>
             }
+            @if (!string.IsNullOrWhiteSpace(Model.CustomerNotes))
+            {
+                <div class="summary-lines summary-notes-line">
+                    <div>
+                        <span>@CatalogLocalizer.Loc("Notas", "Notes")</span>
+                        <strong>@Model.CustomerNotes</strong>
+                    </div>
+                </div>
+            }
 
             <form method="post">
                 @foreach (var h in Model.HiddenFields)

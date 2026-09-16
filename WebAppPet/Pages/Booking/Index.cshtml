@@ -236,6 +236,10 @@
                     <p><strong>@CatalogLocalizer.Loc("Fecha:", "Date:")</strong> @Model.Date · @Model.Time</p>
                 }
                 <p><strong>@CatalogLocalizer.Loc("Mascota:", "Pet:")</strong> @PetSpecies.Emoji(Model.SelectedPet?.Species) @Model.SelectedPet?.Name</p>
+                @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                {
+                    <p><strong>@CatalogLocalizer.Loc("Notas:", "Notes:")</strong> @Model.Notes</p>
+                }
                 @if (Model.SelectedExtras.Any())
                 {
                     <p><strong>@CatalogLocalizer.Loc("Extras:", "Extras:")</strong></p>

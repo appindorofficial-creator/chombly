@@ -56,6 +56,10 @@
                 }
                 <p><strong>@CatalogLocalizer.Loc("Total", "Total"):</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
                 <p class="muted small">@CatalogLocalizer.Loc("Anticipo", "Deposit"): $@a.DepositPaid.ToString("0.00")</p>
+                @if (!string.IsNullOrWhiteSpace(a.Notes))
+                {
+                    <p><strong>@CatalogLocalizer.Loc("Notas", "Notes"):</strong> @CatalogLocalizer.Notes(a.Notes)</p>
+                }
             </div>
 
             var confirmReturn = Url.Page("/Booking/Confirm", new { id = a.Id });

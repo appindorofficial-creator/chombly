@@ -140,20 +140,15 @@
                         </div>
                     </div>
                 </div>
-                <a class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
-                   asp-page="./Index"
-                   asp-route-When="@Model.When"
-                   asp-route-CheckIn="@Model.CheckIn"
-                   asp-route-CheckOut="@Model.CheckOut"
-                   asp-route-PetCount="@Model.PetCount"
-                   asp-route-PetId="@Model.PetId"
-                   asp-route-groomerId="@h.Id"
-                   asp-route-Notes="@Model.Notes"
-                   asp-route-more="@Model.More">
+                <button type="submit"
+                        class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
+                        name="groomerId"
+                        value="@h.Id"
+                        onclick="var h=this.form.querySelector('input[name=groomerId][type=hidden]'); if(h) h.disabled=true;">
                     @(selected
                         ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓")
                         : CatalogLocalizer.Loc("Reservar", "Book"))
-                </a>
+                </button>
             </div>
         }
 
@@ -181,7 +176,8 @@
         <h3 class="section-title">@CatalogLocalizer.Loc("Notas", "Notes")</h3>
         <div class="form-group">
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
-                      placeholder="@CatalogLocalizer.Loc("¿Hay algo que debamos saber?", "Is there anything we should know?")">@Model.Notes</textarea>
+                      placeholder="@CatalogLocalizer.Loc("¿Hay algo que debamos saber?", "Is there anything we should know?")"
+                      onchange="this.form.submit()">@Model.Notes</textarea>
             <div class="muted small" style="text-align:right">@(Model.Notes?.Length ?? 0)/200</div>
         </div>
     </form>
@@ -233,6 +229,7 @@
                 Value = $"{Model.ExtraIds.Count} {CatalogLocalizer.Loc("seleccionados", "selected")}"
             }
         ],
+        CustomerNotes = Model.Notes,
         TotalLabelEs = "Total estimado",
         TotalLabelEn = "Estimated total",
         Estimate = Model.Estimate,
