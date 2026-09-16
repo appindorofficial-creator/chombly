@@ -214,16 +214,17 @@ public class IndexModel : PageModel
 
         var noteParts = new List<string>
         {
-            $"Tipo: {NeedLabel}",
-            $"Lugar: {PlaceLabel}",
+            $"{CatalogLocalizer.Loc("Tipo:", "Type:")} {NeedLabel}",
+            $"{CatalogLocalizer.Loc("Lugar:", "Place:")} {PlaceLabel}",
             PackageLabel,
-            "1 sesión / semana"
+            CatalogLocalizer.Loc("1 sesión / semana", "1 session / week")
         };
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
         if (PaymentMethodId.HasValue || DefaultPayment != null)
         {
             var pm = Payments.FirstOrDefault(p => p.Id == PaymentMethodId) ?? DefaultPayment;
-            if (pm != null) noteParts.Add($"Pago: {pm.Brand} •••• {pm.Last4}");
+            if (pm != null)
+                noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
         var appt = new Appointment

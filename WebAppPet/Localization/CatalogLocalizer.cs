@@ -137,6 +137,31 @@ public static class CatalogLocalizer
         ["/ visita"] = "/ visit",
         ["/ día"] = "/ day",
         ["/ 60 min"] = "/ 60 min",
+        ["/ baño"] = "/ bath",
+        ["/ urgencia"] = "/ emergency",
+        ["/ sesion"] = "/ session",
+        ["/ consulta"] = "/ consult",
+        ["/ servicio"] = "/ service",
+        ["/ paseo"] = "/ walk",
+        ["baño"] = "bath",
+        ["urgencia"] = "emergency",
+        ["consulta"] = "consult",
+        ["servicio"] = "service",
+        ["Urgencia veterinaria"] = "Veterinary emergency",
+        ["Sesión de entrenamiento"] = "Training session",
+        ["Peluquería completa"] = "Full grooming",
+        ["Peluquería"] = "Grooming",
+        ["Paseadores"] = "Walkers",
+        ["Entrenadores"] = "Trainers",
+        ["Veterinaria"] = "Veterinary",
+        ["Guardería"] = "Daycare",
+        ["Hotel"] = "Hotel",
+        ["Servicio"] = "Service",
+        ["Grooming profesional"] = "Professional grooming",
+        ["Atención de urgencias 24/7"] = "24/7 emergency care",
+        ["Paseo 40 min"] = "40-min walk",
+        ["Hospedaje 1 noche"] = "1-night boarding",
+        ["Baño y corte"] = "Bath & haircut",
         ["noche"] = "night",
         ["sesion"] = "session",
         ["visita"] = "visit",
@@ -149,7 +174,24 @@ public static class CatalogLocalizer
         ["Mestizo / mixto"] = "Mixed / mix",
         ["Paseos individuales con foto del paseo. Acepta perros grandes. Sin escaleras."] =
             "Individual walks with a walk photo. Accepts large dogs. No stairs.",
+
+        // Appointment notes (stored fragments)
+        ["Horario:"] = "Schedule:",
+        ["Pago:"] = "Payment:",
+        ["Tipo:"] = "Type:",
+        ["Lugar:"] = "Place:",
+        ["Medio día (hasta 5 h)"] = "Half day (up to 5 h)",
+        ["Día completo (7 AM – 7 PM)"] = "Full day (7 AM – 7 PM)",
+        ["mascotas"] = "pets",
     };
+
+    private static readonly (string Es, string En)[] NotePrefixes =
+    [
+        ("Horario:", "Schedule:"),
+        ("Pago:", "Payment:"),
+        ("Tipo:", "Type:"),
+        ("Lugar:", "Place:"),
+    ];
 
     public static string Text(string? text)
     {
@@ -157,6 +199,42 @@ public static class CatalogLocalizer
         if (!IsEnglish()) return text;
         var key = text.Trim();
         return Map.TryGetValue(key, out var en) ? en : text;
+    }
+
+    /// <summary>Localiza notas de cita compuestas (p. ej. "Horario: Medio día · Pago: Visa").</summary>
+    public static string Notes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return notes ?? "";
+        if (!IsEnglish()) return notes;
+
+        var parts = notes.Split(" · ", StringSplitOptions.None);
+        for (var i = 0; i < parts.Length; i++)
+            parts[i] = LocalizeNotePart(parts[i]);
+        return string.Join(" · ", parts);
+    }
+
+    private static string LocalizeNotePart(string part)
+    {
+        var t = part.Trim();
+        if (t.Length == 0) return t;
+        if (Map.TryGetValue(t, out var full)) return full;
+
+        foreach (var (es, en) in NotePrefixes)
+        {
+            if (!t.StartsWith(es, StringComparison.OrdinalIgnoreCase)) continue;
+            var rest = t[es.Length..].TrimStart();
+            return string.IsNullOrEmpty(rest) ? en : $"{en} {Text(rest)}";
+        }
+
+        // "2 mascotas" / "Paseo 30 min"
+        if (t.EndsWith(" mascotas", StringComparison.OrdinalIgnoreCase))
+            return t[..^" mascotas".Length] + " pets";
+        if (t.StartsWith("Paseo ", StringComparison.OrdinalIgnoreCase) && t.EndsWith(" min", StringComparison.OrdinalIgnoreCase))
+            return "Walk " + t["Paseo ".Length..];
+        if (t.Equals("1 sesión / semana", StringComparison.OrdinalIgnoreCase))
+            return "1 session / week";
+
+        return Text(t);
     }
 
     public static string Loc(string spanish, string english) =>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -18,6 +19,11 @@ public class DetailsModel : PageModel
         _auth = auth;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    public string BackHref { get; private set; } = "/Appointments";
+
     public Appointment? Appointment { get; set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
@@ -32,6 +38,7 @@ public class DetailsModel : PageModel
             .Include(a => a.Extras)
             .FirstOrDefaultAsync(a => a.Id == id && a.ClientId == userId);
 
+        BackHref = ResolveBackHref();
         return Page();
     }
 
@@ -50,8 +57,10 @@ public class DetailsModel : PageModel
             _db.Notifications.Add(new AppNotification
             {
                 UserId = userId,
-                Title = "Cita cancelada",
-                Message = $"Cancelaste tu cita en {appt.Groomer.BusinessName}.",
+                Title = CatalogLocalizer.Loc("Cita cancelada", "Appointment cancelled"),
+                Message = CatalogLocalizer.Loc(
+                    $"Cancelaste tu cita en {appt.Groomer.BusinessName}.",
+                    $"You cancelled your appointment at {appt.Groomer.BusinessName}."),
                 Type = "appointment"
             });
             await _db.SaveChangesAsync();
@@ -62,10 +71,10 @@ public class DetailsModel : PageModel
 
     public string StatusLabel(AppointmentStatus s) => s switch
     {
-        AppointmentStatus.Pending => "Pendiente",
-        AppointmentStatus.Confirmed => "Confirmada",
-        AppointmentStatus.Completed => "Completada",
-        AppointmentStatus.Cancelled => "Cancelada",
+        AppointmentStatus.Pending => CatalogLocalizer.Loc("Pendiente", "Pending"),
+        AppointmentStatus.Confirmed => CatalogLocalizer.Loc("Confirmada", "Confirmed"),
+        AppointmentStatus.Completed => CatalogLocalizer.Loc("Completada", "Completed"),
+        AppointmentStatus.Cancelled => CatalogLocalizer.Loc("Cancelada", "Cancelled"),
         _ => s.ToString()
     };
 
@@ -76,4 +85,38 @@ public class DetailsModel : PageModel
         AppointmentStatus.Completed => "badge-purple",
         _ => "badge-gray"
     };
+
+    private string ResolveBackHref()
+    {
+        if (TryLocalPath(ReturnUrl, out var fromQuery))
+            return fromQuery;
+
+        var referer = Request.Headers.Referer.ToString();
+        if (Uri.TryCreate(referer, UriKind.Absolute, out var uri)
+            && string.Equals(uri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase)
+            && !uri.AbsolutePath.Contains("/Appointments/Details", StringComparison.OrdinalIgnoreCase)
+            && TryLocalPath(uri.PathAndQuery, out var fromReferer))
+        {
+            return fromReferer;
+        }
+
+        return Url.Page("./Index") ?? "/Appointments";
+    }
+
+    private bool TryLocalPath(string? candidate, out string path)
+    {
+        path = "/Appointments";
+        if (string.IsNullOrWhiteSpace(candidate)) return false;
+
+        var value = candidate.Trim();
+        if (!value.StartsWith('/') || value.StartsWith("//", StringComparison.Ordinal))
+            return false;
+        if (!Url.IsLocalUrl(value))
+            return false;
+        if (value.Contains("/Appointments/Details", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        path = value;
+        return true;
+    }
 }

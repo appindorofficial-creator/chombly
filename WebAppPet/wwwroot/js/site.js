@@ -1188,10 +1188,13 @@
         var href = a.getAttribute('href') || '';
         if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
         e.preventDefault();
+        var url = a.href;
+        // Prefer assign: some webviews no-op on replace after preventDefault and leave the user stuck.
         try {
-          window.location.replace(a.href);
+          if (typeof window.location.assign === 'function') window.location.assign(url);
+          else window.location.href = url;
         } catch (_) {
-          window.location.href = a.href;
+          window.location.href = url;
         }
       });
     });

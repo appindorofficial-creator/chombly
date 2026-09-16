@@ -35,10 +35,10 @@
                         : (Model.Case.Pet?.Name ?? "—"))
                 </strong>
                 <p class="muted small mb-0">
-                    @Model.Case.ProblemType
+                    @CatalogLocalizer.Text(Model.Case.ProblemType)
                     @if (!string.IsNullOrWhiteSpace(Model.Case.Frequency))
                     {
-                        <text> · @Model.Case.Frequency</text>
+                        <text> · @CatalogLocalizer.Text(Model.Case.Frequency)</text>
                     }
                 </p>
                 @if (!string.IsNullOrWhiteSpace(Model.Case.ContextNotes))

@@ -28,10 +28,10 @@
             <span class="muted small">@CatalogLocalizer.Loc("Lo que nos contaste", "What you shared")</span>
             <p style="margin:6px 0 0">
                 <strong>@(Model.Case?.Pet?.Name ?? "—")</strong>
-                · @(Model.Case?.ProblemType ?? "—")
+                · @CatalogLocalizer.Text(Model.Case?.ProblemType ?? "—")
                 @if (!string.IsNullOrWhiteSpace(Model.Case?.Frequency))
                 {
-                    <text> · @Model.Case.Frequency</text>
+                    <text> · @CatalogLocalizer.Text(Model.Case.Frequency)</text>
                 }
             </p>
             @if (!string.IsNullOrWhiteSpace(Model.Case?.ContextNotes))

@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Booking.IndexModel
 @{
-    ViewData["Title"] = "Reservar";
+    ViewData["Title"] = CatalogLocalizer.Loc("Reservar", "Book");
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Groomers/Details", new { id = Model.GroomerId, service = Model.Service });
@@ -12,7 +12,7 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body @(HideNav ? "no-nav" : "")">
-    <h1 class="app-page-heading">Reserva</h1>
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reserva", "Booking")</h1>
     @if (Model.Groomer != null)
     {
         <div class="card card-pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:center">
@@ -20,7 +20,7 @@
             <div>
                 <strong>@Model.Groomer.BusinessName</strong>
                 <div class="muted small">
-                    @(Model.Groomer.Category?.Emoji) @(Model.Groomer.Category?.Name ?? "Servicio")
+                    @(Model.Groomer.Category?.Emoji) @CatalogLocalizer.Text(Model.Groomer.Category?.Name ?? "Servicio")
                 </div>
             </div>
         </div>
@@ -83,10 +83,10 @@
 
         @if (Model.Step == 1)
         {
-            <h3 class="section-title" style="margin-top:0">Elige el servicio</h3>
+            <h3 class="section-title" style="margin-top:0">@L["Book_SelectService"]</h3>
             @if (!Model.Services.Any())
             {
-                <div class="empty">Este negocio aún no tiene servicios en la base de datos.</div>
+                <div class="empty">@CatalogLocalizer.Loc("Este negocio aún no tiene servicios en la base de datos.", "This business has no services in the database yet.")</div>
             }
             @foreach (var s in Model.Services)
             {
@@ -97,37 +97,37 @@
                             <strong>@CatalogLocalizer.Text(s.Name)</strong>
                             <div class="muted small">@CatalogLocalizer.Text(s.Description)</div>
                         </div>
-                        <span class="price">Desde $@s.PriceSmall.ToString("0")</span>
+                        <span class="price">@L["Home_FromPrice"] $@s.PriceSmall.ToString("0")</span>
                     </div>
                 </label>
             }
-            <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next" @(Model.Services.Any() ? null : "disabled")>Continuar</button>
+            <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next" @(Model.Services.Any() ? null : "disabled")>@CatalogLocalizer.Loc("Continuar", "Continue")</button>
         }
         else if (Model.Step == 2)
         {
             @if (Model.IsOvernight)
             {
-                <h3 class="section-title" style="margin-top:0">Check-in y check-out</h3>
+                <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Check-in y check-out", "Check-in and check-out")</h3>
                 <div class="form-group">
-                    <label>Check-in</label>
+                    <label>@L["Book_CheckIn"]</label>
                     <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" required data-booking-start />
                 </div>
                 <div class="form-group">
-                    <label>Check-out</label>
+                    <label>@L["Book_CheckOut"]</label>
                     <input class="form-control" type="date" name="EndDate" value="@Model.EndDate" min="@minEndDate" required data-booking-end />
                 </div>
             }
             else
             {
-                <h3 class="section-title" style="margin-top:0">Fecha y hora</h3>
+                <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Fecha y hora", "Date and time")</h3>
                 <div class="form-group">
-                    <label>Fecha</label>
+                    <label>@CatalogLocalizer.Loc("Fecha", "Date")</label>
                     <input class="form-control" type="date" name="Date" value="@Model.Date" min="@minDate" required
                            data-booking-day
                            onchange="var b=document.getElementById('booking-refresh-schedule'); if(b) b.click();" />
                 </div>
                 <div class="form-group">
-                    <label>Hora</label>
+                    <label>@CatalogLocalizer.Loc("Hora", "Time")</label>
                     @{
                         var slots = Model.AvailableTimeSlots;
                         var selectedTime = slots.Contains(Model.Time, StringComparer.OrdinalIgnoreCase) ? Model.Time : (slots.FirstOrDefault() ?? "");
@@ -155,11 +155,11 @@
 
             @if (Model.Extras.Any())
             {
-                <h3 class="section-title">Extras</h3>
+                <h3 class="section-title">@CatalogLocalizer.Loc("Extras", "Extras")</h3>
                 @foreach (var e in Model.Extras)
                 {
                     <label class="toggle-row" style="cursor:pointer">
-                        <span>@e.Name <span class="price">+$@e.Price.ToString("0")</span></span>
+                        <span>@CatalogLocalizer.Text(e.Name) <span class="price">+$@e.Price.ToString("0")</span></span>
                         <input type="checkbox" name="SelectedExtraIds" value="@e.Id"
                                @(Model.SelectedExtraIds.Contains(e.Id) ? "checked" : "") />
                     </label>
@@ -167,23 +167,23 @@
             }
 
             <div style="display:flex;gap:10px;margin-top:14px">
-                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">Atrás</button>
-                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next">Continuar</button>
+                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">@CatalogLocalizer.Loc("Atrás", "Back")</button>
+                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next">@CatalogLocalizer.Loc("Continuar", "Continue")</button>
             </div>
         }
         else if (Model.Step == 3)
         {
-            <h3 class="section-title" style="margin-top:0">¿Para qué mascota?</h3>
+            <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("¿Para qué mascota?", "Which pet?")</h3>
             @if (Model.Groomer != null)
             {
-                <p class="muted small" style="margin-top:-6px">Atiende:
-                    @string.Join(" · ", Model.Groomer.AcceptedSpeciesList.Select(s => $"{PetSpecies.Emoji(s)} {s}"))
+                <p class="muted small" style="margin-top:-6px">@CatalogLocalizer.Loc("Atiende:", "Serves:")
+                    @string.Join(" · ", Model.Groomer.AcceptedSpeciesList.Select(s => $"{PetSpecies.Emoji(s)} {PetSpecies.Label(s)}"))
                 </p>
             }
             @if (!Model.Pets.Any())
             {
-                <div class="alert alert-info">Primero agrega una mascota.
-                    <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">Agregar mascota</a>
+                <div class="alert alert-info">@CatalogLocalizer.Loc("Primero agrega una mascota.", "Add a pet first.")
+                    <a asp-page="/Pets/Create" style="color:var(--brand);font-weight:700">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
                 </div>
             }
             @foreach (var p in Model.Pets)
@@ -196,10 +196,10 @@
                             <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />
                             <div>
                                 <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                                <div class="muted small">@p.Species · @p.Breed · @p.AgeYears años</div>
+                                <div class="muted small">@PetSpecies.Label(p.Species) · @p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "years")</div>
                                 @if (!ok)
                                 {
-                                    <div class="field-error">No atienden @p.Species</div>
+                                    <div class="field-error">@CatalogLocalizer.Loc($"No atienden {PetSpecies.Label(p.Species)}", $"They don't serve {PetSpecies.Label(p.Species)}")</div>
                                 }
                             </div>
                         </div>
@@ -207,12 +207,12 @@
                 </label>
             }
             <div class="form-group">
-                <label>Notas</label>
+                <label>@CatalogLocalizer.Loc("Notas", "Notes")</label>
                 <textarea class="form-control" name="Notes" rows="3">@Model.Notes</textarea>
             </div>
             <div style="display:flex;gap:10px">
-                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">Atrás</button>
-                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next" @(Model.Pets.Any() ? null : "disabled")>Continuar</button>
+                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">@CatalogLocalizer.Loc("Atrás", "Back")</button>
+                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Next" @(Model.Pets.Any() ? null : "disabled")>@CatalogLocalizer.Loc("Continuar", "Continue")</button>
             </div>
         }
         else if (Model.Step == 4)
@@ -222,27 +222,27 @@
             ViewData["PromoDiscount"] = Model.DiscountAmount;
             ViewData["PromoError"] = Model.PromoError;
             ViewData["PromoApplyHandler"] = "ApplyPromo";
-            <h3 class="section-title" style="margin-top:0">Confirmar reserva</h3>
+            <h3 class="section-title" style="margin-top:0">@L["Book_ConfirmTitle"]</h3>
             <div class="card card-pad">
-                <p><strong>Servicio:</strong> @Model.SelectedService?.Name</p>
+                <p><strong>@CatalogLocalizer.Loc("Servicio:", "Service:")</strong> @CatalogLocalizer.Text(Model.SelectedService?.Name)</p>
                 @if (Model.IsOvernight)
                 {
-                    <p><strong>Check-in:</strong> @Model.Date</p>
-                    <p><strong>Check-out:</strong> @Model.EndDate</p>
-                    <p><strong>Noches:</strong> @Model.Nights</p>
+                    <p><strong>@L["Book_CheckIn"]:</strong> @Model.Date</p>
+                    <p><strong>@L["Book_CheckOut"]:</strong> @Model.EndDate</p>
+                    <p><strong>@CatalogLocalizer.Loc("Noches:", "Nights:")</strong> @Model.Nights</p>
                 }
                 else
                 {
-                    <p><strong>Fecha:</strong> @Model.Date · @Model.Time</p>
+                    <p><strong>@CatalogLocalizer.Loc("Fecha:", "Date:")</strong> @Model.Date · @Model.Time</p>
                 }
-                <p><strong>Mascota:</strong> @PetSpecies.Emoji(Model.SelectedPet?.Species) @Model.SelectedPet?.Name</p>
+                <p><strong>@CatalogLocalizer.Loc("Mascota:", "Pet:")</strong> @PetSpecies.Emoji(Model.SelectedPet?.Species) @Model.SelectedPet?.Name</p>
                 @if (Model.SelectedExtras.Any())
                 {
-                    <p><strong>Extras:</strong></p>
+                    <p><strong>@CatalogLocalizer.Loc("Extras:", "Extras:")</strong></p>
                     <ul style="margin:0 0 8px;padding-left:18px">
                         @foreach (var e in Model.SelectedExtras)
                         {
-                            <li>@e.Name (+$@e.Price.ToString("0.00"))</li>
+                            <li>@CatalogLocalizer.Text(e.Name) (+$@e.Price.ToString("0.00"))</li>
                         }
                     </ul>
                 }
@@ -257,12 +257,12 @@
                         <span style="text-decoration:line-through">$@Model.Subtotal.ToString("0.00")</span>
                     </p>
                 }
-                <p style="margin:0"><strong>Total:</strong> <span class="price">$@Model.EstimatedTotal.ToString("0.00")</span></p>
-                <p class="muted small">Anticipo estimado: $@Model.Deposit.ToString("0.00")</p>
+                <p style="margin:0"><strong>@CatalogLocalizer.Loc("Total:", "Total:")</strong> <span class="price">$@Model.EstimatedTotal.ToString("0.00")</span></p>
+                <p class="muted small">@CatalogLocalizer.Loc("Anticipo estimado:", "Estimated deposit:") $@Model.Deposit.ToString("0.00")</p>
             </div>
             <div style="display:flex;gap:10px;margin-top:14px">
-                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">Atrás</button>
-                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Confirm">Enviar reserva</button>
+                <button class="btn btn-outline btn-block" type="submit" name="handler" value="Back">@CatalogLocalizer.Loc("Atrás", "Back")</button>
+                <button class="btn btn-primary btn-block" type="submit" name="handler" value="Confirm">@CatalogLocalizer.Loc("Enviar reserva", "Submit booking")</button>
             </div>
         }
     </form>

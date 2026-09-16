@@ -12,9 +12,9 @@ public class TermsModel : PageModel
 
     public void OnGet()
     {
-        if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+        if (TryLocalPath(ReturnUrl, out var fromQuery))
         {
-            BackHref = ReturnUrl;
+            BackHref = fromQuery;
             return;
         }
 
@@ -22,12 +22,32 @@ public class TermsModel : PageModel
         if (Uri.TryCreate(referer, UriKind.Absolute, out var uri)
             && string.Equals(uri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase)
             && !uri.AbsolutePath.Contains("/Legal/Terms", StringComparison.OrdinalIgnoreCase)
-            && Url.IsLocalUrl(uri.PathAndQuery))
+            && TryLocalPath(uri.PathAndQuery, out var fromReferer))
         {
-            BackHref = uri.PathAndQuery;
+            BackHref = fromReferer;
             return;
         }
 
         BackHref = Url.Page("/Index") ?? "/Index";
+    }
+
+    private bool TryLocalPath(string? candidate, out string path)
+    {
+        path = "/Index";
+        if (string.IsNullOrWhiteSpace(candidate)) return false;
+
+        var value = candidate.Trim();
+        // Allow root-relative paths only (block //evil.com and javascript:).
+        if (!value.StartsWith('/') || value.StartsWith("//", StringComparison.Ordinal))
+            return false;
+        if (!Url.IsLocalUrl(value))
+            return false;
+
+        // Never bounce back into Terms (e.g. hash-only navigations / self-referer).
+        if (value.Contains("/Legal/Terms", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        path = value;
+        return true;
     }
 }
