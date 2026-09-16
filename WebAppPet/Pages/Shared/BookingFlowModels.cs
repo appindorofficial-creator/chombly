@@ -35,6 +35,63 @@ public sealed class BookingDateFieldModel
     public required string MinDate { get; init; }
 }
 
+public sealed class BookingSummaryLine
+{
+    public required string LabelEs { get; init; }
+    public required string LabelEn { get; init; }
+    public required string Value { get; init; }
+}
+
+public sealed class BookingSummaryHidden
+{
+    public required string Name { get; init; }
+    public string? Value { get; init; }
+}
+
+public sealed class BookingSummaryMultiHidden
+{
+    public required string Name { get; init; }
+    public required IEnumerable<string> Values { get; init; }
+}
+
+/// <summary>Shared bottom confirm/reserve sheet for Hotel / Walkers / Daycare / Trainers.</summary>
+public sealed class BookingSummarySheetModel
+{
+    public required string BodyId { get; init; }
+    public bool StartCollapsed { get; init; }
+
+    public required string TitleEs { get; init; }
+    public required string TitleEn { get; init; }
+    public required string EditHintEs { get; init; }
+    public required string EditHintEn { get; init; }
+
+    public required string BusinessName { get; init; }
+    public string? ImageUrl { get; init; }
+    public required string FallbackImage { get; init; }
+    public required string Subtitle { get; init; }
+
+    public IReadOnlyList<BookingSummaryLine>? Lines { get; init; }
+    public string TotalLabelEs { get; init; } = "Total";
+    public string TotalLabelEn { get; init; } = "Total";
+    public decimal Estimate { get; init; }
+    public string? NoteEs { get; init; }
+    public string? NoteEn { get; init; }
+
+    public string PaymentHeadingEs { get; init; } = "Pago";
+    public string PaymentHeadingEn { get; init; } = "Payment";
+    public PaymentMethod? DefaultPayment { get; init; }
+    public bool AcceptTerms { get; init; }
+    public string? TermsStep { get; init; }
+
+    public required string SubmitLabelEs { get; init; }
+    public required string SubmitLabelEn { get; init; }
+    public bool ShowSecureLockOnSubmit { get; init; }
+    public bool ShowSecureFooter { get; init; } = true;
+
+    public IReadOnlyList<BookingSummaryHidden> HiddenFields { get; init; } = [];
+    public IReadOnlyList<BookingSummaryMultiHidden> MultiHiddenFields { get; init; } = [];
+}
+
 /// <summary>Shared date helpers for Walkers / Daycare / Trainers booking flows.</summary>
 public static class BookingDate
 {

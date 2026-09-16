@@ -196,92 +196,39 @@
     ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
     ViewData["PromoDiscount"] = Model.DiscountAmount;
     ViewData["PromoError"] = Model.PromoError;
-    ViewData["TermsStep"] = "10. ";
-    ViewData["TermsChecked"] = Model.AcceptTerms;
-    var startCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage);
-    <aside class="hotel-summary @(startCollapsed ? "is-collapsed" : null)"
-           data-hotel-summary
-           @(startCollapsed ? "data-summary-start-collapsed=1" : null)>
-        <div class="hotel-summary-inner">
-            <div class="hotel-summary-toolbar">
-                <h3>@CatalogLocalizer.Loc("Confirmar paseo", "Confirm walk")</h3>
-                <button type="button"
-                        class="hotel-summary-toggle"
-                        data-summary-toggle
-                        aria-expanded="@(startCollapsed ? "false" : "true")"
-                        aria-controls="walkers-summary-body">
-                    <span data-label-min @(startCollapsed ? "hidden" : null)>▾ @CatalogLocalizer.Loc("Minimizar", "Minimize")</span>
-                    <span data-label-max @(startCollapsed ? null : "hidden")>▴ @CatalogLocalizer.Loc("Expandir", "Expand")</span>
-                </button>
-            </div>
-            <button type="button"
-                    class="hotel-summary-peek"
-                    data-summary-toggle
-                    aria-controls="walkers-summary-body">
-                <div class="hotel-summary-peek-row">
-                    <div>
-                        <strong>@Model.SelectedWalker.BusinessName</strong>
-                        <small>@CatalogLocalizer.Loc("Toca para expandir el resumen", "Tap to expand the summary")</small>
-                    </div>
-                    <strong>$@Model.Estimate.ToString("0")</strong>
-                </div>
-            </button>
-            <div class="hotel-summary-body" id="walkers-summary-body" data-summary-body>
-            <p class="hotel-summary-edit-hint">
-                <button type="button" class="hotel-summary-edit-link" data-summary-toggle>
-                    ← @CatalogLocalizer.Loc("Seguir editando el paseo", "Keep editing the walk")
-                </button>
-            </p>
-            <div class="summary-hotel">
-                <img src="@(Model.SelectedWalker.ImageUrl ?? "/images/categories/cat-walkers-v2.png")" alt="" />
-                <div>
-                    <strong>@Model.SelectedWalker.BusinessName</strong>
-                    <div class="muted small">@(Model.DateLabel ?? "—") · @(Model.TimeLabel ?? "—") · @(Model.HasDuration ? $"{Model.Duration} min" : "—")</div>
-                </div>
-            </div>
-            <div class="summary-total">
-                <span>@CatalogLocalizer.Loc("Total", "Total")</span>
-                <strong>$@Model.Estimate.ToString("0")</strong>
-            </div>
-
-            <form method="post">
-                <input type="hidden" name="When" value="@Model.When" />
-                <input type="hidden" name="Date" value="@Model.Date" />
-                <input type="hidden" name="Slot" value="@Model.Slot" />
-                <input type="hidden" name="Duration" value="@Model.Duration" />
-                <input type="hidden" name="PetId" value="@Model.PetId" />
-                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
-                <input type="hidden" name="Notes" value="@Model.Notes" />
-                @foreach (var p in Model.Prefs)
-                {
-                    <input type="hidden" name="Prefs" value="@p" />
-                }
-
-                <partial name="_PromoCode" />
-
-                <h4 class="summary-sub">@CatalogLocalizer.Loc("9. Método de pago", "9. Payment method")</h4>
-                @if (Model.DefaultPayment != null)
-                {
-                    <div class="pay-row">
-                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
-                        <a asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("Cambiar", "Change")</a>
-                    </div>
-                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
-                }
-                else
-                {
-                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods" style="margin-bottom:10px">@CatalogLocalizer.Loc("+ Agregar método de pago", "+ Add payment method")</a>
-                }
-
-                <partial name="_AcceptTerms" />
-
-                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book" style="margin-top:10px"
-                        aria-describedby="AcceptTerms-error">
-                    @CatalogLocalizer.Loc("Confirmar paseo", "Confirm walk") · $@Model.Estimate.ToString("0")
-                </button>
-                <p class="muted small" style="text-align:center;margin-top:8px">@CatalogLocalizer.Loc("Pago seguro y encriptado", "Secure encrypted payment")</p>
-            </form>
-            </div>
-        </div>
-    </aside>
+    var multi = new List<BookingSummaryMultiHidden>();
+    if (Model.Prefs.Count > 0)
+        multi.Add(new BookingSummaryMultiHidden { Name = "Prefs", Values = Model.Prefs });
+    <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
+    {
+        BodyId = "walkers-summary-body",
+        StartCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage),
+        TitleEs = "Confirmar paseo",
+        TitleEn = "Confirm walk",
+        EditHintEs = "Seguir editando el paseo",
+        EditHintEn = "Keep editing the walk",
+        BusinessName = Model.SelectedWalker.BusinessName,
+        ImageUrl = Model.SelectedWalker.ImageUrl,
+        FallbackImage = "/images/categories/cat-walkers-v2.png",
+        Subtitle = $"{Model.DateLabel ?? "—"} · {Model.TimeLabel ?? "—"} · {(Model.HasDuration ? $"{Model.Duration} min" : "—")}",
+        Estimate = Model.Estimate,
+        PaymentHeadingEs = "Método de pago",
+        PaymentHeadingEn = "Payment method",
+        DefaultPayment = Model.DefaultPayment,
+        AcceptTerms = Model.AcceptTerms,
+        TermsStep = "10. ",
+        SubmitLabelEs = $"Confirmar paseo · ${Model.Estimate:0}",
+        SubmitLabelEn = $"Confirm walk · ${Model.Estimate:0}",
+        HiddenFields =
+        [
+            new BookingSummaryHidden { Name = "When", Value = Model.When },
+            new BookingSummaryHidden { Name = "Date", Value = Model.Date },
+            new BookingSummaryHidden { Name = "Slot", Value = Model.Slot },
+            new BookingSummaryHidden { Name = "Duration", Value = Model.Duration.ToString() },
+            new BookingSummaryHidden { Name = "PetId", Value = Model.PetId.ToString() },
+            new BookingSummaryHidden { Name = "GroomerId", Value = Model.GroomerId?.ToString() },
+            new BookingSummaryHidden { Name = "Notes", Value = Model.Notes }
+        ],
+        MultiHiddenFields = multi
+    })" />
 }

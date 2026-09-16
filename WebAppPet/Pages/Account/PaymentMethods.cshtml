@@ -4,7 +4,18 @@
     ViewData["Title"] = L["Pay_Title"].Value;
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("./Profile");
+    // Belt-and-suspenders: if model fell back to Profile but query has returnUrl, prefer it.
+    var backHref = Model.BackHref;
+    var qReturn = ViewContext.HttpContext.Request.Query["returnUrl"].ToString();
+    if (!string.IsNullOrWhiteSpace(qReturn)
+        && qReturn.StartsWith('/')
+        && !qReturn.StartsWith("//")
+        && !qReturn.Contains("/Account/PaymentMethods", StringComparison.OrdinalIgnoreCase)
+        && (string.IsNullOrEmpty(backHref) || backHref.Contains("/Account/Profile", StringComparison.OrdinalIgnoreCase)))
+    {
+        backHref = Uri.UnescapeDataString(qReturn);
+    }
+    ViewData["OnboardBackHref"] = backHref;
     var HideNav = true;
 }
 <div class="onboard onboard-app">
@@ -24,6 +35,7 @@
             </div>
             <form method="post" asp-page-handler="Delete" onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_DeleteConfirm"].Value)))">
                 <input type="hidden" name="id" value="@m.Id" />
+                <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
                 <button class="icon-btn" type="submit" aria-label="@L["Pay_Delete"]">🗑️</button>
             </form>
         </div>
@@ -38,6 +50,7 @@
     <form method="post" id="pay-form" novalidate data-feedback="save"
           data-feedback-loading="@L["Feedback_Saving"]"
           data-feedback-done="@L["Feedback_Saved"]">
+        <input type="hidden" asp-for="ReturnUrl" />
         <div class="form-group">
             <label for="CardNumber">@L["Pay_CardNumber"]</label>
             <input class="form-control" asp-for="CardNumber" id="CardNumber"

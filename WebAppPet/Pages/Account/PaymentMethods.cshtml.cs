@@ -22,7 +22,14 @@ public class PaymentMethodsModel : PageModel
         _L = L;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    public string BackHref { get; private set; } = "/Account/Profile";
+
     public List<PaymentMethod> Items { get; set; } = new();
+
+    private const string PayReturnCookie = "chombly.payReturn";
 
     [BindProperty]
     public string CardNumber { get; set; } = string.Empty;
@@ -46,6 +53,7 @@ public class PaymentMethodsModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
+        BackHref = ResolveBackHref();
         await LoadAsync(userId);
         return Page();
     }
@@ -54,6 +62,8 @@ public class PaymentMethodsModel : PageModel
     {
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
+
+        BackHref = ResolveBackHref();
 
         var result = CardValidator.Validate(CardNumber, Expiry, Cvv, HolderName);
         if (!result.Ok)
@@ -83,13 +93,15 @@ public class PaymentMethodsModel : PageModel
         });
 
         await _db.SaveChangesAsync();
-        return RedirectToPage();
+        return RedirectAfterMutation();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
+
+        BackHref = ResolveBackHref();
 
         var pm = await _db.PaymentMethods.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
         if (pm != null)
@@ -98,7 +110,88 @@ public class PaymentMethodsModel : PageModel
             await _db.SaveChangesAsync();
         }
 
-        return RedirectToPage();
+        return RedirectAfterMutation();
+    }
+
+    private IActionResult RedirectAfterMutation()
+    {
+        if (TryLocalPath(ReturnUrl, out var local))
+            return LocalRedirect(local);
+        if (TryLocalPath(Request.Cookies[PayReturnCookie], out var fromCookie))
+            return LocalRedirect(fromCookie);
+        return RedirectToPage(new { returnUrl = ReturnUrl });
+    }
+
+    private string ResolveBackHref()
+    {
+        // Prefer explicit query (also re-read raw query in case model binding truncated).
+        var rawQuery = Request.Query["returnUrl"].ToString();
+        if (TryLocalPath(ReturnUrl, out var fromModel))
+        {
+            RememberReturn(fromModel);
+            return fromModel;
+        }
+        if (TryLocalPath(rawQuery, out var fromRaw))
+        {
+            RememberReturn(fromRaw);
+            return fromRaw;
+        }
+        if (TryLocalPath(Request.Cookies[PayReturnCookie], out var fromCookie))
+            return fromCookie;
+
+        var referer = Request.Headers.Referer.ToString();
+        if (Uri.TryCreate(referer, UriKind.Absolute, out var uri)
+            && string.Equals(uri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase)
+            && !uri.AbsolutePath.Contains("/Account/PaymentMethods", StringComparison.OrdinalIgnoreCase)
+            && TryLocalPath(uri.PathAndQuery, out var fromReferer))
+        {
+            RememberReturn(fromReferer);
+            return fromReferer;
+        }
+
+        return Url.Page("./Profile") ?? "/Account/Profile";
+    }
+
+    private void RememberReturn(string path)
+    {
+        Response.Cookies.Append(PayReturnCookie, path, new CookieOptions
+        {
+            HttpOnly = true,
+            IsEssential = true,
+            SameSite = SameSiteMode.Lax,
+            MaxAge = TimeSpan.FromHours(2),
+            Secure = Request.IsHttps
+        });
+    }
+
+    private bool TryLocalPath(string? candidate, out string path)
+    {
+        path = "/Account/Profile";
+        if (string.IsNullOrWhiteSpace(candidate)) return false;
+
+        var value = Uri.UnescapeDataString(candidate.Trim());
+        // Absolute same-host URLs → path+query
+        if (Uri.TryCreate(value, UriKind.Absolute, out var abs)
+            && string.Equals(abs.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase))
+        {
+            value = abs.PathAndQuery;
+        }
+
+        if (!value.StartsWith('/') || value.StartsWith("//", StringComparison.Ordinal))
+            return false;
+        if (value.Contains("://", StringComparison.Ordinal))
+            return false;
+        if (value.Contains("/Account/PaymentMethods", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // Prefer Url.IsLocalUrl when it accepts; otherwise allow plain root-relative paths.
+        if (Url.IsLocalUrl(value) || (value[0] == '/' && value.Length > 1 && value[1] != '/' && value[1] != '\\'))
+        {
+            path = value;
+            return true;
+        }
+
+        return false;
     }
 
     private string MessageFor(CardValidator.FailReason reason) => reason switch

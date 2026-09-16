@@ -9,7 +9,7 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")@(!string.IsNullOrEmpty(Model.ErrorMessage) && Model.GroomerId.HasValue ? " is-summary-collapsed" : "")">
         <h1 class="app-page-heading">@L["Hotel_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -197,68 +197,63 @@
     ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
     ViewData["PromoDiscount"] = Model.DiscountAmount;
     ViewData["PromoError"] = Model.PromoError;
-    ViewData["TermsChecked"] = Model.AcceptTerms;
-    <aside class="hotel-summary">
-        <div class="hotel-summary-inner">
-            <h3>@CatalogLocalizer.Loc("Resumen", "Summary")</h3>
-            <div class="summary-hotel">
-                <img src="@(Model.SelectedHotel.ImageUrl ?? "/images/pet-other.svg")" alt="" />
-                <div>
-                    <strong>@Model.SelectedHotel.BusinessName</strong>
-                    <div class="muted small">@Model.SelectedHotel.City</div>
-                </div>
-            </div>
-            <div class="summary-lines">
-                <div><span>@CatalogLocalizer.Loc("Fechas", "Dates")</span><strong>@Model.CheckIn → @Model.CheckOut</strong></div>
-                <div><span>@CatalogLocalizer.Loc("Noches", "Nights")</span><strong>@Model.Nights</strong></div>
-                <div><span>@CatalogLocalizer.Loc("Mascota", "Pet")</span><strong>@(Model.SelectedPet != null ? $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}" : "—") × @Model.PetCount</strong></div>
-                <div><span>@CatalogLocalizer.Loc("Extras", "Extras")</span><strong>@Model.ExtraIds.Count @CatalogLocalizer.Loc("seleccionados", "selected")</strong></div>
-            </div>
-            <div class="summary-total">
-                <span>@CatalogLocalizer.Loc("Total estimado", "Estimated total")</span>
-                <strong>$@Model.Estimate.ToString("0")</strong>
-            </div>
-            <p class="summary-note">@CatalogLocalizer.Loc("Precio final puede variar según impuestos y extras seleccionados.", "Final price may vary with taxes and selected extras.")</p>
-
-            <form method="post">
-                <input type="hidden" name="When" value="@Model.When" />
-                <input type="hidden" name="CheckIn" value="@Model.CheckIn" />
-                <input type="hidden" name="CheckOut" value="@Model.CheckOut" />
-                <input type="hidden" name="PetCount" value="@Model.PetCount" />
-                <input type="hidden" name="PetId" value="@Model.PetId" />
-                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
-                <input type="hidden" name="Notes" value="@Model.Notes" />
-                @foreach (var f in Model.Filters)
-                {
-                    <input type="hidden" name="Filters" value="@f" />
-                }
-                @foreach (var id in Model.ExtraIds)
-                {
-                    <input type="hidden" name="ExtraIds" value="@id" />
-                }
-
-                <partial name="_PromoCode" />
-
-                <h4 class="summary-sub">@CatalogLocalizer.Loc("Pago", "Payment")</h4>
-                @if (Model.DefaultPayment != null)
-                {
-                    <div class="pay-row">
-                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
-                        <a asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("Cambiar", "Change")</a>
-                    </div>
-                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
-                }
-                else
-                {
-                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")</a>
-                }
-
-                <partial name="_AcceptTerms" />
-                <a class="legal-link small" asp-page="/Legal/Terms" asp-route-returnUrl="/Hotel" asp-fragment="terms" target="_blank" rel="noopener" style="display:block;margin:4px 0 12px">@L["Legal_TermsConditions"] — @CatalogLocalizer.Loc("Ver aquí", "View here")</a>
-
-                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book"
-                        aria-describedby="AcceptTerms-error">🔒 @CatalogLocalizer.Loc("Reservar ahora — Pago seguro", "Book now — Secure payment")</button>
-            </form>
-        </div>
-    </aside>
+    var multi = new List<BookingSummaryMultiHidden>();
+    if (Model.Filters.Count > 0)
+        multi.Add(new BookingSummaryMultiHidden { Name = "Filters", Values = Model.Filters });
+    if (Model.ExtraIds.Count > 0)
+        multi.Add(new BookingSummaryMultiHidden { Name = "ExtraIds", Values = Model.ExtraIds.Select(id => id.ToString()) });
+    <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
+    {
+        BodyId = "hotel-summary-body",
+        StartCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage),
+        TitleEs = "Resumen",
+        TitleEn = "Summary",
+        EditHintEs = "Seguir editando la reserva",
+        EditHintEn = "Keep editing the booking",
+        BusinessName = Model.SelectedHotel.BusinessName,
+        ImageUrl = Model.SelectedHotel.ImageUrl,
+        FallbackImage = "/images/pet-other.svg",
+        Subtitle = Model.SelectedHotel.City ?? "",
+        Lines =
+        [
+            new BookingSummaryLine { LabelEs = "Fechas", LabelEn = "Dates", Value = $"{Model.CheckIn} → {Model.CheckOut}" },
+            new BookingSummaryLine { LabelEs = "Noches", LabelEn = "Nights", Value = Model.Nights.ToString() },
+            new BookingSummaryLine
+            {
+                LabelEs = "Mascota",
+                LabelEn = "Pet",
+                Value = Model.SelectedPet != null
+                    ? $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name} × {Model.PetCount}"
+                    : $"— × {Model.PetCount}"
+            },
+            new BookingSummaryLine
+            {
+                LabelEs = "Extras",
+                LabelEn = "Extras",
+                Value = $"{Model.ExtraIds.Count} {CatalogLocalizer.Loc("seleccionados", "selected")}"
+            }
+        ],
+        TotalLabelEs = "Total estimado",
+        TotalLabelEn = "Estimated total",
+        Estimate = Model.Estimate,
+        NoteEs = "Precio final puede variar según impuestos y extras seleccionados.",
+        NoteEn = "Final price may vary with taxes and selected extras.",
+        DefaultPayment = Model.DefaultPayment,
+        AcceptTerms = Model.AcceptTerms,
+        SubmitLabelEs = "Reservar ahora — Pago seguro",
+        SubmitLabelEn = "Book now — Secure payment",
+        ShowSecureLockOnSubmit = true,
+        ShowSecureFooter = false,
+        HiddenFields =
+        [
+            new BookingSummaryHidden { Name = "When", Value = Model.When },
+            new BookingSummaryHidden { Name = "CheckIn", Value = Model.CheckIn },
+            new BookingSummaryHidden { Name = "CheckOut", Value = Model.CheckOut },
+            new BookingSummaryHidden { Name = "PetCount", Value = Model.PetCount.ToString() },
+            new BookingSummaryHidden { Name = "PetId", Value = Model.PetId.ToString() },
+            new BookingSummaryHidden { Name = "GroomerId", Value = Model.GroomerId?.ToString() },
+            new BookingSummaryHidden { Name = "Notes", Value = Model.Notes }
+        ],
+        MultiHiddenFields = multi
+    })" />
 }

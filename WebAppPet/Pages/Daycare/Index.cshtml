@@ -8,7 +8,7 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")">
+    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")@(!string.IsNullOrEmpty(Model.ErrorMessage) && Model.GroomerId.HasValue ? " is-summary-collapsed" : "")">
         <h1 class="app-page-heading">@L["Daycare_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -224,65 +224,42 @@
     ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
     ViewData["PromoDiscount"] = Model.DiscountAmount;
     ViewData["PromoError"] = Model.PromoError;
-    ViewData["TermsStep"] = "10. ";
-    ViewData["TermsChecked"] = Model.AcceptTerms;
-    <aside class="hotel-summary">
-        <div class="hotel-summary-inner">
-            <h3>@L["Book_ConfirmTitle"]</h3>
-            <div class="summary-hotel">
-                <img src="@(Model.SelectedDaycare.ImageUrl ?? "/images/categories/cat-daycare-v2.png")" alt="" />
-                <div>
-                    <strong>@Model.SelectedDaycare.BusinessName</strong>
-                    <div class="muted small">@Model.DateLabel · @Model.ScheduleLabel</div>
-                </div>
-            </div>
-            <div class="summary-total">
-                <span>@CatalogLocalizer.Loc("Total", "Total")</span>
-                <strong>$@Model.Estimate.ToString("0")</strong>
-            </div>
-
-            <form method="post">
-                <input type="hidden" name="When" value="@Model.When" />
-                <input type="hidden" name="Date" value="@Model.Date" />
-                <input type="hidden" name="Schedule" value="@Model.Schedule" />
-                <input type="hidden" name="CustomStart" value="@Model.CustomStart" />
-                <input type="hidden" name="CustomEnd" value="@Model.CustomEnd" />
-                <input type="hidden" name="PetId" value="@Model.PetId" />
-                <input type="hidden" name="GroomerId" value="@Model.GroomerId" />
-                <input type="hidden" name="Notes" value="@Model.Notes" />
-                @foreach (var p in Model.Prefs)
-                {
-                    <input type="hidden" name="Prefs" value="@p" />
-                }
-                @foreach (var id in Model.ExtraIds)
-                {
-                    <input type="hidden" name="ExtraIds" value="@id" />
-                }
-
-                <partial name="_PromoCode" />
-
-                <h4 class="summary-sub">@CatalogLocalizer.Loc("9. Método de pago", "9. Payment method")</h4>
-                @if (Model.DefaultPayment != null)
-                {
-                    <div class="pay-row">
-                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
-                        <a asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("Cambiar", "Change")</a>
-                    </div>
-                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
-                }
-                else
-                {
-                    <a class="btn btn-outline btn-block btn-sm" asp-page="/Account/PaymentMethods" style="margin-bottom:10px">@CatalogLocalizer.Loc("+ Agregar método de pago", "+ Add payment method")</a>
-                }
-
-                <partial name="_AcceptTerms" />
-
-                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book" style="margin-top:10px"
-                        aria-describedby="AcceptTerms-error">
-                    @CatalogLocalizer.Loc("Confirmar reserva", "Confirm booking") · $@Model.Estimate.ToString("0")
-                </button>
-                <p class="muted small" style="text-align:center;margin-top:8px">@CatalogLocalizer.Loc("Pago seguro y encriptado", "Secure encrypted payment")</p>
-            </form>
-        </div>
-    </aside>
+    var multi = new List<BookingSummaryMultiHidden>();
+    if (Model.Prefs.Count > 0)
+        multi.Add(new BookingSummaryMultiHidden { Name = "Prefs", Values = Model.Prefs });
+    if (Model.ExtraIds.Count > 0)
+        multi.Add(new BookingSummaryMultiHidden { Name = "ExtraIds", Values = Model.ExtraIds.Select(id => id.ToString()) });
+    <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
+    {
+        BodyId = "daycare-summary-body",
+        StartCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage),
+        TitleEs = "Confirmar reserva",
+        TitleEn = "Confirm booking",
+        EditHintEs = "Seguir editando la reserva",
+        EditHintEn = "Keep editing the booking",
+        BusinessName = Model.SelectedDaycare.BusinessName,
+        ImageUrl = Model.SelectedDaycare.ImageUrl,
+        FallbackImage = "/images/categories/cat-daycare-v2.png",
+        Subtitle = $"{Model.DateLabel} · {Model.ScheduleLabel}",
+        Estimate = Model.Estimate,
+        PaymentHeadingEs = "Método de pago",
+        PaymentHeadingEn = "Payment method",
+        DefaultPayment = Model.DefaultPayment,
+        AcceptTerms = Model.AcceptTerms,
+        TermsStep = "10. ",
+        SubmitLabelEs = $"Confirmar reserva · ${Model.Estimate:0}",
+        SubmitLabelEn = $"Confirm booking · ${Model.Estimate:0}",
+        HiddenFields =
+        [
+            new BookingSummaryHidden { Name = "When", Value = Model.When },
+            new BookingSummaryHidden { Name = "Date", Value = Model.Date },
+            new BookingSummaryHidden { Name = "Schedule", Value = Model.Schedule },
+            new BookingSummaryHidden { Name = "CustomStart", Value = Model.CustomStart },
+            new BookingSummaryHidden { Name = "CustomEnd", Value = Model.CustomEnd },
+            new BookingSummaryHidden { Name = "PetId", Value = Model.PetId.ToString() },
+            new BookingSummaryHidden { Name = "GroomerId", Value = Model.GroomerId?.ToString() },
+            new BookingSummaryHidden { Name = "Notes", Value = Model.Notes }
+        ],
+        MultiHiddenFields = multi
+    })" />
 }
