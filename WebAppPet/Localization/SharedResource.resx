@@ -116,7 +116,7 @@
   <data name="Home_PromoTitle" xml:space="preserve"><value>10% de descuento en tu primera cita</value></data>
   <data name="Home_PromoCode" xml:space="preserve"><value>Código</value></data>
   <data name="Promo_Label" xml:space="preserve"><value>Código promocional</value></data>
-  <data name="Promo_Placeholder" xml:space="preserve"><value>Ej. CHOMBLY10</value></data>
+  <data name="Promo_Placeholder" xml:space="preserve"><value>Ej. CHOMBLY10 o TEST10</value></data>
   <data name="Promo_Apply" xml:space="preserve"><value>Aplicar</value></data>
   <data name="Promo_Applied" xml:space="preserve"><value>Descuento aplicado</value></data>
   <data name="Promo_Subtotal" xml:space="preserve"><value>Subtotal</value></data>

@@ -1,14 +1,16 @@
 @page
 @model WebAppPet.Pages.Groomer.BusinessModel
 @{
-    ViewData["Title"] = "Mi negocio";
+    ViewData["Title"] = L["Groomer_Business"].Value;
     ViewData["GroomerTab"] = "business";
     ViewData["LangCompact"] = true;
     var catCount = Model.CategoryIds.Count;
     var svcCount = Model.Services.Count;
     var amenityCount = Model.Amenities.Count;
     var extraCount = Model.Extras.Count;
-    var bizName = string.IsNullOrWhiteSpace(Model.BusinessName) ? "Tu negocio" : Model.BusinessName;
+    var bizName = string.IsNullOrWhiteSpace(Model.BusinessName)
+        ? CatalogLocalizer.Loc("Tu negocio", "Your business")
+        : Model.BusinessName;
 }
 <div class="onboard onboard-app biz-page">
     <partial name="_OnboardTop" />
@@ -16,8 +18,8 @@
         <partial name="_GroomerNav" />
 
         <header class="biz-head">
-            <h1 class="app-page-heading">Mi negocio</h1>
-            <p class="muted small biz-lead">Hotel, vet, grooming, daycare… todo se configura aquí y se lee desde la BD.</p>
+            <h1 class="app-page-heading">@L["Groomer_Business"]</h1>
+            <p class="muted small biz-lead">@CatalogLocalizer.Loc("Hotel, vet, grooming, daycare… todo se configura aquí y se lee desde la BD.", "Hotel, vet, grooming, daycare… everything is configured here and read from the DB.")</p>
         </header>
 
         <div class="biz-tip">
@@ -38,8 +40,8 @@
                     <rect x="52" y="78" width="8" height="6" rx="1.5" fill="#B6E740"/>
                 </svg>
             </span>
-            <p class="biz-tip-kicker">Perfil público</p>
-            <p class="biz-tip-copy">@bizName · @catCount categorías · @svcCount servicios</p>
+            <p class="biz-tip-kicker">@CatalogLocalizer.Loc("Perfil público", "Public profile")</p>
+            <p class="biz-tip-copy">@bizName · @catCount @CatalogLocalizer.Loc("categorías", "categories") · @svcCount @CatalogLocalizer.Loc("servicios", "services")</p>
         </div>
 
         @if (!string.IsNullOrEmpty(Model.Message))
@@ -50,28 +52,28 @@
         <div class="biz-stats">
             <div class="biz-stat">
                 <strong>@catCount</strong>
-                <span>Categorías</span>
+                <span>@CatalogLocalizer.Loc("Categorías", "Categories")</span>
             </div>
             <div class="biz-stat">
                 <strong>@svcCount</strong>
-                <span>Servicios</span>
+                <span>@L["Groomer_Services"]</span>
             </div>
             <div class="biz-stat">
                 <strong>@(amenityCount + extraCount)</strong>
-                <span>Extras</span>
+                <span>@CatalogLocalizer.Loc("Extras", "Extras")</span>
             </div>
         </div>
 
         <form method="post" asp-page-handler="Save" class="biz-save-form">
             <section class="biz-panel" style="--i:0">
-                <h3 class="biz-panel-title">Datos básicos</h3>
+                <h3 class="biz-panel-title">@CatalogLocalizer.Loc("Datos básicos", "Basic details")</h3>
                 <div class="form-group">
-                    <label>Nombre comercial</label>
+                    <label>@L["Biz_BusinessName"]</label>
                     <input class="form-control" asp-for="BusinessName" required />
                 </div>
                 <div class="form-group">
-                    <label>Categorías</label>
-                    <p class="muted small biz-hint">Marca todos los servicios que ofreces. Puedes agregar o quitar cuando quieras.</p>
+                    <label>@CatalogLocalizer.Loc("Categorías", "Categories")</label>
+                    <p class="muted small biz-hint">@CatalogLocalizer.Loc("Marca todos los servicios que ofreces. Puedes agregar o quitar cuando quieras.", "Check every service you offer. You can add or remove anytime.")</p>
                     <input type="hidden" asp-for="CategoryId" />
                     <div class="biz-cat-grid">
                         @{ var ci = 0; }
@@ -90,30 +92,30 @@
             </section>
 
             <section class="biz-panel" style="--i:1">
-                <h3 class="biz-panel-title">Ubicación y contacto</h3>
+                <h3 class="biz-panel-title">@CatalogLocalizer.Loc("Ubicación y contacto", "Location & contact")</h3>
                 <div class="form-group">
-                    <label>Dirección</label>
+                    <label>@L["Common_Address"]</label>
                     <input class="form-control" asp-for="Address" id="Address" data-places="address" data-places-fill="address"
                            data-places-city="#City" data-places-lat="#Latitude" data-places-lng="#Longitude"
-                           placeholder="Busca la dirección…" />
+                           placeholder="@L["Biz_SearchAddress"]" />
                 </div>
                 <div class="form-group">
-                    <label>Ciudad</label>
+                    <label>@L["Common_City"]</label>
                     <input class="form-control" asp-for="City" id="City" data-places="city" data-places-fill="city"
                            data-places-lat="#Latitude" data-places-lng="#Longitude"
-                           placeholder="Busca la ciudad…" />
+                           placeholder="@L["Biz_SearchCity"]" />
                 </div>
                 <div class="biz-coord-row">
                     <div class="form-group">
-                        <label>Latitud</label>
+                        <label>@CatalogLocalizer.Loc("Latitud", "Latitude")</label>
                         <input class="form-control" asp-for="Latitude" id="Latitude" data-places-fill="lat" step="any" readonly />
                     </div>
                     <div class="form-group">
-                        <label>Longitud</label>
+                        <label>@CatalogLocalizer.Loc("Longitud", "Longitude")</label>
                         <input class="form-control" asp-for="Longitude" id="Longitude" data-places-fill="lng" step="any" readonly />
                     </div>
                 </div>
-                <p class="muted small biz-hint">Ubicación se completa al elegir una sugerencia de Google Maps.</p>
+                <p class="muted small biz-hint">@L["Biz_MapsTip"]</p>
                 <div class="form-group">
                     <label>@L["Common_Phone"]</label>
                     <input class="form-control" asp-for="Phone" type="tel" inputmode="numeric" data-phone="1"
@@ -122,56 +124,56 @@
             </section>
 
             <section class="biz-panel" style="--i:2">
-                <h3 class="biz-panel-title">Presentación y precios</h3>
+                <h3 class="biz-panel-title">@CatalogLocalizer.Loc("Presentación y precios", "Presentation & prices")</h3>
                 <div class="form-group">
-                    <label>Imagen (URL)</label>
+                    <label>@CatalogLocalizer.Loc("Imagen (URL)", "Image (URL)")</label>
                     <input class="form-control" asp-for="ImageUrl" placeholder="/images/..." />
                 </div>
                 <div class="form-group">
-                    <label>Sobre el negocio</label>
+                    <label>@CatalogLocalizer.Loc("Sobre el negocio", "About the business")</label>
                     <textarea class="form-control" asp-for="About" rows="3"></textarea>
                 </div>
                 <div class="biz-coord-row">
                     <div class="form-group">
-                        <label>Precio desde</label>
+                        <label>@CatalogLocalizer.Loc("Precio desde", "Starting price")</label>
                         <input class="form-control" asp-for="StartingPrice" step="0.01" />
                     </div>
                     <div class="form-group">
-                        <label>Unidad</label>
-                        <input class="form-control" asp-for="PriceUnit" placeholder="/ noche" />
+                        <label>@CatalogLocalizer.Loc("Unidad", "Unit")</label>
+                        <input class="form-control" asp-for="PriceUnit" placeholder="@CatalogLocalizer.Loc("/ noche", "/ night")" />
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Especies (CSV)</label>
+                    <label>@CatalogLocalizer.Loc("Especies (CSV)", "Species (CSV)")</label>
                     <input class="form-control" asp-for="AcceptedSpecies" />
                 </div>
             </section>
 
             <section class="biz-panel" style="--i:3">
-                <h3 class="biz-panel-title">Preferencias</h3>
+                <h3 class="biz-panel-title">@CatalogLocalizer.Loc("Preferencias", "Preferences")</h3>
                 <label class="biz-pref-row">
-                    <span>Mascotas senior</span>
+                    <span>@CatalogLocalizer.Loc("Mascotas senior", "Senior pets")</span>
                     <span class="biz-switch">
                         <input asp-for="AcceptsSeniorPets" type="checkbox" />
                         <span class="biz-switch-track" aria-hidden="true"></span>
                     </span>
                 </label>
                 <label class="biz-pref-row">
-                    <span>Mascotas ansiosas</span>
+                    <span>@CatalogLocalizer.Loc("Mascotas ansiosas", "Anxious pets")</span>
                     <span class="biz-switch">
                         <input asp-for="AcceptsAnxiousPets" type="checkbox" />
                         <span class="biz-switch-track" aria-hidden="true"></span>
                     </span>
                 </label>
                 <label class="biz-pref-row">
-                    <span>Destacado</span>
+                    <span>@CatalogLocalizer.Loc("Destacado", "Featured")</span>
                     <span class="biz-switch">
                         <input asp-for="IsFeatured" type="checkbox" />
                         <span class="biz-switch-track" aria-hidden="true"></span>
                     </span>
                 </label>
                 <label class="biz-pref-row">
-                    <span>Activo / visible</span>
+                    <span>@CatalogLocalizer.Loc("Activo / visible", "Active / visible")</span>
                     <span class="biz-switch">
                         <input asp-for="IsActive" type="checkbox" />
                         <span class="biz-switch-track" aria-hidden="true"></span>
@@ -179,37 +181,37 @@
                 </label>
             </section>
 
-            <button class="btn btn-primary btn-block biz-primary-btn" type="submit">Guardar negocio</button>
+            <button class="btn btn-primary btn-block biz-primary-btn" type="submit">@CatalogLocalizer.Loc("Guardar negocio", "Save business")</button>
         </form>
 
-        <h3 id="biz-services" class="section-title biz-section-title">Servicios</h3>
+        <h3 id="biz-services" class="section-title biz-section-title">@L["Groomer_Services"]</h3>
         <div class="biz-list">
             @foreach (var s in Model.Services)
             {
                 <article class="biz-item-card">
                     <strong>@s.Name</strong>
-                    <div class="muted small">Desde $@s.PriceSmall · @s.BillingUnit</div>
+                    <div class="muted small">@L["Common_From"] $@s.PriceSmall · @s.BillingUnit</div>
                 </article>
             }
         </div>
         <form method="post" asp-page-handler="AddService" class="biz-add-card">
-            <div class="form-group"><label>Nuevo servicio</label><input class="form-control" asp-for="NewServiceName" /></div>
+            <div class="form-group"><label>@CatalogLocalizer.Loc("Nuevo servicio", "New service")</label><input class="form-control" asp-for="NewServiceName" /></div>
             <div class="biz-coord-row">
-                <div class="form-group"><label>Precio base</label><input class="form-control" asp-for="NewServicePrice" step="0.01" /></div>
+                <div class="form-group"><label>@CatalogLocalizer.Loc("Precio base", "Base price")</label><input class="form-control" asp-for="NewServicePrice" step="0.01" /></div>
                 <div class="form-group">
-                    <label>Unidad</label>
+                    <label>@CatalogLocalizer.Loc("Unidad", "Unit")</label>
                     <select class="form-control" asp-for="NewServiceUnit">
-                        <option value="sesion">sesión</option>
-                        <option value="noche">noche</option>
-                        <option value="dia">día</option>
-                        <option value="visita">visita</option>
+                        <option value="sesion">@CatalogLocalizer.Loc("sesión", "session")</option>
+                        <option value="noche">@CatalogLocalizer.Loc("noche", "night")</option>
+                        <option value="dia">@CatalogLocalizer.Loc("día", "day")</option>
+                        <option value="visita">@CatalogLocalizer.Loc("visita", "visit")</option>
                     </select>
                 </div>
             </div>
-            <button class="btn btn-outline btn-block biz-secondary-btn" type="submit">Agregar servicio</button>
+            <button class="btn btn-outline btn-block biz-secondary-btn" type="submit">@CatalogLocalizer.Loc("Agregar servicio", "Add service")</button>
         </form>
 
-        <h3 id="biz-amenities" class="section-title biz-section-title">Amenities</h3>
+        <h3 id="biz-amenities" class="section-title biz-section-title">@CatalogLocalizer.Loc("Amenities", "Amenities")</h3>
         <div class="amenity-grid biz-amenity-grid">
             @foreach (var a in Model.Amenities)
             {
@@ -218,11 +220,11 @@
         </div>
         <form method="post" asp-page-handler="AddAmenity" class="biz-inline-add">
             <input class="form-control" asp-for="NewAmenityIcon" style="width:70px" placeholder="🎥" />
-            <input class="form-control" asp-for="NewAmenityLabel" placeholder="Cámaras 24/7" />
+            <input class="form-control" asp-for="NewAmenityLabel" placeholder="@CatalogLocalizer.Loc("Cámaras 24/7", "24/7 cameras")" />
             <button class="btn btn-outline biz-icon-btn" type="submit">+</button>
         </form>
 
-        <h3 id="biz-extras" class="section-title biz-section-title">Extras</h3>
+        <h3 id="biz-extras" class="section-title biz-section-title">@CatalogLocalizer.Loc("Extras", "Extras")</h3>
         <div class="biz-list">
             @foreach (var e in Model.Extras)
             {
@@ -233,7 +235,7 @@
             }
         </div>
         <form method="post" asp-page-handler="AddExtra" class="biz-inline-add">
-            <input class="form-control" asp-for="NewExtraName" placeholder="Baño adicional" />
+            <input class="form-control" asp-for="NewExtraName" placeholder="@CatalogLocalizer.Loc("Baño adicional", "Extra bath")" />
             <input class="form-control" asp-for="NewExtraPrice" style="width:100px" step="0.01" />
             <button class="btn btn-outline biz-icon-btn" type="submit">+</button>
         </form>

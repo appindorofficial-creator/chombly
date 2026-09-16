@@ -1,12 +1,14 @@
 @page
 @model WebAppPet.Pages.Groomer.AvailabilityModel
 @{
-    ViewData["Title"] = "Disponibilidad";
+    ViewData["Title"] = CatalogLocalizer.Loc("Disponibilidad", "Availability");
     ViewData["GroomerTab"] = "availability";
     ViewData["LangCompact"] = true;
     var openWeek = Model.WeekEdit.Count(d => d.IsOpen);
     var openDays = Model.Days.Count(d => d.IsAvailable);
     var closedDays = Model.Days.Count(d => !d.IsAvailable);
+    var openLabel = L["Biz_Open"].Value;
+    var closedLabel = CatalogLocalizer.Loc("Cerrado", "Closed");
 }
 <div class="onboard onboard-app agenda-page">
     <partial name="_OnboardTop" />
@@ -14,8 +16,8 @@
         <partial name="_GroomerNav" />
 
         <header class="agenda-head">
-            <h1 class="app-page-heading">Agenda</h1>
-            <p class="muted small agenda-lead">Define tu horario semanal. La agenda de citas se genera a partir de él.</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Agenda", "Agenda")</h1>
+            <p class="muted small agenda-lead">@CatalogLocalizer.Loc("Define tu horario semanal. La agenda de citas se genera a partir de él.", "Set your weekly hours. Bookings are generated from this schedule.")</p>
         </header>
 
         <div class="agenda-tip" aria-hidden="false">
@@ -42,8 +44,8 @@
                     <rect x="70" y="82" width="9" height="9" rx="2" fill="#9ED42A"/>
                 </svg>
             </span>
-            <p class="agenda-tip-kicker">Tu ritmo</p>
-            <p class="agenda-tip-copy">@openWeek días abiertos esta semana · @openDays disponibles en los próximos 30</p>
+            <p class="agenda-tip-kicker">@CatalogLocalizer.Loc("Tu ritmo", "Your rhythm")</p>
+            <p class="agenda-tip-copy">@CatalogLocalizer.Loc($"{openWeek} días abiertos esta semana · {openDays} disponibles en los próximos 30", $"{openWeek} open days this week · {openDays} available in the next 30")</p>
         </div>
 
         @if (!string.IsNullOrEmpty(Model.Message))
@@ -54,19 +56,19 @@
         <div class="agenda-stats">
             <div class="agenda-stat">
                 <strong>@openWeek</strong>
-                <span>Abiertos / sem</span>
+                <span>@CatalogLocalizer.Loc("Abiertos / sem", "Open / wk")</span>
             </div>
             <div class="agenda-stat">
                 <strong>@openDays</strong>
-                <span>Disponibles</span>
+                <span>@CatalogLocalizer.Loc("Disponibles", "Available")</span>
             </div>
             <div class="agenda-stat">
                 <strong>@closedDays</strong>
-                <span>Cerrados</span>
+                <span>@CatalogLocalizer.Loc("Cerrados", "Closed")</span>
             </div>
         </div>
 
-        <h3 class="section-title agenda-section-title">Horario semanal</h3>
+        <h3 class="section-title agenda-section-title">@CatalogLocalizer.Loc("Horario semanal", "Weekly hours")</h3>
         <form method="post" asp-page-handler="SaveWeek" class="agenda-week-form">
             <div class="agenda-week-list">
                 @for (var i = 0; i < Model.WeekEdit.Count; i++)
@@ -78,24 +80,24 @@
                         <label class="agenda-day-toggle">
                             <span class="agenda-day-meta">
                                 <strong>@day.Label</strong>
-                                <span class="agenda-day-status">@(day.IsOpen ? "Abierto" : "Cerrado")</span>
+                                <span class="agenda-day-status">@(day.IsOpen ? openLabel : closedLabel)</span>
                             </span>
                             <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
                             <span class="agenda-switch">
                                 <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true"
                                        @(day.IsOpen ? "checked" : null)
                                        data-agenda-switch
-                                       aria-label="@day.Label abierto" />
+                                       aria-label="@CatalogLocalizer.Loc($"{day.Label} abierto", $"{day.Label} open")" />
                                 <span class="agenda-switch-track" aria-hidden="true"></span>
                             </span>
                         </label>
                         <div class="agenda-day-times">
                             <div class="form-group">
-                                <label class="small muted">Abre</label>
+                                <label class="small muted">@L["Biz_Opens"]</label>
                                 <input class="form-control" type="time" name="WeekEdit[@i].OpenTime" value="@day.OpenTime" />
                             </div>
                             <div class="form-group">
-                                <label class="small muted">Cierra</label>
+                                <label class="small muted">@L["Biz_Closes"]</label>
                                 <input class="form-control" type="time" name="WeekEdit[@i].CloseTime" value="@day.CloseTime" />
                             </div>
                         </div>
@@ -103,22 +105,22 @@
                 }
             </div>
             <button class="btn btn-primary btn-block agenda-primary-btn" type="submit">
-                Guardar horario y regenerar 60 días
+                @CatalogLocalizer.Loc("Guardar horario y regenerar 60 días", "Save hours and regenerate 60 days")
             </button>
         </form>
 
         <form method="post" asp-page-handler="Regenerate" class="agenda-regen-form">
             <button class="btn btn-outline btn-block agenda-secondary-btn" type="submit">
-                Solo regenerar agenda (sin cambiar horario)
+                @CatalogLocalizer.Loc("Solo regenerar agenda (sin cambiar horario)", "Only regenerate agenda (keep hours)")
             </button>
         </form>
 
-        <h3 class="section-title agenda-section-title">Próximos 30 días</h3>
-        <p class="muted small agenda-cal-lead">Toca un día para abrirlo o cerrarlo (vacaciones, lleno, etc.).</p>
+        <h3 class="section-title agenda-section-title">@CatalogLocalizer.Loc("Próximos 30 días", "Next 30 days")</h3>
+        <p class="muted small agenda-cal-lead">@CatalogLocalizer.Loc("Toca un día para abrirlo o cerrarlo (vacaciones, lleno, etc.).", "Tap a day to open or close it (vacation, full, etc.).")</p>
 
         @if (!Model.Days.Any())
         {
-            <div class="empty agenda-empty">Aún no hay días. Guarda el horario semanal primero.</div>
+            <div class="empty agenda-empty">@CatalogLocalizer.Loc("Aún no hay días. Guarda el horario semanal primero.", "No days yet. Save the weekly hours first.")</div>
         }
         else
         {
@@ -128,10 +130,10 @@
                     var d = Model.Days[i];
                     <form method="post" asp-page-handler="Toggle" class="agenda-cal-cell @(d.IsAvailable ? "is-open" : "is-closed")" style="--i:@Math.Min(i, 11)">
                         <input type="hidden" name="id" value="@d.Id" />
-                        <button type="submit" class="agenda-cal-btn" title="@(d.Note ?? (d.IsAvailable ? "Disponible" : "Cerrado"))">
+                        <button type="submit" class="agenda-cal-btn" title="@(d.Note ?? (d.IsAvailable ? CatalogLocalizer.Loc("Disponible", "Available") : closedLabel))">
                             <span class="agenda-cal-dow">@d.Day.ToString("ddd")</span>
                             <span class="agenda-cal-num">@d.Day.Day</span>
-                            <span class="agenda-cal-state">@(d.IsAvailable ? "Abierto" : "Cerrado")</span>
+                            <span class="agenda-cal-state">@(d.IsAvailable ? openLabel : closedLabel)</span>
                         </button>
                     </form>
                 }
@@ -144,6 +146,8 @@
 @section Scripts {
 <script>
 (function () {
+    var openLabel = @System.Text.Json.JsonSerializer.Serialize(openLabel);
+    var closedLabel = @System.Text.Json.JsonSerializer.Serialize(closedLabel);
     document.querySelectorAll('[data-agenda-switch]').forEach(function (input) {
         input.addEventListener('change', function () {
             var card = input.closest('.agenda-day-card');
@@ -151,7 +155,7 @@
             card.classList.toggle('is-open', input.checked);
             card.classList.toggle('is-closed', !input.checked);
             var status = card.querySelector('.agenda-day-status');
-            if (status) status.textContent = input.checked ? 'Abierto' : 'Cerrado';
+            if (status) status.textContent = input.checked ? openLabel : closedLabel;
         });
     });
 })();

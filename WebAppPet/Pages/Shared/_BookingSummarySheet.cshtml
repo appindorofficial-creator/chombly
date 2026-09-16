@@ -68,14 +68,6 @@
                     }
                 </div>
             }
-            <div class="summary-total">
-                <span>@CatalogLocalizer.Loc(Model.TotalLabelEs, Model.TotalLabelEn)</span>
-                <strong>$@estimate</strong>
-            </div>
-            @if (!string.IsNullOrEmpty(Model.NoteEs) && !string.IsNullOrEmpty(Model.NoteEn))
-            {
-                <p class="summary-note">@CatalogLocalizer.Loc(Model.NoteEs, Model.NoteEn)</p>
-            }
 
             <form method="post">
                 @foreach (var h in Model.HiddenFields)
@@ -91,6 +83,15 @@
                 }
 
                 <partial name="_PromoCode" />
+
+                <div class="summary-total">
+                    <span>@CatalogLocalizer.Loc(Model.TotalLabelEs, Model.TotalLabelEn)</span>
+                    <strong>$@estimate</strong>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.NoteEs) && !string.IsNullOrEmpty(Model.NoteEn))
+                {
+                    <p class="summary-note">@CatalogLocalizer.Loc(Model.NoteEs, Model.NoteEn)</p>
+                }
 
                 <h4 class="summary-sub">@CatalogLocalizer.Loc(Model.PaymentHeadingEs, Model.PaymentHeadingEn)</h4>
                 @if (Model.DefaultPayment != null)
@@ -110,7 +111,10 @@
 
                 <partial name="_AcceptTerms" />
 
-                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book" style="margin-top:10px"
+                <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book"
+                        data-terms-submit
+                        disabled="@(Model.AcceptTerms ? null : "disabled")"
+                        style="margin-top:10px"
                         aria-describedby="AcceptTerms-error">
                     @if (Model.ShowSecureLockOnSubmit)
                     {

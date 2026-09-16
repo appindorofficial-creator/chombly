@@ -151,7 +151,9 @@
                 <p class="muted small center care-plan-fineprint">
                     @CatalogLocalizer.Loc("Pago simulado · sin cargo real · renovación automática", "Simulated payment · no real charge · auto-renews")
                 </p>
-                <button type="submit" class="btn btn-primary btn-block btn-lg care-plan-submit">
+                <button type="submit" class="btn btn-primary btn-block btn-lg care-plan-submit"
+                        data-terms-submit
+                        disabled="@(Model.AcceptTerms && Model.AcceptRenewal ? null : "disabled")">
                     @CatalogLocalizer.Loc($"Suscribirme por ${priceLabel}/mes", $"Subscribe for ${priceLabel}/mo")
                 </button>
             </form>

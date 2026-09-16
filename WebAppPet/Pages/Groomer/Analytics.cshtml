@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Groomer.AnalyticsModel
 @{
-    ViewData["Title"] = "Analíticas";
+    ViewData["Title"] = CatalogLocalizer.Loc("Analíticas", "Analytics");
     ViewData["GroomerTab"] = "analytics";
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
@@ -12,11 +12,11 @@
     <div class="home-body">
     <partial name="_GroomerNav" />
 
-    <h2 style="margin:0 0 16px">Analíticas · @DateTime.Today.ToString("MMMM yyyy")</h2>
+    <h2 style="margin:0 0 16px">@CatalogLocalizer.Loc("Analíticas", "Analytics") · @DateTime.Today.ToString("MMMM yyyy")</h2>
 
     <div class="promo-banner" style="margin-top:0">
         <div style="flex:1">
-            <span class="small" style="opacity:.85">Ingresos del mes</span>
+            <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos del mes", "This month's earnings")</span>
             <strong style="font-size:1.6rem">$@Model.MonthIncome.ToString("0.00")</strong>
         </div>
     </div>
@@ -24,23 +24,23 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="card card-pad" style="text-align:center">
             <div style="font-size:1.5rem;font-weight:900;color:var(--purple)">@Model.Completed</div>
-            <div class="muted small">Citas completadas</div>
+            <div class="muted small">@CatalogLocalizer.Loc("Citas completadas", "Completed bookings")</div>
         </div>
         <div class="card card-pad" style="text-align:center">
             <div style="font-size:1.5rem;font-weight:900;color:var(--purple)">@Model.NewRequests</div>
-            <div class="muted small">Nuevas solicitudes</div>
+            <div class="muted small">@CatalogLocalizer.Loc("Nuevas solicitudes", "New requests")</div>
         </div>
         <div class="card card-pad" style="text-align:center">
             <div style="font-size:1.5rem;font-weight:900;color:var(--purple)">@Model.UniqueClients</div>
-            <div class="muted small">Clientes atendidos</div>
+            <div class="muted small">@CatalogLocalizer.Loc("Clientes atendidos", "Clients served")</div>
         </div>
         <div class="card card-pad" style="text-align:center">
             <div style="font-size:1.5rem;font-weight:900;color:@(Model.Cancelled > 0 ? "#dc2626" : "var(--purple)")">@Model.Cancelled</div>
-            <div class="muted small">Cancelaciones</div>
+            <div class="muted small">@CatalogLocalizer.Loc("Cancelaciones", "Cancellations")</div>
         </div>
     </div>
 
-    <h3 class="section-title">Servicios más solicitados</h3>
+    <h3 class="section-title">@CatalogLocalizer.Loc("Servicios más solicitados", "Top requested services")</h3>
     @foreach (var s in Model.TopServices)
     {
         <div style="margin-bottom:10px">
@@ -54,7 +54,7 @@
     }
     @if (!Model.TopServices.Any())
     {
-        <div class="empty">Aún no hay datos suficientes.</div>
+        <div class="empty">@CatalogLocalizer.Loc("Aún no hay datos suficientes.", "Not enough data yet.")</div>
     }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>

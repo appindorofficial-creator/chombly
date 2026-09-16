@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -42,12 +43,12 @@ public class ScheduleCallModel : GroomerPageModel
 
         if (!DateTime.TryParse(Day, out var day))
         {
-            ErrorMessage = "Elige un día.";
+            ErrorMessage = CatalogLocalizer.Loc("Elige un día.", "Pick a day.");
             return Page();
         }
         if (!DateTime.TryParse($"{day:yyyy-MM-dd} {Slot}", out var when))
         {
-            ErrorMessage = "Horario inválido.";
+            ErrorMessage = CatalogLocalizer.Loc("Horario inválido.", "Invalid time slot.");
             return Page();
         }
 
@@ -56,15 +57,19 @@ public class ScheduleCallModel : GroomerPageModel
 
         await _email.SendAsync(
             Profile.User?.Email ?? "",
-            "Chombly: llamada agendada",
-            $"<p>Hola {Profile.User?.FullName},</p><p>Tu llamada de soporte quedó para <strong>{when:ddd d MMM · h:mm tt}</strong>.</p><p>— Equipo Chombly</p>");
+            CatalogLocalizer.Loc("Chombly: llamada agendada", "Chombly: call scheduled"),
+            CatalogLocalizer.Loc(
+                $"<p>Hola {Profile.User?.FullName},</p><p>Tu llamada de soporte quedó para <strong>{when:ddd d MMM · h:mm tt}</strong>.</p><p>— Equipo Chombly</p>",
+                $"<p>Hi {Profile.User?.FullName},</p><p>Your support call is set for <strong>{when:ddd d MMM · h:mm tt}</strong>.</p><p>— Chombly team</p>"));
 
         // Avisar admin
         var adminEmail = "appindorofficial@gmail.com";
         await _email.SendAsync(adminEmail, $"Llamada soporte — {Profile.BusinessName}",
             $"<p>{Profile.BusinessName} agendó llamada: {when:g}</p><p>{Profile.User?.Email} · {Profile.Phone}</p>");
 
-        Message = $"Llamada confirmada: {when:ddd d MMM · h:mm tt}";
+        Message = CatalogLocalizer.Loc(
+            $"Llamada confirmada: {when:ddd d MMM · h:mm tt}",
+            $"Call confirmed: {when:ddd d MMM · h:mm tt}");
         return Page();
     }
 

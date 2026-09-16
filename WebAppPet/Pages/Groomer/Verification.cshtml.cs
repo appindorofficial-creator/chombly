@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -34,7 +35,9 @@ public class VerificationModel : GroomerPageModel
             case "bank": g.VerifiedBank = true; break;
         }
         await Db.SaveChangesAsync();
-        Message = "Marcado como completado. El equipo de Chombly puede revisarlo.";
+        Message = CatalogLocalizer.Loc(
+            "Marcado como completado. El equipo de Chombly puede revisarlo.",
+            "Marked as done. The Chombly team can review it.");
         await EnsureServicesLoadedAsync();
         CountDone();
         return Page();

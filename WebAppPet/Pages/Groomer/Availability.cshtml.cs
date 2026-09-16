@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,11 +11,17 @@ namespace WebAppPet.Pages.Groomer;
 public class AvailabilityModel : GroomerPageModel
 {
     private readonly AvailabilityService _availability;
+    private readonly IStringLocalizer<SharedResource> _L;
 
-    public AvailabilityModel(AppDbContext db, AuthService auth, AvailabilityService availability)
+    public AvailabilityModel(
+        AppDbContext db,
+        AuthService auth,
+        AvailabilityService availability,
+        IStringLocalizer<SharedResource> L)
         : base(db, auth)
     {
         _availability = availability;
+        _L = L;
     }
 
     public List<BusinessDayAvailability> Days { get; set; } = new();
@@ -36,13 +44,17 @@ public class AvailabilityModel : GroomerPageModel
         EnsureWeekLabels(WeekEdit);
         if (!WeekEdit.Any(d => d.IsOpen))
         {
-            Message = "Debes tener al menos un día abierto.";
+            Message = CatalogLocalizer.Loc(
+                "Debes tener al menos un día abierto.",
+                "Open at least one day in your schedule.");
             await LoadAsync();
             return Page();
         }
 
         await _availability.SaveWeeklyAndGenerateAsync(Profile!.Id, WeekEdit, days: 60);
-        Message = "Horario semanal guardado y agenda de 60 días actualizada.";
+        Message = CatalogLocalizer.Loc(
+            "Horario semanal guardado y agenda de 60 días actualizada.",
+            "Weekly hours saved and 60-day agenda updated.");
         await LoadAsync();
         return Page();
     }
@@ -54,7 +66,9 @@ public class AvailabilityModel : GroomerPageModel
         if (row != null)
         {
             row.IsAvailable = !row.IsAvailable;
-            row.Note = row.IsAvailable ? "Abierto (manual)" : "Cerrado (manual)";
+            row.Note = row.IsAvailable
+                ? CatalogLocalizer.Loc("Abierto (manual)", "Open (manual)")
+                : CatalogLocalizer.Loc("Cerrado (manual)", "Closed (manual)");
             await Db.SaveChangesAsync();
         }
         return RedirectToPage();
@@ -66,11 +80,15 @@ public class AvailabilityModel : GroomerPageModel
         var n = await _availability.GenerateFromWeeklyAsync(Profile!.Id, 60, replaceExisting: true);
         if (n == 0)
         {
-            Message = "Primero guarda un horario semanal.";
+            Message = CatalogLocalizer.Loc(
+                "Primero guarda un horario semanal.",
+                "Save a weekly schedule first.");
         }
         else
         {
-            Message = $"Agenda regenerada ({n} días) según tu horario semanal.";
+            Message = CatalogLocalizer.Loc(
+                $"Agenda regenerada ({n} días) según tu horario semanal.",
+                $"Agenda regenerated ({n} days) from your weekly hours.");
         }
         await LoadAsync();
         return Page();
@@ -103,6 +121,7 @@ public class AvailabilityModel : GroomerPageModel
             OpenTime = w.OpenTime,
             CloseTime = w.CloseTime
         }).ToList();
+        EnsureWeekLabels(WeekEdit);
 
         var start = DateTime.Today;
         Days = await Db.DayAvailabilities
@@ -111,9 +130,18 @@ public class AvailabilityModel : GroomerPageModel
             .ToListAsync();
     }
 
-    private static void EnsureWeekLabels(List<WeekDayInput> week)
+    private void EnsureWeekLabels(List<WeekDayInput> week)
     {
-        var names = new[] { "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" };
+        var names = new[]
+        {
+            _L["Day_Sunday"].Value,
+            _L["Day_Monday"].Value,
+            _L["Day_Tuesday"].Value,
+            _L["Day_Wednesday"].Value,
+            _L["Day_Thursday"].Value,
+            _L["Day_Friday"].Value,
+            _L["Day_Saturday"].Value
+        };
         for (var i = 0; i < week.Count && i < 7; i++)
         {
             week[i].DayOfWeek = i;

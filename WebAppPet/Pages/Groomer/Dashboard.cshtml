@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Groomer.DashboardModel
 @{
-    ViewData["Title"] = "Panel groomer";
+    ViewData["Title"] = CatalogLocalizer.Loc("Panel del negocio", "Business panel");
     ViewData["GroomerTab"] = "dashboard";
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
@@ -15,9 +15,9 @@
     @if (Model.JustRegistered || Model.Profile?.PublishStatus == BusinessPublishStatus.PendingReview)
     {
         <div class="card card-pad" style="margin-bottom:14px;background:var(--brand-soft)">
-            <strong>Completa tu verificación</strong>
-            <p class="muted small" style="margin:6px 0 10px">Licencias, seguro y banco ayudan a publicar más rápido.</p>
-            <a class="btn btn-primary btn-block" asp-page="./Verification">Ver checklist</a>
+            <strong>@L["Biz_CompleteVerification"]</strong>
+            <p class="muted small" style="margin:6px 0 10px">@CatalogLocalizer.Loc("Licencias, seguro y banco ayudan a publicar más rápido.", "Licenses, insurance, and banking help you publish faster.")</p>
+            <a class="btn btn-primary btn-block" asp-page="./Verification">@CatalogLocalizer.Loc("Ver checklist", "See checklist")</a>
         </div>
     }
     @if (!string.IsNullOrEmpty(Model.Flash))
@@ -28,34 +28,34 @@
     @if (Model.Profile != null)
     {
         <div class="card card-pad" style="margin-bottom:14px">
-            <h3 style="margin:0 0 6px">Estado de publicación</h3>
+            <h3 style="margin:0 0 6px">@CatalogLocalizer.Loc("Estado de publicación", "Publish status")</h3>
             @switch (Model.Profile.PublishStatus)
             {
                 case BusinessPublishStatus.Approved:
-                    <p class="muted small" style="margin:0">✓ Publicado — los clientes ya pueden encontrarte.</p>
+                    <p class="muted small" style="margin:0">@CatalogLocalizer.Loc("✓ Publicado — los clientes ya pueden encontrarte.", "✓ Published — customers can find you now.")</p>
                     break;
                 case BusinessPublishStatus.PendingReview:
-                    <p class="muted small" style="margin:0">⏳ En revisión — completa agenda y perfil mientras esperas.</p>
+                    <p class="muted small" style="margin:0">@CatalogLocalizer.Loc("⏳ En revisión — completa agenda y perfil mientras esperas.", "⏳ Under review — finish your agenda and profile while you wait.")</p>
                     break;
                 case BusinessPublishStatus.Rejected:
-                    <p class="muted small" style="margin:0">No aprobado. Mejora tu perfil y vuelve a enviar.</p>
+                    <p class="muted small" style="margin:0">@CatalogLocalizer.Loc("No aprobado. Mejora tu perfil y vuelve a enviar.", "Not approved. Improve your profile and resubmit.")</p>
                     <form method="post" asp-page-handler="Resubmit" style="margin-top:8px">
-                        <button class="btn btn-primary btn-block" type="submit">Reenviar a revisión</button>
+                        <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Reenviar a revisión", "Resubmit for review")</button>
                     </form>
                     break;
                 default:
-                    <p class="muted small" style="margin:0">Borrador — termina tu configuración.</p>
+                    <p class="muted small" style="margin:0">@CatalogLocalizer.Loc("Borrador — termina tu configuración.", "Draft — finish your setup.")</p>
                     break;
             }
             <div class="muted small" style="margin-top:8px">
-                Agenda: @Model.OpenWeekDays días abiertos/semana · Servicios: @Model.ServiceCount
-                · <a asp-page="./Availability">Editar agenda</a>
-                · <a asp-page="./Business">Editar negocio</a>
+                @CatalogLocalizer.Loc("Agenda", "Agenda"): @Model.OpenWeekDays @CatalogLocalizer.Loc("días abiertos/semana", "open days/week") · @L["Groomer_Services"]: @Model.ServiceCount
+                · <a asp-page="./Availability">@CatalogLocalizer.Loc("Editar agenda", "Edit agenda")</a>
+                · <a asp-page="./Business">@CatalogLocalizer.Loc("Editar negocio", "Edit business")</a>
             </div>
         </div>
     }
 
-    <h2 style="margin:0 0 4px">Hola, @Model.Profile?.User.FullName</h2>
+    <h2 style="margin:0 0 4px">@string.Format(L["Home_HeroHello"].Value, Model.Profile?.User.FullName)</h2>
     <p class="muted small" style="margin:0 0 16px">
         @Model.Profile?.BusinessName
         @if (Model.OfferedCategories.Count > 0)
@@ -66,27 +66,27 @@
 
     <div class="promo-banner" style="margin-top:0">
         <div style="flex:1">
-            <span class="small" style="opacity:.85">Ingresos de hoy</span>
+            <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos de hoy", "Today's earnings")</span>
             <strong style="font-size:1.6rem">$@Model.TodayIncome.ToString("0.00")</strong>
-            <span class="small">@Model.TodayCompleted citas completadas</span>
+            <span class="small">@Model.TodayCompleted @CatalogLocalizer.Loc("citas completadas", "completed bookings")</span>
         </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         <div class="card card-pad" style="text-align:center">
             <div style="font-size:1.6rem;font-weight:900;color:var(--purple)">@Model.UpcomingCount</div>
-            <div class="muted small">Próximas citas</div>
+            <div class="muted small">@L["Appt_Upcoming"]</div>
         </div>
         <a class="card card-pad" style="text-align:center" asp-page="./Appointments" asp-route-tab="requests">
             <div style="font-size:1.6rem;font-weight:900;color:var(--purple)">@Model.PendingCount</div>
-            <div class="muted small">Nuevas solicitudes</div>
+            <div class="muted small">@CatalogLocalizer.Loc("Nuevas solicitudes", "New requests")</div>
         </a>
     </div>
 
-    <h3 class="section-title">Agenda próxima</h3>
+    <h3 class="section-title">@CatalogLocalizer.Loc("Agenda próxima", "Upcoming agenda")</h3>
     @if (!Model.Upcoming.Any())
     {
-        <div class="empty">No hay citas próximas.</div>
+        <div class="empty">@CatalogLocalizer.Loc("No hay citas próximas.", "No upcoming bookings.")</div>
     }
     @foreach (var a in Model.Upcoming)
     {
@@ -99,7 +99,7 @@
                     <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM · h:mm tt")</div>
                 </div>
                 <span class="badge @(a.Status == AppointmentStatus.Confirmed ? "badge-green" : "badge-orange")">
-                    @(a.Status == AppointmentStatus.Confirmed ? "Confirmada" : "Pendiente")
+                    @(a.Status == AppointmentStatus.Confirmed ? L["Appt_Status_Confirmed"].Value : L["Appt_Status_Pending"].Value)
                 </span>
             </div>
         </div>

@@ -131,7 +131,8 @@
                role="alert"
                @(string.IsNullOrEmpty(Model.ErrorMessage) ? "hidden" : null)>@(Model.ErrorMessage ?? CatalogLocalizer.Loc("Debes aceptar los términos para reservar.", "You must accept the terms to book."))</p>
 
-            <button type="submit" class="btn btn-primary btn-block" disabled="@(Model.Providers.Count == 0)">
+            <button type="submit" class="btn btn-primary btn-block" data-terms-submit
+                    disabled="@((Model.Providers.Count == 0 || !Model.AcceptTerms) ? "disabled" : null)">
                 @CatalogLocalizer.Loc($"Confirmar · ${price:0.##}", $"Confirm · ${price:0.##}")
             </button>
             <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>

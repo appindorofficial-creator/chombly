@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Groomer.ScheduleCallModel
 @{
-    ViewData["Title"] = "Agendar llamada";
+    ViewData["Title"] = CatalogLocalizer.Loc("Agendar llamada", "Schedule call");
     ViewData["GroomerTab"] = "dashboard";
     ViewData["LangCompact"] = true;
 }
@@ -10,13 +10,13 @@
     <div class="home-body">
     <partial name="_GroomerNav" />
     <a class="back-btn" asp-page="./Verification" style="margin-bottom:8px;display:inline-block">←</a>
-    <h2 style="margin:0 0 6px">Agendar llamada</h2>
-    <p class="muted small">Un especialista te ayuda con verificación, seguro y cobros.</p>
+    <h2 style="margin:0 0 6px">@CatalogLocalizer.Loc("Agendar llamada", "Schedule call")</h2>
+    <p class="muted small">@CatalogLocalizer.Loc("Un especialista te ayuda con verificación, seguro y cobros.", "A specialist helps with verification, insurance, and payouts.")</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-info">@Model.Message</div>
-        <a class="btn btn-primary btn-block" asp-page="./Dashboard">Ir al panel</a>
+        <a class="btn btn-primary btn-block" asp-page="./Dashboard">@L["Biz_GoDashboard"]</a>
     }
     else
     {
@@ -25,7 +25,7 @@
             <div class="alert alert-danger">@Model.ErrorMessage</div>
         }
         <form method="post">
-            <h3 class="section-title">Día</h3>
+            <h3 class="section-title">@CatalogLocalizer.Loc("Día", "Day")</h3>
             <div class="when-row" style="flex-wrap:wrap">
                 @foreach (var d in Model.Days)
                 {
@@ -36,7 +36,7 @@
                     </label>
                 }
             </div>
-            <h3 class="section-title">Horario</h3>
+            <h3 class="section-title">@L["Biz_Hours"]</h3>
             <div class="slot-grid" style="margin-bottom:14px">
                 @foreach (var t in Model.Slots)
                 {
@@ -46,7 +46,7 @@
                     </label>
                 }
             </div>
-            <button class="btn btn-primary btn-block" type="submit">Confirmar llamada</button>
+            <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Confirmar llamada", "Confirm call")</button>
         </form>
     }
     </div>

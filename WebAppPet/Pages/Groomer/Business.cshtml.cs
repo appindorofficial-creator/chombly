@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,7 +11,13 @@ namespace WebAppPet.Pages.Groomer;
 
 public class BusinessModel : GroomerPageModel
 {
-    public BusinessModel(AppDbContext db, AuthService auth) : base(db, auth) { }
+    private readonly IStringLocalizer<SharedResource> _L;
+
+    public BusinessModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+        : base(db, auth)
+    {
+        _L = L;
+    }
 
     public List<ServiceCategory> Categories { get; set; } = new();
     public List<BusinessAmenity> Amenities { get; set; } = new();
@@ -62,7 +70,9 @@ public class BusinessModel : GroomerPageModel
             .ToList();
         if (selected.Count == 0)
         {
-            Message = "Selecciona al menos una categoría de servicio.";
+            Message = CatalogLocalizer.Loc(
+                "Selecciona al menos una categoría de servicio.",
+                "Select at least one service category.");
             await FillAsync();
             return Page();
         }
@@ -81,7 +91,7 @@ public class BusinessModel : GroomerPageModel
         g.About = About.Trim();
         if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
         {
-            Message = "Teléfono inválido. Solo números (mín. 7 dígitos). Ej: 7045551234";
+            Message = _L["Phone_Invalid"].Value;
             await FillAsync();
             return Page();
         }
@@ -95,7 +105,7 @@ public class BusinessModel : GroomerPageModel
         g.IsFeatured = IsFeatured;
         g.IsActive = IsActive;
         await Db.SaveChangesAsync();
-        Message = "Negocio actualizado.";
+        Message = CatalogLocalizer.Loc("Negocio actualizado.", "Business updated.");
         await FillAsync();
         return Page();
     }

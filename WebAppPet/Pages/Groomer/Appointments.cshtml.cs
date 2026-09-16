@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -8,7 +10,13 @@ namespace WebAppPet.Pages.Groomer;
 
 public class AppointmentsModel : GroomerPageModel
 {
-    public AppointmentsModel(AppDbContext db, AuthService auth) : base(db, auth) { }
+    private readonly IStringLocalizer<SharedResource> _L;
+
+    public AppointmentsModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+        : base(db, auth)
+    {
+        _L = L;
+    }
 
     [BindProperty(SupportsGet = true)]
     public string Tab { get; set; } = "requests";
@@ -46,15 +54,20 @@ public class AppointmentsModel : GroomerPageModel
 
     public Task<IActionResult> OnPostAcceptAsync(int id, string tab) =>
         ChangeStatusAsync(id, tab, AppointmentStatus.Pending, AppointmentStatus.Confirmed,
-            "¡Cita confirmada!", "confirmó tu cita");
+            CatalogLocalizer.Loc("¡Cita confirmada!", "Booking confirmed!"),
+            CatalogLocalizer.Loc("confirmó tu cita", "confirmed your booking"));
 
     public Task<IActionResult> OnPostRejectAsync(int id, string tab) =>
         ChangeStatusAsync(id, tab, AppointmentStatus.Pending, AppointmentStatus.Cancelled,
-            "Cita rechazada", "no pudo aceptar tu cita");
+            CatalogLocalizer.Loc("Cita rechazada", "Booking declined"),
+            CatalogLocalizer.Loc("no pudo aceptar tu cita", "could not accept your booking"));
 
     public Task<IActionResult> OnPostCompleteAsync(int id, string tab) =>
         ChangeStatusAsync(id, tab, AppointmentStatus.Confirmed, AppointmentStatus.Completed,
-            "Servicio completado", "completó el servicio. ¡Cuéntanos cómo quedó tu mascota!");
+            CatalogLocalizer.Loc("Servicio completado", "Service completed"),
+            CatalogLocalizer.Loc(
+                "completó el servicio. ¡Cuéntanos cómo quedó tu mascota!",
+                "completed the service. Tell us how your pet looks!"));
 
     private async Task<IActionResult> ChangeStatusAsync(
         int id, string tab, AppointmentStatus from, AppointmentStatus to, string title, string messageSuffix)
@@ -83,10 +96,10 @@ public class AppointmentsModel : GroomerPageModel
 
     public string StatusLabel(AppointmentStatus s) => s switch
     {
-        AppointmentStatus.Pending => "Pendiente",
-        AppointmentStatus.Confirmed => "Confirmada",
-        AppointmentStatus.Completed => "Completada",
-        AppointmentStatus.Cancelled => "Cancelada",
+        AppointmentStatus.Pending => _L["Appt_Status_Pending"].Value,
+        AppointmentStatus.Confirmed => _L["Appt_Status_Confirmed"].Value,
+        AppointmentStatus.Completed => _L["Appt_Status_Completed"].Value,
+        AppointmentStatus.Cancelled => _L["Appt_Status_Cancelled"].Value,
         _ => s.ToString()
     };
 

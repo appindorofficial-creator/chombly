@@ -425,16 +425,29 @@
       var err = form.querySelector('[data-terms-error]');
       var renewal = form.querySelector('[data-care-renewal], input[name="AcceptRenewal"][type="checkbox"]');
 
-      function clearIfReady() {
-        if (cb.checked && (!renewal || renewal.checked)) setTermsErrorVisible(err, false);
+      function termsReady() {
+        return !!(cb.checked && (!renewal || renewal.checked));
       }
 
-      cb.addEventListener('change', clearIfReady);
-      if (renewal) renewal.addEventListener('change', clearIfReady);
+      function syncTermsSubmit() {
+        var ready = termsReady();
+        form.querySelectorAll('[data-terms-submit]').forEach(function (btn) {
+          btn.disabled = !ready;
+          btn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+        });
+        if (ready) setTermsErrorVisible(err, false);
+      }
+
+      cb.addEventListener('change', syncTermsSubmit);
+      if (renewal) renewal.addEventListener('change', syncTermsSubmit);
+      syncTermsSubmit();
 
       form.addEventListener('submit', function (e) {
-        var ok = cb.checked && (!renewal || renewal.checked);
-        if (ok) {
+        var submitter = e.submitter;
+        // Promo "Aplicar" and other non-gated submits stay available.
+        if (submitter && !submitter.hasAttribute('data-terms-submit')) return;
+
+        if (termsReady()) {
           setTermsErrorVisible(err, false);
           return;
         }

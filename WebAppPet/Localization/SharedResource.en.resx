@@ -110,7 +110,7 @@
   <data name="Home_PromoTitle" xml:space="preserve"><value>10% off your first booking</value></data>
   <data name="Home_PromoCode" xml:space="preserve"><value>Code</value></data>
   <data name="Promo_Label" xml:space="preserve"><value>Promo code</value></data>
-  <data name="Promo_Placeholder" xml:space="preserve"><value>e.g. CHOMBLY10</value></data>
+  <data name="Promo_Placeholder" xml:space="preserve"><value>e.g. CHOMBLY10 or TEST10</value></data>
   <data name="Promo_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Promo_Applied" xml:space="preserve"><value>Discount applied</value></data>
   <data name="Promo_Subtotal" xml:space="preserve"><value>Subtotal</value></data>

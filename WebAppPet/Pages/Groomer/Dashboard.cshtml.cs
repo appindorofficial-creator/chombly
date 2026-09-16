@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -77,13 +78,17 @@ public class DashboardModel : GroomerPageModel
                 Db.Notifications.Add(new AppNotification
                 {
                     UserId = adminId,
-                    Title = "Negocio reenviado a revisión",
-                    Message = $"{g.BusinessName} vuelve a solicitar publicación.",
+                    Title = CatalogLocalizer.Loc("Negocio reenviado a revisión", "Business resubmitted for review"),
+                    Message = CatalogLocalizer.Loc(
+                        $"{g.BusinessName} vuelve a solicitar publicación.",
+                        $"{g.BusinessName} is requesting publication again."),
                     Type = "business"
                 });
             }
             await Db.SaveChangesAsync();
-            TempData["Flash"] = "Solicitud reenviada. Te avisaremos al publicar.";
+            TempData["Flash"] = CatalogLocalizer.Loc(
+                "Solicitud reenviada. Te avisaremos al publicar.",
+                "Request resubmitted. We'll notify you when you're published.");
         }
         return RedirectToPage();
     }
