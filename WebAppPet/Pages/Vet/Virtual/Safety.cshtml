@@ -29,7 +29,21 @@
                 else
                 {
                     <strong>@CatalogLocalizer.Loc("Sin VCPR verificable", "No verifiable VCPR")</strong>
-                    <p class="muted small mb-0">@CatalogLocalizer.Loc("En NC la telemedicina clínica local requiere relación veterinario-cliente-paciente previa presencial.", "In NC, local clinical telemedicine requires a prior in-person VCPR.")</p>
+                    <p class="muted small mb-0">
+                        @if (string.Equals(Model.Consultation?.ContextCountry, "CO", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(Model.Consultation?.PetUsState, "Other", StringComparison.OrdinalIgnoreCase))
+                        {
+                            @CatalogLocalizer.Loc(
+                                "En Colombia puedes continuar con orientación o clínica presencial. La VCPR aplica sobre todo a telemedicina clínica local en EE.UU.",
+                                "In Colombia you can continue with guidance or an in-clinic visit. VCPR mainly applies to local U.S. clinical telemedicine.")
+                        }
+                        else
+                        {
+                            @CatalogLocalizer.Loc(
+                                "En EE.UU. la telemedicina clínica local requiere relación veterinario-cliente-paciente previa presencial.",
+                                "In the U.S., local clinical telemedicine requires a prior in-person VCPR.")
+                        }
+                    </p>
                 }
             </div>
         </div>

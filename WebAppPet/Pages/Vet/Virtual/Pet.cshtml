@@ -50,31 +50,59 @@
                 </a>
             </p>
 
-            <div class="form-group">
-                <label asp-for="PetUsState">@CatalogLocalizer.Loc("Estado actual (EE.UU.)", "Current U.S. state")</label>
-                <select class="form-control" asp-for="PetUsState">
-                    @foreach (var s in PetModel.UsStates)
+            <div class="form-group" data-vet-pet-location>
+                <label>@CatalogLocalizer.Loc("País donde está la mascota", "Country where the pet is")</label>
+                <div class="vet-pet-countries" role="radiogroup" aria-label="@CatalogLocalizer.Loc("País de la mascota", "Pet country")">
+                    <label class="radio-card">
+                        <input type="radio" name="PetCountry" value="CO" required @(Model.PetCountry == "CO" ? "checked" : null) />
+                        <div class="inner">
+                            <strong>@CatalogLocalizer.Loc("Colombia", "Colombia")</strong>
+                            <div class="muted small">@CatalogLocalizer.Loc("Ciudad / departamento de tu perfil", "City / department from your profile")</div>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="PetCountry" value="US" required @(Model.PetCountry == "US" ? "checked" : null) />
+                        <div class="inner">
+                            <strong>@CatalogLocalizer.Loc("Estados Unidos", "United States")</strong>
+                            <div class="muted small">@CatalogLocalizer.Loc("Incluye estado para VCPR local", "Includes state for local VCPR")</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="vet-pet-us-state" data-us-state-wrap @(Model.PetCountry == "US" ? null : "hidden")>
+                    <label asp-for="PetUsState">@CatalogLocalizer.Loc("Estado (EE.UU.)", "U.S. state")</label>
+                    <select class="form-control" asp-for="PetUsState">
+                        @foreach (var s in PetModel.UsStates)
+                        {
+                            <option value="@s.Code">@CatalogLocalizer.Loc(s.NameEs, s.NameEn)</option>
+                        }
+                    </select>
+                </div>
+
+                <p class="field-hint" style="margin:8px 0 0" data-co-hint @(Model.PetCountry == "CO" ? null : "hidden")>
+                    @if (!string.IsNullOrEmpty(Model.UserCity))
                     {
-                        <option value="@s.Code">@s.Name</option>
+                        @CatalogLocalizer.Loc($"Ubicación según tu perfil: {Model.UserCity}. Puedes cambiar el país si viajas.", $"Location from your profile: {Model.UserCity}. Change country if you are traveling.")
                     }
-                </select>
-                @if (Model.StateFromLocation)
-                {
-                    <p class="field-hint" style="margin:8px 0 0">
-                        @if (!string.IsNullOrEmpty(Model.UserCity))
-                        {
-                            @CatalogLocalizer.Loc($"Según tu ubicación ({Model.UserCity}). Puedes corregirlo.", $"Based on your location ({Model.UserCity}). You can correct it.")
-                        }
-                        else
-                        {
-                            @CatalogLocalizer.Loc("Según tu ubicación guardada. Puedes corregirlo.", "Based on your saved location. You can correct it.")
-                        }
-                    </p>
-                }
-                else
-                {
-                    <p class="field-hint" style="margin:8px 0 0">@CatalogLocalizer.Loc("Usa la ubicación de tu perfil cuando esté disponible. Esto no es el país del veterinario internacional.", "Uses your profile location when available. This is not the international vet's country.")</p>
-                }
+                    else
+                    {
+                        @CatalogLocalizer.Loc("Confirmamos Colombia. Actualiza tu ciudad en el perfil si hace falta.", "We confirm Colombia. Update your city in the profile if needed.")
+                    }
+                </p>
+                <p class="field-hint" style="margin:8px 0 0" data-us-hint @(Model.PetCountry == "US" ? null : "hidden")>
+                    @if (Model.StateFromLocation && !string.IsNullOrEmpty(Model.UserCity))
+                    {
+                        @CatalogLocalizer.Loc($"Según tu ubicación ({Model.UserCity}). Puedes corregirlo.", $"Based on your location ({Model.UserCity}). You can correct it.")
+                    }
+                    else if (Model.StateFromLocation)
+                    {
+                        @CatalogLocalizer.Loc("Según tu ubicación guardada. Puedes corregirlo.", "Based on your saved location. You can correct it.")
+                    }
+                    else
+                    {
+                        @CatalogLocalizer.Loc("El estado importa para telemedicina clínica local en EE.UU. No es el país del veterinario internacional.", "State matters for local U.S. clinical telemedicine. This is not the international vet's country.")
+                    }
+                </p>
             </div>
 
             <div class="form-group">
@@ -118,6 +146,21 @@
       pick.classList.toggle('is-filled', !!(input.files && input.files[0]));
     });
   });
+
+  var loc = document.querySelector('[data-vet-pet-location]');
+  if (!loc) return;
+  var wrap = loc.querySelector('[data-us-state-wrap]');
+  var coHint = loc.querySelector('[data-co-hint]');
+  var usHints = loc.querySelectorAll('[data-us-hint]');
+  function syncCountry() {
+    var us = loc.querySelector('input[name="PetCountry"][value="US"]');
+    var isUs = !!(us && us.checked);
+    if (wrap) wrap.hidden = !isUs;
+    if (coHint) coHint.hidden = isUs;
+    usHints.forEach(function (h) { h.hidden = !isUs; });
+  }
+  loc.addEventListener('change', syncCountry);
+  syncCountry();
 })();
 </script>
 }

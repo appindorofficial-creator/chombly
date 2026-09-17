@@ -4522,6 +4522,20 @@ a.vet-modality-emergency:hover {
   border-left: 4px solid #f59e0b;
 }
 
+.vet-pet-countries {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.vet-pet-us-state {
+  margin-top: 4px;
+}
+.vet-pet-us-state label {
+  display: block;
+  margin-bottom: 6px;
+}
+
 /* Vet Virtual — Safety screening */
 .vet-safety-page {
   padding-bottom: 8px;

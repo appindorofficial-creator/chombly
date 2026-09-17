@@ -94,6 +94,18 @@ public static class BusinessMarketResolver
         return BusinessMarket.Unknown;
     }
 
+    /// <summary>Infers client market from profile city + GPS (clients, not businesses).</summary>
+    public static BusinessMarket ResolveUser(string? city, double? lat, double? lng)
+    {
+        if (lat is double la && lng is double lo)
+        {
+            var fromCoords = FromCoordinates(la, lo);
+            if (fromCoords != BusinessMarket.Unknown) return fromCoords;
+        }
+
+        return FromText(city);
+    }
+
     public static string DefaultInternationalIso(BusinessMarket market) =>
         market == BusinessMarket.UnitedStates ? "MX" : "CO";
 }

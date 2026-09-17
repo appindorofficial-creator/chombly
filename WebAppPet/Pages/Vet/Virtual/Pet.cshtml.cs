@@ -34,6 +34,10 @@ public class PetModel : PageModel
     [BindProperty]
     public int PetId { get; set; }
 
+    /// <summary>CO or US — primary launch markets.</summary>
+    [BindProperty]
+    public string PetCountry { get; set; } = "CO";
+
     [BindProperty]
     public string PetUsState { get; set; } = "NC";
 
@@ -50,16 +54,25 @@ public class PetModel : PageModel
     public List<Models.Pet> Pets { get; set; } = new();
     public string? ErrorMessage { get; set; }
 
-    /// <summary>True when the select was prefilled from the user's saved location.</summary>
+    /// <summary>True when the location was prefilled from the user's saved profile.</summary>
     public bool StateFromLocation { get; set; }
 
     public string? UserCity { get; set; }
 
-    public static readonly (string Code, string Name)[] UsStates =
+    public BusinessMarket DetectedMarket { get; set; }
+
+    public static readonly (string Code, string NameEs, string NameEn)[] UsStates =
     {
-        ("NC", "North Carolina"), ("SC", "South Carolina"), ("VA", "Virginia"),
-        ("GA", "Georgia"), ("TN", "Tennessee"), ("FL", "Florida"), ("NY", "New York"),
-        ("CA", "California"), ("TX", "Texas"), ("Other", "Other / Outside list")
+        ("NC", "Carolina del Norte", "North Carolina"),
+        ("SC", "Carolina del Sur", "South Carolina"),
+        ("VA", "Virginia", "Virginia"),
+        ("GA", "Georgia", "Georgia"),
+        ("TN", "Tennessee", "Tennessee"),
+        ("FL", "Florida", "Florida"),
+        ("NY", "Nueva York", "New York"),
+        ("CA", "California", "California"),
+        ("TX", "Texas", "Texas"),
+        ("Other", "Otro / fuera de la lista", "Other / Outside list")
     };
 
     public async Task<IActionResult> OnGetAsync()
@@ -77,26 +90,11 @@ public class PetModel : PageModel
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == _auth.CurrentUserId.Value);
         UserCity = string.IsNullOrWhiteSpace(user?.City) ? null : user!.City.Trim();
+        DetectedMarket = BusinessMarketResolver.ResolveUser(user?.City, user?.Latitude, user?.Longitude);
         var fromLocation = GeoHelper.ResolveUsState(user?.City, user?.Latitude, user?.Longitude);
 
-        // Antes de completar este paso, prioriza la ubicación guardada del usuario
-        // (las consultas nuevas aún pueden venir con NC por defecto).
-        if (Consultation.PetId is null && !string.IsNullOrWhiteSpace(fromLocation))
-        {
-            PetUsState = fromLocation;
-            StateFromLocation = true;
-            if (!string.Equals(Consultation.PetUsState, fromLocation, StringComparison.OrdinalIgnoreCase))
-            {
-                Consultation.PetUsState = fromLocation;
-                await _flow.TouchAsync(Consultation);
-            }
-        }
-        else
-        {
-            PetUsState = string.IsNullOrWhiteSpace(Consultation.PetUsState) ? (fromLocation ?? "NC") : Consultation.PetUsState;
-            StateFromLocation = !string.IsNullOrWhiteSpace(fromLocation) &&
-                                string.Equals(PetUsState, fromLocation, StringComparison.OrdinalIgnoreCase);
-        }
+        if (ApplyLocationDefaults(Consultation, fromLocation))
+            await _flow.TouchAsync(Consultation);
 
         return Page();
     }
@@ -111,16 +109,30 @@ public class PetModel : PageModel
 
         Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId).OrderBy(p => p.Name).ToListAsync();
 
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == _auth.CurrentUserId.Value);
+        UserCity = string.IsNullOrWhiteSpace(user?.City) ? null : user!.City.Trim();
+        DetectedMarket = BusinessMarketResolver.ResolveUser(user?.City, user?.Latitude, user?.Longitude);
+
         if (PetId <= 0 || !Pets.Any(p => p.Id == PetId))
         {
             ErrorMessage = CatalogLocalizer.Loc("Selecciona una mascota.", "Select a pet.");
             return Page();
         }
 
-        if (string.IsNullOrWhiteSpace(PetUsState))
+        PetCountry = NormalizeCountry(PetCountry) is { Length: > 0 } c ? c : "CO";
+        if (PetCountry == "US")
         {
-            ErrorMessage = CatalogLocalizer.Loc("Confirma el estado actual de la mascota.", "Confirm the pet's current state.");
-            return Page();
+            if (string.IsNullOrWhiteSpace(PetUsState))
+            {
+                ErrorMessage = CatalogLocalizer.Loc("Confirma el estado actual de la mascota.", "Confirm the pet's current state.");
+                return Page();
+            }
+        }
+        else
+        {
+            PetCountry = "CO";
+            PetUsState = "Other";
         }
 
         var err1 = VetMediaStorage.Validate(Media1);
@@ -133,6 +145,7 @@ public class PetModel : PageModel
 
         Consultation.PetId = PetId;
         Consultation.PetUsState = PetUsState.Trim().ToUpperInvariant();
+        Consultation.ContextCountry = PetCountry;
         Consultation.Symptoms = Symptoms?.Trim();
         if (Media1 is { Length: > 0 })
             Consultation.MediaUrl1 = await VetMediaStorage.SaveAsync(Media1, _auth.CurrentUserId.Value, _env);
@@ -145,5 +158,108 @@ public class PetModel : PageModel
             return RedirectToPage("/Vet/International/MatchMode", new { consultationId = ConsultationId });
 
         return RedirectToPage("/Vet/Virtual/Safety", new { consultationId = ConsultationId });
+    }
+
+    /// <summary>Returns true when the consultation location fields were corrected.</summary>
+    private bool ApplyLocationDefaults(Consultation consultation, string? fromLocation)
+    {
+        var storedCountry = NormalizeCountry(consultation.ContextCountry);
+        var storedState = string.IsNullOrWhiteSpace(consultation.PetUsState)
+            ? null
+            : consultation.PetUsState.Trim();
+        var looksLikeLegacyNcDefault =
+            string.Equals(storedState, "NC", StringComparison.OrdinalIgnoreCase) &&
+            string.IsNullOrWhiteSpace(consultation.ContextCountry);
+
+        PetCountry = ResolvePetCountry(storedCountry, fromLocation, looksLikeLegacyNcDefault);
+        StateFromLocation = DetectedMarket != BusinessMarket.Unknown ||
+                            !string.IsNullOrWhiteSpace(fromLocation);
+
+        if (PetCountry == "CO")
+        {
+            PetUsState = "Other";
+            if (!string.Equals(consultation.PetUsState, "Other", StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(consultation.ContextCountry, "CO", StringComparison.OrdinalIgnoreCase))
+            {
+                consultation.PetUsState = "Other";
+                consultation.ContextCountry = "CO";
+                return true;
+            }
+
+            return false;
+        }
+
+        // United States
+        if (!string.IsNullOrWhiteSpace(fromLocation) &&
+            !string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase) &&
+            (consultation.PetId is null || looksLikeLegacyNcDefault))
+        {
+            PetUsState = fromLocation;
+        }
+        else if (!string.IsNullOrWhiteSpace(storedState) &&
+                 !string.Equals(storedState, "Other", StringComparison.OrdinalIgnoreCase) &&
+                 !looksLikeLegacyNcDefault)
+        {
+            PetUsState = storedState!;
+        }
+        else
+        {
+            PetUsState = fromLocation is not null &&
+                         !string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase)
+                ? fromLocation
+                : "NC";
+        }
+
+        StateFromLocation = !string.IsNullOrWhiteSpace(fromLocation) &&
+                            string.Equals(PetUsState, fromLocation, StringComparison.OrdinalIgnoreCase);
+
+        var changed = false;
+        if (!string.Equals(consultation.PetUsState, PetUsState, StringComparison.OrdinalIgnoreCase))
+        {
+            consultation.PetUsState = PetUsState;
+            changed = true;
+        }
+
+        if (!string.Equals(consultation.ContextCountry, "US", StringComparison.OrdinalIgnoreCase))
+        {
+            consultation.ContextCountry = "US";
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private string ResolvePetCountry(string storedCountry, string? fromLocation, bool looksLikeLegacyNcDefault)
+    {
+        if (storedCountry is "CO" or "US")
+            return storedCountry;
+
+        if (DetectedMarket == BusinessMarket.Colombia)
+            return "CO";
+
+        if (DetectedMarket == BusinessMarket.UnitedStates)
+            return "US";
+
+        if (fromLocation is not null && !string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase))
+            return "US";
+
+        if (string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase))
+            return "CO";
+
+        // Ambiguous legacy NC default with no GPS/city signal → keep US state UX.
+        if (looksLikeLegacyNcDefault)
+            return "US";
+
+        // Dual-market default when location is truly unknown.
+        return "CO";
+    }
+
+    private static string NormalizeCountry(string? country)
+    {
+        if (string.IsNullOrWhiteSpace(country)) return "";
+        var t = country.Trim().ToUpperInvariant();
+        if (t is "CO" or "COL" or "COLOMBIA") return "CO";
+        if (t is "US" or "USA" or "UM" or "EEUU" or "EE.UU") return "US";
+        return t is "CO" or "US" ? t : "";
     }
 }
