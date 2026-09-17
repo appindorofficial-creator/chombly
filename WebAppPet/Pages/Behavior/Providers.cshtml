@@ -2,7 +2,7 @@
 @model WebAppPet.Pages.Behavior.ProvidersModel
 @using WebAppPet.Pages.Shared
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Reservar especialista", "Book specialist");
+    ViewData["Title"] = CatalogLocalizer.Loc("Reservar especialista", "Reserve specialist");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Behavior/Intake", new { caseId = Model.CaseId });
     var unit = Model.CatalogItem?.Price ?? 55m;
@@ -17,7 +17,7 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reservar especialista", "Book specialist")</h1>
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reservar especialista", "Reserve specialist")</h1>
         <p class="muted small">
             $@price.ToString("0.##")
             @if (petCount > 1)

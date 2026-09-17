@@ -7,7 +7,7 @@
 
   <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
   <data name="Nav_Search" xml:space="preserve"><value>Search</value></data>
-  <data name="Nav_Appointments" xml:space="preserve"><value>Bookings</value></data>
+  <data name="Nav_Appointments" xml:space="preserve"><value>Reservations</value></data>
   <data name="Nav_Pets" xml:space="preserve"><value>Pets</value></data>
   <data name="Nav_Profile" xml:space="preserve"><value>Profile</value></data>
 
@@ -45,7 +45,7 @@
   <data name="Common_Confirm" xml:space="preserve"><value>Confirm</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Common_SeeAll" xml:space="preserve"><value>See all</value></data>
-  <data name="Common_Book" xml:space="preserve"><value>Book</value></data>
+  <data name="Common_Book" xml:space="preserve"><value>Reserve</value></data>
   <data name="Common_From" xml:space="preserve"><value>From</value></data>
   <data name="Common_To" xml:space="preserve"><value>To</value></data>
   <data name="Common_Date" xml:space="preserve"><value>Date</value></data>
@@ -158,14 +158,14 @@
 
   <data name="Appt_History" xml:space="preserve"><value>History</value></data>
   <data name="Appt_EmptyTitle" xml:space="preserve"><value>No bookings yet</value></data>
-  <data name="Appt_EmptySub" xml:space="preserve"><value>Book the best care for your pet.</value></data>
+  <data name="Appt_EmptySub" xml:space="preserve"><value>Reserve the best care for your pet.</value></data>
   <data name="Appt_GuestTitle" xml:space="preserve"><value>Sign in to see your bookings</value></data>
   <data name="Appt_GuestSub" xml:space="preserve"><value>With an account you can book, track and manage appointments.</value></data>
-  <data name="Appt_BookNew" xml:space="preserve"><value>Book a new appointment</value></data>
+  <data name="Appt_BookNew" xml:space="preserve"><value>Reserve a new appointment</value></data>
   <data name="Appt_HowTitle" xml:space="preserve"><value>How it works</value></data>
   <data name="Appt_HowSearch" xml:space="preserve"><value>Search</value></data>
   <data name="Appt_HowSearchDesc" xml:space="preserve"><value>Find businesses near you and check their services.</value></data>
-  <data name="Appt_HowBook" xml:space="preserve"><value>Book</value></data>
+  <data name="Appt_HowBook" xml:space="preserve"><value>Reserve</value></data>
   <data name="Appt_HowBookDesc" xml:space="preserve"><value>Pick a date, time and the service your pet needs.</value></data>
   <data name="Appt_HowEnjoy" xml:space="preserve"><value>Enjoy</value></data>
   <data name="Appt_HowEnjoyDesc" xml:space="preserve"><value>The pro will take great care of your pet.</value></data>
@@ -221,7 +221,7 @@
   <data name="Onboard_Slide2Title" xml:space="preserve"><value>Services near you</value></data>
   <data name="Onboard_Slide2Body" xml:space="preserve"><value>Grooming, boarding, daycare and more with trusted pros.</value></data>
   <data name="Onboard_Slide3Title" xml:space="preserve"><value>Health and peace of mind</value></data>
-  <data name="Onboard_Slide3Body" xml:space="preserve"><value>Book vet care and keep your pet's history in one place.</value></data>
+  <data name="Onboard_Slide3Body" xml:space="preserve"><value>Reserve vet care and keep your pet's history in one place.</value></data>
   <data name="Onboard_Slide4Title" xml:space="preserve"><value>Walks and routine</value></data>
   <data name="Onboard_Slide4Body" xml:space="preserve"><value>Find walkers and trainers for everyday care.</value></data>
 
@@ -329,7 +329,7 @@
   <data name="Appt_Empty" xml:space="preserve"><value>You don't have any bookings yet.</value></data>
   <data name="Appt_Upcoming" xml:space="preserve"><value>Upcoming</value></data>
   <data name="Appt_Past" xml:space="preserve"><value>Past</value></data>
-  <data name="Appt_Book" xml:space="preserve"><value>Book now</value></data>
+  <data name="Appt_Book" xml:space="preserve"><value>Reserve now</value></data>
   <data name="Appt_Status_Pending" xml:space="preserve"><value>Pending</value></data>
   <data name="Appt_Status_Confirmed" xml:space="preserve"><value>Confirmed</value></data>
   <data name="Appt_Status_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
@@ -477,7 +477,7 @@
   <data name="Groomer_Business" xml:space="preserve"><value>My business</value></data>
   <data name="Groomer_Services" xml:space="preserve"><value>Services</value></data>
   <data name="Groomer_Schedule" xml:space="preserve"><value>Schedule</value></data>
-  <data name="Groomer_Bookings" xml:space="preserve"><value>Bookings</value></data>
+  <data name="Groomer_Bookings" xml:space="preserve"><value>Reservations</value></data>
   <data name="Groomer_Verification" xml:space="preserve"><value>Verification</value></data>
 
   <data name="Admin_Approvals" xml:space="preserve"><value>Approvals</value></data>
