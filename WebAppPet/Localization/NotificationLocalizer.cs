@@ -24,6 +24,13 @@ public static class NotificationLocalizer
         ["Nueva cita"] = "New appointment",
         ["Cita cancelada"] = "Appointment cancelled",
         ["Recordatorio de cuidado"] = "Care reminder",
+        ["Recordatorio de vacuna"] = "Vaccine reminder",
+        ["Recordatorio de medicamento"] = "Medication reminder",
+        ["Recordatorio de cita"] = "Appointment reminder",
+        ["Vacuna antirrábica"] = "Rabies vaccine",
+        ["Vacuna antirrabica"] = "Rabies vaccine",
+        ["Antirrábica"] = "Rabies",
+        ["Antirrabica"] = "Rabies",
         ["Prueba eliminar"] = "Delete test",
         ["Tienes una actualización de tu reserva"] = "You have a booking update",
     };
@@ -148,6 +155,10 @@ public static class NotificationLocalizer
             // keep business name; translate trailing label
             t = t.Replace(" · Negocio", " · Business", StringComparison.OrdinalIgnoreCase);
         }
+
+        var mapped = CatalogLocalizer.Text(t);
+        if (!string.Equals(mapped, t, StringComparison.Ordinal))
+            return mapped;
 
         return CatalogLocalizer.Notes(t);
     }

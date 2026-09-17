@@ -61,11 +61,18 @@
 
     <section class="card card-pad care-hero">
         <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Nuevo recordatorio", "New reminder")</h2>
-        <form method="post" asp-page-handler="Create">
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert alert-warn">@Model.Error</div>
+        }
+        <form method="post" asp-page-handler="Create"
+              data-validate-i18n
+              data-msg-required="@CatalogLocalizer.Loc("Completa los campos obligatorios.", "Fill in the required fields.")">
             <input type="hidden" name="Id" value="@Model.Id" />
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Tipo", "Type")</label>
-                <select class="form-control" asp-for="Type">
+                <select class="form-control" asp-for="Type" required>
+                    <option value="">@CatalogLocalizer.Loc("Elige tipo", "Choose type")</option>
                     <option value="@((int)ReminderType.Vaccine)">@ReminderTypeLabel(ReminderType.Vaccine)</option>
                     <option value="@((int)ReminderType.Medication)">@ReminderTypeLabel(ReminderType.Medication)</option>
                     <option value="@((int)ReminderType.Appointment)">@ReminderTypeLabel(ReminderType.Appointment)</option>
@@ -82,11 +89,11 @@
             </div>
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Cada (días)", "Every (days)")</label>
-                <input class="form-control" type="number" asp-for="FrequencyDays" min="1" />
+                <input class="form-control" type="number" asp-for="FrequencyDays" min="1" placeholder="@CatalogLocalizer.Loc("Opcional", "Optional")" />
             </div>
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Próxima fecha", "Next due date")</label>
-                <input class="form-control" type="date" asp-for="NextDueLocal" />
+                <input class="form-control" type="date" asp-for="NextDueLocal" required />
             </div>
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Inicio horas silenciosas", "Quiet hours start")</label>
