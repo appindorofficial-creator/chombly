@@ -4751,6 +4751,31 @@ a.vet-modality-emergency:hover {
   color: #9a3412;
   font-weight: 800;
 }
+.vet-safety-flag-none {
+  border-style: dashed;
+  background: linear-gradient(165deg, #f7faf5 0%, #fff 70%);
+}
+.vet-safety-flag-none:has(input:checked),
+.vet-safety-flag-none:has(input:checked):focus-within {
+  border-color: rgba(15, 61, 47, 0.35);
+  border-style: solid;
+  background: linear-gradient(165deg, #f4fbef 0%, #fff 72%);
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.28);
+}
+.vet-safety-flag-none:has(input:checked) .vet-safety-flag-ico {
+  background: rgba(182, 231, 64, 0.35);
+}
+.vet-safety-flag-none:has(input:checked) .vet-safety-flag-tick {
+  border-color: var(--forest-deep);
+  background: var(--forest-deep);
+}
+.vet-safety-submit:disabled,
+.vet-safety-submit[disabled] {
+  opacity: .48;
+  cursor: not-allowed;
+  box-shadow: none;
+  pointer-events: none;
+}
 .vet-safety-submit.is-emergency {
   background: #c2410c;
   border-color: #c2410c;

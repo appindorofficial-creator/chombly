@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -37,6 +38,7 @@ public class SafetyModel : PageModel
     [BindProperty] public bool ToxinIngestion { get; set; }
     [BindProperty] public bool ExtremePain { get; set; }
     [BindProperty] public bool CannotUrinate { get; set; }
+    [BindProperty] public bool NoRedFlags { get; set; }
     [BindProperty] public string? SafetyNotes { get; set; }
 
     public Consultation? Consultation { get; set; }
@@ -62,12 +64,26 @@ public class SafetyModel : PageModel
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation?.PetId is null) return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = ConsultationId });
 
+        HasVcpr = await _vcpr.HasActiveAsync(Consultation.PetId.Value, Consultation.PetUsState);
+
         var answers = new SafetyScreeningService.SafetyAnswers(
             BreathingTrouble, Seizures, Unconscious, SevereBleeding,
             ToxinIngestion, ExtremePain, CannotUrinate, SafetyNotes);
 
+        var hasRed = _safety.HasRedFlags(answers);
+        if (!hasRed && !NoRedFlags)
+        {
+            ErrorMessage = CatalogLocalizer.Loc(
+                "Marca una bandera roja o confirma “Ninguna de estas” para continuar.",
+                "Check a red flag or confirm “None of these” to continue.");
+            return Page();
+        }
+
+        if (hasRed && NoRedFlags)
+            NoRedFlags = false;
+
         Consultation.SafetyAnswersJson = _safety.Serialize(answers);
-        Consultation.HasRedFlags = _safety.HasRedFlags(answers);
+        Consultation.HasRedFlags = hasRed;
         Consultation.HasActiveVcpr = await _vcpr.HasActiveAsync(Consultation.PetId.Value, Consultation.PetUsState);
         Consultation.Status = ConsultationStatus.SafetyScreened;
         await _flow.TouchAsync(Consultation);
