@@ -16,11 +16,11 @@ public class CountryCatalogService
         var query = _db.CountryCatalog.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(q))
         {
-            q = q.Trim();
+            var ql = q.Trim().ToLowerInvariant();
             query = query.Where(c =>
-                c.Iso2.Contains(q) ||
-                c.NameEs.Contains(q) ||
-                c.NameEn.Contains(q));
+                c.Iso2.ToLower().Contains(ql) ||
+                c.NameEs.ToLower().Contains(ql) ||
+                c.NameEn.ToLower().Contains(ql));
         }
 
         var list = await query.ToListAsync(ct);
@@ -29,6 +29,42 @@ public class CountryCatalogService
             .OrderByDescending(c => c.Status == CountryMarketStatus.Available)
             .ThenBy(c => en ? c.NameEn : c.NameEs)
             .ToList();
+    }
+
+    public async Task<CountryCatalogEntry?> GetByIsoAsync(string? iso2, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(iso2)) return null;
+        var code = iso2.Trim().ToUpperInvariant();
+        return await _db.CountryCatalog.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Iso2 == code, ct);
+    }
+
+    /// <summary>Resolve free text or ISO to a catalog ISO2 when possible.</summary>
+    public async Task<string?> ResolveIsoAsync(string? raw, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var t = raw.Trim();
+        if (t.Length == 2)
+        {
+            var byIso = await GetByIsoAsync(t, ct);
+            return byIso?.Iso2 ?? t.ToUpperInvariant();
+        }
+
+        // "Colombia (CO)" → CO
+        var paren = t.LastIndexOf('(');
+        if (paren >= 0 && t.EndsWith(')') && t.Length - paren >= 4)
+        {
+            var maybe = t[(paren + 1)..^1].Trim();
+            if (maybe.Length == 2)
+                return await ResolveIsoAsync(maybe, ct);
+        }
+
+        var hits = await SearchAsync(t, ct);
+        var exact = hits.FirstOrDefault(c =>
+            c.NameEs.Equals(t, StringComparison.OrdinalIgnoreCase) ||
+            c.NameEn.Equals(t, StringComparison.OrdinalIgnoreCase) ||
+            c.Iso2.Equals(t, StringComparison.OrdinalIgnoreCase));
+        return exact?.Iso2 ?? hits.FirstOrDefault()?.Iso2;
     }
 
     public static string DisplayName(CountryCatalogEntry c)

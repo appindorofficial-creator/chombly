@@ -185,6 +185,20 @@ app.MapGet("/api/places/reverse", async (
     });
 });
 
+app.MapGet("/api/countries/suggest", async (
+    string? q,
+    CountryCatalogService countries,
+    CancellationToken ct) =>
+{
+    var items = await countries.SearchAsync(q ?? "", ct);
+    return Results.Json(items.Take(12).Select(c => new
+    {
+        iso = c.Iso2,
+        label = $"{CountryCatalogService.DisplayName(c)} ({c.Iso2})",
+        name = CountryCatalogService.DisplayName(c)
+    }));
+});
+
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
 

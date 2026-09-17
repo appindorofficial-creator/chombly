@@ -32,8 +32,15 @@
             <input class="form-control" asp-for="ClinicOrPracticeName" />
         </div>
         <div class="form-group">
-            <label>@CatalogLocalizer.Loc("País (ISO, ej. CO, SV, MX)", "Country (ISO, e.g. CO, SV, MX)")</label>
-            <input class="form-control" asp-for="LicenseJurisdiction" required maxlength="8" />
+            <label>@CatalogLocalizer.Loc("País", "Country")</label>
+            <div class="places-field">
+                <input class="form-control" asp-for="CountrySearch" id="CountrySearch"
+                       data-country-suggest data-country-iso="#LicenseJurisdiction"
+                       autocomplete="off" required
+                       placeholder="@CatalogLocalizer.Loc("Busca tu país…", "Search your country…")" />
+                <input type="hidden" asp-for="LicenseJurisdiction" id="LicenseJurisdiction" />
+            </div>
+            <p class="muted small biz-hint">@CatalogLocalizer.Loc("Escribe y elige el país de tu credencial.", "Type and pick the country of your credential.")</p>
             <span class="field-error" hidden></span>
         </div>
         <div class="form-group">
@@ -88,6 +95,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/country-suggest.js" asp-append-version="true"></script>
     <script>
         (function () {
             var input = document.getElementById('DocumentUpload');

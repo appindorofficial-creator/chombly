@@ -12,17 +12,20 @@ public class InternationalModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ProfessionalOnboardingService _onboarding;
+    private readonly CountryCatalogService _countries;
     private readonly IWebHostEnvironment _env;
 
     public InternationalModel(
         AppDbContext db,
         AuthService auth,
         ProfessionalOnboardingService onboarding,
+        CountryCatalogService countries,
         IWebHostEnvironment env)
     {
         _db = db;
         _auth = auth;
         _onboarding = onboarding;
+        _countries = countries;
         _env = env;
     }
 
@@ -30,6 +33,7 @@ public class InternationalModel : PageModel
     [BindProperty] public string ClinicOrPracticeName { get; set; } = "";
     [BindProperty] public string LicenseNumber { get; set; } = "";
     [BindProperty] public string LicenseJurisdiction { get; set; } = "";
+    [BindProperty] public string CountrySearch { get; set; } = "";
     [BindProperty] public DateTime? LicenseExpiry { get; set; }
     [BindProperty] public string Languages { get; set; } = "es,en";
     [BindProperty] public string Specialties { get; set; } = "";
@@ -65,6 +69,8 @@ public class InternationalModel : PageModel
             AcceptsInternationalClients = latest.AcceptsInternationalClients;
             DocumentsNote = latest.DocumentsNote;
         }
+
+        await SyncCountrySearchAsync();
         return Page();
     }
 
@@ -77,6 +83,20 @@ public class InternationalModel : PageModel
         if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
         try
         {
+            var iso = await _countries.ResolveIsoAsync(
+                !string.IsNullOrWhiteSpace(LicenseJurisdiction) ? LicenseJurisdiction : CountrySearch);
+            if (string.IsNullOrWhiteSpace(iso))
+            {
+                Error = Localization.CatalogLocalizer.Loc(
+                    "Elige un país de la lista.",
+                    "Pick a country from the list.");
+                await SyncCountrySearchAsync();
+                return Page();
+            }
+
+            LicenseJurisdiction = iso;
+            await SyncCountrySearchAsync();
+
             var uploadPath = await SaveUploadAsync();
             var app = await _onboarding.StartOrUpdateDraftAsync(
                 _auth.CurrentUserId!.Value,
@@ -86,7 +106,7 @@ public class InternationalModel : PageModel
                     a.LegalName = (LegalName ?? "").Trim();
                     a.ClinicOrPracticeName = (ClinicOrPracticeName ?? "").Trim();
                     a.LicenseNumber = (LicenseNumber ?? "").Trim();
-                    a.LicenseJurisdiction = (LicenseJurisdiction ?? "").Trim().ToUpperInvariant();
+                    a.LicenseJurisdiction = LicenseJurisdiction;
                     a.LicenseExpiry = LicenseExpiry;
                     a.Languages = (Languages ?? "").Trim();
                     a.Specialties = (Specialties ?? "").Trim();
@@ -106,8 +126,23 @@ public class InternationalModel : PageModel
         catch (Exception ex)
         {
             Error = ex.Message;
+            await SyncCountrySearchAsync();
             return Page();
         }
+    }
+
+    private async Task SyncCountrySearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(LicenseJurisdiction))
+        {
+            CountrySearch = "";
+            return;
+        }
+
+        var entry = await _countries.GetByIsoAsync(LicenseJurisdiction);
+        CountrySearch = entry is null
+            ? LicenseJurisdiction
+            : CountryCatalogService.DisplayName(entry);
     }
 
     private async Task<bool> GateAsync()
