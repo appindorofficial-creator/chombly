@@ -169,6 +169,8 @@ public static class CatalogLocalizer
         ["Atención de urgencias 24/7"] = "24/7 emergency care",
         ["Paseo 40 min"] = "40-min walk",
         ["Hospedaje 1 noche"] = "1-night boarding",
+        ["Hospedaje multi-mascota con cámaras 24/7."] = "Multi-pet boarding with 24/7 cameras.",
+        ["Hospedaje multi-mascota con cámaras 24/7"] = "Multi-pet boarding with 24/7 cameras",
         ["Baño y corte"] = "Bath & haircut",
         ["noche"] = "night",
         ["sesion"] = "session",
@@ -221,6 +223,11 @@ public static class CatalogLocalizer
         ["Grooming"] = "Grooming",
         ["suave"] = "gentle",
         ["felino"] = "feline",
+        ["Hospedaje"] = "Boarding",
+        ["multi-mascota"] = "multi-pet",
+        ["con"] = "with",
+        ["cámaras"] = "cameras",
+        ["camaras"] = "cameras",
     };
 
     private static readonly (string Es, string En)[] NotePrefixes =
@@ -237,6 +244,13 @@ public static class CatalogLocalizer
         if (!IsEnglish()) return text;
         var key = text.Trim();
         if (Map.TryGetValue(key, out var en)) return en;
+
+        // Same phrase without trailing sentence punctuation
+        var trimmedEnd = key.TrimEnd('.', '!', '?', '…');
+        if (trimmedEnd.Length > 0 && trimmedEnd.Length < key.Length
+            && Map.TryGetValue(trimmedEnd, out en))
+            return en + key[trimmedEnd.Length..];
+
         return TranslateWords(key);
     }
 
@@ -248,8 +262,13 @@ public static class CatalogLocalizer
         {
             var raw = parts[i];
             if (raw.Length == 0) continue;
-            if (!Words.TryGetValue(raw, out var en)) continue;
-            parts[i] = MatchCase(raw, en);
+
+            // Keep trailing punctuation (e.g. "cámaras." / "24/7.")
+            var core = raw.TrimEnd('.', ',', ';', ':', '!', '?', '…');
+            var suffix = raw[core.Length..];
+            if (core.Length == 0) continue;
+            if (!Words.TryGetValue(core, out var en)) continue;
+            parts[i] = MatchCase(core, en) + suffix;
             changed = true;
         }
         return changed ? string.Join(' ', parts) : text;
