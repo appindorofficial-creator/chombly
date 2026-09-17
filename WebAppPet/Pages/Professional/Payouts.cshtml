@@ -1,18 +1,34 @@
 @page
 @model WebAppPet.Pages.Professional.PayoutsModel
 @using WebAppPet.Localization
-@using WebAppPet.Services
+@using WebAppPet.Models
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Mis pagos", "My payouts");
+    ViewData["Title"] = L["Groomer_Payouts"].Value;
     ViewData["GroomerTab"] = "payouts";
     ViewData["LangCompact"] = true;
+    string ServiceLabel(CompensationServiceType t) => t switch
+    {
+        CompensationServiceType.LocalVet => L["Payout_Service_LocalVet"].Value,
+        CompensationServiceType.InternationalVet => L["Payout_Service_InternationalVet"].Value,
+        CompensationServiceType.Behavior => L["Payout_Service_Behavior"].Value,
+        _ => t.ToString()
+    };
+    string StatusLabel(ProviderPayoutStatus s) => s switch
+    {
+        ProviderPayoutStatus.Pending => L["Payout_Status_Pending"].Value,
+        ProviderPayoutStatus.Processing => L["Payout_Status_Processing"].Value,
+        ProviderPayoutStatus.Paid => L["Payout_Status_Paid"].Value,
+        ProviderPayoutStatus.Failed => L["Payout_Status_Failed"].Value,
+        ProviderPayoutStatus.Held => L["Payout_Status_Held"].Value,
+        _ => s.ToString()
+    };
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
-    <h1 class="page-title">@CatalogLocalizer.Loc("Mis pagos", "My payouts")</h1>
-    <p class="muted small">@CatalogLocalizer.Loc("Comisiones y resúmenes de período (simulado, sin Stripe real).", "Commissions and period summaries (simulated, no real Stripe).")</p>
+    <h1 class="page-title">@L["Groomer_Payouts"]</h1>
+    <p class="muted small">@L["Payout_Lead"]</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
@@ -24,19 +40,19 @@
     }
 
     <section class="card card-pad vet-vcpr-ok" style="margin-bottom:14px">
-        <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Reglas de comisión", "Commission rules")</h2>
+        <h2 class="section-title" style="margin-top:0">@L["Payout_CommissionRules"]</h2>
         @if (Model.Rules.Count == 0)
         {
-            <p class="muted small mb-0">@CatalogLocalizer.Loc("Aún no hay reglas. Completa el onboarding profesional.", "No rules yet. Complete professional onboarding.")</p>
+            <p class="muted small mb-0">@L["Payout_NoRules"]</p>
         }
         else
         {
             @foreach (var r in Model.Rules)
             {
                 <div style="margin-bottom:8px">
-                    <strong>@r.ServiceType</strong>
+                    <strong>@ServiceLabel(r.ServiceType)</strong>
                     <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @r.PayoutCurrency
-                        @if (r.ProviderUserId is null) { <text>· @CatalogLocalizer.Loc("default plataforma", "platform default")</text> }
+                        @if (r.ProviderUserId is null) { <text>· @L["Payout_PlatformDefault"]</text> }
                     </span>
                 </div>
             }
@@ -44,35 +60,35 @@
     </section>
 
     <section class="card card-pad" style="margin-bottom:14px">
-        <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Generar resumen de período", "Generate period summary")</h2>
+        <h2 class="section-title" style="margin-top:0">@L["Payout_GenerateTitle"]</h2>
         <form method="post" asp-page-handler="Generate">
             <div class="form-group">
-                <label>@CatalogLocalizer.Loc("Desde", "From")</label>
+                <label>@L["Payout_From"]</label>
                 <input class="form-control" type="date" asp-for="PeriodStart" />
             </div>
             <div class="form-group">
-                <label>@CatalogLocalizer.Loc("Hasta", "To")</label>
+                <label>@L["Payout_To"]</label>
                 <input class="form-control" type="date" asp-for="PeriodEnd" />
             </div>
-            <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Generar (simulado)", "Generate (simulated)")</button>
+            <button class="btn btn-primary btn-block" type="submit">@L["Payout_Generate"]</button>
         </form>
     </section>
 
     <section>
-        <h2 class="section-title">@CatalogLocalizer.Loc("Historial", "History")</h2>
+        <h2 class="section-title">@L["Payout_History"]</h2>
         @if (Model.History.Count == 0)
         {
-            <p class="muted small">@CatalogLocalizer.Loc("Sin payouts aún.", "No payouts yet.")</p>
+            <p class="muted small">@L["Payout_Empty"]</p>
         }
         else
         {
             @foreach (var p in Model.History)
             {
                 <div class="card card-pad" style="margin-bottom:8px">
-                    <strong>@p.Status</strong>
+                    <strong>@StatusLabel(p.Status)</strong>
                     <span class="muted small" style="display:block">
                         @AppTimeZones.FormatDate(p.PeriodStart) – @AppTimeZones.FormatDate(p.PeriodEnd)
-                        · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
+                        · @p.ConsultationCount @L["Payout_Items"]
                     </span>
                     <span class="muted small" style="display:block">
                         Gross $@p.GrossAmountUsd.ToString("0.00") · Comm $@p.CommissionAmountUsd.ToString("0.00")

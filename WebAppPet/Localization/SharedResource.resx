@@ -556,4 +556,74 @@
   <data name="Pay_ErrCvvInvalid" xml:space="preserve"><value>El CVV debe tener 3 dígitos (4 para Amex).</value></data>
   <data name="Pay_ErrHolderRequired" xml:space="preserve"><value>El nombre en la tarjeta es obligatorio.</value></data>
   <data name="Pay_ErrHolderInvalid" xml:space="preserve"><value>El nombre solo puede contener letras y espacios (mín. 2 caracteres).</value></data>
+
+  <!-- Groomer Business panel -->
+  <data name="BizPanel_YourBusiness" xml:space="preserve"><value>Tu negocio</value></data>
+  <data name="BizPanel_Lead" xml:space="preserve"><value>Hotel, vet, grooming, daycare… todo se configura aquí y se lee desde la BD.</value></data>
+  <data name="BizPanel_PublicProfile" xml:space="preserve"><value>Perfil público</value></data>
+  <data name="BizPanel_CategoriesLower" xml:space="preserve"><value>categorías</value></data>
+  <data name="BizPanel_ServicesLower" xml:space="preserve"><value>servicios</value></data>
+  <data name="BizPanel_Categories" xml:space="preserve"><value>Categorías</value></data>
+  <data name="BizPanel_Extras" xml:space="preserve"><value>Extras</value></data>
+  <data name="BizPanel_BasicDetails" xml:space="preserve"><value>Datos básicos</value></data>
+  <data name="BizPanel_CategoriesHint" xml:space="preserve"><value>Marca todos los servicios que ofreces. Puedes agregar o quitar cuando quieras.</value></data>
+  <data name="BizPanel_LocationContact" xml:space="preserve"><value>Ubicación y contacto</value></data>
+  <data name="BizPanel_Latitude" xml:space="preserve"><value>Latitud</value></data>
+  <data name="BizPanel_Longitude" xml:space="preserve"><value>Longitud</value></data>
+  <data name="BizPanel_PresentationPrices" xml:space="preserve"><value>Presentación y precios</value></data>
+  <data name="BizPanel_ImageUrl" xml:space="preserve"><value>Imagen (URL)</value></data>
+  <data name="BizPanel_About" xml:space="preserve"><value>Sobre el negocio</value></data>
+  <data name="BizPanel_StartingPrice" xml:space="preserve"><value>Precio desde</value></data>
+  <data name="BizPanel_Unit" xml:space="preserve"><value>Unidad</value></data>
+  <data name="BizPanel_PriceUnitPh" xml:space="preserve"><value>/ noche</value></data>
+  <data name="BizPanel_SpeciesCsv" xml:space="preserve"><value>Especies (CSV)</value></data>
+  <data name="BizPanel_Preferences" xml:space="preserve"><value>Preferencias</value></data>
+  <data name="BizPanel_SeniorPets" xml:space="preserve"><value>Mascotas senior</value></data>
+  <data name="BizPanel_AnxiousPets" xml:space="preserve"><value>Mascotas ansiosas</value></data>
+  <data name="BizPanel_Featured" xml:space="preserve"><value>Destacado</value></data>
+  <data name="BizPanel_ActiveVisible" xml:space="preserve"><value>Activo / visible</value></data>
+  <data name="BizPanel_Save" xml:space="preserve"><value>Guardar negocio</value></data>
+  <data name="BizPanel_NewService" xml:space="preserve"><value>Nuevo servicio</value></data>
+  <data name="BizPanel_BasePrice" xml:space="preserve"><value>Precio base</value></data>
+  <data name="BizPanel_UnitSession" xml:space="preserve"><value>sesión</value></data>
+  <data name="BizPanel_UnitNight" xml:space="preserve"><value>noche</value></data>
+  <data name="BizPanel_UnitDay" xml:space="preserve"><value>día</value></data>
+  <data name="BizPanel_UnitVisit" xml:space="preserve"><value>visita</value></data>
+  <data name="BizPanel_AddService" xml:space="preserve"><value>Agregar servicio</value></data>
+  <data name="BizPanel_Amenities" xml:space="preserve"><value>Amenities</value></data>
+  <data name="BizPanel_AmenityPh" xml:space="preserve"><value>Cámaras 24/7</value></data>
+  <data name="BizPanel_ExtraPh" xml:space="preserve"><value>Baño adicional</value></data>
+  <data name="BizPanel_Updated" xml:space="preserve"><value>Negocio actualizado.</value></data>
+  <data name="BizPanel_ErrCategory" xml:space="preserve"><value>Selecciona al menos una categoría de servicio.</value></data>
+  <data name="Groomer_Agenda" xml:space="preserve"><value>Agenda</value></data>
+  <data name="Groomer_Analytics" xml:space="preserve"><value>Analíticas</value></data>
+  <data name="Groomer_Onboarding" xml:space="preserve"><value>Onboarding</value></data>
+  <data name="Groomer_Payouts" xml:space="preserve"><value>Mis pagos</value></data>
+
+  <data name="Common_ChooseFile" xml:space="preserve"><value>Seleccionar archivo</value></data>
+  <data name="Common_NoFileChosen" xml:space="preserve"><value>Ningún archivo seleccionado</value></data>
+  <data name="Common_RemoveFile" xml:space="preserve"><value>Eliminar adjunto</value></data>
+  <data name="Onboard_UploadOptional" xml:space="preserve"><value>Subir documento (opcional)</value></data>
+
+  <data name="Payout_Lead" xml:space="preserve"><value>Comisiones y resúmenes de período (simulado, sin Stripe real).</value></data>
+  <data name="Payout_CommissionRules" xml:space="preserve"><value>Reglas de comisión</value></data>
+  <data name="Payout_NoRules" xml:space="preserve"><value>Aún no hay reglas. Completa el onboarding profesional.</value></data>
+  <data name="Payout_PlatformDefault" xml:space="preserve"><value>default plataforma</value></data>
+  <data name="Payout_Service_LocalVet" xml:space="preserve"><value>Vet local</value></data>
+  <data name="Payout_Service_InternationalVet" xml:space="preserve"><value>Vet internacional</value></data>
+  <data name="Payout_Service_Behavior" xml:space="preserve"><value>Conducta</value></data>
+  <data name="Payout_GenerateTitle" xml:space="preserve"><value>Generar resumen de período</value></data>
+  <data name="Payout_From" xml:space="preserve"><value>Desde</value></data>
+  <data name="Payout_To" xml:space="preserve"><value>Hasta</value></data>
+  <data name="Payout_Generate" xml:space="preserve"><value>Generar (simulado)</value></data>
+  <data name="Payout_History" xml:space="preserve"><value>Historial</value></data>
+  <data name="Payout_Empty" xml:space="preserve"><value>Sin payouts aún.</value></data>
+  <data name="Payout_Items" xml:space="preserve"><value>ítems</value></data>
+  <data name="Payout_PeriodEndError" xml:space="preserve"><value>La fecha fin debe ser posterior al inicio.</value></data>
+  <data name="Payout_SummaryCreated" xml:space="preserve"><value>Resumen de período creado · neto ${0} ({1} ítems).</value></data>
+  <data name="Payout_Status_Pending" xml:space="preserve"><value>Pendiente</value></data>
+  <data name="Payout_Status_Processing" xml:space="preserve"><value>Procesando</value></data>
+  <data name="Payout_Status_Paid" xml:space="preserve"><value>Pagado</value></data>
+  <data name="Payout_Status_Failed" xml:space="preserve"><value>Fallido</value></data>
+  <data name="Payout_Status_Held" xml:space="preserve"><value>Retenido</value></data>
 </root>

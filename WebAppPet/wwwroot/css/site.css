@@ -2714,6 +2714,27 @@ button[data-terms-submit]:disabled {
   width: 100%;
   height: 100%;
 }
+.file-pick-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.file-pick-row .pet-photo-pick {
+  flex: 0 0 auto;
+}
+.file-pick-name {
+  min-width: 0;
+  word-break: break-word;
+}
+.file-pick-clear {
+  flex: 0 0 auto;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+.file-pick-clear[hidden] {
+  display: none !important;
+}
 .pet-photo-url-fallback {
   margin-top: 10px;
 }

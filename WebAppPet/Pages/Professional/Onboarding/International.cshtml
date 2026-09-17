@@ -19,10 +19,13 @@
         <div class="alert alert-warn">@Model.Error</div>
     }
 
-    <form method="post" enctype="multipart/form-data" class="card card-pad">
+    <form method="post" enctype="multipart/form-data" class="card card-pad"
+          data-validate-i18n
+          data-msg-required="@L["Validation_Required"]">
         <div class="form-group">
             <label>@CatalogLocalizer.Loc("Nombre legal", "Legal name")</label>
             <input class="form-control" asp-for="LegalName" required />
+            <span class="field-error" hidden></span>
         </div>
         <div class="form-group">
             <label>@CatalogLocalizer.Loc("Práctica / clínica", "Practice / clinic")</label>
@@ -31,6 +34,7 @@
         <div class="form-group">
             <label>@CatalogLocalizer.Loc("País (ISO, ej. CO, SV, MX)", "Country (ISO, e.g. CO, SV, MX)")</label>
             <input class="form-control" asp-for="LicenseJurisdiction" required maxlength="8" />
+            <span class="field-error" hidden></span>
         </div>
         <div class="form-group">
             <label>@CatalogLocalizer.Loc("Nº credencial / licencia local", "Local credential / license #")</label>
@@ -43,6 +47,7 @@
         <div class="form-group">
             <label>@CatalogLocalizer.Loc("Idiomas (coma)", "Languages (comma)")</label>
             <input class="form-control" asp-for="Languages" required />
+            <span class="field-error" hidden></span>
         </div>
         <div class="form-group">
             <label>@CatalogLocalizer.Loc("Especialidades", "Specialties")</label>
@@ -61,8 +66,19 @@
             <textarea class="form-control" asp-for="DocumentsNote" rows="2"></textarea>
         </div>
         <div class="form-group">
-            <label>@CatalogLocalizer.Loc("Subir documento (opcional)", "Upload document (optional)")</label>
-            <input class="form-control" type="file" asp-for="DocumentUpload" accept=".pdf,.jpg,.jpeg,.png" />
+            <label>@L["Onboard_UploadOptional"]</label>
+            <div class="file-pick-row">
+                <label class="pet-photo-pick btn btn-outline">
+                    @L["Common_ChooseFile"]
+                    <input type="file" asp-for="DocumentUpload" accept=".pdf,.jpg,.jpeg,.png" />
+                </label>
+                <span class="muted small file-pick-name"
+                      data-file-name
+                      data-file-empty="@L["Common_NoFileChosen"]">@L["Common_NoFileChosen"]</span>
+                <button type="button" class="btn btn-outline btn-sm file-pick-clear" data-file-clear hidden>
+                    @L["Common_RemoveFile"]
+                </button>
+            </div>
         </div>
         <button class="btn btn-outline btn-block" type="submit" asp-page-handler="Draft">@CatalogLocalizer.Loc("Guardar borrador", "Save draft")</button>
         <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Submit" style="margin-top:8px">@CatalogLocalizer.Loc("Enviar a revisión", "Submit for review")</button>
@@ -70,3 +86,28 @@
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var input = document.getElementById('DocumentUpload');
+            var nameEl = document.querySelector('[data-file-name]');
+            var clearBtn = document.querySelector('[data-file-clear]');
+            if (!input || !nameEl) return;
+            var empty = nameEl.getAttribute('data-file-empty') || '';
+            function sync() {
+                var has = !!(input.files && input.files[0]);
+                nameEl.textContent = has ? input.files[0].name : empty;
+                if (clearBtn) clearBtn.hidden = !has;
+            }
+            input.addEventListener('change', sync);
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    input.value = '';
+                    sync();
+                });
+            }
+            sync();
+        })();
+    </script>
+}

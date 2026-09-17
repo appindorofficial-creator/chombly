@@ -70,9 +70,7 @@ public class BusinessModel : GroomerPageModel
             .ToList();
         if (selected.Count == 0)
         {
-            Message = CatalogLocalizer.Loc(
-                "Selecciona al menos una categoría de servicio.",
-                "Select at least one service category.");
+            Message = _L["BizPanel_ErrCategory"].Value;
             await FillAsync();
             return Page();
         }
@@ -105,7 +103,7 @@ public class BusinessModel : GroomerPageModel
         g.IsFeatured = IsFeatured;
         g.IsActive = IsActive;
         await Db.SaveChangesAsync();
-        Message = CatalogLocalizer.Loc("Negocio actualizado.", "Business updated.");
+        Message = _L["BizPanel_Updated"].Value;
         await FillAsync();
         return Page();
     }

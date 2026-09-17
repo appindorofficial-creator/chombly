@@ -6,7 +6,7 @@
             : null);
 }
 <div class="provider-banner">
-    <strong>@CatalogLocalizer.Loc("Panel del negocio", "Business panel")</strong>
+    <strong>@L["Profile_BusinessPanel"]</strong>
     @if (cats is { Count: > 0 })
     {
         <span class="provider-cat-badges">
@@ -20,9 +20,9 @@
 <div class="tabs tabs-wrap" style="margin-bottom:16px">
     <a class="@(current == "dashboard" ? "active" : "")" asp-page="/Groomer/Dashboard">@L["Nav_Home"]</a>
     <a class="@(current == "appointments" ? "active" : "")" asp-page="/Groomer/Appointments">@L["Groomer_Bookings"]</a>
-    <a class="@(current == "availability" ? "active" : "")" asp-page="/Groomer/Availability">@CatalogLocalizer.Loc("Agenda", "Agenda")</a>
+    <a class="@(current == "availability" ? "active" : "")" asp-page="/Groomer/Availability">@L["Groomer_Agenda"]</a>
     <a class="@(current == "business" ? "active" : "")" asp-page="/Groomer/Business">@L["Biz_Business"]</a>
-    <a class="@(current == "analytics" ? "active" : "")" asp-page="/Groomer/Analytics">@CatalogLocalizer.Loc("Analíticas", "Analytics")</a>
-    <a class="@(current == "onboarding" ? "active" : "")" asp-page="/Professional/Onboarding">@CatalogLocalizer.Loc("Onboarding", "Onboarding")</a>
-    <a class="@(current == "payouts" ? "active" : "")" asp-page="/Professional/Payouts">@CatalogLocalizer.Loc("Mis pagos", "My payouts")</a>
+    <a class="@(current == "analytics" ? "active" : "")" asp-page="/Groomer/Analytics">@L["Groomer_Analytics"]</a>
+    <a class="@(current == "onboarding" ? "active" : "")" asp-page="/Professional/Onboarding">@L["Groomer_Onboarding"]</a>
+    <a class="@(current == "payouts" ? "active" : "")" asp-page="/Professional/Payouts">@L["Groomer_Payouts"]</a>
 </div>

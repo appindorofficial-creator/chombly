@@ -87,16 +87,16 @@ public class LocalModel : PageModel
 
             var app = await _onboarding.StartOrUpdateDraftAsync(_auth.CurrentUserId!.Value, track, a =>
             {
-                a.LegalName = LegalName.Trim();
-                a.ClinicOrPracticeName = ClinicOrPracticeName.Trim();
-                a.LicenseNumber = LicenseNumber.Trim();
-                a.LicenseJurisdiction = LicenseJurisdiction.Trim().ToUpperInvariant();
+                a.LegalName = (LegalName ?? "").Trim();
+                a.ClinicOrPracticeName = (ClinicOrPracticeName ?? "").Trim();
+                a.LicenseNumber = (LicenseNumber ?? "").Trim();
+                a.LicenseJurisdiction = (LicenseJurisdiction ?? "").Trim().ToUpperInvariant();
                 a.LicenseExpiry = LicenseExpiry;
-                a.Languages = Languages.Trim();
-                a.Specialties = Specialties.Trim();
+                a.Languages = (Languages ?? "").Trim();
+                a.Specialties = (Specialties ?? "").Trim();
                 a.HasPhysicalClinic = HasPhysicalClinic;
                 a.VcprCapable = VcprCapable;
-                a.DocumentsNote = DocumentsNote;
+                a.DocumentsNote = string.IsNullOrWhiteSpace(DocumentsNote) ? null : DocumentsNote.Trim();
                 a.AcceptsInternationalClients = false;
                 a.BreedExpertiseCsv = "";
                 if (uploadPath != null) a.UploadPath = uploadPath;

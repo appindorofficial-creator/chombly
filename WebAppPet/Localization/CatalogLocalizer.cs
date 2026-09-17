@@ -185,6 +185,32 @@ public static class CatalogLocalizer
         ["mascotas"] = "pets",
     };
 
+    /// <summary>Word-level fallback for free-form catalog labels (e.g. extras like "Baño test").</summary>
+    private static readonly Dictionary<string, string> Words = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Baño"] = "Bath",
+        ["Noche"] = "Night",
+        ["Día"] = "Day",
+        ["Dia"] = "Day",
+        ["Medio"] = "Half",
+        ["completo"] = "full",
+        ["básico"] = "basic",
+        ["basico"] = "basic",
+        ["adicional"] = "extra",
+        ["estándar"] = "standard",
+        ["estandar"] = "standard",
+        ["premium"] = "premium",
+        ["Corte"] = "Haircut",
+        ["pelo"] = "hair",
+        ["sesión"] = "session",
+        ["sesion"] = "session",
+        ["visita"] = "visit",
+        ["Paseo"] = "Walk",
+        ["Grooming"] = "Grooming",
+        ["suave"] = "gentle",
+        ["felino"] = "feline",
+    };
+
     private static readonly (string Es, string En)[] NotePrefixes =
     [
         ("Horario:", "Schedule:"),
@@ -198,7 +224,31 @@ public static class CatalogLocalizer
         if (string.IsNullOrWhiteSpace(text)) return text ?? "";
         if (!IsEnglish()) return text;
         var key = text.Trim();
-        return Map.TryGetValue(key, out var en) ? en : text;
+        if (Map.TryGetValue(key, out var en)) return en;
+        return TranslateWords(key);
+    }
+
+    private static string TranslateWords(string text)
+    {
+        var parts = text.Split(' ', StringSplitOptions.None);
+        var changed = false;
+        for (var i = 0; i < parts.Length; i++)
+        {
+            var raw = parts[i];
+            if (raw.Length == 0) continue;
+            if (!Words.TryGetValue(raw, out var en)) continue;
+            parts[i] = MatchCase(raw, en);
+            changed = true;
+        }
+        return changed ? string.Join(' ', parts) : text;
+    }
+
+    private static string MatchCase(string original, string replacement)
+    {
+        if (original.Length == 0 || replacement.Length == 0) return replacement;
+        if (char.IsUpper(original[0]))
+            return char.ToUpperInvariant(replacement[0]) + replacement[1..];
+        return char.ToLowerInvariant(replacement[0]) + replacement[1..];
     }
 
     /// <summary>Localiza notas de cita compuestas (p. ej. "Horario: Medio día · Pago: Visa").</summary>

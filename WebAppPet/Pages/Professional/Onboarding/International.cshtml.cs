@@ -83,18 +83,18 @@ public class InternationalModel : PageModel
                 ProfessionalOnboardingTrack.International,
                 a =>
                 {
-                    a.LegalName = LegalName.Trim();
-                    a.ClinicOrPracticeName = ClinicOrPracticeName.Trim();
-                    a.LicenseNumber = LicenseNumber.Trim();
-                    a.LicenseJurisdiction = LicenseJurisdiction.Trim().ToUpperInvariant();
+                    a.LegalName = (LegalName ?? "").Trim();
+                    a.ClinicOrPracticeName = (ClinicOrPracticeName ?? "").Trim();
+                    a.LicenseNumber = (LicenseNumber ?? "").Trim();
+                    a.LicenseJurisdiction = (LicenseJurisdiction ?? "").Trim().ToUpperInvariant();
                     a.LicenseExpiry = LicenseExpiry;
-                    a.Languages = Languages.Trim();
-                    a.Specialties = Specialties.Trim();
-                    a.BreedExpertiseCsv = BreedExpertiseCsv.Trim();
+                    a.Languages = (Languages ?? "").Trim();
+                    a.Specialties = (Specialties ?? "").Trim();
+                    a.BreedExpertiseCsv = (BreedExpertiseCsv ?? "").Trim();
                     a.AcceptsInternationalClients = AcceptsInternationalClients;
                     a.HasPhysicalClinic = false;
                     a.VcprCapable = false;
-                    a.DocumentsNote = DocumentsNote;
+                    a.DocumentsNote = string.IsNullOrWhiteSpace(DocumentsNote) ? null : DocumentsNote.Trim();
                     if (uploadPath != null) a.UploadPath = uploadPath;
                 });
 

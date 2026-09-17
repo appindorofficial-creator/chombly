@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -12,12 +14,18 @@ public class PayoutsModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ProviderPayoutService _payouts;
+    private readonly IStringLocalizer<SharedResource> _L;
 
-    public PayoutsModel(AppDbContext db, AuthService auth, ProviderPayoutService payouts)
+    public PayoutsModel(
+        AppDbContext db,
+        AuthService auth,
+        ProviderPayoutService payouts,
+        IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
         _payouts = payouts;
+        _L = L;
     }
 
     public List<ProviderCompensationRule> Rules { get; set; } = new();
@@ -45,7 +53,7 @@ public class PayoutsModel : PageModel
         {
             if (PeriodEnd <= PeriodStart)
             {
-                Error = "Period end must be after start.";
+                Error = _L["Payout_PeriodEndError"].Value;
             }
             else
             {
@@ -54,7 +62,10 @@ public class PayoutsModel : PageModel
                     PeriodStart.ToUniversalTime(),
                     PeriodEnd.ToUniversalTime(),
                     _auth.CurrentUserId);
-                Message = $"Period summary created · net ${payout.NetAmountUsd:0.00} ({payout.ConsultationCount} items).";
+                Message = string.Format(
+                    _L["Payout_SummaryCreated"].Value,
+                    payout.NetAmountUsd.ToString("0.00"),
+                    payout.ConsultationCount);
             }
         }
         catch (Exception ex)
