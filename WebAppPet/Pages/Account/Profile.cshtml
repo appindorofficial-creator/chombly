@@ -101,14 +101,12 @@
             }
 
             <div class="menu-list menu-chombly">
-                @if (Model.UserEntity.Role == UserRole.Groomer)
-                {
-                    <p class="menu-section-label">@CatalogLocalizer.Loc("Negocio", "Business")</p>
-                    <a asp-page="/Account/SetAppMode" asp-route-mode="business" asp-route-returnUrl="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev" aria-hidden="true">›</span></a>
-                    <a asp-page="/Professional/Onboarding"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🩺</span> @CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</span><span class="chev" aria-hidden="true">›</span></a>
-                    <a asp-page="/Professional/Payouts"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💵</span> @CatalogLocalizer.Loc("Mis pagos", "My payouts")</span><span class="chev" aria-hidden="true">›</span></a>
+                @{
+                    // Dual-role: filter menu by shell. Clients always see owner activity.
+                    var showBusinessMenu = Model.CanSwitchShell && Model.IsBusinessShell;
+                    var showOwnerActivity = !Model.CanSwitchShell || !Model.IsBusinessShell;
                 }
-                else if (Model.UserEntity.Role == UserRole.Admin)
+                @if (Model.UserEntity.Role == UserRole.Admin)
                 {
                     <p class="menu-section-label">Admin</p>
                     <a asp-page="/Admin/Approvals"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✅</span> @L["Profile_AdminApprovals"]</span><span class="chev" aria-hidden="true">›</span></a>
@@ -116,25 +114,44 @@
                     <a asp-page="/Admin/Payouts"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💵</span> Payouts</span><span class="chev" aria-hidden="true">›</span></a>
                 }
 
-                <p class="menu-section-label">@CatalogLocalizer.Loc("Tu actividad", "Your activity")</p>
-                @if (Model.CanSwitchShell)
+                @if (showBusinessMenu)
                 {
-                    <a asp-page="/Account/SetAppMode" asp-route-mode="owner" asp-route-returnUrl="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <p class="menu-section-label">@CatalogLocalizer.Loc("Negocio", "Business")</p>
+                    <a asp-page="/Account/SetAppMode" asp-route-mode="business" asp-route-returnUrl="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Professional/Onboarding"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🩺</span> @CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Professional/Payouts"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💵</span> @CatalogLocalizer.Loc("Mis pagos", "My payouts")</span><span class="chev" aria-hidden="true">›</span></a>
                 }
-                else
+
+                @if (showOwnerActivity)
                 {
-                    <a asp-page="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <p class="menu-section-label">@CatalogLocalizer.Loc("Tu actividad", "Your activity")</p>
+                    @if (Model.CanSwitchShell)
+                    {
+                        <a asp-page="/Account/SetAppMode" asp-route-mode="owner" asp-route-returnUrl="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    }
+                    <a asp-page="/Chat/Inbox"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💬</span> @L["Profile_Messages"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Account/Favorites"><span class="menu-left"><span class="menu-ico" aria-hidden="true">❤️</span> @L["Profile_Favorites"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Appointments/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">📅</span> @L["Profile_MyAppointments"]</span><span class="chev" aria-hidden="true">›</span></a>
                 }
-                <a asp-page="/Chat/Inbox"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💬</span> @L["Profile_Messages"]</span><span class="chev" aria-hidden="true">›</span></a>
-                <a asp-page="/Account/Favorites"><span class="menu-left"><span class="menu-ico" aria-hidden="true">❤️</span> @L["Profile_Favorites"]</span><span class="chev" aria-hidden="true">›</span></a>
-                <a asp-page="/Appointments/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">📅</span> @L["Profile_MyAppointments"]</span><span class="chev" aria-hidden="true">›</span></a>
+                else if (showBusinessMenu)
+                {
+                    <p class="menu-section-label">@CatalogLocalizer.Loc("Tu actividad", "Your activity")</p>
+                    <a asp-page="/Chat/Inbox"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💬</span> @L["Profile_Messages"]</span><span class="chev" aria-hidden="true">›</span></a>
+                }
 
                 <p class="menu-section-label">@CatalogLocalizer.Loc("Cuenta", "Account")</p>
                 @if (Model.UserEntity.Role != UserRole.Groomer && Model.UserEntity.Role != UserRole.Admin)
                 {
                     <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🏪</span> @L["Profile_BecomeBusiness"]</span><span class="chev" aria-hidden="true">›</span></a>
                 }
-                <a asp-page="/Account/PaymentMethods"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💳</span> @L["Profile_Payments"]</span><span class="chev" aria-hidden="true">›</span></a>
+                @if (showOwnerActivity || !Model.CanSwitchShell)
+                {
+                    <a asp-page="/Account/PaymentMethods"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💳</span> @L["Profile_Payments"]</span><span class="chev" aria-hidden="true">›</span></a>
+                }
                 <a asp-page="/Account/Notifications" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🔔</span> @L["Profile_Notifications"]</span><span class="chev" aria-hidden="true">›</span></a>
                 <a asp-page="/Welcome" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✨</span> @L["Profile_WelcomeLink"]</span><span class="chev" aria-hidden="true">›</span></a>
             </div>
