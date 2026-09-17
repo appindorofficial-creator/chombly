@@ -78,11 +78,33 @@
                 </div>
             </div>
 
+            @if (Model.CanSwitchShell)
+            {
+                <div class="profile-shell-switch" role="group" aria-label="@L["Profile_ShellMode"]">
+                    <p class="profile-shell-label">@L["Profile_ShellMode"]</p>
+                    <div class="profile-shell-toggle">
+                        <a class="profile-shell-opt @(Model.IsBusinessShell ? "" : "is-active")"
+                           asp-page="/Account/SetAppMode"
+                           asp-route-mode="owner"
+                           asp-route-returnUrl="/Account/Profile">
+                            🐾 @L["Profile_ShellOwner"]
+                        </a>
+                        <a class="profile-shell-opt @(Model.IsBusinessShell ? "is-active" : "")"
+                           asp-page="/Account/SetAppMode"
+                           asp-route-mode="business"
+                           asp-route-returnUrl="/Account/Profile">
+                            💼 @L["Profile_ShellBusiness"]
+                        </a>
+                    </div>
+                    <p class="muted small profile-shell-hint">@L["Profile_ShellHint"]</p>
+                </div>
+            }
+
             <div class="menu-list menu-chombly">
                 @if (Model.UserEntity.Role == UserRole.Groomer)
                 {
                     <p class="menu-section-label">@CatalogLocalizer.Loc("Negocio", "Business")</p>
-                    <a asp-page="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev" aria-hidden="true">›</span></a>
+                    <a asp-page="/Account/SetAppMode" asp-route-mode="business" asp-route-returnUrl="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev" aria-hidden="true">›</span></a>
                     <a asp-page="/Professional/Onboarding"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🩺</span> @CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</span><span class="chev" aria-hidden="true">›</span></a>
                     <a asp-page="/Professional/Payouts"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💵</span> @CatalogLocalizer.Loc("Mis pagos", "My payouts")</span><span class="chev" aria-hidden="true">›</span></a>
                 }
@@ -95,7 +117,14 @@
                 }
 
                 <p class="menu-section-label">@CatalogLocalizer.Loc("Tu actividad", "Your activity")</p>
-                <a asp-page="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                @if (Model.CanSwitchShell)
+                {
+                    <a asp-page="/Account/SetAppMode" asp-route-mode="owner" asp-route-returnUrl="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                }
+                else
+                {
+                    <a asp-page="/Pets/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🐾</span> @L["Profile_MyPets"]</span><span class="chev" aria-hidden="true">›</span></a>
+                }
                 <a asp-page="/Chat/Inbox"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💬</span> @L["Profile_Messages"]</span><span class="chev" aria-hidden="true">›</span></a>
                 <a asp-page="/Account/Favorites"><span class="menu-left"><span class="menu-ico" aria-hidden="true">❤️</span> @L["Profile_Favorites"]</span><span class="chev" aria-hidden="true">›</span></a>
                 <a asp-page="/Appointments/Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">📅</span> @L["Profile_MyAppointments"]</span><span class="chev" aria-hidden="true">›</span></a>

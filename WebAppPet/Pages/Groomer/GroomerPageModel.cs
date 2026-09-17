@@ -34,6 +34,10 @@ public abstract class GroomerPageModel : PageModel
         if (Profile == null)
             return RedirectToPage("/Account/RegisterBusiness");
 
+        // Entering business routes switches shell to business (keeps nav in sync).
+        if (Auth.IsGroomer && Auth.IsOwnerShell)
+            Auth.SetShellMode(AppShellMode.Business);
+
         await LoadOfferedCategoriesAsync();
         return null;
     }

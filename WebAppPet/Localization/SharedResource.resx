@@ -248,6 +248,10 @@
   <data name="Profile_MyAppointments" xml:space="preserve"><value>Mis citas</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Panel de negocio</value></data>
   <data name="Profile_BecomeBusiness" xml:space="preserve"><value>Soy un negocio</value></data>
+  <data name="Profile_ShellMode" xml:space="preserve"><value>Modo de la app</value></data>
+  <data name="Profile_ShellOwner" xml:space="preserve"><value>Mis mascotas</value></data>
+  <data name="Profile_ShellBusiness" xml:space="preserve"><value>Mi negocio</value></data>
+  <data name="Profile_ShellHint" xml:space="preserve"><value>Misma cuenta: cambia entre dueño y negocio cuando quieras.</value></data>
   <data name="Profile_Language" xml:space="preserve"><value>Idioma de la app</value></data>
   <data name="Profile_Edit" xml:space="preserve"><value>Editar perfil</value></data>
   <data name="Profile_Edit_ChangePassword" xml:space="preserve"><value>Cambiar contraseña</value></data>

@@ -19,6 +19,8 @@ public class ProfileModel : PageModel
 
     public AppUser? UserEntity { get; set; }
     public bool HasGpsLocation { get; set; }
+    public bool CanSwitchShell { get; set; }
+    public bool IsBusinessShell { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -32,5 +34,8 @@ public class ProfileModel : PageModel
 
         HasGpsLocation = UserEntity?.Latitude is double lat && UserEntity.Longitude is double lng
                          && !(lat == 0 && lng == 0);
+
+        CanSwitchShell = UserEntity?.Role == UserRole.Groomer;
+        IsBusinessShell = _auth.IsBusinessShell;
     }
 }

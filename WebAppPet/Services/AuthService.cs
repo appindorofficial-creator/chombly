@@ -28,6 +28,37 @@ public class AuthService
     public bool IsAdmin =>
         _http.HttpContext?.User.FindFirstValue(ClaimTypes.Role) == nameof(Models.UserRole.Admin);
 
+    /// <summary>
+    /// Business bottom-nav / home. Groomers default to business when no shell cookie is set.
+    /// </summary>
+    public bool IsBusinessShell
+    {
+        get
+        {
+            if (!IsGroomer) return false;
+            var ctx = _http.HttpContext;
+            if (ctx == null) return true;
+            var mode = AppShellMode.Read(ctx.Request);
+            if (string.IsNullOrEmpty(mode)) return true;
+            return mode == AppShellMode.Business;
+        }
+    }
+
+    public bool IsOwnerShell => !IsBusinessShell;
+
+    public void SetShellMode(string mode)
+    {
+        var ctx = _http.HttpContext;
+        if (ctx == null) return;
+        if (!IsGroomer)
+        {
+            AppShellMode.Set(ctx.Response, AppShellMode.Owner);
+            return;
+        }
+
+        AppShellMode.Set(ctx.Response, mode);
+    }
+
     public async Task SignInAsync(AppUser user)
     {
         var claims = new List<Claim>
@@ -49,6 +80,18 @@ public class AuthService
                 IsPersistent = true,
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14)
             });
+
+        // First-time groomer session: land in business shell unless they already chose owner.
+        if (user.Role == UserRole.Groomer)
+        {
+            var existing = AppShellMode.Read(_http.HttpContext.Request);
+            if (string.IsNullOrEmpty(existing))
+                AppShellMode.Set(_http.HttpContext.Response, AppShellMode.Business);
+        }
+        else if (user.Role == UserRole.Client)
+        {
+            AppShellMode.Set(_http.HttpContext.Response, AppShellMode.Owner);
+        }
     }
 
     public async Task SignOutAsync() =>

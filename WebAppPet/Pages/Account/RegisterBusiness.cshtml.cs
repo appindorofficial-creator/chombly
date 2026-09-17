@@ -529,6 +529,7 @@ public class RegisterBusinessModel : PageModel
 
         // Re-sign so Role claim becomes Groomer (needed when converting an existing client).
         await _auth.SignInAsync(user);
+        _auth.SetShellMode(AppShellMode.Business);
         Step = 7;
         return Page();
     }

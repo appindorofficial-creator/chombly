@@ -37,7 +37,8 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGetAsync(string? city)
     {
         IsGuest = !_auth.IsAuthenticated;
-        if (_auth.IsGroomer)
+        // Dual-role (Indor-style): only force business home when shell is business.
+        if (_auth.IsBusinessShell)
             return RedirectToPage("/Groomer/Dashboard");
         if (IsGuest && !Browse)
             return Redirect("/Welcome");

@@ -13,11 +13,13 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="icon" href="~/brand/v2/chombly-mark.png" asp-append-version="true" />
 </head>
+@inject WebAppPet.Services.AuthService Auth
 @{
     var hideNav = ViewData["HideNav"] as bool? == true;
     var path = Context.Request.Path.Value ?? "";
     var isAuthed = User.Identity?.IsAuthenticated == true;
-    var isBiz = User.IsInRole(nameof(WebAppPet.Models.UserRole.Groomer));
+    // Dual-role: Groomer in owner shell sees pet-owner nav.
+    var isBiz = Auth.IsBusinessShell;
     bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase);
     var onNotifications = IsActive("/Account/Notifications");

@@ -241,6 +241,10 @@
   <data name="Profile_MyAppointments" xml:space="preserve"><value>My bookings</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Business panel</value></data>
   <data name="Profile_BecomeBusiness" xml:space="preserve"><value>I'm a business</value></data>
+  <data name="Profile_ShellMode" xml:space="preserve"><value>App mode</value></data>
+  <data name="Profile_ShellOwner" xml:space="preserve"><value>My pets</value></data>
+  <data name="Profile_ShellBusiness" xml:space="preserve"><value>My business</value></data>
+  <data name="Profile_ShellHint" xml:space="preserve"><value>Same account: switch between owner and business anytime.</value></data>
   <data name="Profile_Language" xml:space="preserve"><value>App language</value></data>
   <data name="Profile_Edit" xml:space="preserve"><value>Edit profile</value></data>
   <data name="Profile_Edit_ChangePassword" xml:space="preserve"><value>Change password</value></data>

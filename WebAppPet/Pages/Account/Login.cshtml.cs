@@ -76,12 +76,13 @@ public class LoginModel : PageModel
         if (dest != null)
             return LocalRedirect(dest);
 
-        return user.Role switch
-        {
-            Models.UserRole.Groomer => RedirectToPage("/Groomer/Dashboard"),
-            Models.UserRole.Admin => RedirectToPage("/Admin/Approvals"),
-            _ => RedirectToPage("/Index")
-        };
+        if (user.Role == Models.UserRole.Admin)
+            return RedirectToPage("/Admin/Approvals");
+
+        if (user.Role == Models.UserRole.Groomer && _auth.IsBusinessShell)
+            return RedirectToPage("/Groomer/Dashboard");
+
+        return RedirectToPage("/Index");
     }
 
     private string? SafeLocalUrl(string? url)
