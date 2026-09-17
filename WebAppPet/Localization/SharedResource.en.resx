@@ -609,4 +609,9 @@
   <data name="Payout_Status_Paid" xml:space="preserve"><value>Paid</value></data>
   <data name="Payout_Status_Failed" xml:space="preserve"><value>Failed</value></data>
   <data name="Payout_Status_Held" xml:space="preserve"><value>Held</value></data>
+
+  <data name="Pets_HistoryTitle" xml:space="preserve"><value>History</value></data>
+  <data name="Pets_HistoryOf" xml:space="preserve"><value>History for {0}</value></data>
+  <data name="Pets_HistoryPetFallback" xml:space="preserve"><value>pet</value></data>
+  <data name="Pets_HistoryEmpty" xml:space="preserve"><value>No services recorded yet.</value></data>
 </root>

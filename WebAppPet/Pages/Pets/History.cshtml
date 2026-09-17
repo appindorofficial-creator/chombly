@@ -1,40 +1,43 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Pets.HistoryModel
+@using WebAppPet.Localization
+@using WebAppPet.Models
 @{
-    ViewData["Title"] = "Historial";
+    ViewData["Title"] = L["Pets_HistoryTitle"].Value;
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("./Index");
     var HideNav = true;
+    var petName = Model.Pet?.Name ?? L["Pets_HistoryPetFallback"].Value;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body @(HideNav ? "no-nav" : "")">
-    <h1 class="app-page-heading">Historial de @(Model.Pet?.Name ?? "mascota")</h1>
+    <h1 class="app-page-heading">@string.Format(L["Pets_HistoryOf"].Value, petName)</h1>
     @if (Model.Pet != null)
     {
         <div class="pet-select" style="margin-bottom:16px">
             <partial name="_PetAvatar" model="(Model.Pet.PhotoUrl, Model.Pet.Species, Model.Pet.Name, (string?)null)" />
             <div>
                 <strong>@PetSpecies.Emoji(Model.Pet.Species) @Model.Pet.Name</strong>
-                <div class="muted small">@Model.Pet.Species · @Model.Pet.Breed · @Model.Pet.AgeYears años</div>
+                <div class="muted small">@PetSpecies.Label(Model.Pet.Species) · @PetCatalog.DisplayBreed(Model.Pet.Species, Model.Pet.Breed) · @Model.Pet.AgeYears @L["Pets_Years"]</div>
             </div>
         </div>
     }
 
     @if (!Model.Items.Any())
     {
-        <div class="empty">Sin servicios registrados todavía.</div>
+        <div class="empty">@L["Pets_HistoryEmpty"]</div>
     }
     @foreach (var a in Model.Items)
     {
         <div class="appt-card">
             <div class="row">
-                <img src="@a.Groomer.ImageUrl" alt="@a.Groomer.BusinessName" />
+                <img src="@(a.Groomer?.ImageUrl)" alt="@(a.Groomer?.BusinessName)" />
                 <div style="flex:1">
-                    <strong>@a.Service.Name</strong>
-                    <div class="muted small">@a.Groomer.BusinessName</div>
-                    <div class="muted small">@a.ScheduledAt.ToString("d MMM yyyy")</div>
+                    <strong>@CatalogLocalizer.Text(a.Service?.Name)</strong>
+                    <div class="muted small">@(a.Groomer?.BusinessName)</div>
+                    <div class="muted small">@AppTimeZones.FormatDate(a.ScheduledAt)</div>
                 </div>
                 <span class="price">$@a.TotalPrice.ToString("0")</span>
             </div>
