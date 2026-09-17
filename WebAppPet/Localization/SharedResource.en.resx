@@ -236,6 +236,7 @@
   <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>You can’t undo this action.</value></data>
   <data name="Notif_ClearAllOk" xml:space="preserve"><value>Clear All</value></data>
   <data name="Notif_SwipeHint" xml:space="preserve"><value>Swipe left to delete</value></data>
+  <data name="Notif_Empty" xml:space="preserve"><value>You have no notifications.</value></data>
   <data name="Profile_MyPets" xml:space="preserve"><value>My pets</value></data>
   <data name="Profile_MyAppointments" xml:space="preserve"><value>My bookings</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Business panel</value></data>

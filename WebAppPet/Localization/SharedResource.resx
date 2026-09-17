@@ -243,6 +243,7 @@
   <data name="Notif_ClearAllConfirm" xml:space="preserve"><value>No podrás recuperarlas.</value></data>
   <data name="Notif_ClearAllOk" xml:space="preserve"><value>Eliminar todas</value></data>
   <data name="Notif_SwipeHint" xml:space="preserve"><value>Desliza a la izquierda para eliminar</value></data>
+  <data name="Notif_Empty" xml:space="preserve"><value>No tienes notificaciones.</value></data>
   <data name="Profile_MyPets" xml:space="preserve"><value>Mis mascotas</value></data>
   <data name="Profile_MyAppointments" xml:space="preserve"><value>Mis citas</value></data>
   <data name="Profile_BusinessPanel" xml:space="preserve"><value>Panel de negocio</value></data>

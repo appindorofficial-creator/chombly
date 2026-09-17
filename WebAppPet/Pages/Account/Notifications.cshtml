@@ -1,5 +1,6 @@
 @page
 @model WebAppPet.Pages.Account.NotificationsModel
+@using WebAppPet.Localization
 @{
     ViewData["Title"] = L["Profile_Notifications"].Value;
     ViewData["LangCompact"] = true;
@@ -29,7 +30,7 @@
     @if (!Model.Items.Any())
     {
         <app-card animation="FadeIn" variant="soft" class="empty notif-empty">
-            @CatalogLocalizer.Loc("No tienes notificaciones.", "You have no notifications.")
+            @L["Notif_Empty"]
         </app-card>
     }
     else
@@ -44,7 +45,7 @@
                     <span>@L["Common_Delete"]</span>
                 </div>
                 <div class="notif-item @(n.IsRead ? "" : "unread")" data-notif-swipe>
-                    <strong>@n.Title</strong>
+                    <strong>@NotificationLocalizer.Title(n.Title)</strong>
                     <form method="post" asp-page-handler="Delete" class="notif-delete-form"
                           data-confirm
                           data-confirm-title="@L["Notif_DeleteTitle"]"
@@ -56,7 +57,7 @@
                         <input type="hidden" asp-for="ReturnUrl" />
                         <button type="submit" tabindex="-1">@L["Notif_Delete"]</button>
                     </form>
-                    <p class="muted small notif-item-msg">@n.Message</p>
+                    <p class="muted small notif-item-msg">@NotificationLocalizer.Message(n.Message)</p>
                     <p class="muted small notif-item-time">@AppTimeZones.FormatShort(n.CreatedAt)</p>
                 </div>
             </div>
