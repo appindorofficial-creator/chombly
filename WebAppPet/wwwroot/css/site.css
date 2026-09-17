@@ -8025,27 +8025,16 @@ a.appt-card,
   pointer-events: none;
 }
 .home-body.is-soft-updating > * {
-  opacity: .72;
-  transition: opacity var(--motion-fast) var(--ease-standard);
+  opacity: 1;
 }
+/* Tiny, low-contrast cue only after a slow soft-fetch — never a page dim/reload feel */
 .home-body.is-soft-updating::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--brand-mid, #3d6b5c), transparent);
-  background-size: 40% 100%;
-  background-repeat: no-repeat;
-  animation: soft-update-bar 0.9s var(--ease-emphasized) infinite;
-  pointer-events: none;
-  z-index: 6;
+  content: none;
 }
-@keyframes soft-update-bar {
-  from { background-position: -40% 0; }
-  to { background-position: 140% 0; }
+
+/* Soft filter updates: skip heavy cross-document content morph (felt like loading). */
+.hotel-flow {
+  view-transition-name: none;
 }
 .app-soft-skeleton {
   display: none !important;

@@ -96,7 +96,7 @@
         </section>
 
         <section style="margin-top:16px">
-            <h2 class="section-title" id="behavior-specialists">@CatalogLocalizer.Loc("Especialistas disponibles", "Available specialists")</h2>
+            <h2 class="section-title" id="behavior-results">@CatalogLocalizer.Loc("Especialistas disponibles", "Available specialists")</h2>
             @if (Model.Providers.Count == 0)
             {
                 <p class="muted">@CatalogLocalizer.Loc("No hay especialistas publicados aún.", "No specialists published yet.")</p>
@@ -147,7 +147,7 @@
                                     Slot = hasSlot ? Model.Slot : null,
                                     ProviderId = p.Id
                                 }),
-                                GateAnchorId = "behavior-specialists",
+                                GateAnchorId = "behavior-results",
                                 ChooseLabelEs = "Elegir especialista",
                                 ChooseLabelEn = "Choose specialist"
                             };

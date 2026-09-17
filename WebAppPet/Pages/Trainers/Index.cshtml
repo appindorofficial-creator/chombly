@@ -26,7 +26,7 @@
             {
                 <label class="chip @(Model.Need == n.Key ? "active" : "")">
                     <input type="radio" name="Need" value="@n.Key" @(Model.Need == n.Key ? "checked" : "")
-                           onchange="this.form.submit()" style="display:none" />
+                           style="display:none" />
                     @CatalogLocalizer.Text(n.Label)
                 </label>
             }
@@ -42,7 +42,7 @@
                 var taken = Model.OccupiedSlots.Contains(t);
                 <label class="when-chip @(Model.Slot == t ? "active" : "") @(taken ? "is-disabled" : "")">
                     <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : "") @(taken ? "disabled" : null)
-                           onchange="this.form.submit()" />
+                           />
                     @t@(taken ? CatalogLocalizer.Loc(" · ocupado", " · taken") : "")
                 </label>
             }
@@ -54,7 +54,7 @@
             {
                 var on = Model.Place == p.Key;
                 <label class="radio-card" style="margin-bottom:8px">
-                    <input type="radio" name="Place" value="@p.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="radio" name="Place" value="@p.Key" @(on ? "checked" : "") />
                     <div class="inner"><strong>@CatalogLocalizer.Text(p.Label)</strong></div>
                 </label>
             }
@@ -66,7 +66,7 @@
             {
                 var on = Model.Sessions == pkg.Sessions;
                 <label class="radio-card" style="margin-bottom:8px">
-                    <input type="radio" name="Sessions" value="@pkg.Sessions" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="radio" name="Sessions" value="@pkg.Sessions" @(on ? "checked" : "") />
                     <div class="inner">
                         <strong>@CatalogLocalizer.Text(pkg.Label)</strong>
                         @if (!string.IsNullOrEmpty(pkg.Badge))
@@ -87,7 +87,7 @@
             {
                 var on = Model.Prefs.Contains(pref.Key);
                 <label class="chip filter-check @(on ? "active" : "")">
-                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") />
                     @(on ? "✓ " : "")@CatalogLocalizer.Text(pref.Label)
                 </label>
             }
@@ -214,7 +214,7 @@
             <h3 class="section-title">@CatalogLocalizer.Loc("10. Notas para el entrenador", "10. Notes for the trainer") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                       placeholder="@CatalogLocalizer.Loc("Objetivos, problemas de conducta, experiencia previa…", "Goals, behavior issues, prior experience…")"
-                      onchange="this.form.submit()">@Model.Notes</textarea>
+                     >@Model.Notes</textarea>
             <p class="muted small">@CatalogLocalizer.Loc("Máx. 200 caracteres", "Max. 200 characters")</p>
         </form>
     }

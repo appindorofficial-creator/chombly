@@ -13,7 +13,7 @@ else
     {
         var on = p.Id == Model.PetId;
         <label class="radio-card">
-            <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+            <input type="radio" name="PetId" value="@p.Id" @(on ? "checked" : "") />
             <div class="inner">
                 <div class="pet-select" style="border:none;padding:0;flex:1">
                     <img src="@PetSpecies.PhotoOrDefault(p.PhotoUrl, p.Species)" alt="@p.Name" />

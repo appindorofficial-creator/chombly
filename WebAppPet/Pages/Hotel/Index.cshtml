@@ -24,15 +24,15 @@
         <h3 class="section-title" style="margin-top:0">@L["Book_WhenNeeded"]</h3>
         <div class="when-row">
             <label class="when-chip @(Model.When == "hoy" ? "active" : "")">
-                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") onchange="this.form.submit()" />
+                <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : "") />
                 @L["Book_Today"]
             </label>
             <label class="when-chip @(Model.When == "manana" ? "active" : "")">
-                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") onchange="this.form.submit()" />
+                <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : "") />
                 @L["Book_Tomorrow"]
             </label>
             <label class="when-chip @(Model.When == "fechas" ? "active" : "")">
-                <input type="radio" name="When" value="fechas" @(Model.When == "fechas" ? "checked" : "") onchange="this.form.submit()" />
+                <input type="radio" name="When" value="fechas" @(Model.When == "fechas" ? "checked" : "") />
                 @L["Book_PickDates"]
             </label>
         </div>
@@ -42,11 +42,11 @@
             <div class="date-row">
                 <div class="form-group" style="flex:1;margin:0">
                     <label class="muted small">@L["Book_CheckIn"]</label>
-                    <input class="form-control" type="date" name="CheckIn" value="@Model.CheckIn" min="@minDate" onchange="this.form.submit()" />
+                    <input class="form-control" type="date" name="CheckIn" value="@Model.CheckIn" min="@minDate" />
                 </div>
                 <div class="form-group" style="flex:1;margin:0">
                     <label class="muted small">@L["Book_CheckOut"]</label>
-                    <input class="form-control" type="date" name="CheckOut" value="@Model.CheckOut" min="@minCheckout" onchange="this.form.submit()" />
+                    <input class="form-control" type="date" name="CheckOut" value="@Model.CheckOut" min="@minCheckout" />
                 </div>
             </div>
         }
@@ -66,7 +66,7 @@
             </div>
             @if (Model.Pets.Any())
             {
-                <select class="form-control pet-select-inline" name="PetId" onchange="this.form.submit()">
+                <select class="form-control pet-select-inline" name="PetId">
                     @foreach (var p in Model.Pets)
                     {
                         if (p.Id == Model.PetId)
@@ -96,14 +96,14 @@
                 {
                     var on = Model.Filters.Any(x => x.Equals(f, StringComparison.OrdinalIgnoreCase));
                     <label class="chip filter-check @(on ? "active" : "")">
-                        <input type="checkbox" name="Filters" value="@f" @(on ? "checked" : "") onchange="this.form.submit()" />
+                        <input type="checkbox" name="Filters" value="@f" @(on ? "checked" : "") />
                         @(on ? "✓ " : "")@CatalogLocalizer.Text(f)
                     </label>
                 }
             </div>
         }
 
-        <h3 class="section-title">@CatalogLocalizer.Loc("Resultados", "Results")</h3>
+        <h3 class="section-title" id="hotel-results">@CatalogLocalizer.Loc("Resultados", "Results")</h3>
         @if (!Model.CanSelectHotel)
         {
             var hotelGate = new BookingGateNoteModel
@@ -181,7 +181,7 @@
                 {
                     var on = Model.ExtraIds.Contains(e.Id);
                     <label class="extra-chip @(on ? "active" : "")">
-                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") />
                         @CatalogLocalizer.Text(e.Name)
                         <span class="muted small">+$@e.Price.ToString("0")</span>
                     </label>
@@ -193,7 +193,7 @@
         <div class="form-group">
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                       placeholder="@CatalogLocalizer.Loc("¿Hay algo que debamos saber?", "Is there anything we should know?")"
-                      onchange="this.form.submit()">@Model.Notes</textarea>
+                     >@Model.Notes</textarea>
             <div class="muted small" style="text-align:right">@(Model.Notes?.Length ?? 0)/200</div>
         </div>
     </form>

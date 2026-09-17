@@ -96,7 +96,7 @@
         <p class="muted small groomers-loc" id="loc-hint">@L["Search_EnableLocation"] <button type="button" class="link-btn" id="btn-loc">@L["Search_UseMyLocation"]</button></p>
     }
 
-    <h3 class="section-title groomers-results-title">@string.Format(L["Search_Results"].Value, Model.Results.Count)</h3>
+    <h3 class="section-title groomers-results-title" id="groomers-results">@string.Format(L["Search_Results"].Value, Model.Results.Count)</h3>
 
     <div class="groomers-list">
     @foreach (var item in Model.Results)

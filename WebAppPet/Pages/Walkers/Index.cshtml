@@ -28,7 +28,7 @@
             @foreach (var t in Model.AvailableTimeOptions)
             {
                 <label class="when-chip @(Model.Slot == t.Key ? "active" : "")">
-                    <input type="radio" name="Slot" value="@t.Key" @(Model.Slot == t.Key ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="radio" name="Slot" value="@t.Key" @(Model.Slot == t.Key ? "checked" : "") />
                     @(t.Key == "ahora" ? CatalogLocalizer.Loc("Ahora", "Now") : t.Label)
                 </label>
             }
@@ -47,7 +47,7 @@
             @foreach (var d in WebAppPet.Pages.Walkers.IndexModel.DurationOptions)
             {
                 <label class="when-chip @(Model.Duration == d ? "active" : "")">
-                    <input type="radio" name="Duration" value="@d" @(Model.Duration == d ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="radio" name="Duration" value="@d" @(Model.Duration == d ? "checked" : "") />
                     @d @CatalogLocalizer.Loc("min", "min")
                 </label>
             }
@@ -62,7 +62,7 @@
             {
                 var on = Model.Prefs.Contains(pref.Key);
                 <label class="chip filter-check @(on ? "active" : "")">
-                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") />
                     @(on ? "✓ " : "")@CatalogLocalizer.Text(pref.Label)
                 </label>
             }
@@ -180,7 +180,7 @@
             <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para el paseador", "8. Notes for the walker") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                       placeholder="@CatalogLocalizer.Loc("Comportamiento, llaves, correa especial…", "Behavior, keys, special leash…")"
-                      onchange="this.form.submit()">@Model.Notes</textarea>
+                     >@Model.Notes</textarea>
             <p class="muted small">@CatalogLocalizer.Loc("Máx. 200 caracteres", "Max. 200 characters")</p>
         </form>
     }

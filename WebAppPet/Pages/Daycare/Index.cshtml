@@ -29,7 +29,7 @@
             {
                 var on = Model.Schedule == s.Key;
                 <label class="radio-card" style="margin-bottom:8px">
-                    <input type="radio" name="Schedule" value="@s.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="radio" name="Schedule" value="@s.Key" @(on ? "checked" : "") />
                     <div class="inner">
                         <strong>@CatalogLocalizer.Text(s.Label)</strong>
                         <div class="muted small">@CatalogLocalizer.Text(s.Hint)</div>
@@ -43,11 +43,11 @@
             <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
                 <div class="form-group" style="margin:0">
                     <label class="small muted">@CatalogLocalizer.Loc("Entrada", "Drop-off")</label>
-                    <input class="form-control" type="time" name="CustomStart" value="@Model.CustomStart" onchange="this.form.submit()" />
+                    <input class="form-control" type="time" name="CustomStart" value="@Model.CustomStart" />
                 </div>
                 <div class="form-group" style="margin:0">
                     <label class="small muted">@CatalogLocalizer.Loc("Salida", "Pick-up")</label>
-                    <input class="form-control" type="time" name="CustomEnd" value="@Model.CustomEnd" onchange="this.form.submit()" />
+                    <input class="form-control" type="time" name="CustomEnd" value="@Model.CustomEnd" />
                 </div>
             </div>
         }
@@ -66,7 +66,7 @@
             {
                 var on = Model.Prefs.Contains(pref.Key);
                 <label class="chip filter-check @(on ? "active" : "")">
-                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") onchange="this.form.submit()" />
+                    <input type="checkbox" name="Prefs" value="@pref.Key" @(on ? "checked" : "") />
                     @(on ? "✓ " : "")@CatalogLocalizer.Text(pref.Label)
                 </label>
             }
@@ -200,7 +200,7 @@
                     var on = Model.ExtraIds.Contains(e.Id);
                     <label class="toggle-row" style="cursor:pointer">
                         <span>@CatalogLocalizer.Text(e.Name) <span class="price">+$@e.Price.ToString("0")</span></span>
-                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") onchange="this.form.submit()" />
+                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") />
                     </label>
                 }
             }
@@ -208,7 +208,7 @@
             <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para el daycare", "8. Notes for the daycare") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                       placeholder="@CatalogLocalizer.Loc("Alergias, comportamiento, medicación…", "Allergies, behavior, medication…")"
-                      onchange="this.form.submit()">@Model.Notes</textarea>
+                     >@Model.Notes</textarea>
             <p class="muted small">@CatalogLocalizer.Loc("Máx. 200 caracteres", "Max. 200 characters")</p>
         </form>
     }

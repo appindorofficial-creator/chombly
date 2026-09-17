@@ -900,33 +900,477 @@
 
   function bindSoftFilters(root) {
     var scope = root || document;
-    function markUpdating(fromEl) {
-      var body = (fromEl && fromEl.closest) ? (fromEl.closest('.home-body') || fromEl.closest('.app-shell')) : document.querySelector('.home-body');
+    var softNavBusy = false;
+    var softUpdatingTimer = null;
+    var softAbort = null;
+
+    function markUpdating(fromEl, on) {
+      var body = (fromEl && fromEl.closest)
+        ? (fromEl.closest('.home-body') || fromEl.closest('.app-shell'))
+        : document.querySelector('.home-body');
       if (!body) return;
-      body.classList.add('is-soft-updating');
+      if (softUpdatingTimer) {
+        clearTimeout(softUpdatingTimer);
+        softUpdatingTimer = null;
+      }
+      if (!on) {
+        body.classList.remove('is-soft-updating');
+        return;
+      }
+      // Delay indicator so fast responses never look like a reload flash
+      softUpdatingTimer = setTimeout(function () {
+        softUpdatingTimer = null;
+        body.classList.add('is-soft-updating');
+      }, 450);
     }
 
-    scope.querySelectorAll('.filter-bar a, .chip-row a, a.chip, .hotel-flow a[href]').forEach(function (a) {
-      if (a.dataset.softFilterBound === '1') return;
-      a.dataset.softFilterBound = '1';
-      a.addEventListener('click', function () {
-        if (a.target === '_blank') return;
-        markUpdating(a);
+    function rebindAfterSoftReplace(scopeEl) {
+      bindPhoneInputs(scopeEl);
+      bindSoftFilters(scopeEl);
+      bindToggleSingleChips(scopeEl);
+      bindHotelSummaryToggle(document);
+      bindFeedbackForms(scopeEl);
+      bindCopyActions(scopeEl);
+      bindConfirmForms(scopeEl);
+      bindFavoriteButtons(scopeEl);
+      bindAcceptTerms(scopeEl);
+      bindLocalizedValidation(scopeEl);
+    }
+
+    function findResultsAnchor(root) {
+      if (!root) return null;
+      return root.querySelector('[id$="-results"]')
+        || root.querySelector('.groomers-results-title')
+        || root.querySelector('.hotel-card, .groomer-card-wrap, .empty, [id$="-need-basics"]');
+    }
+
+    function resultsStartNode(root) {
+      var anchor = findResultsAnchor(root);
+      if (!anchor) return null;
+      if (anchor.id && /-results$/.test(anchor.id)) return anchor;
+      if (anchor.classList && anchor.classList.contains('groomers-results-title')) return anchor;
+      if (anchor.classList && anchor.classList.contains('section-title')) return anchor;
+      var prev = anchor.previousElementSibling;
+      if (prev && prev.classList && prev.classList.contains('section-title')) return prev;
+      return anchor;
+    }
+
+    function reuseImages(fromRoot, intoRoot) {
+      if (!fromRoot || !intoRoot) return;
+      var pool = {};
+      Array.prototype.forEach.call(fromRoot.querySelectorAll('img[src]'), function (img) {
+        var src = img.getAttribute('src');
+        if (!src) return;
+        if (!pool[src]) pool[src] = [];
+        pool[src].push(img);
+      });
+      Array.prototype.forEach.call(intoRoot.querySelectorAll('img[src]'), function (img) {
+        var src = img.getAttribute('src');
+        var list = pool[src];
+        if (!list || !list.length) return;
+        var old = list.shift();
+        if (old && old.parentNode) {
+          img.replaceWith(old);
+        }
+      });
+    }
+
+    function preResultsSignature(form, resultsStart) {
+      if (!form || !resultsStart) return '';
+      var hasDateRow = 0;
+      var hasCustomTime = 0;
+      var hasPetError = 0;
+      var filterCount = 0;
+      var n = form.firstChild;
+      while (n && n !== resultsStart) {
+        if (n.nodeType === 1) {
+          if ((n.matches && n.matches('.date-row')) || (n.querySelector && n.querySelector('.date-row'))) hasDateRow = 1;
+          if (n.querySelector && n.querySelector('input[type="time"][name="CustomStart"]')) hasCustomTime = 1;
+          if (n.querySelector && n.querySelector('.field-error')) hasPetError = 1;
+          if (n.querySelector) filterCount += n.querySelectorAll('.filter-check, .chip:not(.filter-check), .when-chip, .radio-card').length;
+        }
+        n = n.nextSibling;
+      }
+      return [hasDateRow, hasCustomTime, hasPetError, filterCount].join(':');
+    }
+
+    function replaceRangeBefore(parent, stopNode, nextNodes) {
+      var remove = [];
+      var n = parent.firstChild;
+      while (n && n !== stopNode) {
+        remove.push(n);
+        n = n.nextSibling;
+      }
+      remove.forEach(function (el) { parent.removeChild(el); });
+      nextNodes.forEach(function (el) {
+        parent.insertBefore(el, stopNode);
+      });
+    }
+
+    function collectUntil(node, stopNode) {
+      var out = [];
+      var n = node;
+      while (n && n !== stopNode) {
+        out.push(n);
+        n = n.nextSibling;
+      }
+      return out;
+    }
+
+    function syncFilterChrome(curForm, nextForm) {
+      if (!curForm || !nextForm) return;
+      // Occupied / disabled time slots without rebuilding the whole form
+      Array.prototype.forEach.call(nextForm.querySelectorAll('.when-chip'), function (nextLab) {
+        var input = nextLab.querySelector('input[type="radio"]');
+        if (!input || !input.name) return;
+        var curInput = curForm.querySelector(
+          'input[type="radio"][name="' + input.name + '"][value="' + String(input.value).replace(/"/g, '\\"') + '"]'
+        );
+        if (!curInput) return;
+        var curLab = curInput.closest('label');
+        if (!curLab) return;
+        curInput.disabled = !!input.disabled;
+        curLab.classList.toggle('is-disabled', nextLab.classList.contains('is-disabled'));
+        curLab.classList.toggle('disabled', nextLab.classList.contains('disabled'));
+        curLab.classList.toggle('active', !!curInput.checked);
+        if (curLab.childNodes.length && nextLab.childNodes.length) {
+          var curText = Array.prototype.filter.call(curLab.childNodes, function (n) { return n.nodeType === 3; });
+          var nextText = Array.prototype.filter.call(nextLab.childNodes, function (n) { return n.nodeType === 3; });
+          if (curText.length && nextText.length) {
+            curText[curText.length - 1].textContent = nextText[nextText.length - 1].textContent;
+          }
+        }
+      });
+
+      // Optional preference chips (✓ prefix) without rebuilding filters
+      Array.prototype.forEach.call(nextForm.querySelectorAll('label.filter-check'), function (nextLab) {
+        var nextInput = nextLab.querySelector('input[type="checkbox"]');
+        if (!nextInput || !nextInput.name) return;
+        var curInput = curForm.querySelector(
+          'input[type="checkbox"][name="' + nextInput.name + '"][value="' + String(nextInput.value).replace(/"/g, '\\"') + '"]'
+        );
+        if (!curInput) return;
+        var curLab = curInput.closest('label');
+        if (!curLab) return;
+        curInput.checked = !!nextInput.checked;
+        curLab.className = nextLab.className;
+        var html = nextLab.innerHTML;
+        curLab.innerHTML = html;
+      });
+    }
+
+    function syncFlowChrome(cur, next) {
+      // Groomers search filters / species chips live outside the search form
+      var curBars = cur.querySelectorAll('.groomers-filters, .filter-bar.groomers-filters');
+      var nextBars = next.querySelectorAll('.groomers-filters, .filter-bar.groomers-filters');
+      for (var i = 0; i < curBars.length && i < nextBars.length; i++) {
+        var imported = document.importNode(nextBars[i], true);
+        reuseImages(curBars[i], imported);
+        curBars[i].replaceWith(imported);
+      }
+      var curHint = cur.querySelector('.groomers-loc, #loc-hint');
+      var nextHint = next.querySelector('.groomers-loc, #loc-hint');
+      if (curHint && nextHint) {
+        curHint.replaceWith(document.importNode(nextHint, true));
+      } else if (curHint && !nextHint) {
+        curHint.remove();
+      } else if (!curHint && nextHint) {
+        var results = findResultsAnchor(cur);
+        if (results) results.parentNode.insertBefore(document.importNode(nextHint, true), results);
+      }
+      var curSearch = cur.querySelector('form.search-box, form[data-soft-filter]');
+      var nextSearch = next.querySelector('form.search-box, form[data-soft-filter]');
+      if (curSearch && nextSearch) {
+        Array.prototype.forEach.call(nextSearch.querySelectorAll('input'), function (nextInput) {
+          if (!nextInput.name) return;
+          var curInput = curSearch.querySelector('[name="' + nextInput.name + '"]');
+          if (curInput && 'value' in curInput) curInput.value = nextInput.value;
+        });
+      }
+      var curHead = cur.querySelector('.groomers-head');
+      var nextHead = next.querySelector('.groomers-head');
+      if (curHead && nextHead) {
+        curHead.replaceWith(document.importNode(nextHead, true));
+      }
+    }
+
+    function replaceNodeRange(parent, fromNode, nextNodes) {
+      if (!parent || !fromNode) return false;
+      var remove = [];
+      var n = fromNode;
+      while (n) {
+        remove.push(n);
+        n = n.nextSibling;
+      }
+      remove.forEach(function (el) { parent.removeChild(el); });
+      nextNodes.forEach(function (el) { parent.appendChild(el); });
+      return true;
+    }
+
+    function collectFrom(node) {
+      var out = [];
+      var n = node;
+      while (n) {
+        out.push(n);
+        n = n.nextSibling;
+      }
+      return out;
+    }
+
+    function swapResultsSlice(curParent, curStart, nextParent, nextStart) {
+      var nextSlice = collectFrom(nextStart).map(function (node) {
+        return document.importNode(node, true);
+      });
+      var staging = document.createElement('div');
+      nextSlice.forEach(function (el) { staging.appendChild(el); });
+      reuseImages(curParent, staging);
+      var importedSlice = Array.prototype.slice.call(staging.childNodes);
+      replaceNodeRange(curParent, curStart, importedSlice);
+    }
+
+    function applySoftHotelFlow(cur, next) {
+      var y = window.scrollY || window.pageYOffset || 0;
+      var curForm = cur.querySelector('form[id$="-filter-form"]') || cur.querySelector('form');
+      var nextForm = next.querySelector('form[id$="-filter-form"]') || next.querySelector('form');
+      var curStartInForm = resultsStartNode(curForm);
+      var nextStartInForm = resultsStartNode(nextForm);
+
+      // Booking flows: Hotel / Daycare / Walkers / Trainers (results inside filter form)
+      if (curForm && nextForm && curStartInForm && nextStartInForm
+          && curForm.contains(curStartInForm) && nextForm.contains(nextStartInForm)) {
+        var curSig = preResultsSignature(curForm, curStartInForm);
+        var nextSig = preResultsSignature(nextForm, nextStartInForm);
+        if (curSig !== nextSig) {
+          var preNext = collectUntil(nextForm.firstChild, nextStartInForm).map(function (node) {
+            return document.importNode(node, true);
+          });
+          var preStage = document.createElement('div');
+          preNext.forEach(function (el) { preStage.appendChild(el); });
+          reuseImages(curForm, preStage);
+          replaceRangeBefore(curForm, curStartInForm, Array.prototype.slice.call(preStage.childNodes));
+          // resultsStart may have been invalidated if stop node moved — re-find
+          curStartInForm = resultsStartNode(curForm) || curStartInForm;
+        } else {
+          syncFilterChrome(curForm, nextForm);
+        }
+
+        swapResultsSlice(curForm, curStartInForm, nextForm, nextStartInForm);
+
+        var afterCur = [];
+        var sib = curForm.nextSibling;
+        while (sib) {
+          afterCur.push(sib);
+          sib = sib.nextSibling;
+        }
+        var afterNext = [];
+        sib = nextForm.nextSibling;
+        while (sib) {
+          afterNext.push(document.importNode(sib, true));
+          sib = sib.nextSibling;
+        }
+        afterCur.forEach(function (el) {
+          if (el.parentNode === cur) cur.removeChild(el);
+        });
+        afterNext.forEach(function (el) { cur.appendChild(el); });
+
+        cur.className = next.className;
+        try { window.scrollTo(0, y); } catch (_) { }
+        rebindAfterSoftReplace(cur);
+        return cur;
+      }
+
+      // Groomers / list pages: results live as siblings of the search form
+      var curFlowStart = resultsStartNode(cur);
+      var nextFlowStart = resultsStartNode(next);
+      if (curFlowStart && nextFlowStart && cur.contains(curFlowStart) && next.contains(nextFlowStart)
+          && (!curForm || !curForm.contains(curFlowStart))) {
+        if (cur.querySelector('.groomers-filters')) {
+          syncFlowChrome(cur, next);
+          swapResultsSlice(cur, curFlowStart, next, nextFlowStart);
+        } else {
+          // Behavior / similar: keep page heading, soft-swap from first filter section
+          var curFrom = cur.querySelector('section') || curFlowStart;
+          var nextFrom = next.querySelector('section') || nextFlowStart;
+          swapResultsSlice(cur, curFrom, next, nextFrom);
+        }
+        cur.className = next.className;
+        try { window.scrollTo(0, y); } catch (_) { }
+        rebindAfterSoftReplace(cur);
+        return cur;
+      }
+
+      // Fallback: full swap, but reuse decoded images to avoid flash
+      var h = cur.getBoundingClientRect().height;
+      if (h > 0) cur.style.minHeight = Math.ceil(h) + 'px';
+      var imported = document.importNode(next, true);
+      reuseImages(cur, imported);
+      cur.replaceWith(imported);
+      try { window.scrollTo(0, y); } catch (_) { }
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(function () {
+          window.scrollTo(0, y);
+          imported.style.minHeight = '';
+        });
+      } else {
+        imported.style.minHeight = '';
+      }
+      rebindAfterSoftReplace(imported);
+      return imported;
+    }
+
+    function softNavigateHotelFlow(form, submitter) {
+      if (!form) return;
+      var method = (form.getAttribute('method') || 'get').toLowerCase();
+      if (method !== 'get') {
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+        return;
+      }
+
+      var action = form.getAttribute('action') || window.location.pathname;
+      var params = new URLSearchParams(new FormData(form));
+      if (submitter && submitter.name) {
+        params.set(submitter.name, submitter.value == null ? '' : String(submitter.value));
+      }
+      // Drop empty optional params for cleaner URLs
+      Array.from(params.keys()).forEach(function (k) {
+        var v = params.get(k);
+        if (v === '' || v == null) params.delete(k);
+      });
+      var url = action + (params.toString() ? ('?' + params.toString()) : '');
+
+      if (softAbort) {
+        try { softAbort.abort(); } catch (_) { }
+      }
+      softAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      softNavBusy = true;
+      storeFlowScrollY();
+      markUpdating(form, true);
+
+      fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        signal: softAbort ? softAbort.signal : undefined,
+        headers: {
+          'Accept': 'text/html',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).then(function (res) {
+        if (!res.ok) throw new Error('soft-nav ' + res.status);
+        return res.text();
+      }).then(function (html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var next = doc.querySelector('.hotel-flow');
+        var cur = document.querySelector('.hotel-flow');
+        if (!next || !cur) {
+          window.location.assign(url);
+          return;
+        }
+        var live = applySoftHotelFlow(cur, next);
+        try { history.replaceState(null, '', url); } catch (_) { }
+        markUpdating(live || document.querySelector('.hotel-flow'), false);
+      }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        window.location.assign(url);
+      }).finally(function () {
+        softNavBusy = false;
+      });
+    }
+
+    // Expose for inline fallbacks if needed
+    window.chomblySoftFilter = softNavigateHotelFlow;
+
+    // HTMLFormElement.submit() (used by onchange="this.form.submit()") does NOT fire "submit".
+    // Route those through soft-nav so chips never do a full document reload.
+    if (!HTMLFormElement.prototype.__chomblySoftSubmitPatched) {
+      var nativeSubmit = HTMLFormElement.prototype.submit;
+      HTMLFormElement.prototype.submit = function () {
+        try {
+          if (this && this.closest && this.closest('.hotel-flow')) {
+            var m = (this.getAttribute('method') || 'get').toLowerCase();
+            if (m === 'get') {
+              softNavigateHotelFlow(this, null);
+              return;
+            }
+          }
+        } catch (_) { }
+        return nativeSubmit.apply(this, arguments);
+      };
+      HTMLFormElement.prototype.__chomblySoftSubmitPatched = true;
+    }
+
+    scope.querySelectorAll('.hotel-flow form').forEach(function (form) {
+      if (form.dataset.softNavBound === '1') return;
+      var method = (form.getAttribute('method') || 'get').toLowerCase();
+      if (method !== 'get') return;
+      form.dataset.softNavBound = '1';
+
+      form.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!t || !form.contains(t)) return;
+        // Notes: wait for blur-driven change only (already onchange); still soft-nav once
+        softNavigateHotelFlow(form);
+      });
+
+      // Capture submit (requestSubmit / Enter / choose-provider buttons) before full navigation
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        softNavigateHotelFlow(form, e.submitter || null);
       });
     });
 
-    scope.querySelectorAll('.hotel-flow form, form[data-soft-filter]').forEach(function (form) {
-      if (form.dataset.softFilterBound === '1') return;
-      // Soft-update is for filter GET navigations. POST forms (Agenda, etc.) must not lock the UI.
-      var method = (form.getAttribute('method') || 'get').toLowerCase();
-      var isSoftFilter = form.hasAttribute('data-soft-filter');
-      if (method !== 'get' && !isSoftFilter) return;
-      form.dataset.softFilterBound = '1';
-      form.addEventListener('change', function () {
-        markUpdating(form);
-      }, true);
-      form.addEventListener('submit', function () {
-        markUpdating(form);
+    // Same-path filter links (stepper +/−, choose provider) → soft fetch
+    scope.querySelectorAll('.hotel-flow a[href]').forEach(function (a) {
+      if (a.dataset.softLinkBound === '1') return;
+      a.dataset.softLinkBound = '1';
+      a.addEventListener('click', function (e) {
+        if (a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (a.hasAttribute('download')) return;
+        var href = a.getAttribute('href') || '';
+        if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+        var url;
+        try {
+          url = new URL(a.href, window.location.href);
+          if (url.origin !== window.location.origin) return;
+          var curPath = (window.location.pathname || '').replace(/\/$/, '');
+          var nextPath = (url.pathname || '').replace(/\/$/, '');
+          if (curPath !== nextPath) return;
+        } catch (_) {
+          return;
+        }
+        e.preventDefault();
+        if (softAbort) {
+          try { softAbort.abort(); } catch (_) { }
+        }
+        softAbort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        softNavBusy = true;
+        storeFlowScrollY();
+        markUpdating(a, true);
+        fetch(url.toString(), {
+          method: 'GET',
+          credentials: 'same-origin',
+          signal: softAbort ? softAbort.signal : undefined,
+          headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (res) {
+          if (!res.ok) throw new Error('soft-link ' + res.status);
+          return res.text();
+        }).then(function (html) {
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          var next = doc.querySelector('.hotel-flow');
+          var cur = document.querySelector('.hotel-flow');
+          if (!next || !cur) {
+            window.location.assign(url.toString());
+            return;
+          }
+          var live = applySoftHotelFlow(cur, next);
+          try { history.replaceState(null, '', url.toString()); } catch (_) { }
+          markUpdating(live || document.querySelector('.hotel-flow'), false);
+        }).catch(function (err) {
+          if (err && err.name === 'AbortError') return;
+          window.location.assign(url.toString());
+        }).finally(function () {
+          softNavBusy = false;
+        });
       });
     });
   }
@@ -1309,7 +1753,8 @@
           hit.label.classList.add('active');
         }
 
-        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        if (typeof window.chomblySoftFilter === 'function') window.chomblySoftFilter(form);
+        else if (typeof form.requestSubmit === 'function') form.requestSubmit();
         else form.submit();
       }, true);
     });
