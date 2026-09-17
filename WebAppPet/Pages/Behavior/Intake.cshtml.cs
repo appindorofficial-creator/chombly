@@ -58,16 +58,12 @@ public class IntakeModel : PageModel
 
         Pets = await LoadDogPetsAsync();
 
-        var dogIds = Pets.Select(p => p.Id).ToHashSet();
-        SelectedPetIds = BehaviorFlowService.GetSelectedPetIds(Case)
-            .Where(id => dogIds.Contains(id))
-            .ToList();
-        // Do not auto-pick a pet — user must explicitly turn one on.
-
-        ProblemType = Case.ProblemType;
-        Frequency = Case.Frequency ?? Frequencies[0];
-        ContextNotes = Case.ContextNotes;
-        HasClinicalConcern = Case.ClinicalRedFlag;
+        // Fresh form every visit — do not preselect pets, problem, or frequency.
+        SelectedPetIds = new();
+        ProblemType = null;
+        Frequency = null;
+        ContextNotes = null;
+        HasClinicalConcern = false;
         return Page();
     }
 
@@ -96,9 +92,15 @@ public class IntakeModel : PageModel
             return Page();
         }
 
+        if (string.IsNullOrWhiteSpace(Frequency))
+        {
+            ErrorMessage = CatalogLocalizer.Loc("Indica la frecuencia.", "Choose the frequency.");
+            return Page();
+        }
+
         BehaviorFlowService.SetSelectedPetIds(Case, SelectedPetIds);
         Case.ProblemType = ProblemType.Trim();
-        Case.Frequency = string.IsNullOrWhiteSpace(Frequency) ? Frequencies[0] : Frequency.Trim();
+        Case.Frequency = Frequency.Trim();
         Case.ContextNotes = ContextNotes?.Trim();
         Case.ClinicalRedFlag = HasClinicalConcern;
         Case.VideoUrl = null;

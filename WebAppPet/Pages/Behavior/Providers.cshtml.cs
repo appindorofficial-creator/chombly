@@ -36,9 +36,15 @@ public class ProvidersModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int CaseId { get; set; }
 
-    [BindProperty] public int ProviderId { get; set; }
-    [BindProperty] public string Slot { get; set; } = "10:30 AM";
-    [BindProperty] public string When { get; set; } = "hoy";
+    [BindProperty(SupportsGet = true)]
+    public int ProviderId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Slot { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? When { get; set; }
+
     [BindProperty] public bool AcceptTerms { get; set; }
     [BindProperty] public bool AcceptScope { get; set; } = true;
     [BindProperty] public int? PaymentMethodId { get; set; }
@@ -48,6 +54,7 @@ public class ProvidersModel : PageModel
     public ServiceCatalogItem? CatalogItem { get; set; }
     public List<GroomerProfile> Providers { get; set; } = new();
     public List<PaymentMethod> Payments { get; set; } = new();
+    public Dictionary<int, string> DistanceLabels { get; set; } = new();
     public string? ErrorMessage { get; set; }
     public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -72,8 +79,14 @@ public class ProvidersModel : PageModel
 
         if (!await LoadCatalogAsync()) return RedirectToPage("/Care/Services");
         await LoadSelectedPetsAsync();
-        if (ProviderId <= 0 && Providers.Count > 0)
-            ProviderId = Providers[0].Id;
+        // Fresh entry: do not preselect day, slot, or specialist from defaults/case.
+        if (ProviderId > 0 && !Providers.Any(p => p.Id == ProviderId))
+            ProviderId = 0;
+
+        NormalizeWhen();
+        if (!string.IsNullOrWhiteSpace(Slot) &&
+            !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
+            Slot = null;
 
         await RefreshSlotAvailabilityAsync();
         return Page();
@@ -105,6 +118,21 @@ public class ProvidersModel : PageModel
         }
 
         AcceptScope = true;
+
+        if (string.IsNullOrWhiteSpace(When) || (When != "hoy" && When != "manana"))
+        {
+            ErrorMessage = CatalogLocalizer.Loc("Elige el día.", "Choose the day.");
+            await RefreshSlotAvailabilityAsync();
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(Slot) ||
+            !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
+        {
+            ErrorMessage = CatalogLocalizer.Loc("Elige un horario.", "Choose a time.");
+            await RefreshSlotAvailabilityAsync();
+            return Page();
+        }
 
         if (ProviderId <= 0 || !Providers.Any(p => p.Id == ProviderId))
         {
@@ -242,19 +270,46 @@ public class ProvidersModel : PageModel
             .OrderByDescending(p => p.IsDefault)
             .ToListAsync();
 
-        if (Case?.ProviderId is int pid && Providers.Any(p => p.Id == pid))
-            ProviderId = pid;
+        await FillDistanceLabelsAsync();
 
         return true;
+    }
+
+    private async Task FillDistanceLabelsAsync()
+    {
+        DistanceLabels.Clear();
+        if (_auth.CurrentUserId is null || Providers.Count == 0) return;
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == _auth.CurrentUserId.Value);
+        if (user?.Latitude is not double ulat || user.Longitude is not double ulng)
+            return;
+
+        foreach (var p in Providers)
+        {
+            if (p.Latitude == 0 && p.Longitude == 0) continue;
+            var km = GeoHelper.KmBetween(ulat, ulng, p.Latitude, p.Longitude);
+            var label = GeoHelper.FormatDistanceOrPlace(km, p.City);
+            if (!string.IsNullOrEmpty(label))
+                DistanceLabels[p.Id] = label;
+        }
     }
 
     private async Task RefreshSlotAvailabilityAsync()
     {
         NormalizeWhen();
-        if (!TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
-            Slot = TimeSlots[0];
+        if (string.IsNullOrWhiteSpace(Slot) ||
+            !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
+        {
+            OccupiedSlots.Clear();
+            return;
+        }
 
-        if (ProviderId <= 0) return;
+        if (ProviderId <= 0 || string.IsNullOrWhiteSpace(When))
+        {
+            OccupiedSlots.Clear();
+            return;
+        }
 
         var day = ResolveDay();
         OccupiedSlots.Clear();
@@ -280,10 +335,7 @@ public class ProvidersModel : PageModel
         }
 
         if (OccupiedSlots.Contains(Slot))
-        {
-            var free = TimeSlots.FirstOrDefault(t => !OccupiedSlots.Contains(t));
-            if (free != null) Slot = free;
-        }
+            Slot = null;
     }
 
     private void NormalizeWhen()
@@ -292,7 +344,7 @@ public class ProvidersModel : PageModel
         {
             "hoy" or "today" => "hoy",
             "manana" or "mañana" or "tomorrow" => "manana",
-            _ => "hoy"
+            _ => null
         };
     }
 
@@ -306,8 +358,15 @@ public class ProvidersModel : PageModel
     {
         error = null;
         NormalizeWhen();
+        if (string.IsNullOrWhiteSpace(When))
+        {
+            error = CatalogLocalizer.Loc("Elige el día.", "Choose the day.");
+            startUtc = default;
+            return false;
+        }
+
         var day = ResolveDay();
-        if (!AppTimeZones.TryParseSlotToTimeSpan(Slot, out _))
+        if (string.IsNullOrWhiteSpace(Slot) || !AppTimeZones.TryParseSlotToTimeSpan(Slot, out _))
         {
             error = CatalogLocalizer.Loc("Elige un horario.", "Choose a time.");
             startUtc = default;

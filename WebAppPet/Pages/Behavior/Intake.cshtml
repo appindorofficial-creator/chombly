@@ -25,7 +25,9 @@
         {
             <form method="post" enctype="multipart/form-data" class="stack" style="gap:14px" id="behavior-intake-form"
                   data-pet-required="1"
-                  data-msg-pet-required="@CatalogLocalizer.Loc("Activa al menos un perro.", "Turn on at least one dog.")">
+                  data-msg-pet-required="@CatalogLocalizer.Loc("Activa al menos un perro.", "Turn on at least one dog.")"
+                  data-msg-problem-required="@CatalogLocalizer.Loc("Indica el problema principal.", "Choose the main problem.")"
+                  data-msg-frequency-required="@CatalogLocalizer.Loc("Indica la frecuencia.", "Choose the frequency.")">
                 <input type="hidden" asp-for="CaseId" />
 
                 <section class="behavior-pet-section" aria-label="@CatalogLocalizer.Loc("Perros", "Dogs")">
@@ -66,7 +68,7 @@
                         @foreach (var p in IntakeModel.Problems)
                         {
                             <label class="chip @(Model.ProblemType == p ? "active" : null)">
-                                <input type="radio" name="ProblemType" value="@p" @(Model.ProblemType == p ? "checked" : null) required />
+                                <input type="radio" name="ProblemType" value="@p" @(Model.ProblemType == p ? "checked" : null) />
                                 @CatalogLocalizer.Text(p)
                             </label>
                         }
@@ -100,7 +102,7 @@
                     <p class="muted small mb-0" style="margin-top:6px">@CatalogLocalizer.Loc("Si marcas esto, te llevamos a Veterinaria primero.", "If checked, we route you to Veterinary first.")</p>
                 </section>
 
-                <button type="submit" class="btn btn-primary btn-block" id="behavior-intake-continue">@L["Common_Continue"]</button>
+                <button type="submit" class="btn btn-primary btn-block" id="behavior-intake-continue" disabled aria-disabled="true">@L["Common_Continue"]</button>
             </form>
             <script>
             (() => {
@@ -108,42 +110,74 @@
               if (!form) return;
               const err = document.getElementById('behavior-pet-error');
               const btn = document.getElementById('behavior-intake-continue');
-              const msg = form.getAttribute('data-msg-pet-required') || 'Activa al menos una mascota.';
+              const msgPet = form.getAttribute('data-msg-pet-required') || 'Activa al menos un perro.';
+              const msgProblem = form.getAttribute('data-msg-problem-required') || 'Indica el problema principal.';
+              const msgFrequency = form.getAttribute('data-msg-frequency-required') || 'Indica la frecuencia.';
               const switches = () => [...form.querySelectorAll('.behavior-pet-switch')];
               const anyOn = () => switches().some(s => s.checked);
+              const hasProblem = () => !!form.querySelector('input[name="ProblemType"]:checked');
+              const hasFrequency = () => !!form.querySelector('input[name="Frequency"]:checked');
+
+              const syncChips = () => {
+                form.querySelectorAll('label.chip').forEach(label => {
+                  const input = label.querySelector('input[type="radio"]');
+                  label.classList.toggle('active', !!(input && input.checked));
+                });
+              };
 
               const sync = (showError) => {
                 form.querySelectorAll('.behavior-pet-row').forEach(row => {
                   const input = row.querySelector('.behavior-pet-switch');
                   row.classList.toggle('is-on', !!(input && input.checked));
                 });
-                const ok = anyOn();
+                syncChips();
+                const petsOk = anyOn();
+                const problemOk = hasProblem();
+                const frequencyOk = hasFrequency();
+                const ok = petsOk && problemOk && frequencyOk;
                 if (btn) {
                   btn.disabled = !ok;
                   btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
                 }
-                form.classList.toggle('is-pet-missing', !ok);
+                form.classList.toggle('is-pet-missing', !petsOk);
                 if (err) {
-                  if (ok) {
+                  if (petsOk) {
                     err.hidden = true;
                   } else if (showError) {
-                    err.textContent = msg;
+                    err.textContent = msgPet;
                     err.hidden = false;
                   }
                 }
-                return ok;
+                return { ok, petsOk, problemOk, frequencyOk };
+              };
+
+              const toast = (msg) => {
+                if (window.ChomblyToast && typeof window.ChomblyToast.show === 'function') {
+                  window.ChomblyToast.show(msg, { kind: 'error' });
+                }
               };
 
               switches().forEach(sw => sw.addEventListener('change', () => sync(false)));
+              form.addEventListener('change', e => {
+                const t = e.target;
+                if (t && (t.name === 'ProblemType' || t.name === 'Frequency')) sync(false);
+              });
 
               form.addEventListener('submit', e => {
-                if (!sync(true)) {
+                const state = sync(true);
+                if (!state.ok) {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (window.ChomblyToast && typeof window.ChomblyToast.show === 'function') {
-                    window.ChomblyToast.show(msg, { kind: 'error' });
+                  if (!state.petsOk) {
+                    toast(msgPet);
+                    err?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  } else if (!state.problemOk) {
+                    toast(msgProblem);
+                    form.querySelector('input[name="ProblemType"]')?.closest('section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  } else if (!state.frequencyOk) {
+                    toast(msgFrequency);
+                    form.querySelector('input[name="Frequency"]')?.closest('section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                   }
-                  err?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
               }, true);
 

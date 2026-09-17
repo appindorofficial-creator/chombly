@@ -1,5 +1,6 @@
 @page
 @model WebAppPet.Pages.Behavior.ProvidersModel
+@using WebAppPet.Pages.Shared
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Reservar especialista", "Book specialist");
     ViewData["LangCompact"] = true;
@@ -7,6 +8,11 @@
     var unit = Model.CatalogItem?.Price ?? 55m;
     var petCount = Math.Max(1, Model.SelectedPets.Count);
     var price = unit * petCount;
+    var hasProvider = Model.ProviderId > 0 && Model.Providers.Any(p => p.Id == Model.ProviderId);
+    var hasWhen = Model.When is "hoy" or "manana";
+    var hasSlot = !string.IsNullOrWhiteSpace(Model.Slot) &&
+                  Model.TimeSlots.Contains(Model.Slot, StringComparer.OrdinalIgnoreCase);
+    var canConfirm = hasProvider && hasWhen && hasSlot && Model.Providers.Count > 0;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -48,54 +54,130 @@
             </div>
         }
 
-        <form method="post" class="stack" style="gap:14px" data-care-activate>
+        <section>
+            <h2 class="section-title">@CatalogLocalizer.Loc("¿Cuándo?", "When?")</h2>
+            <div class="filter-bar filter-bar-wrap">
+                <a class="chip @(Model.When == "hoy" ? "active" : null)"
+                   asp-page="./Providers"
+                   asp-route-caseId="@Model.CaseId"
+                   asp-route-When="hoy"
+                   asp-route-Slot="@(hasSlot ? Model.Slot : null)"
+                   asp-route-ProviderId="@(hasProvider ? Model.ProviderId : null)">
+                    @CatalogLocalizer.Loc("Hoy", "Today")
+                </a>
+                <a class="chip @(Model.When == "manana" ? "active" : null)"
+                   asp-page="./Providers"
+                   asp-route-caseId="@Model.CaseId"
+                   asp-route-When="manana"
+                   asp-route-Slot="@(hasSlot ? Model.Slot : null)"
+                   asp-route-ProviderId="@(hasProvider ? Model.ProviderId : null)">
+                    @CatalogLocalizer.Loc("Mañana", "Tomorrow")
+                </a>
+            </div>
+            <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
+                @foreach (var t in Model.TimeSlots)
+                {
+                    var taken = hasProvider && hasWhen && Model.OccupiedSlots.Contains(t);
+                    if (taken)
+                    {
+                        <span class="chip is-disabled">@t@CatalogLocalizer.Loc(" · ocupado", " · taken")</span>
+                    }
+                    else
+                    {
+                        <a class="chip @(hasSlot && Model.Slot == t ? "active" : null)"
+                           asp-page="./Providers"
+                           asp-route-caseId="@Model.CaseId"
+                           asp-route-When="@(hasWhen ? Model.When : null)"
+                           asp-route-Slot="@t"
+                           asp-route-ProviderId="@(hasProvider ? Model.ProviderId : null)">@t</a>
+                    }
+                }
+            </div>
+        </section>
+
+        <section style="margin-top:16px">
+            <h2 class="section-title" id="behavior-specialists">@CatalogLocalizer.Loc("Especialistas disponibles", "Available specialists")</h2>
+            @if (Model.Providers.Count == 0)
+            {
+                <p class="muted">@CatalogLocalizer.Loc("No hay especialistas publicados aún.", "No specialists published yet.")</p>
+            }
+            else
+            {
+                @foreach (var p in Model.Providers)
+                {
+                    var selected = hasProvider && Model.ProviderId == p.Id;
+                    var distance = Model.DistanceLabels.GetValueOrDefault(p.Id);
+                    <div class="hotel-card @(selected ? "selected" : "")">
+                        <div class="hotel-card-main">
+                            <img src="@(p.ImageUrl ?? "/images/categories/cat-trainers-v2.png")" alt="@p.BusinessName" />
+                            <div class="info">
+                                <h3>@p.BusinessName</h3>
+                                <div class="meta-row">
+                                    <span class="muted small">@ProvidersModel.RoleLabel(p.BehaviorRole)</span>
+                                    @if (p.ReviewCount > 0)
+                                    {
+                                        <span class="stars">★ @p.Rating.ToString("0.0")</span>
+                                        <span class="muted small">(@p.ReviewCount)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="stars">★ @p.Rating.ToString("0.0")</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(distance))
+                                {
+                                    <div class="muted small">@distance</div>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(p.City))
+                                {
+                                    <div class="muted small">@p.City</div>
+                                }
+                                <div class="price">$@unit.ToString("0") <span class="muted small">/ @CatalogLocalizer.Loc("sesión", "session")</span></div>
+                            </div>
+                        </div>
+                        @{
+                            var choose = new BookingChooseActionModel
+                            {
+                                CanSelect = true,
+                                Selected = selected,
+                                ChooseUrl = Url.Page("./Providers", new
+                                {
+                                    caseId = Model.CaseId,
+                                    When = hasWhen ? Model.When : null,
+                                    Slot = hasSlot ? Model.Slot : null,
+                                    ProviderId = p.Id
+                                }),
+                                GateAnchorId = "behavior-specialists",
+                                ChooseLabelEs = "Elegir especialista",
+                                ChooseLabelEn = "Choose specialist"
+                            };
+                        }
+                        <partial name="_BookingChooseAction" model="choose" />
+                    </div>
+                }
+            }
+        </section>
+
+        <form method="post" class="stack" style="gap:14px;margin-top:16px" data-care-activate>
             <input type="hidden" asp-for="CaseId" />
+            <input type="hidden" asp-for="When" />
+            <input type="hidden" asp-for="Slot" />
+            <input type="hidden" asp-for="ProviderId" />
 
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("¿Cuándo?", "When?")</h2>
-                <div class="filter-bar filter-bar-wrap">
-                    <label class="chip @(Model.When == "hoy" ? "active" : null)">
-                        <input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : null) />
-                        @CatalogLocalizer.Loc("Hoy", "Today")
-                    </label>
-                    <label class="chip @(Model.When == "manana" ? "active" : null)">
-                        <input type="radio" name="When" value="manana" @(Model.When == "manana" ? "checked" : null) />
-                        @CatalogLocalizer.Loc("Mañana", "Tomorrow")
-                    </label>
-                </div>
-                <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
-                    @foreach (var t in Model.TimeSlots)
-                    {
-                        var taken = Model.OccupiedSlots.Contains(t);
-                        <label class="chip @(Model.Slot == t ? "active" : null) @(taken ? "is-disabled" : null)">
-                            <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : null) @(taken ? "disabled" : null) />
-                            @t@(taken ? CatalogLocalizer.Loc(" · ocupado", " · taken") : null)
-                        </label>
-                    }
-                </div>
-            </section>
-
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Especialista", "Specialist")</h2>
-                @if (Model.Providers.Count == 0)
+            @if (!canConfirm && Model.Providers.Count > 0)
+            {
+                var gate = new BookingGateNoteModel
                 {
-                    <p class="muted">@CatalogLocalizer.Loc("No hay especialistas publicados aún.", "No specialists published yet.")</p>
-                }
-                else
-                {
-                    @foreach (var p in Model.Providers)
-                    {
-                        <label class="radio-card">
-                            <input type="radio" name="ProviderId" value="@p.Id" @(Model.ProviderId == p.Id ? "checked" : null) required />
-                            <span>
-                                <strong>@p.BusinessName</strong>
-                                <span class="muted small" style="display:block">@ProvidersModel.RoleLabel(p.BehaviorRole) · ★ @p.Rating.ToString("0.0")</span>
-                                <span class="muted small" style="display:block">@p.SpokenLanguages · @p.City</span>
-                            </span>
-                        </label>
-                    }
-                }
-            </section>
+                    Id = "behavior-need-specialist",
+                    TextEs = !hasWhen || !hasSlot
+                        ? "Elige día y horario, y luego un especialista."
+                        : "Elige un especialista para continuar con la reserva.",
+                    TextEn = !hasWhen || !hasSlot
+                        ? "Choose day and time, then a specialist."
+                        : "Choose a specialist to continue booking."
+                };
+                <partial name="_BookingGateNote" model="gate" />
+            }
 
             @if (Model.Payments.Count > 0)
             {
@@ -104,8 +186,10 @@
                     @foreach (var p in Model.Payments)
                     {
                         <label class="radio-card">
-                            <input type="radio" name="PaymentMethodId" value="@p.Id" @(p.IsDefault || Model.PaymentMethodId == p.Id ? "checked" : null) />
-                            <span>@p.Brand ·••• @p.Last4</span>
+                            <input type="radio" name="PaymentMethodId" value="@p.Id" @(Model.PaymentMethodId == p.Id ? "checked" : null) />
+                            <div class="inner">
+                                <span>@p.Brand ·••• @p.Last4</span>
+                            </div>
                         </label>
                     }
                 </section>
@@ -117,7 +201,7 @@
                     @CatalogLocalizer.Loc("Acepto los", "I accept the")
                     <a class="legal-link"
                        asp-page="/Legal/Terms"
-                       asp-route-returnUrl="@(Url.Page("/Behavior/Providers", new { caseId = Model.CaseId }) ?? "/Behavior/Providers")"
+                       asp-route-returnUrl="@(Url.Page("/Behavior/Providers", new { caseId = Model.CaseId, When = hasWhen ? Model.When : null, Slot = hasSlot ? Model.Slot : null, ProviderId = hasProvider ? Model.ProviderId : (int?)null }) ?? "/Behavior/Providers")"
                        asp-fragment="terms"
                        onclick="event.stopPropagation()">@L["Legal_TermsConditions"]</a>
                     @CatalogLocalizer.Loc("y que esto es un plan educativo, no un diagnóstico veterinario.", "and that this is an educational plan, not a veterinary diagnosis.")
@@ -132,7 +216,7 @@
                @(string.IsNullOrEmpty(Model.ErrorMessage) ? "hidden" : null)>@(Model.ErrorMessage ?? CatalogLocalizer.Loc("Debes aceptar los términos para reservar.", "You must accept the terms to book."))</p>
 
             <button type="submit" class="btn btn-primary btn-block" data-terms-submit
-                    disabled="@((Model.Providers.Count == 0 || !Model.AcceptTerms) ? "disabled" : null)">
+                    disabled="@((!canConfirm || !Model.AcceptTerms) ? "disabled" : null)">
                 @CatalogLocalizer.Loc($"Confirmar · ${price:0.##}", $"Confirm · ${price:0.##}")
             </button>
             <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>
