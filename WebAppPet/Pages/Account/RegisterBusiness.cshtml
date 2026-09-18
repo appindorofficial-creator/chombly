@@ -337,6 +337,7 @@
                                 <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>
                                 @{
                                     ViewData["TermsChecked"] = Model.AcceptTerms;
+                                    ViewData["TermsReturnUrl"] = Url.Page("/Account/RegisterBusiness", new { Step = Model.Step });
                                 }
                                 <partial name="_AcceptTerms" />
                             </div>
@@ -345,6 +346,7 @@
                     else if (Model.Step == 6)
                     {
                         ViewData["TermsChecked"] = Model.AcceptTerms;
+                        ViewData["TermsReturnUrl"] = Url.Page("/Account/RegisterBusiness", new { Step = Model.Step });
                         <h2 class="biz-section-title">@L["Biz_SetPassword"]</h2>
                         <p class="onboard-auth-lead">@L["Biz_SetPasswordLead"]</p>
                         <p class="field-hint">@L["Common_Email"]: <strong>@Model.Email</strong></p>

@@ -10,7 +10,9 @@
     var showError = !string.IsNullOrWhiteSpace(modelErr);
     if (showError) errMsg = modelErr!;
 
-    var termsReturn = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var termsReturn = ViewData["TermsReturnUrl"] as string;
+    if (string.IsNullOrWhiteSpace(termsReturn))
+        termsReturn = $"{Context.Request.Path}{Context.Request.QueryString}";
     if (string.IsNullOrWhiteSpace(termsReturn) || termsReturn == "/")
         termsReturn = "/Index";
 }

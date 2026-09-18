@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -86,6 +87,12 @@ public class RegisterBusinessModel : PageModel
 
     public async Task OnGetAsync()
     {
+        var stepFromQuery = Request.Query.ContainsKey(nameof(Step));
+        var queryStep = Step;
+        TryRestoreDraft();
+        if (stepFromQuery)
+            Step = queryStep;
+
         if (Step is < 0 or > 7) Step = 0;
         // Account step is only for guests; signed-in users finish on prices + terms.
         if (Step == 6 && _auth.IsAuthenticated)
@@ -112,7 +119,7 @@ public class RegisterBusinessModel : PageModel
         EnsureDefaultServices();
         if (Step == 1)
             await PrefillFromCurrentUserAsync();
-        return Page();
+        return WizardPage();
     }
 
     private async Task<IActionResult> GoNextAsync()
@@ -125,12 +132,12 @@ public class RegisterBusinessModel : PageModel
             if (uploadErr != null)
             {
                 ErrorMessage = uploadErr;
-                return Page();
+                return WizardPage();
             }
         }
 
         if (!ValidateCurrentStep())
-            return Page();
+            return WizardPage();
 
         // Logged-in users already have an account — don't send them to "create account".
         if (Step == 5 && _auth.IsAuthenticated)
@@ -151,10 +158,16 @@ public class RegisterBusinessModel : PageModel
             // Guests never land on step 6 while authenticated; if URL forced it, bounce.
             if (Step == 6 && _auth.IsAuthenticated)
                 return await SubmitAsync();
-            return Page();
+            return WizardPage();
         }
 
         return await SubmitAsync();
+    }
+
+    private IActionResult WizardPage()
+    {
+        SaveDraft();
+        return Page();
     }
 
     private async Task<string?> TrySavePhotoUploadsAsync()
@@ -386,19 +399,19 @@ public class RegisterBusinessModel : PageModel
             {
                 ErrorMessage = _L["Biz_ErrInvalidSession"].Value;
                 Step = 0;
-                return Page();
+                return WizardPage();
             }
             if (existing.GroomerProfile != null)
             {
                 ErrorMessage = _L["Biz_ErrAlreadyBusiness"].Value;
                 Step = 0;
-                return Page();
+                return WizardPage();
             }
             if (await _db.Users.AnyAsync(u => u.Email == email && u.Id != existing.Id))
             {
                 ErrorMessage = _L["Biz_ErrEmailTaken"].Value;
                 Step = 1;
-                return Page();
+                return WizardPage();
             }
 
             existing.FullName = FullName.Trim();
@@ -414,7 +427,7 @@ public class RegisterBusinessModel : PageModel
             {
                 ErrorMessage = _L["Biz_ErrEmailTakenLogin"].Value;
                 Step = 1;
-                return Page();
+                return WizardPage();
             }
 
             user = new AppUser
@@ -437,7 +450,7 @@ public class RegisterBusinessModel : PageModel
         {
             ErrorMessage = _L["Biz_ErrInvalidCategory"].Value;
             Step = 2;
-            return Page();
+            return WizardPage();
         }
 
         NormalizeServices();
@@ -545,8 +558,142 @@ public class RegisterBusinessModel : PageModel
         // Re-sign so Role claim becomes Groomer (needed when converting an existing client).
         await _auth.SignInAsync(user);
         _auth.SetShellMode(AppShellMode.Business);
+        ClearDraft();
         Step = 7;
         return Page();
+    }
+
+    private const string DraftSessionKey = "RegisterBusiness.Draft";
+
+    private void SaveDraft()
+    {
+        if (Step is < 0 or > 6) return;
+        try
+        {
+            var draft = new BizRegDraft
+            {
+                Step = Step,
+                ProviderKindKey = ProviderKindKey,
+                FullName = FullName,
+                BusinessName = BusinessName,
+                Phone = Phone,
+                Email = Email,
+                City = City,
+                Address = Address,
+                Latitude = Latitude,
+                Longitude = Longitude,
+                CategoryId = CategoryId,
+                CategoryIds = CategoryIds?.ToList() ?? new(),
+                WorkModeKey = WorkModeKey,
+                Week = Week?.Select(w => new BizRegWeekDay
+                {
+                    DayOfWeek = w.DayOfWeek,
+                    Label = w.Label,
+                    IsOpen = w.IsOpen,
+                    OpenTime = w.OpenTime,
+                    CloseTime = w.CloseTime
+                }).ToList() ?? new(),
+                ServiceAreaMiles = ServiceAreaMiles,
+                About = About,
+                LogoUrl = LogoUrl,
+                CoverUrl = CoverUrl,
+                ServiceNames = ServiceNames?.ToList() ?? new(),
+                ServicePrices = ServicePrices?.ToList() ?? new(),
+                AcceptTerms = AcceptTerms
+            };
+            HttpContext.Session.SetString(DraftSessionKey, JsonSerializer.Serialize(draft));
+        }
+        catch
+        {
+            // Session may be unavailable; wizard still works via POST hiddens.
+        }
+    }
+
+    private void TryRestoreDraft()
+    {
+        try
+        {
+            var json = HttpContext.Session.GetString(DraftSessionKey);
+            if (string.IsNullOrWhiteSpace(json)) return;
+            var draft = JsonSerializer.Deserialize<BizRegDraft>(json);
+            if (draft == null) return;
+
+            Step = draft.Step;
+            ProviderKindKey = draft.ProviderKindKey ?? ProviderKindKey;
+            FullName = draft.FullName ?? "";
+            BusinessName = draft.BusinessName ?? "";
+            Phone = draft.Phone ?? "";
+            Email = draft.Email ?? "";
+            City = draft.City ?? "";
+            Address = draft.Address ?? "";
+            Latitude = draft.Latitude;
+            Longitude = draft.Longitude;
+            CategoryId = draft.CategoryId;
+            CategoryIds = draft.CategoryIds ?? new();
+            WorkModeKey = draft.WorkModeKey ?? WorkModeKey;
+            if (draft.Week is { Count: > 0 })
+            {
+                Week = draft.Week.Select(w => new WeekDayInput
+                {
+                    DayOfWeek = w.DayOfWeek,
+                    Label = w.Label ?? "",
+                    IsOpen = w.IsOpen,
+                    OpenTime = w.OpenTime ?? "08:00",
+                    CloseTime = w.CloseTime ?? "18:00"
+                }).ToList();
+            }
+            ServiceAreaMiles = draft.ServiceAreaMiles;
+            About = draft.About ?? "";
+            LogoUrl = draft.LogoUrl;
+            CoverUrl = draft.CoverUrl;
+            ServiceNames = draft.ServiceNames ?? new();
+            ServicePrices = draft.ServicePrices ?? new();
+            AcceptTerms = draft.AcceptTerms;
+        }
+        catch
+        {
+            ClearDraft();
+        }
+    }
+
+    private void ClearDraft()
+    {
+        try { HttpContext.Session.Remove(DraftSessionKey); }
+        catch { /* ignore */ }
+    }
+
+    private sealed class BizRegDraft
+    {
+        public int Step { get; set; }
+        public string? ProviderKindKey { get; set; }
+        public string? FullName { get; set; }
+        public string? BusinessName { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+        public string? City { get; set; }
+        public string? Address { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public int CategoryId { get; set; }
+        public List<int>? CategoryIds { get; set; }
+        public string? WorkModeKey { get; set; }
+        public List<BizRegWeekDay>? Week { get; set; }
+        public int ServiceAreaMiles { get; set; }
+        public string? About { get; set; }
+        public string? LogoUrl { get; set; }
+        public string? CoverUrl { get; set; }
+        public List<string>? ServiceNames { get; set; }
+        public List<decimal>? ServicePrices { get; set; }
+        public bool AcceptTerms { get; set; }
+    }
+
+    private sealed class BizRegWeekDay
+    {
+        public int DayOfWeek { get; set; }
+        public string? Label { get; set; }
+        public bool IsOpen { get; set; }
+        public string? OpenTime { get; set; }
+        public string? CloseTime { get; set; }
     }
 
     private void EnsureWeek()

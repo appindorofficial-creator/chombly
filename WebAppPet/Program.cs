@@ -96,6 +96,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(6);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.Name = ".Chombly.Session";
+});
 
 var app = builder.Build();
 
@@ -133,6 +141,7 @@ UploadPaths.MapUploadStaticFiles(app);
 
 app.UseRouting();
 app.UseRequestLocalization();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
