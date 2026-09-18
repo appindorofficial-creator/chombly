@@ -1042,13 +1042,11 @@ button[data-terms-submit]:disabled {
 .small { font-size: .85rem; }
 
 /* Forms */
-.form-group { margin-bottom: 14px; }
-.form-group label {
-  display: block; font-size: .82rem; font-weight: 700;
-  margin-bottom: 6px; color: var(--muted);
-}
 .form-control {
-  width: 100%; padding: 12px 14px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
   border: 1.5px solid var(--border); border-radius: var(--radius-sm);
   font-size: 1rem; background: var(--ivory-light); color: var(--text);
   outline: none;
@@ -1058,6 +1056,29 @@ button[data-terms-submit]:disabled {
     box-shadow var(--motion-fast) var(--ease-standard),
     background-color var(--motion-fast) var(--ease-standard),
     transform var(--motion-fast) var(--ease-standard);
+}
+/* iOS/WebKit date & time controls have a large intrinsic min-width and overflow cards. */
+input.form-control[type="date"],
+input.form-control[type="time"],
+input.form-control[type="datetime-local"],
+input.form-control[type="month"],
+input.form-control[type="week"],
+input.form-control[type="number"] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.form-group {
+  margin-bottom: 14px;
+  max-width: 100%;
+  min-width: 0;
+}
+.form-group label {
+  display: block; font-size: .82rem; font-weight: 700;
+  margin-bottom: 6px; color: var(--muted);
 }
 .form-control:focus {
   border-color: var(--forest);
@@ -5299,6 +5320,8 @@ form#behavior-intake-form.is-pet-missing .behavior-pet-list {
 .care-hero {
   background: linear-gradient(160deg, #e8f5e9 0%, #fff 70%);
   border: 1px solid rgba(18, 61, 50, 0.12);
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 /* Chombly Care plan page */
@@ -7093,6 +7116,9 @@ body.celebrate-open {
   border-radius: 18px;
   border: 1.5px solid var(--border);
   padding: 12px 14px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
   background:
     linear-gradient(165deg, #fbfff3 0%, var(--ivory-light) 55%, #fff 100%);
   -webkit-tap-highlight-color: transparent;
@@ -7202,6 +7228,8 @@ body.celebrate-open {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px dashed rgba(15, 61, 47, 0.1);
+  max-width: 100%;
+  min-width: 0;
   transition:
     opacity var(--motion-fast) var(--ease-standard),
     max-height var(--motion-normal) var(--ease-emphasized);
@@ -7209,8 +7237,13 @@ body.celebrate-open {
 .agenda-day-times .form-group {
   flex: 1;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 .agenda-day-times .form-control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   transition:
     border-color var(--motion-fast) var(--ease-standard),
     box-shadow var(--motion-fast) var(--ease-standard);
