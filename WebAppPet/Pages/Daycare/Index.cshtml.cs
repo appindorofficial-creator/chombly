@@ -141,13 +141,15 @@ public class IndexModel : PageModel
 
         if (SelectedDaycare == null || SelectedService == null || SelectedPet == null)
         {
-            ErrorMessage = "Elige daycare y mascota para continuar.";
+            ErrorMessage = CatalogLocalizer.Loc("Elige guardería y mascota para continuar.", "Choose a daycare and pet to continue.");
             return Page();
         }
 
         if (!SelectedDaycare.AcceptsSpecies(SelectedPet.Species))
         {
-            ErrorMessage = $"Este daycare no atiende {SelectedPet.Species}.";
+            ErrorMessage = CatalogLocalizer.Loc(
+                $"Esta guardería no atiende {SelectedPet.Species}.",
+                $"This daycare does not accept {SelectedPet.Species}.");
             return Page();
         }
 

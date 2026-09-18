@@ -72,20 +72,20 @@
             }
         </div>
 
-        <h3 class="section-title" id="daycare-results">@CatalogLocalizer.Loc("5. Daycares disponibles cerca de ti", "5. Daycares available near you")</h3>
+        <h3 class="section-title" id="daycare-results">@CatalogLocalizer.Loc("5. Guarderías disponibles cerca de ti", "5. Daycares available near you")</h3>
         @if (!Model.CanSelectDaycare)
         {
             var daycareGate = new BookingGateNoteModel
             {
                 Id = "daycare-need-basics",
-                TextEs = "Completa fecha, horario y mascota (pasos 1–3) para poder elegir un daycare.",
+                TextEs = "Completa fecha, horario y mascota (pasos 1–3) para poder elegir una guardería.",
                 TextEn = "Complete date, schedule, and pet (steps 1–3) before choosing a daycare."
             };
             <partial name="_BookingGateNote" model="daycareGate" />
         }
         @if (!Model.Results.Any())
         {
-            <div class="empty">@CatalogLocalizer.Loc("No hay daycares con esos filtros en la base de datos.", "No daycares match these filters.")</div>
+            <div class="empty">@CatalogLocalizer.Loc("No hay guarderías con esos filtros en la base de datos.", "No daycares match these filters.")</div>
         }
         @foreach (var item in Model.Results)
         {
@@ -141,7 +141,7 @@
                             More = Model.More
                         }),
                         GateAnchorId = "daycare-need-basics",
-                        ChooseLabelEs = "Elegir daycare",
+                        ChooseLabelEs = "Elegir guardería",
                         ChooseLabelEn = "Choose daycare"
                     };
                 }
@@ -157,7 +157,7 @@
                asp-route-Schedule="@Model.Schedule"
                asp-route-PetId="@Model.PetId"
                asp-route-groomerId="@Model.GroomerId"
-               asp-route-More="true">@CatalogLocalizer.Loc("Ver más daycares", "See more daycares")</a>
+               asp-route-More="true">@CatalogLocalizer.Loc("Ver más guarderías", "See more daycares")</a>
         }
     </form>
 
@@ -205,7 +205,7 @@
                 }
             }
 
-            <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para el daycare", "8. Notes for the daycare") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
+            <h3 class="section-title">@CatalogLocalizer.Loc("8. Notas para la guardería", "8. Notes for the daycare") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
             <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                       placeholder="@CatalogLocalizer.Loc("Alergias, comportamiento, medicación…", "Allergies, behavior, medication…")"
                      >@Model.Notes</textarea>

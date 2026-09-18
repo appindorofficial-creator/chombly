@@ -1220,6 +1220,59 @@
       return imported;
     }
 
+    function syncBookingSummary(doc) {
+      if (!doc) return;
+      var nextSummary = doc.querySelector('[data-hotel-summary]');
+      var curSummary = document.querySelector('[data-hotel-summary]');
+
+      function bindSummary(el) {
+        if (!el) return;
+        rebindAfterSoftReplace(el);
+        bindHotelSummaryToggle(document);
+        // Open sheet so the user can confirm after choosing a provider
+        el.classList.remove('is-collapsed');
+        var flow = document.querySelector('.hotel-flow');
+        if (flow) flow.classList.remove('is-summary-collapsed');
+        el.querySelectorAll('[data-summary-toggle].hotel-summary-toggle').forEach(function (btn) {
+          btn.setAttribute('aria-expanded', 'true');
+          var min = btn.querySelector('[data-label-min]');
+          var max = btn.querySelector('[data-label-max]');
+          if (min) min.hidden = false;
+          if (max) max.hidden = true;
+        });
+      }
+
+      if (nextSummary && curSummary) {
+        var imported = document.importNode(nextSummary, true);
+        reuseImages(curSummary, imported);
+        curSummary.replaceWith(imported);
+        bindSummary(imported);
+        return;
+      }
+
+      if (nextSummary && !curSummary) {
+        var add = document.importNode(nextSummary, true);
+        var flow = document.querySelector('.hotel-flow');
+        var clearance = document.querySelector('.bottom-nav-clearance');
+        var host = (flow && flow.parentNode) || document.body;
+        if (clearance && clearance.parentNode === host) {
+          host.insertBefore(add, clearance);
+        } else if (flow && flow.nextSibling) {
+          host.insertBefore(add, flow.nextSibling);
+        } else {
+          host.appendChild(add);
+        }
+        bindSummary(add);
+        return;
+      }
+
+      if (!nextSummary && curSummary) {
+        curSummary.remove();
+        var flowOnly = document.querySelector('.hotel-flow');
+        if (flowOnly) flowOnly.classList.remove('has-summary', 'is-summary-collapsed');
+      }
+    }
+
     function softNavigateHotelFlow(form, submitter) {
       if (!form) return;
       var method = (form.getAttribute('method') || 'get').toLowerCase();
@@ -1269,6 +1322,7 @@
           return;
         }
         var live = applySoftHotelFlow(cur, next);
+        syncBookingSummary(doc);
         try { history.replaceState(null, '', url); } catch (_) { }
         markUpdating(live || document.querySelector('.hotel-flow'), false);
       }).catch(function (err) {
@@ -1371,6 +1425,7 @@
             return;
           }
           var live = applySoftHotelFlow(cur, next);
+          syncBookingSummary(doc);
           try { history.replaceState(null, '', url.toString()); } catch (_) { }
           markUpdating(live || document.querySelector('.hotel-flow'), false);
         }).catch(function (err) {
