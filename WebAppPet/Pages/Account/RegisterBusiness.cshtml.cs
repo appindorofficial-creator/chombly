@@ -487,7 +487,11 @@ public class RegisterBusinessModel : PageModel
 
         var firstPrice = ServicePrices.FirstOrDefault(p => p > 0);
         if (firstPrice <= 0) firstPrice = 35;
-        var unit = cat.IsOvernight ? "/ noche" : "/ sesión";
+        var unit = cat.IsOvernight
+            ? CatalogLocalizer.Loc("/ noche", "/ night")
+            : CatalogLocalizer.Loc("/ sesión", "/ session");
+        var catLabel = cat.DisplayName();
+        var serviceDescPrefix = CatalogLocalizer.Loc("Servicio de", "Service:");
 
         var profile = new GroomerProfile
         {
@@ -538,7 +542,7 @@ public class RegisterBusinessModel : PageModel
             {
                 GroomerId = profile.Id,
                 Name = name,
-                Description = $"Servicio de {cat.Name}",
+                Description = $"{serviceDescPrefix} {catLabel}",
                 BillingUnit = cat.IsOvernight ? "noche" : "sesion",
                 PriceSmall = price,
                 PriceMedium = price + 10,
@@ -553,6 +557,7 @@ public class RegisterBusinessModel : PageModel
         _db.Notifications.Add(new AppNotification
         {
             UserId = user.Id,
+            // Stored in Spanish; NotificationLocalizer translates on read.
             Title = "¡Bienvenido a Chombly!",
             Message = "Tu perfil fue creado. Completa la verificación para publicar más rápido.",
             Type = "business"
@@ -571,12 +576,20 @@ public class RegisterBusinessModel : PageModel
         }
         await _db.SaveChangesAsync();
 
-        await _email.SendAsync(user.Email, "Chombly: perfil de negocio creado",
-            $"<p>Hola {user.FullName},</p><p>¡Bienvenido! Creamos el perfil de <strong>{profile.BusinessName}</strong>.</p><p>— Equipo Chombly</p>");
+        await _email.SendAsync(
+            user.Email,
+            CatalogLocalizer.Loc("Chombly: perfil de negocio creado", "Chombly: business profile created"),
+            CatalogLocalizer.Loc(
+                $"<p>Hola {user.FullName},</p><p>¡Bienvenido! Creamos el perfil de <strong>{profile.BusinessName}</strong>.</p><p>— Equipo Chombly</p>",
+                $"<p>Hi {user.FullName},</p><p>Welcome! We created the profile for <strong>{profile.BusinessName}</strong>.</p><p>— Chombly team</p>"));
 
         var adminTo = string.IsNullOrWhiteSpace(_smtp.AdminNotifyEmail) ? _smtp.From : _smtp.AdminNotifyEmail;
-        await _email.SendAsync(adminTo, $"Chombly: nuevo negocio — {profile.BusinessName}",
-            $"<p><strong>{profile.BusinessName}</strong> ({cat.Name}) · {user.Email} · {Phone}</p><p>{City}</p>");
+        await _email.SendAsync(
+            adminTo,
+            CatalogLocalizer.Loc(
+                $"Chombly: nuevo negocio — {profile.BusinessName}",
+                $"Chombly: new business — {profile.BusinessName}"),
+            $"<p><strong>{profile.BusinessName}</strong> ({catLabel}) · {user.Email} · {Phone}</p><p>{City}</p>");
 
         // Re-sign so Role claim becomes Groomer (needed when converting an existing client).
         await _auth.SignInAsync(user);
@@ -752,7 +765,11 @@ public class RegisterBusinessModel : PageModel
 
     private void EnsureDefaultServices(bool force = false)
     {
-        if (!force && ServiceNames.Count > 0) return;
+        if (!force && ServiceNames.Count > 0)
+        {
+            NormalizeDefaultServiceNamesToSpanish();
+            return;
+        }
         SyncPrimaryCategoryId();
         var selected = Categories.Where(c => CategoryIds.Contains(c.Id)).ToList();
         if (selected.Count == 0)
@@ -763,10 +780,10 @@ public class RegisterBusinessModel : PageModel
 
         var names = new List<string>();
         var prices = new List<decimal>();
-        var en = CultureCookie.IsEnglish();
+        // Canonical catalog language is Spanish; CatalogLocalizer.Text renders EN in the UI.
         foreach (var cat in selected)
         {
-            var (n, p) = DefaultsForSlug(cat.Slug, en);
+            var (n, p) = DefaultsForSlug(cat.Slug, en: false);
             for (var i = 0; i < n.Count; i++)
             {
                 if (names.Contains(n[i], StringComparer.OrdinalIgnoreCase)) continue;
@@ -777,13 +794,40 @@ public class RegisterBusinessModel : PageModel
 
         if (names.Count == 0)
         {
-            var (n, p) = DefaultsForSlug("grooming", en);
+            var (n, p) = DefaultsForSlug("grooming", en: false);
             names = n;
             prices = p;
         }
 
         ServiceNames = names;
         ServicePrices = prices;
+    }
+
+    /// <summary>Keep canned defaults in Spanish so ES/EN UI can localize via CatalogLocalizer.</summary>
+    private void NormalizeDefaultServiceNamesToSpanish()
+    {
+        if (!AreDefaultServicePlaceholders()) return;
+
+        static string ToSpanish(string? name) => (name ?? "").Trim() switch
+        {
+            "Standard night" => "Noche estándar",
+            "Premium night" => "Noche premium",
+            "General checkup" => "Consulta general",
+            "Vaccines" => "Vacunas",
+            "Full day" => "Día completo",
+            "Half day" => "Medio día",
+            "30-min walk" => "Paseo 30 min",
+            "60-min walk" => "Paseo 60 min",
+            "Basic obedience" => "Obediencia básica",
+            "Advanced session" => "Sesión avanzada",
+            "Basic bath" => "Baño básico",
+            "Haircut" => "Corte de pelo",
+            "Full grooming" => "Grooming completo",
+            var n => n
+        };
+
+        for (var i = 0; i < ServiceNames.Count; i++)
+            ServiceNames[i] = ToSpanish(ServiceNames[i]);
     }
 
     private static (List<string> Names, List<decimal> Prices) DefaultsForSlug(string slug, bool en) => slug switch

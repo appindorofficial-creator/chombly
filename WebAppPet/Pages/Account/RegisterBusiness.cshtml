@@ -309,7 +309,7 @@
                             <div class="card card-pad" style="margin-bottom:8px;display:flex;gap:10px;align-items:end">
                                 <div class="form-group" style="flex:2;margin:0">
                                     <label class="small muted">@L["Biz_Service"]</label>
-                                    <input class="form-control" name="ServiceNames[@i]" value="@Model.ServiceNames[i]" />
+                                    <input class="form-control" name="ServiceNames[@i]" value="@CatalogLocalizer.Text(Model.ServiceNames[i])" />
                                 </div>
                                 <div class="form-group" style="flex:1;margin:0">
                                     <label class="small muted">@L["Biz_FromPrice"]</label>
@@ -379,7 +379,7 @@
         </div>
     </div>
 
-    <p class="onboard-version">Chombly · Pet Care</p>
+    <p class="onboard-version">Chombly · @L["Brand_Tagline"]</p>
 </div>
 
 @section Scripts {
