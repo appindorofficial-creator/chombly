@@ -67,6 +67,16 @@ public class RemindersModel : PageModel
             return Page();
         }
 
+        var today = AppTimeZones.TodayLocalDate();
+        if (NextDueLocal.Value.Date < today)
+        {
+            Error = CatalogLocalizer.Loc(
+                "La próxima fecha no puede ser en el pasado.",
+                "The next due date can't be in the past.");
+            Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId!.Value, Id);
+            return Page();
+        }
+
         var type = Type.Value;
         if (string.IsNullOrWhiteSpace(Title))
         {

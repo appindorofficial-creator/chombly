@@ -8,6 +8,7 @@
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Pets/Care", new { id = Model.Id });
     var HideNav = ViewData["HideNav"] as bool? == true;
+    var minDueDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
     string ReminderTypeLabel(ReminderType t) => t switch
     {
         ReminderType.Vaccine => CatalogLocalizer.Loc("Vacuna", "Vaccine"),
@@ -93,7 +94,7 @@
             </div>
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Próxima fecha", "Next due date")</label>
-                <input class="form-control" type="date" asp-for="NextDueLocal" required />
+                <input class="form-control" type="date" asp-for="NextDueLocal" required min="@minDueDate" />
             </div>
             <div class="form-group">
                 <label>@CatalogLocalizer.Loc("Inicio horas silenciosas", "Quiet hours start")</label>
