@@ -35,6 +35,15 @@ public sealed class BookingDateFieldModel
     public required string MinDate { get; init; }
 }
 
+public sealed class BookingTimeSlotsModel
+{
+    public required IReadOnlyList<string> Slots { get; init; }
+    public string? Selected { get; init; }
+    public IReadOnlyCollection<string> PastSlots { get; init; } = Array.Empty<string>();
+    public IReadOnlyCollection<string> OccupiedSlots { get; init; } = Array.Empty<string>();
+    public string InputName { get; init; } = "Slot";
+}
+
 public sealed class BookingSummaryLine
 {
     public required string LabelEs { get; init; }
@@ -133,9 +142,44 @@ public static class BookingDate
         if (key is "manana" or "mañana" or "tomorrow")
             return ("", today.AddDays(1).ToString("yyyy-MM-dd"));
 
-        if (TryParseSelected(date, out var day))
+        // Past dates (typed or soft-nav) clamp to today — never keep a past value in the flow.
+        if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var parsed))
+        {
+            var day = parsed.Date < today ? today : parsed.Date;
             return ("", day.ToString("yyyy-MM-dd"));
+        }
 
         return ("", null);
+    }
+}
+
+/// <summary>Shared wall-clock slot helpers for Trainers / Behavior / Booking / Vet.</summary>
+public static class BookingTime
+{
+    public static HashSet<string> MarkPastSlots(IEnumerable<string> slots, DateTime day)
+    {
+        var past = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var nowUtc = DateTime.UtcNow;
+        foreach (var label in slots)
+        {
+            if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var tod)) continue;
+            var utc = AppTimeZones.LocalDateAndTimeToUtc(day.Date, tod);
+            if (utc <= nowUtc)
+                past.Add(label);
+        }
+        return past;
+    }
+
+    public static bool IsSlotAvailable(
+        string? slot,
+        IEnumerable<string> catalog,
+        IReadOnlySet<string> past,
+        IReadOnlySet<string> occupied)
+    {
+        if (string.IsNullOrWhiteSpace(slot)) return false;
+        if (!catalog.Contains(slot, StringComparer.OrdinalIgnoreCase)) return false;
+        if (past.Contains(slot)) return false;
+        if (occupied.Contains(slot)) return false;
+        return true;
     }
 }

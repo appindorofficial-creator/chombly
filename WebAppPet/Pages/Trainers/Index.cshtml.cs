@@ -95,6 +95,7 @@ public class IndexModel : PageModel
     };
 
     public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> PastSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     [BindProperty]
     public bool AcceptTerms { get; set; }
@@ -125,7 +126,10 @@ public class IndexModel : PageModel
     public bool HasNeed => TrainingTypes.Any(t => string.Equals(t.Key, Need, StringComparison.OrdinalIgnoreCase));
     public bool HasPlace => PlaceOptions.Any(p => string.Equals(p.Key, Place, StringComparison.OrdinalIgnoreCase));
     public bool HasSessions => Sessions is 1 or 4 or 8;
-    public bool HasSlot => TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase);
+    public bool HasSlot =>
+        TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase)
+        && !PastSlots.Contains(Slot)
+        && !OccupiedSlots.Contains(Slot);
     public bool HasDate => BookingDate.TryParseSelected(Date, out _);
 
     /// <summary>Steps 1–6 complete: need, date, time, place, sessions, and pet.</summary>
@@ -280,12 +284,13 @@ public class IndexModel : PageModel
             Slot = "";
 
         var day = ResolveDay();
+        MarkPastSlots(day);
         if (GroomerId is int bookedGroomerId && HasDate)
             await LoadOccupiedSlotsAsync(bookedGroomerId, day);
 
-        if (!string.IsNullOrWhiteSpace(Slot) && OccupiedSlots.Contains(Slot))
+        if (!string.IsNullOrWhiteSpace(Slot) && (OccupiedSlots.Contains(Slot) || PastSlots.Contains(Slot)))
         {
-            var free = TimeSlots.FirstOrDefault(t => !OccupiedSlots.Contains(t));
+            var free = TimeSlots.FirstOrDefault(t => !OccupiedSlots.Contains(t) && !PastSlots.Contains(t));
             Slot = free ?? "";
         }
 
@@ -474,6 +479,12 @@ public class IndexModel : PageModel
         return AppTimeZones.TodayLocalDate();
     }
 
+    /// <summary>Disable wall-clock slots that are already past for the selected (or today) day.</summary>
+    private void MarkPastSlots(DateTime day)
+    {
+        PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
+    }
+
     private async Task LoadOccupiedSlotsAsync(int groomerId, DateTime day)
     {
         OccupiedSlots.Clear();
@@ -511,18 +522,16 @@ public class IndexModel : PageModel
         }
 
         startUtc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+        if (startUtc <= DateTime.UtcNow)
+        {
+            error = CatalogLocalizer.Loc(
+                "No puedes elegir una fecha u hora en el pasado.",
+                "You can't select a past date or time.");
+            return false;
+        }
 
         if (groomerId is not int gid)
-        {
-            if (startUtc <= DateTime.UtcNow)
-            {
-                error = CatalogLocalizer.Loc(
-                    "No puedes elegir una fecha u hora en el pasado.",
-                    "You can't select a past date or time.");
-                return false;
-            }
             return true;
-        }
 
         var preferredIndex = Array.FindIndex(TimeSlots, t => string.Equals(t, Slot, StringComparison.OrdinalIgnoreCase));
         if (preferredIndex < 0) preferredIndex = 0;

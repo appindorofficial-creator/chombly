@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
+using WebAppPet.Pages.Shared;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Behavior;
@@ -42,8 +43,12 @@ public class ProvidersModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Slot { get; set; }
 
+    /// <summary>Legacy When=hoy|manana; normalized into <see cref="Date"/>.</summary>
     [BindProperty(SupportsGet = true)]
     public string? When { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Date { get; set; }
 
     [BindProperty] public bool AcceptTerms { get; set; }
     [BindProperty] public bool AcceptScope { get; set; } = true;
@@ -57,11 +62,16 @@ public class ProvidersModel : PageModel
     public Dictionary<int, string> DistanceLabels { get; set; } = new();
     public string? ErrorMessage { get; set; }
     public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> PastSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     public List<string> TimeSlots { get; } = new()
     {
         "9:00 AM", "10:00 AM", "10:30 AM", "1:00 PM", "2:00 PM", "3:00 PM", "5:00 PM"
     };
+
+    public bool HasDate => BookingDate.TryParseSelected(Date, out _);
+    public bool HasSlot => BookingTime.IsSlotAvailable(Slot, TimeSlots, PastSlots, OccupiedSlots);
+    public bool HasProvider => ProviderId > 0 && Providers.Any(p => p.Id == ProviderId);
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -79,16 +89,10 @@ public class ProvidersModel : PageModel
 
         if (!await LoadCatalogAsync()) return RedirectToPage("/Care/Services");
         await LoadSelectedPetsAsync();
-        // Fresh entry: do not preselect day, slot, or specialist from defaults/case.
         if (ProviderId > 0 && !Providers.Any(p => p.Id == ProviderId))
             ProviderId = 0;
 
-        NormalizeWhen();
-        if (!string.IsNullOrWhiteSpace(Slot) &&
-            !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
-            Slot = null;
-
-        await RefreshSlotAvailabilityAsync();
+        await RefreshScheduleStateAsync();
         return Page();
     }
 
@@ -107,51 +111,46 @@ public class ProvidersModel : PageModel
 
         if (!await LoadCatalogAsync()) return RedirectToPage("/Care/Services");
         await LoadSelectedPetsAsync();
+        await RefreshScheduleStateAsync();
 
         if (!AcceptTerms)
         {
             ErrorMessage = CatalogLocalizer.Loc(
                 "Debes aceptar los términos para reservar.",
                 "You must accept the terms to book.");
-            await RefreshSlotAvailabilityAsync();
             return Page();
         }
 
         AcceptScope = true;
 
-        if (string.IsNullOrWhiteSpace(When) || (When != "hoy" && When != "manana"))
+        if (!HasDate)
         {
             ErrorMessage = CatalogLocalizer.Loc("Elige el día.", "Choose the day.");
-            await RefreshSlotAvailabilityAsync();
             return Page();
         }
 
-        if (string.IsNullOrWhiteSpace(Slot) ||
-            !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
+        if (!HasSlot)
         {
             ErrorMessage = CatalogLocalizer.Loc("Elige un horario.", "Choose a time.");
-            await RefreshSlotAvailabilityAsync();
             return Page();
         }
 
-        if (ProviderId <= 0 || !Providers.Any(p => p.Id == ProviderId))
+        if (!HasProvider)
         {
             ErrorMessage = CatalogLocalizer.Loc("Selecciona un especialista.", "Select a specialist.");
-            await RefreshSlotAvailabilityAsync();
             return Page();
         }
 
         if (!TryResolveSchedule(ProviderId, out var scheduledAt, out var scheduleError))
         {
             ErrorMessage = scheduleError;
-            await RefreshSlotAvailabilityAsync();
+            await RefreshScheduleStateAsync();
             return Page();
         }
 
         if (SelectedPets.Count == 0 || CatalogItem is null)
         {
             ErrorMessage = CatalogLocalizer.Loc("Faltan datos de la evaluación.", "Evaluation details are incomplete.");
-            await RefreshSlotAvailabilityAsync();
             return Page();
         }
 
@@ -295,28 +294,32 @@ public class ProvidersModel : PageModel
         }
     }
 
-    private async Task RefreshSlotAvailabilityAsync()
+    private async Task RefreshScheduleStateAsync()
     {
-        NormalizeWhen();
-        if (string.IsNullOrWhiteSpace(Slot) ||
+        (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
+        if (!string.IsNullOrWhiteSpace(Slot) &&
             !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
-        {
-            OccupiedSlots.Clear();
-            return;
-        }
-
-        if (ProviderId <= 0 || string.IsNullOrWhiteSpace(When))
-        {
-            OccupiedSlots.Clear();
-            return;
-        }
+            Slot = null;
 
         var day = ResolveDay();
+        PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
+        OccupiedSlots.Clear();
+
+        if (HasDate && ProviderId > 0)
+            await LoadOccupiedSlotsAsync(ProviderId, day);
+
+        if (!string.IsNullOrWhiteSpace(Slot) &&
+            (PastSlots.Contains(Slot) || OccupiedSlots.Contains(Slot)))
+            Slot = null;
+    }
+
+    private async Task LoadOccupiedSlotsAsync(int providerId, DateTime day)
+    {
         OccupiedSlots.Clear();
         var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
         var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
         var taken = await _db.Appointments.AsNoTracking()
-            .Where(a => a.GroomerId == ProviderId
+            .Where(a => a.GroomerId == providerId
                         && a.Status != AppointmentStatus.Cancelled
                         && a.ScheduledAt >= from
                         && a.ScheduledAt < to)
@@ -333,79 +336,55 @@ public class ProvidersModel : PageModel
                     OccupiedSlots.Add(label);
             }
         }
-
-        if (OccupiedSlots.Contains(Slot))
-            Slot = null;
-    }
-
-    private void NormalizeWhen()
-    {
-        When = When?.Trim().ToLowerInvariant() switch
-        {
-            "hoy" or "today" => "hoy",
-            "manana" or "mañana" or "tomorrow" => "manana",
-            _ => null
-        };
     }
 
     private DateTime ResolveDay()
     {
-        var today = AppTimeZones.TodayLocalDate();
-        return When == "manana" ? today.AddDays(1) : today;
+        if (BookingDate.TryParseSelected(Date, out var day))
+            return day;
+        return AppTimeZones.TodayLocalDate();
     }
 
     private bool TryResolveSchedule(int providerId, out DateTime startUtc, out string? error)
     {
         error = null;
-        NormalizeWhen();
-        if (string.IsNullOrWhiteSpace(When))
+        if (!BookingDate.TryParseSelected(Date, out var day))
         {
             error = CatalogLocalizer.Loc("Elige el día.", "Choose the day.");
             startUtc = default;
             return false;
         }
 
-        var day = ResolveDay();
-        if (string.IsNullOrWhiteSpace(Slot) || !AppTimeZones.TryParseSlotToTimeSpan(Slot, out _))
+        if (string.IsNullOrWhiteSpace(Slot) || !AppTimeZones.TryParseSlotToTimeSpan(Slot, out var tod))
         {
             error = CatalogLocalizer.Loc("Elige un horario.", "Choose a time.");
             startUtc = default;
             return false;
         }
 
-        var preferredIndex = TimeSlots.FindIndex(t => string.Equals(t, Slot, StringComparison.OrdinalIgnoreCase));
-        if (preferredIndex < 0) preferredIndex = 0;
-
-        for (var dayOffset = 0; dayOffset < 7; dayOffset++)
+        startUtc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+        if (startUtc <= DateTime.UtcNow)
         {
-            var tryDay = day.AddDays(dayOffset);
-            var ordered = dayOffset == 0
-                ? TimeSlots.Skip(preferredIndex).ToList()
-                : TimeSlots;
-
-            foreach (var t in ordered)
-            {
-                if (!AppTimeZones.TryParseSlotToTimeSpan(t, out var slotTod)) continue;
-                var candidate = AppTimeZones.LocalDateAndTimeToUtc(tryDay, slotTod);
-                if (candidate <= DateTime.UtcNow) continue;
-                var busy = _db.Appointments.AsNoTracking().Any(a =>
-                    a.GroomerId == providerId
-                    && a.Status != AppointmentStatus.Cancelled
-                    && a.ScheduledAt == candidate);
-                if (busy) continue;
-
-                startUtc = candidate;
-                Slot = t;
-                When = tryDay.Date == AppTimeZones.TodayLocalDate() ? "hoy" : "manana";
-                return true;
-            }
+            error = CatalogLocalizer.Loc(
+                "No puedes elegir una fecha u hora en el pasado.",
+                "You can't select a past date or time.");
+            return false;
         }
 
-        error = CatalogLocalizer.Loc(
-            "Ese horario ya no está disponible. Elige otro día u hora.",
-            "That time is no longer available. Choose another day or time.");
-        startUtc = default;
-        return false;
+        var candidateUtc = startUtc;
+        var busy = _db.Appointments.AsNoTracking().Any(a =>
+            a.GroomerId == providerId
+            && a.Status != AppointmentStatus.Cancelled
+            && a.ScheduledAt == candidateUtc);
+        if (busy)
+        {
+            error = CatalogLocalizer.Loc(
+                "Ese horario ya no está disponible. Elige otro día u hora.",
+                "That time is no longer available. Choose another day or time.");
+            return false;
+        }
+
+        return true;
     }
 
     public static string RoleLabel(BehaviorSpecialistRole? role) => role switch

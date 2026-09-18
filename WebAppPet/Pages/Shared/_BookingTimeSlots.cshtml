@@ -1,0 +1,26 @@
+@model WebAppPet.Pages.Shared.BookingTimeSlotsModel
+@using System.Linq
+@* Shared AM/PM time chips: past and occupied slots are disabled. *@
+<div class="when-row" style="flex-wrap:wrap">
+    @foreach (var t in Model.Slots)
+    {
+        var past = Model.PastSlots.Contains(t, StringComparer.OrdinalIgnoreCase);
+        var taken = Model.OccupiedSlots.Contains(t, StringComparer.OrdinalIgnoreCase);
+        var blocked = past || taken;
+        var selected = !blocked
+            && !string.IsNullOrWhiteSpace(Model.Selected)
+            && string.Equals(Model.Selected, t, StringComparison.OrdinalIgnoreCase);
+        <label class="when-chip @(selected ? "active" : "") @(blocked ? "is-disabled" : "")">
+            <input type="radio"
+                   name="@Model.InputName"
+                   value="@t"
+                   @(selected ? "checked" : null)
+                   @(blocked ? "disabled" : null) />
+            @t@(past
+                ? CatalogLocalizer.Loc(" · pasado", " · past")
+                : taken
+                    ? CatalogLocalizer.Loc(" · ocupado", " · taken")
+                    : "")
+        </label>
+    }
+</div>

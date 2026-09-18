@@ -39,11 +39,13 @@
         <div class="when-row" style="flex-wrap:wrap">
             @foreach (var t in WebAppPet.Pages.Trainers.IndexModel.TimeSlots)
             {
+                var past = Model.PastSlots.Contains(t);
                 var taken = Model.OccupiedSlots.Contains(t);
-                <label class="when-chip @(Model.Slot == t ? "active" : "") @(taken ? "is-disabled" : "")">
-                    <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : "") @(taken ? "disabled" : null)
+                var blocked = past || taken;
+                <label class="when-chip @(Model.Slot == t ? "active" : "") @(blocked ? "is-disabled" : "")">
+                    <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : "") @(blocked ? "disabled" : null)
                            />
-                    @t@(taken ? CatalogLocalizer.Loc(" · ocupado", " · taken") : "")
+                    @t@(past ? CatalogLocalizer.Loc(" · pasado", " · past") : taken ? CatalogLocalizer.Loc(" · ocupado", " · taken") : "")
                 </label>
             }
         </div>

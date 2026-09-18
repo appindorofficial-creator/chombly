@@ -983,17 +983,21 @@
       var hasCustomTime = 0;
       var hasPetError = 0;
       var filterCount = 0;
+      var pastOrBusy = 0;
       var n = form.firstChild;
       while (n && n !== resultsStart) {
         if (n.nodeType === 1) {
           if ((n.matches && n.matches('.date-row')) || (n.querySelector && n.querySelector('.date-row'))) hasDateRow = 1;
           if (n.querySelector && n.querySelector('input[type="time"][name="CustomStart"]')) hasCustomTime = 1;
           if (n.querySelector && n.querySelector('.field-error')) hasPetError = 1;
-          if (n.querySelector) filterCount += n.querySelectorAll('.filter-check, .chip:not(.filter-check), .when-chip, .radio-card').length;
+          if (n.querySelector) {
+            filterCount += n.querySelectorAll('.filter-check, .chip:not(.filter-check), .when-chip, .radio-card').length;
+            pastOrBusy += n.querySelectorAll('.when-chip.is-disabled, .when-chip input:disabled').length;
+          }
         }
         n = n.nextSibling;
       }
-      return [hasDateRow, hasCustomTime, hasPetError, filterCount].join(':');
+      return [hasDateRow, hasCustomTime, hasPetError, filterCount, pastOrBusy].join(':');
     }
 
     function replaceRangeBefore(parent, stopNode, nextNodes) {
@@ -1021,6 +1025,20 @@
 
     function syncFilterChrome(curForm, nextForm) {
       if (!curForm || !nextForm) return;
+      // Date fields: server may clamp past values; keep live inputs in sync
+      Array.prototype.forEach.call(nextForm.querySelectorAll('input[type="date"]'), function (nextInput) {
+        if (!nextInput.name) return;
+        var curInput = curForm.querySelector(
+          'input[type="date"][name="' + String(nextInput.name).replace(/"/g, '\\"') + '"]'
+        );
+        if (!curInput) return;
+        var min = nextInput.getAttribute('min');
+        var max = nextInput.getAttribute('max');
+        if (min) curInput.setAttribute('min', min);
+        if (max) curInput.setAttribute('max', max);
+        else curInput.removeAttribute('max');
+        curInput.value = nextInput.value || '';
+      });
       // Occupied / disabled time slots without rebuilding the whole form
       Array.prototype.forEach.call(nextForm.querySelectorAll('.when-chip'), function (nextLab) {
         var input = nextLab.querySelector('input[type="radio"]');
@@ -1032,6 +1050,10 @@
         var curLab = curInput.closest('label');
         if (!curLab) return;
         curInput.disabled = !!input.disabled;
+        if (!input.disabled)
+          curInput.checked = !!input.checked;
+        else if (input.disabled)
+          curInput.checked = false;
         curLab.classList.toggle('is-disabled', nextLab.classList.contains('is-disabled'));
         curLab.classList.toggle('disabled', nextLab.classList.contains('disabled'));
         curLab.classList.toggle('active', !!curInput.checked);
@@ -1358,6 +1380,31 @@
       HTMLFormElement.prototype.__chomblySoftSubmitPatched = true;
     }
 
+    // Keep date pickers from accepting past days (browsers often allow typing past min=).
+    scope.querySelectorAll('.hotel-flow input[type="date"][min]').forEach(function (el) {
+      if (el.dataset.dateClampBound === '1') return;
+      el.dataset.dateClampBound = '1';
+      function clampDateInput() {
+        var min = el.getAttribute('min');
+        if (!min || !el.value) return false;
+        var changed = false;
+        if (el.value < min) {
+          el.value = min;
+          changed = true;
+        }
+        var max = el.getAttribute('max');
+        if (max && el.value > max) {
+          el.value = max;
+          changed = true;
+        }
+        return changed;
+      }
+      clampDateInput();
+      el.addEventListener('input', clampDateInput);
+      el.addEventListener('change', clampDateInput);
+      el.addEventListener('blur', clampDateInput);
+    });
+
     scope.querySelectorAll('.hotel-flow form').forEach(function (form) {
       if (form.dataset.softNavBound === '1') return;
       var method = (form.getAttribute('method') || 'get').toLowerCase();
@@ -1367,6 +1414,10 @@
       form.addEventListener('change', function (e) {
         var t = e.target;
         if (!t || !form.contains(t)) return;
+        if (t.matches && t.matches('input[type="date"][min]')) {
+          var min = t.getAttribute('min');
+          if (min && t.value && t.value < min) t.value = min;
+        }
         // Notes: wait for blur-driven change only (already onchange); still soft-nav once
         softNavigateHotelFlow(form);
       });
