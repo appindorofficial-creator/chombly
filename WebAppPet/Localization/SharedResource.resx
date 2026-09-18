@@ -564,7 +564,7 @@
 
   <!-- Groomer Business panel -->
   <data name="BizPanel_YourBusiness" xml:space="preserve"><value>Tu negocio</value></data>
-  <data name="BizPanel_Lead" xml:space="preserve"><value>Hotel, vet, grooming, daycare… todo se configura aquí y se lee desde la BD.</value></data>
+  <data name="BizPanel_Lead" xml:space="preserve"><value>Hotel, veterinaria, peluquería, guardería… todo se configura aquí y se lee desde la BD.</value></data>
   <data name="BizPanel_PublicProfile" xml:space="preserve"><value>Perfil público</value></data>
   <data name="BizPanel_CategoriesLower" xml:space="preserve"><value>categorías</value></data>
   <data name="BizPanel_ServicesLower" xml:space="preserve"><value>servicios</value></data>
@@ -602,7 +602,7 @@
   <data name="BizPanel_ErrCategory" xml:space="preserve"><value>Selecciona al menos una categoría de servicio.</value></data>
   <data name="Groomer_Agenda" xml:space="preserve"><value>Agenda</value></data>
   <data name="Groomer_Analytics" xml:space="preserve"><value>Analíticas</value></data>
-  <data name="Groomer_Onboarding" xml:space="preserve"><value>Onboarding</value></data>
+  <data name="Groomer_Onboarding" xml:space="preserve"><value>Incorporación</value></data>
   <data name="Groomer_Payouts" xml:space="preserve"><value>Mis pagos</value></data>
 
   <data name="Common_ChooseFile" xml:space="preserve"><value>Seleccionar archivo</value></data>

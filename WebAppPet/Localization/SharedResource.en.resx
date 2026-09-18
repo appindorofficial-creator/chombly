@@ -583,7 +583,7 @@
   <data name="BizPanel_ExtraPh" xml:space="preserve"><value>Extra bath</value></data>
   <data name="BizPanel_Updated" xml:space="preserve"><value>Business updated.</value></data>
   <data name="BizPanel_ErrCategory" xml:space="preserve"><value>Select at least one service category.</value></data>
-  <data name="Groomer_Agenda" xml:space="preserve"><value>Agenda</value></data>
+  <data name="Groomer_Agenda" xml:space="preserve"><value>Schedule</value></data>
   <data name="Groomer_Analytics" xml:space="preserve"><value>Analytics</value></data>
   <data name="Groomer_Onboarding" xml:space="preserve"><value>Onboarding</value></data>
   <data name="Groomer_Payouts" xml:space="preserve"><value>My payouts</value></data>

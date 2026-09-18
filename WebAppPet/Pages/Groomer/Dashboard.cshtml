@@ -48,8 +48,8 @@
                     break;
             }
             <div class="muted small" style="margin-top:8px">
-                @CatalogLocalizer.Loc("Agenda", "Agenda"): @Model.OpenWeekDays @CatalogLocalizer.Loc("días abiertos/semana", "open days/week") · @L["Groomer_Services"]: @Model.ServiceCount
-                · <a asp-page="./Availability">@CatalogLocalizer.Loc("Editar agenda", "Edit agenda")</a>
+                @L["Groomer_Agenda"]: @Model.OpenWeekDays @CatalogLocalizer.Loc("días abiertos/semana", "open days/week") · @L["Groomer_Services"]: @Model.ServiceCount
+                · <a asp-page="./Availability">@CatalogLocalizer.Loc("Editar agenda", "Edit schedule")</a>
                 · <a asp-page="./Business">@CatalogLocalizer.Loc("Editar negocio", "Edit business")</a>
             </div>
         </div>
@@ -83,7 +83,7 @@
         </a>
     </div>
 
-    <h3 class="section-title">@CatalogLocalizer.Loc("Agenda próxima", "Upcoming agenda")</h3>
+    <h3 class="section-title">@CatalogLocalizer.Loc("Agenda próxima", "Upcoming schedule")</h3>
     @if (!Model.Upcoming.Any())
     {
         <div class="empty">@CatalogLocalizer.Loc("No hay citas próximas.", "No upcoming bookings.")</div>
