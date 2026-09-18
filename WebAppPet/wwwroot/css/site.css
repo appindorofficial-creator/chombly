@@ -234,6 +234,10 @@ h1, h2, h3,
   border-radius: 28px 28px 0 0;
   margin-top: 4px;
   box-shadow: 0 -8px 28px rgba(7, 61, 46, 0.08);
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 .home-hero {
   background: #fff;
@@ -1032,8 +1036,12 @@ button[data-terms-submit]:disabled {
   box-shadow: var(--shadow);
   overflow: hidden;
   border: 1px solid var(--border);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
-.card-pad { padding: 14px; }
+.card-pad { padding: 14px; max-width: 100%; box-sizing: border-box; }
 .section-title {
   font-size: 1.05rem; font-weight: 700; margin: 20px 0 12px;
   color: var(--forest);
@@ -1070,11 +1078,21 @@ input.form-control[type="number"] {
   min-width: 0;
   -webkit-appearance: none;
   appearance: none;
+  /* Prevent iOS intrinsic min-width from expanding parent cards past the viewport. */
+  -webkit-min-logical-width: 0;
 }
 .form-group {
   margin-bottom: 14px;
   max-width: 100%;
   min-width: 0;
+}
+.form-group:has(> input[type="date"]),
+.form-group:has(> input[type="time"]),
+.form-group:has(> input[type="datetime-local"]),
+.form-group:has(> input[type="month"]),
+.form-group:has(> input[type="week"]),
+.form-group:has(> input[type="number"]) {
+  overflow: hidden;
 }
 .form-group label {
   display: block; font-size: .82rem; font-weight: 700;
