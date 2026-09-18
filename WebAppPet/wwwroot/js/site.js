@@ -101,9 +101,11 @@
     if (!a || !a.closest || !a.closest('.hotel-flow, .hotel-summary')) return;
     if (a.target === '_blank' || a.hasAttribute('download')) return;
     var href = a.getAttribute('href') || '';
-    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    if (!href || href.charAt(0) === '#') return;
+    if (/^(tel|mailto|sms|whatsapp):/i.test(href) || href.indexOf('javascript:') === 0) return;
     try {
       var url = new URL(a.href, window.location.href);
+      if (!/^https?:$/i.test(url.protocol)) return;
       if (url.origin !== window.location.origin) return;
       var cur = (window.location.pathname || '').replace(/\/$/, '');
       var next = (url.pathname || '').replace(/\/$/, '');
@@ -1270,7 +1272,10 @@
         try { history.replaceState(null, '', url); } catch (_) { }
         markUpdating(live || document.querySelector('.hotel-flow'), false);
       }).catch(function (err) {
-        if (err && err.name === 'AbortError') return;
+        if (err && err.name === 'AbortError') {
+          markUpdating(document.querySelector('.hotel-flow') || form, false);
+          return;
+        }
         window.location.assign(url);
       }).finally(function () {
         softNavBusy = false;
@@ -1327,10 +1332,13 @@
         if (a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         if (a.hasAttribute('download')) return;
         var href = a.getAttribute('href') || '';
-        if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+        if (!href || href.charAt(0) === '#') return;
+        // Never soft-nav external apps / dialers (Emergency Call now, mailto, etc.)
+        if (/^(tel|mailto|sms|whatsapp):/i.test(href) || href.indexOf('javascript:') === 0) return;
         var url;
         try {
           url = new URL(a.href, window.location.href);
+          if (!/^https?:$/i.test(url.protocol)) return;
           if (url.origin !== window.location.origin) return;
           var curPath = (window.location.pathname || '').replace(/\/$/, '');
           var nextPath = (url.pathname || '').replace(/\/$/, '');
@@ -1366,7 +1374,10 @@
           try { history.replaceState(null, '', url.toString()); } catch (_) { }
           markUpdating(live || document.querySelector('.hotel-flow'), false);
         }).catch(function (err) {
-          if (err && err.name === 'AbortError') return;
+          if (err && err.name === 'AbortError') {
+            markUpdating(document.querySelector('.hotel-flow') || a, false);
+            return;
+          }
           window.location.assign(url.toString());
         }).finally(function () {
           softNavBusy = false;
@@ -1382,6 +1393,40 @@
       });
     });
   }
+
+  // After tel:/app switch (Emergency "Call now"), iOS/Safari can leave the page
+  // looking frozen or non-interactive. Clear transient locks on resume.
+  function clearTransientUiLocks() {
+    document.documentElement.classList.remove('ch-route-pending');
+    document.querySelectorAll('.is-soft-updating').forEach(function (el) {
+      el.classList.remove('is-soft-updating');
+    });
+    try {
+      if (typeof document.getAnimations === 'function') {
+        document.getAnimations().forEach(function (anim) {
+          try { anim.cancel(); } catch (_) { }
+        });
+      }
+    } catch (_) { }
+  }
+
+  window.addEventListener('pageshow', clearTransientUiLocks);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') clearTransientUiLocks();
+  });
+  window.addEventListener('focus', clearTransientUiLocks);
+
+  // Emergency / dialer links: never leave the page in a soft-updating lock.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-external-action], a[href^="tel:"], a[href^="mailto:"]') : null;
+    if (!a) return;
+    clearTransientUiLocks();
+    // Drop stuck :active / focus that can make buttons look disabled after returning.
+    setTimeout(function () {
+      try { if (a.blur) a.blur(); } catch (_) { }
+      clearTransientUiLocks();
+    }, 0);
+  }, true);
 
   function bindFlashAndAlerts() {
     var flash = document.getElementById('app-flash-toast');

@@ -7,7 +7,7 @@
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
+    <div class="home-body hotel-flow" data-keep-interactive>
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Emergencia", "Emergency")</h1>
         <p class="muted small">@CatalogLocalizer.Loc("No cobramos ni reservamos online. Busca atención inmediata.", "We do not charge or book online. Seek care now.")</p>
     <div class="alert alert-danger" role="alert">
@@ -19,14 +19,15 @@
     @if (Model.Clinics.Count == 0)
     {
         <p class="muted">@CatalogLocalizer.Loc("No hay clínicas 24/7 cargadas. Llama a tu servicio de urgencias local.", "No 24/7 clinics loaded. Call your local emergency service.")</p>
-        <a class="btn btn-primary btn-block" href="tel:911">@CatalogLocalizer.Loc("Llamar ahora", "Call now")</a>
+        <a class="btn btn-primary btn-block" href="tel:911" data-external-action="tel">@CatalogLocalizer.Loc("Llamar ahora", "Call now")</a>
     }
     else
     {
         <div class="stack" style="gap:12px">
             @foreach (var c in Model.Clinics)
             {
-                var maps = $"https://www.google.com/maps/dir/?api=1&destination={Uri.EscapeDataString(c.Latitude + "," + c.Longitude)}";
+                var dest = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{c.Latitude},{c.Longitude}");
+                var maps = $"https://www.google.com/maps/dir/?api=1&destination={Uri.EscapeDataString(dest)}";
                 <article class="card card-pad">
                     <strong>@c.BusinessName</strong>
                     <p class="muted small mb-0">@c.Address · @c.City</p>
@@ -37,9 +38,9 @@
                     <div class="row-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
                         @if (!string.IsNullOrWhiteSpace(c.Phone))
                         {
-                            <a class="btn btn-primary" href="tel:@c.Phone">@CatalogLocalizer.Loc("Llamar ahora", "Call now")</a>
+                            <a class="btn btn-primary" href="tel:@c.Phone" data-external-action="tel">@CatalogLocalizer.Loc("Llamar ahora", "Call now")</a>
                         }
-                        <a class="btn btn-outline" href="@maps" target="_blank" rel="noopener">@CatalogLocalizer.Loc("Ver ruta", "Get directions")</a>
+                        <a class="btn btn-outline" href="@maps" target="_blank" rel="noopener" data-external-action="maps">@CatalogLocalizer.Loc("Ver ruta", "Get directions")</a>
                     </div>
                 </article>
             }

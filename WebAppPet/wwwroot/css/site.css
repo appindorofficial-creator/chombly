@@ -8027,6 +8027,11 @@ a.appt-card,
 .home-body.is-soft-updating > * {
   opacity: 1;
 }
+/* Emergency / keep-interactive pages must stay tappable even if a soft lock sticks */
+.home-body[data-keep-interactive].is-soft-updating,
+.home-body.is-soft-updating [data-external-action] {
+  pointer-events: auto;
+}
 /* Tiny, low-contrast cue only after a slow soft-fetch — never a page dim/reload feel */
 .home-body.is-soft-updating::after {
   content: none;
