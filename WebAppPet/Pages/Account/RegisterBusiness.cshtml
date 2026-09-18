@@ -230,12 +230,9 @@
                         <div class="when-row" style="flex-wrap:wrap">
                             @foreach (var miles in new[] { 5, 10, 20, 0 })
                             {
-                                var label = miles == 0
-                                    ? L["Biz_WholeCity"].Value
-                                    : CatalogLocalizer.Loc($"{miles} mi", $"{miles} mi");
                                 <label class="when-chip @(Model.ServiceAreaMiles == miles ? "active" : "")">
                                     <input type="radio" name="ServiceAreaMiles" value="@miles" @(Model.ServiceAreaMiles == miles ? "checked" : "") />
-                                    @label
+                                    @Model.FormatServiceAreaLabel(miles)
                                 </label>
                             }
                         </div>

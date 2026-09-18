@@ -76,6 +76,23 @@ public class RegisterBusinessModel : PageModel
     [BindProperty] public string ConfirmPassword { get; set; } = string.Empty;
     [BindProperty] public bool AcceptTerms { get; set; }
 
+    /// <summary>Market inferred from step-1 city / GPS (US → mi, Colombia → km).</summary>
+    public BusinessMarket DetectedMarket =>
+        BusinessMarketResolver.ResolveUser(
+            City,
+            Latitude == 0 && Longitude == 0 ? null : Latitude,
+            Latitude == 0 && Longitude == 0 ? null : Longitude);
+
+    public bool ServiceAreaUsesKm => DetectedMarket == BusinessMarket.Colombia;
+
+    public string FormatServiceAreaLabel(int value)
+    {
+        if (value <= 0) return _L["Biz_WholeCity"].Value;
+        return ServiceAreaUsesKm
+            ? CatalogLocalizer.Loc($"{value} km", $"{value} km")
+            : CatalogLocalizer.Loc($"{value} mi", $"{value} mi");
+    }
+
     public int WizardProgress => Step switch
     {
         1 => 25,
@@ -481,7 +498,13 @@ public class RegisterBusinessModel : PageModel
             ProviderKind = kind,
             WorkMode = work,
             Type = groomerType,
-            ServiceAreaMiles = ServiceAreaMiles,
+            ServiceAreaMiles = ToStoredServiceAreaMiles(ServiceAreaMiles),
+            LicenseCountry = DetectedMarket switch
+            {
+                BusinessMarket.Colombia => "CO",
+                BusinessMarket.UnitedStates => "US",
+                _ => null
+            },
             Address = string.IsNullOrWhiteSpace(Address) ? City.Trim() : Address.Trim(),
             City = City.Trim(),
             Latitude = Latitude,
@@ -561,6 +584,14 @@ public class RegisterBusinessModel : PageModel
         ClearDraft();
         Step = 7;
         return Page();
+    }
+
+    private int ToStoredServiceAreaMiles(int selected)
+    {
+        if (selected <= 0) return 0;
+        // Form chips are round local units (km in Colombia, mi in US/other).
+        if (!ServiceAreaUsesKm) return selected;
+        return Math.Max(1, (int)Math.Round(selected / 1.609344));
     }
 
     private const string DraftSessionKey = "RegisterBusiness.Draft";
