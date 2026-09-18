@@ -6114,6 +6114,36 @@ body.celebrate-open {
   width: min(100%, 440px);
   position: relative;
 }
+.onboard-biz .biz-hours-day {
+  margin-bottom: 8px;
+  overflow-x: clip;
+  max-width: 100%;
+  min-width: 0;
+}
+.onboard-biz .biz-hours-toggle {
+  margin-bottom: 8px;
+  padding-top: 0;
+  border-bottom: 1px dashed rgba(15, 61, 47, 0.1);
+}
+.onboard-biz .biz-hours-times {
+  display: flex;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+}
+.onboard-biz .biz-hours-times .form-group {
+  flex: 1 1 0;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+.onboard-biz .biz-hours-times .form-control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
 .onboard-biz .biz-progress {
   margin: 0 0 16px;
   height: 6px;
