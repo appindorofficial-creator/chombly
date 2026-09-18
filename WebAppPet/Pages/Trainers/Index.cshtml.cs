@@ -89,10 +89,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public bool More { get; set; }
 
-    public static readonly string[] TimeSlots =
-    {
-        "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "5:00 PM"
-    };
+    public static readonly string[] TimeSlots = BookingTime.DefaultSlots;
 
     public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> PastSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);

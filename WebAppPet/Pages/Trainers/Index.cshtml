@@ -36,19 +36,12 @@
         <partial name="_BookingDateField" model="new BookingDateFieldModel { Date = Model.Date, MinDate = minDate }" />
 
         <h3 class="section-title">@CatalogLocalizer.Loc("3. ¿A qué hora?", "3. What time?")</h3>
-        <div class="when-row" style="flex-wrap:wrap">
-            @foreach (var t in WebAppPet.Pages.Trainers.IndexModel.TimeSlots)
-            {
-                var past = Model.PastSlots.Contains(t);
-                var taken = Model.OccupiedSlots.Contains(t);
-                var blocked = past || taken;
-                <label class="when-chip @(Model.Slot == t ? "active" : "") @(blocked ? "is-disabled" : "")">
-                    <input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : "") @(blocked ? "disabled" : null)
-                           />
-                    @t@(past ? CatalogLocalizer.Loc(" · pasado", " · past") : taken ? CatalogLocalizer.Loc(" · ocupado", " · taken") : "")
-                </label>
-            }
-        </div>
+        <partial name="_BookingTimeSlots" model="new BookingTimeSlotsModel {
+            Slots = WebAppPet.Pages.Trainers.IndexModel.TimeSlots,
+            Selected = Model.Slot,
+            PastSlots = Model.PastSlots,
+            OccupiedSlots = Model.OccupiedSlots
+        }" />
 
         <h3 class="section-title">@CatalogLocalizer.Loc("4. ¿Dónde prefieres las clases?", "4. Where do you prefer classes?")</h3>
         <div class="filter-bar" style="flex-direction:column;align-items:stretch">

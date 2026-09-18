@@ -24,22 +24,15 @@
         <partial name="_BookingDateField" model="new BookingDateFieldModel { Date = Model.Date, MinDate = minDate }" />
 
         <h3 class="section-title">@CatalogLocalizer.Loc("2. ¿A qué hora?", "2. What time?")</h3>
-        <div class="when-row">
-            @foreach (var t in Model.AvailableTimeOptions)
-            {
-                <label class="when-chip @(Model.Slot == t.Key ? "active" : "")">
-                    <input type="radio" name="Slot" value="@t.Key" @(Model.Slot == t.Key ? "checked" : "") />
-                    @(t.Key == "ahora" ? CatalogLocalizer.Loc("Ahora", "Now") : t.Label)
-                </label>
-            }
-        </div>
-        @if (Model.HasDate && Model.AvailableTimeOptions.Count == 0)
+        <partial name="_BookingTimeSlots" model="new BookingTimeSlotsModel {
+            Slots = WebAppPet.Pages.Walkers.IndexModel.TimeSlots,
+            Selected = Model.Slot,
+            PastSlots = Model.PastSlots,
+            OccupiedSlots = Model.OccupiedSlots
+        }" />
+        @if (Model.HasDate && Model.PastSlots.Count == IndexModel.TimeSlots.Length)
         {
             <p class="field-error" role="alert">@CatalogLocalizer.Loc("No quedan horarios para esa fecha. Elige otro día.", "No times left for that date. Choose another day.")</p>
-        }
-        @if (!string.IsNullOrEmpty(Model.SuggestedTime))
-        {
-            <p class="muted small">@CatalogLocalizer.Loc("Hora sugerida:", "Suggested time:") @Model.SuggestedTime</p>
         }
 
         <h3 class="section-title">@CatalogLocalizer.Loc("3. ¿Cuánto tiempo?", "3. How long?")</h3>

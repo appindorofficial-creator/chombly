@@ -153,9 +153,14 @@ public static class BookingDate
     }
 }
 
-/// <summary>Shared wall-clock slot helpers for Trainers / Behavior / Booking / Vet.</summary>
+/// <summary>Shared wall-clock slot helpers for Trainers / Walkers / Behavior / Booking / Vet.</summary>
 public static class BookingTime
 {
+    public static readonly string[] DefaultSlots =
+    {
+        "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
+    };
+
     public static HashSet<string> MarkPastSlots(IEnumerable<string> slots, DateTime day)
     {
         var past = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -180,6 +185,46 @@ public static class BookingTime
         if (!catalog.Contains(slot, StringComparer.OrdinalIgnoreCase)) return false;
         if (past.Contains(slot)) return false;
         if (occupied.Contains(slot)) return false;
+        return true;
+    }
+
+    /// <summary>Maps legacy walker keys (ahora/manana9/tarde/noche) into DefaultSlots labels.</summary>
+    public static string? MapLegacySlot(string? slot)
+    {
+        if (string.IsNullOrWhiteSpace(slot)) return null;
+        var key = slot.Trim();
+        if (DefaultSlots.Contains(key, StringComparer.OrdinalIgnoreCase))
+            return DefaultSlots.First(s => s.Equals(key, StringComparison.OrdinalIgnoreCase));
+
+        return key.ToLowerInvariant() switch
+        {
+            "manana9" => "9:00 AM",
+            "tarde" => "1:00 PM",
+            "noche" => "5:00 PM",
+            "ahora" => null,
+            _ => null
+        };
+    }
+
+    public static bool TryResolveStartUtc(string? slot, DateTime day, out DateTime startUtc, out string? error)
+    {
+        error = null;
+        startUtc = default;
+        if (!AppTimeZones.TryParseSlotToTimeSpan(slot, out var tod))
+        {
+            error = CatalogLocalizer.Loc("Elige un horario.", "Choose a time slot.");
+            return false;
+        }
+
+        startUtc = AppTimeZones.LocalDateAndTimeToUtc(day.Date, tod);
+        if (startUtc <= DateTime.UtcNow)
+        {
+            error = CatalogLocalizer.Loc(
+                "No puedes elegir una fecha u hora en el pasado.",
+                "You can't select a past date or time.");
+            return false;
+        }
+
         return true;
     }
 }

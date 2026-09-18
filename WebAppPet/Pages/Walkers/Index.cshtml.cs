@@ -24,13 +24,7 @@ public class IndexModel : PageModel
         _promo = promo;
     }
 
-    public static readonly (string Key, string Label)[] TimeOptions =
-    {
-        ("ahora", "Ahora"),
-        ("manana9", "9:00 AM"),
-        ("tarde", "1:00 PM"),
-        ("noche", "6:00 PM")
-    };
+    public static readonly string[] TimeSlots = BookingTime.DefaultSlots;
 
     public static readonly int[] DurationOptions = { 30, 60, 90, 120 };
 
@@ -92,9 +86,10 @@ public class IndexModel : PageModel
     public string? PromoError { get; set; }
     public string? DateLabel { get; set; }
     public string? TimeLabel { get; set; }
-    public string? SuggestedTime { get; set; }
     public string? ErrorMessage { get; set; }
     public bool HasMore { get; set; }
+    public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> PastSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>True when the user has explicitly chosen a duration chip.</summary>
     public bool HasDuration => DurationOptions.Contains(Duration);
@@ -102,8 +97,7 @@ public class IndexModel : PageModel
     /// <summary>True when the user picked a valid booking date (today or later).</summary>
     public bool HasDate => BookingDate.TryParseSelected(Date, out _);
 
-    /// <summary>Time chips still valid for the selected day (hides past slots on today).</summary>
-    public List<(string Key, string Label)> AvailableTimeOptions { get; private set; } = new();
+    public bool HasSlot => BookingTime.IsSlotAvailable(Slot, TimeSlots, PastSlots, OccupiedSlots);
 
     /// <summary>Minutes shown on cards/estimates; 60 until the user picks a duration.</summary>
     public int DisplayDuration => HasDuration ? Duration : 60;
@@ -111,8 +105,7 @@ public class IndexModel : PageModel
     /// <summary>Steps 1–4 complete: date, time, duration, and pet.</summary>
     public bool HasBookingBasics =>
         HasDate
-        && !string.IsNullOrWhiteSpace(Slot)
-        && AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase))
+        && HasSlot
         && HasDuration
         && PetId > 0
         && SelectedPet != null;
@@ -143,19 +136,11 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (!HasDate || string.IsNullOrWhiteSpace(Slot) || !DurationOptions.Contains(Duration))
+        if (!HasDate || !HasSlot || !DurationOptions.Contains(Duration))
         {
             ErrorMessage = CatalogLocalizer.Loc(
                 "Elige fecha, a qué hora y cuánto tiempo dura el paseo.",
                 "Choose a date, what time, and how long the walk should be.");
-            return Page();
-        }
-
-        if (!AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase)))
-        {
-            ErrorMessage = CatalogLocalizer.Loc(
-                "Esa hora ya no está disponible. Elige otro horario.",
-                "That time is no longer available. Choose another slot.");
             return Page();
         }
 
@@ -174,8 +159,13 @@ public class IndexModel : PageModel
         }
 
         ResolveDate(out var day);
-        ResolveStart(day, out var start);
-        var end = start.AddMinutes(Duration);
+        if (!BookingTime.TryResolveStartUtc(Slot, day, out var startUtc, out var scheduleError))
+        {
+            ErrorMessage = scheduleError;
+            return Page();
+        }
+
+        var endUtc = startUtc.AddMinutes(Duration);
 
         var subtotal = PriceForDuration(SelectedService, SelectedPet);
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
@@ -213,8 +203,8 @@ public class IndexModel : PageModel
             PetId = SelectedPet.Id,
             GroomerId = SelectedWalker.Id,
             ServiceId = SelectedService.Id,
-            ScheduledAt = start,
-            EndAt = end,
+            ScheduledAt = startUtc,
+            EndAt = endUtc,
             Nights = 0,
             Status = AppointmentStatus.Pending,
             TotalPrice = total,
@@ -236,7 +226,7 @@ public class IndexModel : PageModel
         {
             UserId = SelectedWalker.UserId,
             Title = "Nueva solicitud de paseo",
-            Message = $"{SelectedPet.Name} · {start:g} · {Duration} min.",
+            Message = $"{SelectedPet.Name} · {AppTimeZones.FormatShort(startUtc)} · {Duration} min.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -256,28 +246,20 @@ public class IndexModel : PageModel
 
         Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "walkers" && c.IsActive);
         (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
+        Slot = BookingTime.MapLegacySlot(Slot) ?? "";
         ResolveDate(out var day);
-        DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
+        PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
+        OccupiedSlots.Clear();
+        if (GroomerId is int walkerId && HasDate)
+            await LoadOccupiedSlotsAsync(walkerId, day);
 
-        AvailableTimeOptions = HasDate ? GetAvailableTimeOptions(day) : new();
         if (!string.IsNullOrWhiteSpace(Slot) &&
-            !AvailableTimeOptions.Any(t => string.Equals(t.Key, Slot, StringComparison.OrdinalIgnoreCase)))
-        {
+            (PastSlots.Contains(Slot) || OccupiedSlots.Contains(Slot) ||
+             !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase)))
             Slot = "";
-        }
 
-        ResolveStart(day, out var start);
-        SuggestedTime = string.IsNullOrWhiteSpace(Slot) ? null : start.ToString("h:mm tt");
-        TimeLabel = Slot switch
-        {
-            "ahora" => SuggestedTime != null
-                ? CatalogLocalizer.Loc($"Ahora (~{SuggestedTime})", $"Now (~{SuggestedTime})")
-                : CatalogLocalizer.Loc("Ahora", "Now"),
-            "manana9" => "9:00 AM",
-            "tarde" => "1:00 PM",
-            "noche" => "6:00 PM",
-            _ => null
-        };
+        DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
+        TimeLabel = HasSlot ? Slot : null;
 
         double? userLat = null, userLng = null;
         if (_auth.CurrentUserId is int userId)
@@ -446,56 +428,29 @@ public class IndexModel : PageModel
         day = AppTimeZones.TodayLocalDate();
     }
 
-    private List<(string Key, string Label)> GetAvailableTimeOptions(DateTime day)
+    private async Task LoadOccupiedSlotsAsync(int groomerId, DateTime day)
     {
-        var today = AppTimeZones.TodayLocalDate();
-        var nowLocal = AppTimeZones.NowLocal();
-        var list = new List<(string Key, string Label)>();
+        OccupiedSlots.Clear();
+        var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
+        var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
+        var taken = await _db.Appointments.AsNoTracking()
+            .Where(a => a.GroomerId == groomerId
+                        && a.Status != AppointmentStatus.Cancelled
+                        && a.ScheduledAt >= from
+                        && a.ScheduledAt < to)
+            .Select(a => a.ScheduledAt)
+            .ToListAsync();
 
-        foreach (var opt in TimeOptions)
+        foreach (var utc in taken)
         {
-            if (opt.Key == "ahora")
+            var local = AppTimeZones.ToAppLocal(utc);
+            foreach (var label in TimeSlots)
             {
-                if (day.Date == today)
-                    list.Add(opt);
-                continue;
+                if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var slotTod)) continue;
+                if (slotTod == local.TimeOfDay)
+                    OccupiedSlots.Add(label);
             }
-
-            // Build the slot on the selected calendar day and drop it if already past.
-            var probe = day.Date;
-            ResolveStartForSlot(opt.Key, probe, nowLocal, out var start);
-            if (day.Date > today || start > nowLocal)
-                list.Add(opt);
         }
-
-        return list;
-    }
-
-    private void ResolveStart(DateTime day, out DateTime start)
-    {
-        ResolveStartForSlot(Slot, day, AppTimeZones.NowLocal(), out start);
-    }
-
-    private static void ResolveStartForSlot(string? slot, DateTime day, DateTime nowLocal, out DateTime start)
-    {
-        if (slot == "ahora")
-        {
-            if (day.Date == AppTimeZones.TodayLocalDate())
-            {
-                start = nowLocal.AddMinutes(15);
-                start = new DateTime(start.Year, start.Month, start.Day, start.Hour, (start.Minute / 5) * 5, 0);
-            }
-            else
-                start = day.Date.AddHours(9);
-        }
-        else if (slot == "manana9")
-            start = day.Date.AddHours(9);
-        else if (slot == "noche")
-            start = day.Date.AddHours(18);
-        else if (slot == "tarde")
-            start = day.Date.AddHours(13);
-        else
-            start = day.Date.AddHours(13); // listing fallback only; booking requires Slot
     }
 
     public class WalkerCardVm
