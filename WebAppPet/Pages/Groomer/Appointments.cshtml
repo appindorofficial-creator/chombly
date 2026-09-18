@@ -29,7 +29,7 @@
             <div class="row" style="margin-bottom:10px">
                 <img src="@PetSpecies.PhotoOrDefault(a.Pet.PhotoUrl, a.Pet.Species)" alt="@a.Pet.Name" style="border-radius:50%" />
                 <div style="flex:1">
-                    <strong>@a.Pet.Name · @a.Service.Name</strong>
+                    <strong>@a.Pet.Name · @CatalogLocalizer.Text(a.Service.Name)</strong>
                     <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM yyyy · h:mm tt")</div>
                     <span class="price">$@a.TotalPrice.ToString("0.00")</span>
                 </div>
@@ -39,7 +39,7 @@
             <div class="card-pad" style="background:var(--purple-soft);border-radius:12px;padding:10px 12px;margin-bottom:10px">
                 <strong class="small">@CatalogLocalizer.Loc("Cliente y mascota", "Client & pet")</strong>
                 <div class="muted small">👤 @a.Client.FullName · 📞 @(a.Client.Phone ?? CatalogLocalizer.Loc("sin teléfono", "no phone"))</div>
-                <div class="muted small">@PetSpecies.Emoji(a.Pet.Species) @a.Pet.Species · @a.Pet.Breed · @a.Pet.AgeYears @L["Pets_Years"] · @a.Pet.Temperament</div>
+                <div class="muted small">@PetSpecies.Emoji(a.Pet.Species) @PetSpecies.Label(a.Pet.Species) · @PetCatalog.DisplayBreed(a.Pet.Species, a.Pet.Breed) · @a.Pet.AgeYears @L["Pets_Years"] · @PetCatalog.DisplayTemperament(a.Pet.Temperament)</div>
                 @if (a.Pet.IsAnxious || a.Pet.IsSenior || a.Pet.HasSpecialNeeds)
                 {
                     <div class="muted small">
@@ -48,7 +48,7 @@
                 }
                 @if (!string.IsNullOrWhiteSpace(a.Notes))
                 {
-                    <div class="muted small">📝 @a.Notes</div>
+                    <div class="muted small">📝 @CatalogLocalizer.Notes(a.Notes)</div>
                 }
             </div>
 

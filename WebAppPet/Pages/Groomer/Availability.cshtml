@@ -130,7 +130,7 @@
                     var d = Model.Days[i];
                     <form method="post" asp-page-handler="Toggle" class="agenda-cal-cell @(d.IsAvailable ? "is-open" : "is-closed")" style="--i:@Math.Min(i, 11)">
                         <input type="hidden" name="id" value="@d.Id" />
-                        <button type="submit" class="agenda-cal-btn" title="@(d.Note ?? (d.IsAvailable ? CatalogLocalizer.Loc("Disponible", "Available") : closedLabel))">
+                        <button type="submit" class="agenda-cal-btn" title="@(string.IsNullOrWhiteSpace(d.Note) ? (d.IsAvailable ? CatalogLocalizer.Loc("Disponible", "Available") : closedLabel) : CatalogLocalizer.Text(d.Note))">
                             <span class="agenda-cal-dow">@d.Day.ToString("ddd")</span>
                             <span class="agenda-cal-num">@d.Day.Day</span>
                             <span class="agenda-cal-state">@(d.IsAvailable ? openLabel : closedLabel)</span>

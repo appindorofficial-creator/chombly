@@ -94,7 +94,7 @@
             <div class="row">
                 <img src="@PetSpecies.PhotoOrDefault(a.Pet.PhotoUrl, a.Pet.Species)" alt="@a.Pet.Name" style="border-radius:50%" />
                 <div style="flex:1">
-                    <strong>@a.Pet.Name · @a.Service.Name</strong>
+                    <strong>@a.Pet.Name · @CatalogLocalizer.Text(a.Service.Name)</strong>
                     <div class="muted small">@a.Client.FullName</div>
                     <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM · h:mm tt")</div>
                 </div>
