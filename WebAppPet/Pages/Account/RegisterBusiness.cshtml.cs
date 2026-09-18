@@ -268,15 +268,20 @@ public class RegisterBusinessModel : PageModel
                 }
                 break;
             case 1:
-                if (string.IsNullOrWhiteSpace(FullName) || string.IsNullOrWhiteSpace(BusinessName)
-                    || string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(City))
+                FullName = (FullName ?? "").Trim();
+                BusinessName = (BusinessName ?? "").Trim();
+                Email = (Email ?? "").Trim();
+                City = (City ?? "").Trim();
+                Phone = (Phone ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(FullName))
                 {
-                    ErrorMessage = _L["Biz_ErrBasicRequired"].Value;
+                    ErrorMessage = _L["Profile_Edit_NameRequired"].Value;
                     return false;
                 }
-                if (!new EmailAddressAttribute().IsValid(Email))
+                if (string.IsNullOrWhiteSpace(BusinessName))
                 {
-                    ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
+                    ErrorMessage = _L["Biz_ErrBusinessNameRequired"].Value;
                     return false;
                 }
                 if (string.IsNullOrWhiteSpace(Phone))
@@ -290,6 +295,16 @@ public class RegisterBusinessModel : PageModel
                     return false;
                 }
                 Phone = phoneNorm!;
+                if (string.IsNullOrWhiteSpace(Email) || !new EmailAddressAttribute().IsValid(Email))
+                {
+                    ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
+                    return false;
+                }
+                if (string.IsNullOrWhiteSpace(City) || (Latitude == 0 && Longitude == 0))
+                {
+                    ErrorMessage = _L["Register_LocationRequired"].Value;
+                    return false;
+                }
                 break;
             case 2:
                 SyncPrimaryCategoryId();

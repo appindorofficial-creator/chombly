@@ -459,6 +459,7 @@
   <data name="Biz_Loading" xml:space="preserve"><value>Cargando…</value></data>
   <data name="Biz_ErrChooseType" xml:space="preserve"><value>Elige cómo quieres usar Chombly.</value></data>
   <data name="Biz_ErrBasicRequired" xml:space="preserve"><value>Completa nombre, negocio, email y ciudad.</value></data>
+  <data name="Biz_ErrBusinessNameRequired" xml:space="preserve"><value>El nombre del negocio es obligatorio.</value></data>
   <data name="Biz_ErrNoCategories" xml:space="preserve"><value>No hay categorías disponibles. Intenta más tarde.</value></data>
   <data name="Biz_ErrPickService" xml:space="preserve"><value>Elige al menos un tipo de servicio.</value></data>
   <data name="Biz_ErrOpenDay" xml:space="preserve"><value>Abre al menos un día en tu horario.</value></data>

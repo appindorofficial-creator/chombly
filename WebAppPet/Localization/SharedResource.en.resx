@@ -445,6 +445,7 @@
   <data name="Biz_Loading" xml:space="preserve"><value>Loading…</value></data>
   <data name="Biz_ErrChooseType" xml:space="preserve"><value>Choose how you want to use Chombly.</value></data>
   <data name="Biz_ErrBasicRequired" xml:space="preserve"><value>Fill in name, business, email and city.</value></data>
+  <data name="Biz_ErrBusinessNameRequired" xml:space="preserve"><value>Business name is required.</value></data>
   <data name="Biz_ErrNoCategories" xml:space="preserve"><value>No categories available. Try again later.</value></data>
   <data name="Biz_ErrPickService" xml:space="preserve"><value>Choose at least one service type.</value></data>
   <data name="Biz_ErrOpenDay" xml:space="preserve"><value>Open at least one day in your schedule.</value></data>
