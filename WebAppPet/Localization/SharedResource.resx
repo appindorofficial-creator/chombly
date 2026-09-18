@@ -595,7 +595,7 @@
   <data name="BizPanel_UnitDay" xml:space="preserve"><value>día</value></data>
   <data name="BizPanel_UnitVisit" xml:space="preserve"><value>visita</value></data>
   <data name="BizPanel_AddService" xml:space="preserve"><value>Agregar servicio</value></data>
-  <data name="BizPanel_Amenities" xml:space="preserve"><value>Amenities</value></data>
+  <data name="BizPanel_Amenities" xml:space="preserve"><value>Amenidades</value></data>
   <data name="BizPanel_AmenityPh" xml:space="preserve"><value>Cámaras 24/7</value></data>
   <data name="BizPanel_ExtraPh" xml:space="preserve"><value>Baño adicional</value></data>
   <data name="BizPanel_Updated" xml:space="preserve"><value>Negocio actualizado.</value></data>
