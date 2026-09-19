@@ -43,13 +43,13 @@
         <section>
             <h2 class="section-title">@CatalogLocalizer.Loc("Horario", "Schedule")</h2>
             <div class="filter-bar filter-bar-wrap">
-                <label class="chip"><input type="radio" name="When" value="hoy" checked="@(Model.When == "hoy")" /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
-                <label class="chip"><input type="radio" name="When" value="mañana" checked="@(Model.When == "mañana")" /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
+                <label class="chip"><input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : null) /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
+                <label class="chip"><input type="radio" name="When" value="mañana" @(Model.When == "mañana" ? "checked" : null) /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
             </div>
             <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
                 @foreach (var t in Model.TimeSlots)
                 {
-                    <label class="chip"><input type="radio" name="Slot" value="@t" checked="@(Model.Slot == t)" /> @t</label>
+                    <label class="chip"><input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : null) /> @t</label>
                 }
             </div>
         </section>

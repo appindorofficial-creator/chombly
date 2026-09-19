@@ -4,42 +4,119 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Cómo buscar", "How to search");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/International/Home", new { consultationId = Model.ConsultationId });
+    var best = Model.Mode == IntlMatchMode.Best;
+    var country = Model.Mode == IntlMatchMode.Country;
+    var breed = Model.Mode == IntlMatchMode.Breed;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Estrategia de coincidencia", "Match strategy")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("País, raza o mejor combinación", "Country, breed, or best combination")</p>
-    @if (!string.IsNullOrWhiteSpace(Model.PetBreed))
-    {
-        <p class="muted small">@CatalogLocalizer.Loc("Raza en perfil:", "Breed on profile:") <strong>@Model.PetBreed</strong></p>
-    }
+    <div class="home-body hotel-flow intl-match-page">
+        <p class="intl-home-kicker">@CatalogLocalizer.Loc("Orientación internacional", "International guidance")</p>
+        <h1 class="app-page-heading intl-match-title">
+            @CatalogLocalizer.Loc("¿Cómo quieres encontrar a tu veterinario?", "How do you want to find your vet?")
+        </h1>
+        <p class="muted intl-match-lead">
+            @CatalogLocalizer.Loc(
+                "Elige el criterio principal. Podrás ajustar el resto después.",
+                "Pick the main filter. You can refine the rest next.")
+        </p>
 
-    <form method="post" class="stack" style="gap:12px">
-        <input type="hidden" asp-for="ConsultationId" />
-        <label class="radio-card">
-            <input type="radio" name="Mode" value="@IntlMatchMode.Best" checked="@(Model.Mode == IntlMatchMode.Best)" />
-            <span>
-                <strong>@CatalogLocalizer.Loc("Mejor combinación", "Best match")</strong>
-                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("País, idioma, raza y disponibilidad", "Country, language, breed, and availability")</span>
-            </span>
-        </label>
-        <label class="radio-card">
-            <input type="radio" name="Mode" value="@IntlMatchMode.Country" checked="@(Model.Mode == IntlMatchMode.Country)" />
-            <span>
-                <strong>@CatalogLocalizer.Loc("Por país", "By country")</strong>
-                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Elige un mercado Disponible o únete a la lista de espera", "Pick an Available market or join the waitlist")</span>
-            </span>
-        </label>
-        <label class="radio-card">
-            <input type="radio" name="Mode" value="@IntlMatchMode.Breed" checked="@(Model.Mode == IntlMatchMode.Breed)" />
-            <span>
-                <strong>@CatalogLocalizer.Loc("Por experiencia con la raza", "By breed experience")</strong>
-                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("No se deduce de la nacionalidad", "Not inferred from nationality")</span>
-            </span>
-        </label>
-        <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
-    </form>
+        @if (!string.IsNullOrWhiteSpace(Model.PetBreed))
+        {
+            <div class="intl-match-breed" role="status">
+                <span class="intl-match-breed-label">@CatalogLocalizer.Loc("Raza en perfil", "Breed on profile")</span>
+                <strong class="intl-match-breed-value">@Model.PetBreed</strong>
+            </div>
+        }
+
+        <form method="post" class="intl-match-form" data-intl-match-form>
+            <input type="hidden" asp-for="ConsultationId" />
+
+            <div class="intl-match-options" role="radiogroup" aria-label="@CatalogLocalizer.Loc("Estrategia de coincidencia", "Match strategy")">
+                <label class="intl-match-option @(best ? "is-selected" : null)">
+                    <input type="radio" name="Mode" value="@IntlMatchMode.Best" checked="@best" />
+                    <span class="intl-match-option-inner">
+                        <span class="intl-match-option-ico" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.8 5.4H19l-4.4 3.2 1.7 5.4L12 14.8 7.7 17l1.7-5.4L5 8.4h5.2L12 3z"/></svg>
+                        </span>
+                        <span class="intl-match-option-copy">
+                            <span class="intl-match-option-title-row">
+                                <strong>@CatalogLocalizer.Loc("Mejor combinación", "Best match")</strong>
+                                <span class="intl-match-pill">@CatalogLocalizer.Loc("Recomendado", "Recommended")</span>
+                            </span>
+                            <span class="intl-match-option-desc">
+                                @CatalogLocalizer.Loc(
+                                    "País, idioma, raza y disponibilidad en un solo ranking.",
+                                    "Country, language, breed, and availability in one ranking.")
+                            </span>
+                        </span>
+                        <span class="intl-match-check" aria-hidden="true"></span>
+                    </span>
+                </label>
+
+                <label class="intl-match-option @(country ? "is-selected" : null)">
+                    <input type="radio" name="Mode" value="@IntlMatchMode.Country" checked="@country" />
+                    <span class="intl-match-option-inner">
+                        <span class="intl-match-option-ico" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                        </span>
+                        <span class="intl-match-option-copy">
+                            <strong>@CatalogLocalizer.Loc("Por país", "By country")</strong>
+                            <span class="intl-match-option-desc">
+                                @CatalogLocalizer.Loc(
+                                    "Elige un mercado Disponible o únete a la lista de espera.",
+                                    "Pick an Available market or join the waitlist.")
+                            </span>
+                        </span>
+                        <span class="intl-match-check" aria-hidden="true"></span>
+                    </span>
+                </label>
+
+                <label class="intl-match-option @(breed ? "is-selected" : null)">
+                    <input type="radio" name="Mode" value="@IntlMatchMode.Breed" checked="@breed" />
+                    <span class="intl-match-option-inner">
+                        <span class="intl-match-option-ico" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14c-1.2 0-2.5.8-2.5 2.2S7.2 19 9 19c2.2 0 4.5-1.4 5.5-3.2.6-1.1.7-2.3.3-3.3-.5-1.2-1.8-1.8-3.1-1.5C9.8 11.4 8.6 12.6 8 14z"/><circle cx="7.2" cy="8.2" r="1.6"/><circle cx="11.5" cy="6.8" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="17.5" cy="12.8" r="1.5"/></svg>
+                        </span>
+                        <span class="intl-match-option-copy">
+                            <strong>@CatalogLocalizer.Loc("Por experiencia con la raza", "By breed experience")</strong>
+                            <span class="intl-match-option-desc">
+                                @CatalogLocalizer.Loc(
+                                    "Prioriza quien ya trata esa raza — no se deduce de la nacionalidad.",
+                                    "Prioritize who already treats that breed — not inferred from nationality.")
+                            </span>
+                        </span>
+                        <span class="intl-match-check" aria-hidden="true"></span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="intl-match-cta">
+                <p class="muted small intl-match-fineprint">
+                    @CatalogLocalizer.Loc(
+                        "Orientación remota · no emergencia · no receta de EE.UU.",
+                        "Remote guidance · not emergency · no U.S. prescription")
+                </p>
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    @L["Common_Continue"]
+                </button>
+            </div>
+        </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+@section Scripts {
+<script>
+(function () {
+  var form = document.querySelector('[data-intl-match-form]');
+  if (!form) return;
+  form.querySelectorAll('.intl-match-option input[type="radio"]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      form.querySelectorAll('.intl-match-option').forEach(function (opt) {
+        opt.classList.toggle('is-selected', opt.querySelector('input') === input && input.checked);
+      });
+    });
+  });
+})();
+</script>
+}

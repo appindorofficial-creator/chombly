@@ -43,8 +43,8 @@ public class ConsentModel : PageModel
     [BindProperty] public bool AcceptScope { get; set; }
     [BindProperty] public bool AcceptMedia { get; set; }
     [BindProperty] public bool AcceptRenewal { get; set; }
-    [BindProperty] public string Slot { get; set; } = "10:30 AM";
-    [BindProperty] public string When { get; set; } = "hoy";
+    [BindProperty] public string? Slot { get; set; }
+    [BindProperty] public string? When { get; set; }
 
     public Consultation? Consultation { get; set; }
     public GroomerProfile? Provider { get; set; }
@@ -81,6 +81,14 @@ public class ConsentModel : PageModel
         if (UsingCare && !AcceptRenewal && CareBenefit == 0)
         {
             // Only required when activating Care — if already using benefit, skip
+        }
+
+        if (string.IsNullOrWhiteSpace(When) ||
+            (!string.Equals(When, "hoy", StringComparison.OrdinalIgnoreCase) &&
+             !string.Equals(When, "mañana", StringComparison.OrdinalIgnoreCase)))
+        {
+            ErrorMessage = CatalogLocalizer.Loc("Elige un día.", "Choose a day.");
+            return Page();
         }
 
         if (!AppTimeZones.TryParseSlotToTimeSpan(Slot, out var tod))
