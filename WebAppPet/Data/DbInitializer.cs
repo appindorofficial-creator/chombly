@@ -1584,7 +1584,8 @@ public static class DbInitializer
         await EnsureBreedsAsync("vet.intl@chombly.com",
             ("Pastor alemán", "Casos clínicos verificados (demo)"),
             ("Labrador", "Experiencia clínica (demo)"),
-            ("Golden Retriever", "Seguimiento nutricional (demo)"));
+            ("Golden Retriever", "Seguimiento nutricional (demo)"),
+            ("Chihuahua", "Razas toy (demo)"));
         await EnsureBreedsAsync("vet.sv@chombly.com",
             ("Chihuahua", "Razas toy (demo)"),
             ("Poodle", "Experiencia clínica (demo)"),
@@ -1592,7 +1593,8 @@ public static class DbInitializer
         await EnsureBreedsAsync("vet.mx@chombly.com",
             ("Pastor alemán", "Ortopedia y raza (demo)"),
             ("Husky siberiano", "Experiencia verificada (demo)"),
-            ("Bulldog", "Cuidados respiratorios (demo)"));
+            ("Bulldog", "Cuidados respiratorios (demo)"),
+            ("Chihuahua", "Razas toy (demo)"));
     }
 
     private static async Task BackfillAcceptedSpeciesAsync(AppDbContext db)

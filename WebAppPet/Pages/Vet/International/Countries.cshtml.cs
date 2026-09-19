@@ -82,7 +82,7 @@ public class CountriesModel : PageModel
         Consultation.MatchMode = IntlMatchMode.Country;
         await _flow.TouchAsync(Consultation);
         await _audit.LogAsync("country_selected", _auth.CurrentUserId, "Consultation", ConsultationId, new { country.Iso2 });
-        return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+        return RedirectToPage("/Vet/International/MatchMode", new { consultationId = ConsultationId });
     }
 
     public async Task<IActionResult> OnPostWaitlistAsync()
