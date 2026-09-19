@@ -3663,7 +3663,7 @@ body.chat-layout .chat-page {
   background: transparent;
   border-radius: 12px;
 }
-.hotel-flow.has-summary { padding-bottom: min(58vh, 420px); }
+.hotel-flow.has-summary { padding-bottom: min(82vh, 620px); }
 .hotel-flow.has-summary.is-summary-collapsed { padding-bottom: 108px; }
 
 .hotel-summary {
@@ -3713,7 +3713,8 @@ body.chat-layout .chat-page {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  max-height: min(72vh, 640px);
+  /* Fill the overlay (above bottom nav) so the sheet sits under the header, not mid-screen. */
+  max-height: calc(100% - 8px);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -7453,6 +7454,9 @@ body.celebrate-open {
   box-shadow: 0 0 0 2px var(--brand-soft), 0 12px 28px rgba(7, 61, 46, 0.1);
 }
 .hotel-summary:not(.is-collapsed) .hotel-summary-inner {
+  /* Sit high under the header: fill the overlay instead of a short bottom card. */
+  min-height: calc(100% - 8px);
+  max-height: calc(100% - 8px);
   animation: ch-sheet-up var(--motion-slow) var(--ease-emphasized) both;
 }
 @keyframes ch-sheet-up {
