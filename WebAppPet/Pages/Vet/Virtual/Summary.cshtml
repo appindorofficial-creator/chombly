@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Resumen", "Summary");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Appointments/Index");
+    ViewData["OnboardBackHref"] = Model.BackHref;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -36,6 +36,7 @@
 
     <form method="post" asp-page-handler="Save" class="stack" style="gap:12px">
         <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" asp-for="ReturnUrl" />
         <h2 class="section-title">@CatalogLocalizer.Loc("Notas / seguimiento", "Notes / follow-up")</h2>
         <textarea class="input" asp-for="ClinicalNotes" rows="4" placeholder="@CatalogLocalizer.Loc("Notas para el historial…", "Notes for the record…")"></textarea>
         <button type="submit" class="btn btn-primary btn-block">@CatalogLocalizer.Loc("Guardar en historial", "Save to history")</button>

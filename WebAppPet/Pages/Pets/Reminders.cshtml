@@ -6,7 +6,7 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc($"Recordatorios · {Model.Pet?.Name}", $"Reminders · {Model.Pet?.Name}");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Pets/Care", new { id = Model.Id });
+    ViewData["OnboardBackHref"] = Url.Page("/Pets/Index");
     var HideNav = ViewData["HideNav"] as bool? == true;
     var minDueDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
     string ReminderTypeLabel(ReminderType t) => t switch

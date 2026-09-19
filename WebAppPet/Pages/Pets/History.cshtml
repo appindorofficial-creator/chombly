@@ -6,9 +6,10 @@
     ViewData["Title"] = L["Pets_HistoryTitle"].Value;
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("./Index");
+    ViewData["OnboardBackHref"] = Model.BackHref;
     var HideNav = true;
     var petName = Model.Pet?.Name ?? L["Pets_HistoryPetFallback"].Value;
+    var hasAny = Model.Items.Count > 0 || Model.Consults.Count > 0;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -25,23 +26,51 @@
         </div>
     }
 
-    @if (!Model.Items.Any())
+    @if (!hasAny)
     {
         <div class="empty">@L["Pets_HistoryEmpty"]</div>
     }
-    @foreach (var a in Model.Items)
+
+    @if (Model.Consults.Count > 0)
     {
-        <div class="appt-card">
-            <div class="row">
-                <img src="@(a.Groomer?.ImageUrl)" alt="@(a.Groomer?.BusinessName)" />
-                <div style="flex:1">
-                    <strong>@CatalogLocalizer.Text(a.Service?.Name)</strong>
-                    <div class="muted small">@(a.Groomer?.BusinessName)</div>
-                    <div class="muted small">@AppTimeZones.FormatDate(a.ScheduledAt)</div>
+        <h2 class="section-title">@CatalogLocalizer.Loc("Consultas", "Consults")</h2>
+        @foreach (var c in Model.Consults)
+        {
+            <a class="appt-card" asp-page="/Vet/Virtual/Summary" asp-route-id="@c.Id" asp-route-returnUrl="@Model.BackHref" style="display:block;text-decoration:none;color:inherit;margin-bottom:8px">
+                <div class="row">
+                    @if (!string.IsNullOrWhiteSpace(c.Provider?.ImageUrl))
+                    {
+                        <img src="@c.Provider.ImageUrl" alt="@VetDisplay.ConsultationTitle(c)" />
+                    }
+                    <div style="flex:1">
+                        <strong>@VetDisplay.ConsultationTitle(c)</strong>
+                        <div class="muted small">@VetDisplay.StatusLabel(c.Status)</div>
+                        <div class="muted small">@AppTimeZones.FormatDate(VetDisplay.SortAt(c))</div>
+                    </div>
                 </div>
-                <span class="price">$@a.TotalPrice.ToString("0")</span>
+            </a>
+        }
+    }
+
+    @if (Model.Items.Count > 0)
+    {
+        <h2 class="section-title" style="@(Model.Consults.Count > 0 ? "margin-top:18px" : null)">
+            @CatalogLocalizer.Loc("Servicios", "Services")
+        </h2>
+        @foreach (var a in Model.Items)
+        {
+            <div class="appt-card">
+                <div class="row">
+                    <img src="@(a.Groomer?.ImageUrl)" alt="@(a.Groomer?.BusinessName)" />
+                    <div style="flex:1">
+                        <strong>@CatalogLocalizer.Text(a.Service?.Name)</strong>
+                        <div class="muted small">@(a.Groomer?.BusinessName)</div>
+                        <div class="muted small">@AppTimeZones.FormatDate(a.ScheduledAt)</div>
+                    </div>
+                    <span class="price">$@a.TotalPrice.ToString("0")</span>
+                </div>
             </div>
-        </div>
+        }
     }
     </div>
     @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }

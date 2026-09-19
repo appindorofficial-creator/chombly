@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = L["Vet_Title"].Value;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Index");
+    ViewData["OnboardBackHref"] = Model.BackHref;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />

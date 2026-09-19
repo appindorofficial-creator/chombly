@@ -24,12 +24,16 @@ public class SummaryModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int Id { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     [BindProperty]
     public string? ClinicalNotes { get; set; }
 
     public Consultation? Consultation { get; set; }
     public ServiceCatalogItem? CatalogItem { get; set; }
     public string? Message { get; set; }
+    public string BackHref { get; private set; } = "/Appointments";
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -42,6 +46,10 @@ public class SummaryModel : PageModel
             .FirstOrDefaultAsync(c => c.Id == Id && c.ClientId == _auth.CurrentUserId);
 
         if (Consultation is null) return RedirectToPage("/Vet/Index");
+
+        BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
+            ? ReturnUrl!
+            : Url.Page("/Appointments/Index") ?? "/Appointments";
 
         CatalogItem = await _catalog.GetAsync(Consultation.ServiceCatalogCode ?? "");
         ClinicalNotes = Consultation.ClinicalNotes;
@@ -58,6 +66,10 @@ public class SummaryModel : PageModel
             .FirstOrDefaultAsync(c => c.Id == Id && c.ClientId == _auth.CurrentUserId);
 
         if (Consultation is null) return RedirectToPage("/Vet/Index");
+
+        BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
+            ? ReturnUrl!
+            : Url.Page("/Appointments/Index") ?? "/Appointments";
 
         Consultation.ClinicalNotes = ClinicalNotes?.Trim();
         Consultation.UpdatedAt = DateTime.UtcNow;

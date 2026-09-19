@@ -20,6 +20,11 @@ public class HistoryModel : PageModel
 
     public Pet? Pet { get; set; }
     public List<Appointment> Items { get; set; } = new();
+    public List<Consultation> Consults { get; set; } = new();
+    public string BackHref { get; private set; } = "/Pets";
+
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -30,11 +35,22 @@ public class HistoryModel : PageModel
         if (Pet == null)
             return RedirectToPage("./Index");
 
+        BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
+            ? ReturnUrl!
+            : Url.Page("./Index") ?? "/Pets";
+
         Items = await _db.Appointments
             .Include(a => a.Groomer)
             .Include(a => a.Service)
             .Where(a => a.PetId == id && a.Status == AppointmentStatus.Completed)
             .OrderByDescending(a => a.ScheduledAt)
+            .ToListAsync();
+
+        Consults = await _db.Consultations
+            .AsNoTracking()
+            .Include(c => c.Provider)
+            .Where(c => c.ClientId == userId && c.PetId == id)
+            .OrderByDescending(c => c.ScheduledAt ?? c.UpdatedAt)
             .ToListAsync();
 
         return Page();

@@ -25,7 +25,18 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? PetId { get; set; }
 
-    public IActionResult OnGet() => Page();
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    public string BackHref { get; private set; } = "/";
+
+    public IActionResult OnGet()
+    {
+        BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
+            ? ReturnUrl!
+            : Url.Page("/Index") ?? "/";
+        return Page();
+    }
 
     public async Task<IActionResult> OnPostStartVirtualAsync()
     {

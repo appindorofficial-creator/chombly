@@ -26,7 +26,7 @@
                 · @CatalogLocalizer.Loc("Renueva", "Renews") @AppTimeZones.FormatDate(Model.Subscription.CurrentPeriodEnd)
             </p>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-                <a class="btn btn-primary btn-sm" asp-page="/Vet/Index">@CatalogLocalizer.Loc("Hablar con mi equipo virtual", "Talk to my virtual team")</a>
+                <a class="btn btn-primary btn-sm" asp-page="/Vet/Index" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))">@CatalogLocalizer.Loc("Hablar con mi equipo virtual", "Talk to my virtual team")</a>
                 <a class="btn btn-outline btn-sm" asp-page="/Plans/ChomblyCare" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))">@CatalogLocalizer.Loc("Gestionar plan", "Manage plan")</a>
             </div>
         }
@@ -48,7 +48,7 @@
         {
             @foreach (var a in Model.Upcoming)
             {
-                <a class="card card-pad" asp-page="/Appointments/Details" asp-route-id="@a.Id" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
+                <a class="card card-pad" asp-page="/Appointments/Details" asp-route-id="@a.Id" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
                     <strong>@a.Groomer.BusinessName</strong>
                     <span class="muted small" style="display:block">@AppTimeZones.FormatShort(a.ScheduledAt) · @a.Service.Name</span>
                 </a>
@@ -66,10 +66,10 @@
         {
             @foreach (var c in Model.RecentConsults)
             {
-                <a class="card card-pad" asp-page="/Vet/Virtual/Summary" asp-route-id="@c.Id" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
-                    <strong>@(c.Provider?.BusinessName ?? "—")</strong>
+                <a class="card card-pad" asp-page="/Vet/Virtual/Summary" asp-route-id="@c.Id" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
+                    <strong>@VetDisplay.ConsultationTitle(c)</strong>
                     <span class="muted small" style="display:block">
-                        @c.Status · @(c.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : AppTimeZones.FormatShort(c.UpdatedAt))
+                        @VetDisplay.StatusLabel(c.Status) · @AppTimeZones.FormatShort(VetDisplay.SortAt(c))
                         @if (c.UsesCareBenefit) { <text>· Care</text> }
                     </span>
                 </a>
@@ -78,7 +78,7 @@
     </section>
 
     <div style="display:flex;flex-direction:column;gap:8px">
-        <a class="btn btn-outline btn-block" asp-page="/Pets/History" asp-route-id="@Model.Id">
+        <a class="btn btn-outline btn-block" asp-page="/Pets/History" asp-route-id="@Model.Id" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))">
             @CatalogLocalizer.Loc("Ver historial de servicios", "View service history")
         </a>
         <form method="post" asp-page-handler="Remind">
