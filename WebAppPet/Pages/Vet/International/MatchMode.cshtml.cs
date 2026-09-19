@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -26,10 +27,11 @@ public class MatchModeModel : PageModel
     public int ConsultationId { get; set; }
 
     [BindProperty]
-    public IntlMatchMode Mode { get; set; } = IntlMatchMode.Best;
+    public IntlMatchMode? Mode { get; set; }
 
     public Consultation? Consultation { get; set; }
     public string? PetBreed { get; set; }
+    public string? ErrorMessage { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -42,7 +44,8 @@ public class MatchModeModel : PageModel
         if (Consultation.PetId is int pid)
             PetBreed = await _db.Pets.Where(p => p.Id == pid).Select(p => p.Breed).FirstOrDefaultAsync();
 
-        Mode = Consultation.MatchMode;
+        // Do not preselect — user must choose before Continuar is enabled.
+        Mode = null;
         return Page();
     }
 
@@ -51,11 +54,23 @@ public class MatchModeModel : PageModel
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/International/Home");
 
-        Consultation.MatchMode = Mode;
-        await _flow.TouchAsync(Consultation);
-        await _audit.LogAsync("mode_selected", _auth.CurrentUserId, "Consultation", ConsultationId, new { Mode });
+        if (Consultation.PetId is int pid)
+            PetBreed = await _db.Pets.Where(p => p.Id == pid).Select(p => p.Breed).FirstOrDefaultAsync();
 
-        return Mode switch
+        if (Mode is null)
+        {
+            ErrorMessage = CatalogLocalizer.Loc(
+                "Elige cómo quieres buscar a tu veterinario.",
+                "Choose how you want to find your vet.");
+            return Page();
+        }
+
+        var selected = Mode.Value;
+        Consultation.MatchMode = selected;
+        await _flow.TouchAsync(Consultation);
+        await _audit.LogAsync("mode_selected", _auth.CurrentUserId, "Consultation", ConsultationId, new { Mode = selected });
+
+        return selected switch
         {
             IntlMatchMode.Country => RedirectToPage("/Vet/International/Countries", new { consultationId = ConsultationId }),
             IntlMatchMode.Breed => RedirectToPage("/Vet/International/BreedMatch", new { consultationId = ConsultationId }),
