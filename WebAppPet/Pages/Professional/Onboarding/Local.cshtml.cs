@@ -54,8 +54,13 @@ public class LocalModel : PageModel
             && (latest.Track == ProfessionalOnboardingTrack.Local
                 || latest.Track == ProfessionalOnboardingTrack.Behavior))
         {
+            // Wrong track query (e.g. Local vs behavior) → open the matching form with draft.
             if (IsBehavior != (latest.Track == ProfessionalOnboardingTrack.Behavior))
-                return Page();
+            {
+                return latest.Track == ProfessionalOnboardingTrack.Behavior
+                    ? RedirectToPage("./Local", new { Track = "behavior" })
+                    : RedirectToPage("./Local");
+            }
 
             LegalName = latest.LegalName;
             ClinicOrPracticeName = latest.ClinicOrPracticeName;

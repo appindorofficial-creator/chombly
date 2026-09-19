@@ -43,7 +43,7 @@
 
         @if (a.Status is ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected)
         {
-            <a class="btn btn-primary btn-block" style="margin-top:12px" asp-page="/Professional/Onboarding">@CatalogLocalizer.Loc("Continuar / editar", "Continue / edit")</a>
+            <a class="btn btn-primary btn-block" style="margin-top:12px" href="@(Model.ContinueHref ?? "/Professional/Onboarding")">@CatalogLocalizer.Loc("Continuar / editar", "Continue / edit")</a>
         }
         else if (a.Status == ProfessionalOnboardingStatus.Approved)
         {

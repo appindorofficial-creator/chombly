@@ -54,7 +54,11 @@ public class InternationalModel : PageModel
             LicenseJurisdiction = BusinessMarketResolver.DefaultInternationalIso(market);
 
         var latest = await _onboarding.GetLatestAsync(_auth.CurrentUserId!.Value);
-        if (latest is { Track: ProfessionalOnboardingTrack.International })
+        if (latest is
+            {
+                Track: ProfessionalOnboardingTrack.International,
+                Status: ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected
+            })
         {
             LegalName = latest.LegalName;
             ClinicOrPracticeName = latest.ClinicOrPracticeName;

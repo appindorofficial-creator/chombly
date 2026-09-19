@@ -22,6 +22,9 @@ public class StatusModel : PageModel
 
     public ProfessionalOnboardingApplication? Application { get; set; }
 
+    /// <summary>Continue/edit target for Draft or Rejected applications.</summary>
+    public string? ContinueHref { get; private set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is null)
@@ -32,6 +35,21 @@ public class StatusModel : PageModel
             return RedirectToPage("/Account/RegisterBusiness");
 
         Application = await _onboarding.GetLatestAsync(_auth.CurrentUserId.Value);
+        ContinueHref = ResolveContinueHref(Application);
         return Page();
+    }
+
+    private static string? ResolveContinueHref(ProfessionalOnboardingApplication? app)
+    {
+        if (app is null) return null;
+        if (app.Status is not (ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected))
+            return null;
+
+        return app.Track switch
+        {
+            ProfessionalOnboardingTrack.International => "/Professional/Onboarding/International",
+            ProfessionalOnboardingTrack.Behavior => "/Professional/Onboarding/Local?Track=behavior",
+            _ => "/Professional/Onboarding/Local"
+        };
     }
 }
