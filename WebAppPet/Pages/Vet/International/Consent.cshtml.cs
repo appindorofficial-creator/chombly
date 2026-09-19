@@ -39,7 +39,6 @@ public class ConsentModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int CareBenefit { get; set; }
 
-    [BindProperty] public bool AcceptTerms { get; set; }
     [BindProperty] public bool AcceptScope { get; set; }
     [BindProperty] public bool AcceptMedia { get; set; }
     [BindProperty] public bool AcceptRenewal { get; set; }
@@ -70,11 +69,11 @@ public class ConsentModel : PageModel
     {
         if (!await LoadAsync()) return RedirectToPage("/Vet/International/Home");
 
-        if (!AcceptTerms || !AcceptScope)
+        if (!AcceptScope)
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                "Marca las casillas de términos y alcance antes de continuar al pago.",
-                "Check terms and scope boxes before continuing to payment.");
+                "Marca el consentimiento de orientación internacional antes de continuar al pago.",
+                "Check the international guidance consent before continuing to payment.");
             return Page();
         }
 
@@ -109,8 +108,6 @@ public class ConsentModel : PageModel
 
         await _consent.SaveAsync(_auth.CurrentUserId!.Value, Consultation.Id, new[]
         {
-            (ConsentService.DocTerms, AcceptTerms),
-            (ConsentService.DocPrivacy, AcceptTerms),
             (ConsentService.DocIntlOrientation, AcceptScope),
             (ConsentService.DocMedia, AcceptMedia)
         }, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString());

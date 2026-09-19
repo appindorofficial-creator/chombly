@@ -57,14 +57,6 @@
         <section class="vet-consent">
             <h2 class="section-title">@CatalogLocalizer.Loc("Consentimientos", "Consents")</h2>
             <label class="check-row">
-                <input type="checkbox" asp-for="AcceptTerms" />
-                <span>
-                    <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank">@L["Legal_TermsConditions"]</a>
-                    ·
-                    <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="privacy" target="_blank">@L["Legal_PrivacyPolicy"]</a>
-                </span>
-            </label>
-            <label class="check-row">
                 <input type="checkbox" asp-for="AcceptScope" />
                 <span>@CatalogLocalizer.Loc("Orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.", "International guidance: no U.S. Rx, not emergency, does not replace local vet.")</span>
             </label>
