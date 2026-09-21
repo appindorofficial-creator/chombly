@@ -33,6 +33,7 @@ builder.Services.AddHttpClient("nominatim", client =>
 builder.Services.AddScoped<PlacesSuggestService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AvailabilityService>();
+builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<PromoCodeService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<VetAuditService>();

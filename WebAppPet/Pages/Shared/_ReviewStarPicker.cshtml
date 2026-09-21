@@ -1,0 +1,33 @@
+@model WebAppPet.Pages.Shared.ReviewStarPickerModel
+@{
+    var selected = Model.Rating;
+}
+<div class="review-stars" role="radiogroup" aria-label="@CatalogLocalizer.Loc("Calificación", "Rating")">
+    @for (var s = 1; s <= 5; s++)
+    {
+        <label class="review-star @(s <= selected ? "is-on" : "")">
+            <input type="radio" name="@Model.InputName" value="@s" required @(selected == s ? "checked" : null) />
+            <span aria-hidden="true">★</span>
+            <span class="sr-only">@s</span>
+        </label>
+    }
+</div>
+<script>
+(function () {
+  var root = document.currentScript && document.currentScript.previousElementSibling;
+  if (!root || !root.classList.contains('review-stars')) {
+    root = document.querySelector('.review-stars');
+  }
+  if (!root) return;
+  root.addEventListener('change', function (e) {
+    var t = e.target;
+    if (!t || t.name !== '@Model.InputName') return;
+    var val = parseInt(t.value, 10) || 0;
+    root.querySelectorAll('.review-star').forEach(function (lab) {
+      var input = lab.querySelector('input');
+      var n = input ? parseInt(input.value, 10) : 0;
+      lab.classList.toggle('is-on', n <= val && n > 0);
+    });
+  });
+})();
+</script>

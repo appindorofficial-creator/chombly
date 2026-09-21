@@ -12,11 +12,13 @@ public class DetailsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly ReviewService _reviews;
 
-    public DetailsModel(AppDbContext db, AuthService auth)
+    public DetailsModel(AppDbContext db, AuthService auth, ReviewService reviews)
     {
         _db = db;
         _auth = auth;
+        _reviews = reviews;
     }
 
     public GroomerProfile? Groomer { get; set; }
@@ -26,6 +28,7 @@ public class DetailsModel : PageModel
     public List<Review> Reviews { get; set; } = new();
     public List<GroomerPhoto> Photos { get; set; } = new();
     public bool IsFavorite { get; set; }
+    public bool CanWriteReview { get; set; }
 
     /// <summary>Popular / search service name to pre-select on the booking page.</summary>
     [BindProperty(SupportsGet = true)]
@@ -33,12 +36,6 @@ public class DetailsModel : PageModel
 
     /// <summary>Resolved catalog service id when <see cref="Service"/> matches this groomer's offerings.</summary>
     public int? PrefillServiceId { get; set; }
-
-    public int StarPercent(int star)
-    {
-        if (Reviews.Count == 0) return 0;
-        return (int)Math.Round(100.0 * Reviews.Count(r => r.Rating == star) / Reviews.Count);
-    }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -51,11 +48,7 @@ public class DetailsModel : PageModel
         Amenities = await _db.Amenities.Where(a => a.GroomerId == id).OrderBy(a => a.SortOrder).ToListAsync();
         Extras = await _db.ServiceExtras.Where(e => e.GroomerId == id && e.IsActive).OrderBy(e => e.Price).ToListAsync();
         Photos = await _db.GroomerPhotos.Where(p => p.GroomerId == id).ToListAsync();
-        Reviews = await _db.Reviews.Include(r => r.Client)
-            .Where(r => r.GroomerId == id)
-            .OrderByDescending(r => r.CreatedAt)
-            .Take(10)
-            .ToListAsync();
+        Reviews = await _reviews.ListForGroomerAsync(id, 20);
 
         if (!string.IsNullOrWhiteSpace(Service))
         {
@@ -68,7 +61,10 @@ public class DetailsModel : PageModel
         }
 
         if (_auth.CurrentUserId is int userId)
+        {
             IsFavorite = await _db.Favorites.AnyAsync(f => f.UserId == userId && f.GroomerId == id);
+            CanWriteReview = await _reviews.CanReviewAsync(userId, id);
+        }
 
         return Page();
     }

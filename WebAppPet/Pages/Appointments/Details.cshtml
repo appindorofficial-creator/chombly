@@ -74,6 +74,17 @@ else
         <a class="btn btn-outline btn-block" href="tel:@a.Groomer.Phone" style="margin-top:10px">@CatalogLocalizer.Loc("Contactar", "Contact")</a>
     }
 
+    @if (Model.CanWriteReview)
+    {
+        <a class="btn btn-primary btn-block" style="margin-top:10px"
+           asp-page="/Reviews/Write"
+           asp-route-groomerId="@a.GroomerId"
+           asp-route-appointmentId="@a.Id"
+           asp-route-returnUrl="@(Url.Page("/Appointments/Details", new { id = a.Id }))">
+            @CatalogLocalizer.Loc("Valorar visita", "Rate visit")
+        </a>
+    }
+
     @if (a.Status is AppointmentStatus.Pending or AppointmentStatus.Confirmed)
     {
         var cancelTitle = CatalogLocalizer.Loc("Cancelar reserva", "Cancel booking");

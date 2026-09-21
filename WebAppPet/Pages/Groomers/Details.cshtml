@@ -157,42 +157,21 @@ else
                 }
             }
 
-            <h3 class="section-title">@L["Detail_ReviewsTitle"]</h3>
-            @if (Model.Reviews.Any())
-            {
-                <div class="card card-pad" style="margin-bottom:12px;display:flex;gap:16px;align-items:center">
-                    <div style="text-align:center">
-                        <div style="font-size:2rem;font-weight:900;color:var(--brand)">@g.Rating.ToString("0.0")</div>
-                        <div class="stars">★★★★★</div>
-                        <div class="muted small">@g.ReviewCount @L["Detail_Reviews"]</div>
-                    </div>
-                    <div style="flex:1">
-                        @for (var star = 5; star >= 1; star--)
-                        {
-                            var pct = Model.StarPercent(star);
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                                <span class="muted small" style="width:12px">@star</span>
-                                <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
-                                    <div style="width:@(pct)%;height:100%;background:var(--brand)"></div>
-                                </div>
-                                <span class="muted small" style="width:34px;text-align:right">@(pct)%</span>
-                            </div>
-                        }
-                    </div>
-                </div>
-                @foreach (var r in Model.Reviews)
-                {
-                    <div class="card card-pad" style="margin-bottom:10px">
-                        <div class="stars">★ @r.Rating.ToString("0")</div>
-                        <p style="margin:6px 0">@r.Comment</p>
-                        <span class="muted small">@r.Client.FullName · @AppTimeZones.FormatDate(r.CreatedAt)</span>
-                    </div>
-                }
+            @{
+                var writeHref = Model.CanWriteReview
+                    ? Url.Page("/Reviews/Write", new
+                    {
+                        groomerId = g.Id,
+                        returnUrl = Url.Page("/Groomers/Details", new { id = g.Id, category = g.Category?.Slug, service = Model.Service })
+                    })
+                    : null;
             }
-            else
-            {
-                <div class="empty">@L["Detail_NoReviews"]</div>
-            }
+            <partial name="_ReviewsSection" model="new WebAppPet.Pages.Shared.ReviewsSectionModel {
+                Reviews = Model.Reviews,
+                Rating = (decimal)g.Rating,
+                ReviewCount = g.ReviewCount,
+                WriteHref = writeHref
+            }" />
         </div>
     </div>
     <div class="sticky-cta">

@@ -1,0 +1,59 @@
+@page
+@model WebAppPet.Pages.Reviews.WriteModel
+@using WebAppPet.Pages.Shared
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Escribir reseña", "Write a review");
+    ViewData["HideNav"] = true;
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = Model.BackHref;
+    var HideNav = true;
+}
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body @(HideNav ? "no-nav" : "")">
+        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Escribir reseña", "Write a review")</h1>
+
+        @if (Model.Groomer != null)
+        {
+            <div class="card card-pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:center">
+                <img src="@(Model.Groomer.ImageUrl ?? "/images/pet-other.svg")" alt=""
+                     style="width:56px;height:56px;border-radius:12px;object-fit:cover" />
+                <div>
+                    <strong>@Model.Groomer.BusinessName</strong>
+                    <div class="muted small">
+                        @(Model.Groomer.Category?.Emoji) @CatalogLocalizer.Text(Model.Groomer.Category?.Name ?? "")
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
+
+        @if (Model.CanSubmit)
+        {
+            <form method="post" class="review-write-form">
+                <input type="hidden" asp-for="GroomerId" />
+                <input type="hidden" asp-for="AppointmentId" />
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("¿Cómo estuvo tu visita?", "How was your visit?")</h3>
+                <partial name="_ReviewStarPicker" model="new ReviewStarPickerModel { Rating = Model.Rating }" />
+
+                <div class="form-group" style="margin-top:16px">
+                    <label>@CatalogLocalizer.Loc("Comentario (opcional)", "Comment (optional)")</label>
+                    <textarea class="form-control" name="Comment" rows="4" maxlength="600"
+                              placeholder="@CatalogLocalizer.Loc("Cuéntanos tu experiencia…", "Tell us about your experience…")">@Model.Comment</textarea>
+                </div>
+
+                <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Publicar reseña", "Post review")</button>
+            </form>
+        }
+        else if (string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="empty">@CatalogLocalizer.Loc("No puedes valorar este negocio ahora.", "You can't review this business right now.")</div>
+        }
+    </div>
+</div>

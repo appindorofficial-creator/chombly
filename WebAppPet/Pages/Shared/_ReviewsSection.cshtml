@@ -1,0 +1,60 @@
+@model WebAppPet.Pages.Shared.ReviewsSectionModel
+@{
+    var reviews = Model.Reviews;
+    var count = Model.ReviewCount > 0 ? Model.ReviewCount : reviews.Count;
+    var rating = count > 0
+        ? (Model.Rating > 0 ? Model.Rating : (decimal)reviews.Average(r => r.Rating))
+        : 0m;
+    int StarPercent(int star)
+    {
+        if (reviews.Count == 0) return 0;
+        return (int)Math.Round(100.0 * reviews.Count(r => r.Rating == star) / reviews.Count);
+    }
+}
+<section class="reviews-section" aria-label="@CatalogLocalizer.Loc("Reseñas", "Reviews")">
+    <h3 class="section-title">@CatalogLocalizer.Loc("Reseñas", "Reviews")</h3>
+    @if (!string.IsNullOrWhiteSpace(Model.WriteHref))
+    {
+        <p style="margin:-6px 0 12px">
+            <a class="apple-text-link" href="@Model.WriteHref">@CatalogLocalizer.Loc("Escribir una reseña", "Write a review")</a>
+        </p>
+    }
+    @if (reviews.Count == 0)
+    {
+        <div class="empty">@CatalogLocalizer.Loc("Aún no hay reseñas. Sé el primero después de tu visita.", "No reviews yet. Be the first after your visit.")</div>
+    }
+    else
+    {
+        <div class="card card-pad" style="margin-bottom:12px;display:flex;gap:16px;align-items:center">
+            <div style="text-align:center">
+                <div style="font-size:2rem;font-weight:900;color:var(--brand)">@rating.ToString("0.0")</div>
+                <div class="stars">★★★★★</div>
+                <div class="muted small">@count @CatalogLocalizer.Loc("reseñas", "reviews")</div>
+            </div>
+            <div style="flex:1">
+                @for (var star = 5; star >= 1; star--)
+                {
+                    var pct = StarPercent(star);
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                        <span class="muted small" style="width:12px">@star</span>
+                        <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                            <div style="width:@(pct)%;height:100%;background:var(--brand)"></div>
+                        </div>
+                        <span class="muted small" style="width:34px;text-align:right">@(pct)%</span>
+                    </div>
+                }
+            </div>
+        </div>
+        @foreach (var r in reviews)
+        {
+            <div class="card card-pad" style="margin-bottom:10px">
+                <div class="stars">★ @r.Rating.ToString("0")</div>
+                @if (!string.IsNullOrWhiteSpace(r.Comment))
+                {
+                    <p style="margin:6px 0">@r.Comment</p>
+                }
+                <span class="muted small">@(r.Client?.FullName ?? "—") · @AppTimeZones.FormatDate(r.CreatedAt)</span>
+            </div>
+        }
+    }
+</section>

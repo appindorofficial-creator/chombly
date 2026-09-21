@@ -12,11 +12,13 @@ public class DetailsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly ReviewService _reviews;
 
-    public DetailsModel(AppDbContext db, AuthService auth)
+    public DetailsModel(AppDbContext db, AuthService auth, ReviewService reviews)
     {
         _db = db;
         _auth = auth;
+        _reviews = reviews;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -25,6 +27,7 @@ public class DetailsModel : PageModel
     public string BackHref { get; private set; } = "/Appointments";
 
     public Appointment? Appointment { get; set; }
+    public bool CanWriteReview { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -37,6 +40,9 @@ public class DetailsModel : PageModel
             .Include(a => a.Pet)
             .Include(a => a.Extras)
             .FirstOrDefaultAsync(a => a.Id == id && a.ClientId == userId);
+
+        if (Appointment != null)
+            CanWriteReview = await _reviews.CanReviewAsync(userId, Appointment.GroomerId, Appointment.Id);
 
         BackHref = ResolveBackHref();
         return Page();

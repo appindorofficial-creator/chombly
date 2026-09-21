@@ -1589,6 +1589,38 @@ input.form-control[type="number"] {
 .price { font-weight: 800; color: var(--forest); font-size: .9rem; }
 .stars { color: #F59E0B; font-weight: 700; }
 
+.review-stars {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+.review-star {
+  position: relative;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--border);
+  transition: color .15s ease, transform .12s ease;
+}
+.review-star input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.review-star.is-on { color: #F59E0B; }
+.review-star:hover { transform: scale(1.08); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .search-box {
   display: flex;
   gap: 8px;
