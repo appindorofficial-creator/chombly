@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -10,12 +13,18 @@ public class HomeModel : PageModel
     private readonly AuthService _auth;
     private readonly ConsultationFlowService _flow;
     private readonly VetAuditService _audit;
+    private readonly AppDbContext _db;
 
-    public HomeModel(AuthService auth, ConsultationFlowService flow, VetAuditService audit)
+    public HomeModel(
+        AuthService auth,
+        ConsultationFlowService flow,
+        VetAuditService audit,
+        AppDbContext db)
     {
         _auth = auth;
         _flow = flow;
         _audit = audit;
+        _db = db;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -24,7 +33,16 @@ public class HomeModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? PetId { get; set; }
 
-    public void OnGet() { }
+    public string? PetName { get; set; }
+    public string? PetBreed { get; set; }
+    public string PreferredLanguage { get; set; } = "es";
+    public string LanguageLabel =>
+        string.Equals(PreferredLanguage, "en", StringComparison.OrdinalIgnoreCase) ? "English" : "Español";
+
+    public async Task OnGetAsync()
+    {
+        await LoadContextAsync();
+    }
 
     public async Task<IActionResult> OnPostFindAsync()
     {
@@ -36,20 +54,66 @@ public class HomeModel : PageModel
             : null;
         c ??= await _flow.StartVirtualAsync();
         c.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
+        c.MatchMode = IntlMatchMode.Best;
 
         if (PetId is int pid && pid > 0 && c.PetId is null)
-        {
-            // Pet ownership validated in Care/Services; still apply when coming from Vet Index.
             c.PetId = pid;
+
+        // Seed breed from pet so Matches can filter/rank without MatchMode.
+        if (string.IsNullOrWhiteSpace(c.PreferredBreed) && c.PetId is int petId)
+        {
+            var breed = await _db.Pets.AsNoTracking()
+                .Where(p => p.Id == petId)
+                .Select(p => p.Breed)
+                .FirstOrDefaultAsync();
+            if (!string.IsNullOrWhiteSpace(breed))
+                c.PreferredBreed = breed.Trim();
         }
 
         await _flow.TouchAsync(c);
         await _audit.LogAsync("intl_landing_view", _auth.CurrentUserId, "Consultation", c.Id);
 
-        // Ensure pet + location before matching (PDF: mascota y ubicación en cada consulta)
         if (c.PetId is null || string.IsNullOrWhiteSpace(c.PetUsState))
             return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = c.Id, next = "intl" });
 
-        return RedirectToPage("/Vet/International/MatchMode", new { consultationId = c.Id });
+        // Skip MatchMode — go straight to results (filters live on Matches / later slice).
+        return RedirectToPage("/Vet/International/Matches", new { consultationId = c.Id });
+    }
+
+    private async Task LoadContextAsync()
+    {
+        if (_auth.CurrentUserId is int uid)
+        {
+            PreferredLanguage = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == uid)
+                .Select(u => u.PreferredLanguage)
+                .FirstOrDefaultAsync() ?? "es";
+        }
+
+        if (string.IsNullOrWhiteSpace(PreferredLanguage))
+            PreferredLanguage = CatalogLocalizer.IsEnglish() ? "en" : "es";
+
+        int? petId = PetId;
+        if (petId is null && ConsultationId is int cid)
+        {
+            var c = await _flow.GetOwnedAsync(cid);
+            petId = c?.PetId;
+            if (!string.IsNullOrWhiteSpace(c?.PreferredBreed))
+                PetBreed = c.PreferredBreed;
+        }
+
+        if (petId is int pid)
+        {
+            var pet = await _db.Pets.AsNoTracking()
+                .Where(p => p.Id == pid)
+                .Select(p => new { p.Name, p.Breed })
+                .FirstOrDefaultAsync();
+            if (pet != null)
+            {
+                PetName = pet.Name;
+                if (string.IsNullOrWhiteSpace(PetBreed))
+                    PetBreed = pet.Breed;
+            }
+        }
     }
 }

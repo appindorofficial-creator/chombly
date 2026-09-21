@@ -155,7 +155,21 @@ public class PetModel : PageModel
         await _flow.TouchAsync(Consultation);
 
         if (string.Equals(Next, "intl", StringComparison.OrdinalIgnoreCase))
-            return RedirectToPage("/Vet/International/MatchMode", new { consultationId = ConsultationId });
+        {
+            Consultation.MatchMode = IntlMatchMode.Best;
+            Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
+            if (string.IsNullOrWhiteSpace(Consultation.PreferredBreed) && Consultation.PetId is int petIdForBreed)
+            {
+                var breed = await _db.Pets.AsNoTracking()
+                    .Where(p => p.Id == petIdForBreed)
+                    .Select(p => p.Breed)
+                    .FirstOrDefaultAsync();
+                if (!string.IsNullOrWhiteSpace(breed))
+                    Consultation.PreferredBreed = breed.Trim();
+            }
+            await _flow.TouchAsync(Consultation);
+            return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+        }
 
         return RedirectToPage("/Vet/Virtual/Safety", new { consultationId = ConsultationId });
     }

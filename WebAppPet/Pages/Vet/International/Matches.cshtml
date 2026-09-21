@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Coincidencias", "Matches");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/MatchMode", new { consultationId = Model.ConsultationId });
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/Home", new { consultationId = Model.ConsultationId });
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -24,7 +24,7 @@
             </div>
         }
     <p class="muted small" style="margin-bottom:12px">
-        <a asp-page="/Vet/International/MatchMode" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Ajustar preferencias", "Adjust preferences")</a>
+        <a asp-page="/Vet/International/Home" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Volver al inicio", "Back to start")</a>
         ·
         <a asp-page="/Vet/International/Countries" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("País", "Country")</a>
         ·

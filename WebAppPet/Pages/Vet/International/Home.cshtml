@@ -4,6 +4,7 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Veterinario como en casa", "Your vet, like at home");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
+    var hasPet = !string.IsNullOrWhiteSpace(Model.PetName) || !string.IsNullOrWhiteSpace(Model.PetBreed);
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -30,24 +31,64 @@
                     "Your vet speaks your language and understands your context.")
             </p>
 
-            <ul class="intl-home-includes">
-                <li>
-                    <strong>@CatalogLocalizer.Loc("Contexto", "Context")</strong>
-                    <span>@CatalogLocalizer.Loc("País, idioma y productos que conoces", "Country, language, and products you know")</span>
-                </li>
-                <li>
-                    <strong>@CatalogLocalizer.Loc("Experiencia", "Experience")</strong>
-                    <span>@CatalogLocalizer.Loc("Raza verificada — no por nacionalidad", "Verified breed — not by nationality")</span>
-                </li>
-                <li>
-                    <strong>@CatalogLocalizer.Loc("Acceso", "Access")</strong>
-                    <span>@CatalogLocalizer.Loc("Horario, historial y ruta local si hace falta", "Schedule, history, and a local path if needed")</span>
-                </li>
-            </ul>
+            <div class="intl-home-context" role="status">
+                <span class="intl-home-chip">
+                    <span class="intl-home-chip-label">@CatalogLocalizer.Loc("Idioma", "Language")</span>
+                    <strong>@Model.LanguageLabel</strong>
+                </span>
+                @if (!string.IsNullOrWhiteSpace(Model.PetBreed))
+                {
+                    <span class="intl-home-chip">
+                        <span class="intl-home-chip-label">@CatalogLocalizer.Loc("Raza", "Breed")</span>
+                        <strong>@Model.PetBreed</strong>
+                    </span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.PetName))
+                {
+                    <span class="intl-home-chip">
+                        <span class="intl-home-chip-label">@CatalogLocalizer.Loc("Mascota", "Pet")</span>
+                        <strong>@Model.PetName</strong>
+                    </span>
+                }
+            </div>
 
-            <details class="intl-home-excludes">
-                <summary>@CatalogLocalizer.Loc("Qué no es", "What this is not")</summary>
-                <ul>
+            <form method="post" asp-page-handler="Find" class="intl-home-cta intl-home-cta-primary" id="intlHomeFindForm">
+                @if (Model.ConsultationId is int cid)
+                {
+                    <input type="hidden" name="ConsultationId" value="@cid" />
+                }
+                @if (Model.PetId is int petId)
+                {
+                    <input type="hidden" name="PetId" value="@petId" />
+                }
+                <button type="submit" class="btn btn-primary btn-block btn-lg intl-home-submit" id="intlHomeFindBtn"
+                        data-label-busy="@CatalogLocalizer.Loc("Buscando…", "Searching…")">
+                    @CatalogLocalizer.Loc("Encontrar mi veterinario", "Find my veterinarian")
+                </button>
+                <p class="muted small center intl-home-fineprint">
+                    @CatalogLocalizer.Loc(
+                        "Te mostramos coincidencias con tu idioma y raza. País se puede ajustar después.",
+                        "We show matches with your language and breed. Country can be adjusted later.")
+                </p>
+            </form>
+
+            <details class="intl-home-more">
+                <summary>@CatalogLocalizer.Loc("Qué incluye y qué no", "What’s included and what’s not")</summary>
+                <ul class="intl-home-includes">
+                    <li>
+                        <strong>@CatalogLocalizer.Loc("Contexto", "Context")</strong>
+                        <span>@CatalogLocalizer.Loc("País, idioma y productos que conoces", "Country, language, and products you know")</span>
+                    </li>
+                    <li>
+                        <strong>@CatalogLocalizer.Loc("Experiencia", "Experience")</strong>
+                        <span>@CatalogLocalizer.Loc("Raza verificada — no por nacionalidad", "Verified breed — not by nationality")</span>
+                    </li>
+                    <li>
+                        <strong>@CatalogLocalizer.Loc("Acceso", "Access")</strong>
+                        <span>@CatalogLocalizer.Loc("Horario, historial y ruta local si hace falta", "Schedule, history, and a local path if needed")</span>
+                    </li>
+                </ul>
+                <ul class="intl-home-excludes-list">
                     <li>@CatalogLocalizer.Loc("No es una emergencia ni atención en clínica", "Not an emergency or in-clinic visit")</li>
                     <li>@CatalogLocalizer.Loc("No emite recetas de EE.UU.", "Does not issue U.S. prescriptions")</li>
                     <li>@CatalogLocalizer.Loc("Es orientación remota, no un diagnóstico presencial", "Remote guidance, not an in-person diagnosis")</li>
@@ -55,27 +96,23 @@
             </details>
         </section>
 
-        <form method="post" asp-page-handler="Find" class="intl-home-cta">
-            @if (Model.ConsultationId is int cid)
-            {
-                <input type="hidden" name="ConsultationId" value="@cid" />
-            }
-            @if (Model.PetId is int petId)
-            {
-                <input type="hidden" name="PetId" value="@petId" />
-            }
-            <p class="muted small center intl-home-fineprint">
-                @CatalogLocalizer.Loc("Orientación · no emergencia · no receta de EE.UU.", "Guidance · not emergency · no U.S. prescription")
-            </p>
-            <button type="submit" class="btn btn-primary btn-block btn-lg intl-home-submit">
-                @CatalogLocalizer.Loc("Encontrar mi veterinario", "Find my veterinarian")
-            </button>
-            <p class="muted small center intl-home-care-link">
-                <a asp-page="/Plans/ChomblyCare" asp-route-returnUrl="/Vet/International/Home">
-                    @CatalogLocalizer.Loc("Ver Chombly Care ($14,99/mes)", "See Chombly Care ($14.99/mo)")
-                </a>
-            </p>
-        </form>
+        <p class="muted small center intl-home-care-link">
+            <a asp-page="/Plans/ChomblyCare" asp-route-returnUrl="/Vet/International/Home">
+                @CatalogLocalizer.Loc("Ver Chombly Care ($14,99/mes)", "See Chombly Care ($14.99/mo)")
+            </a>
+        </p>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+<script>
+(function () {
+  var form = document.getElementById('intlHomeFindForm');
+  var btn = document.getElementById('intlHomeFindBtn');
+  if (!form || !btn) return;
+  form.addEventListener('submit', function () {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = btn.getAttribute('data-label-busy') || '…';
+  });
+})();
+</script>
