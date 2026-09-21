@@ -997,7 +997,19 @@
         }
         n = n.nextSibling;
       }
-      return [hasDateRow, hasCustomTime, hasPetError, filterCount, pastOrBusy].join(':');
+      // Pet count / selection must bust the signature or soft-nav keeps the old picker UI.
+      var petCountEl = form.querySelector('input[name="PetCount"]');
+      var petCount = petCountEl ? String(petCountEl.value || '') : '';
+      var stepperStrong = form.querySelector('.stepper strong');
+      if (stepperStrong && stepperStrong.textContent)
+        petCount = String(stepperStrong.textContent).trim() || petCount;
+      var petIdEl = form.querySelector('select[name="PetId"], input[name="PetId"]:not([type="checkbox"])');
+      var petId = petIdEl ? String(petIdEl.value || '') : '';
+      var petIds = Array.prototype.map.call(
+        form.querySelectorAll('input[type="checkbox"][name="PetIds"]:checked'),
+        function (el) { return String(el.value || ''); }
+      ).sort().join(',');
+      return [hasDateRow, hasCustomTime, hasPetError, filterCount, pastOrBusy, petCount, petId, petIds].join(':');
     }
 
     function replaceRangeBefore(parent, stopNode, nextNodes) {
@@ -1064,6 +1076,43 @@
             curText[curText.length - 1].textContent = nextText[nextText.length - 1].textContent;
           }
         }
+      });
+
+      // Pet count stepper (+/−) — keep display, hidden field, and hrefs in sync
+      var nextPetCount = nextForm.querySelector('input[name="PetCount"]');
+      var curPetCount = curForm.querySelector('input[name="PetCount"]');
+      if (nextPetCount && curPetCount)
+        curPetCount.value = nextPetCount.value || '';
+      var nextStepper = nextForm.querySelector('.stepper');
+      var curStepper = curForm.querySelector('.stepper');
+      if (nextStepper && curStepper) {
+        var nextStrong = nextStepper.querySelector('strong');
+        var curStrong = curStepper.querySelector('strong');
+        if (nextStrong && curStrong)
+          curStrong.textContent = nextStrong.textContent;
+        var nextBtns = nextStepper.querySelectorAll('a.stepper-btn');
+        var curBtns = curStepper.querySelectorAll('a.stepper-btn');
+        for (var si = 0; si < nextBtns.length && si < curBtns.length; si++) {
+          var nh = nextBtns[si].getAttribute('href');
+          if (nh != null) curBtns[si].setAttribute('href', nh);
+        }
+      }
+      var nextPetSelect = nextForm.querySelector('select[name="PetId"]');
+      var curPetSelect = curForm.querySelector('select[name="PetId"]');
+      if (nextPetSelect && curPetSelect && nextPetSelect.value !== curPetSelect.value)
+        curPetSelect.value = nextPetSelect.value;
+
+      // Hotel multi-pet switches
+      Array.prototype.forEach.call(nextForm.querySelectorAll('input[type="checkbox"][name="PetIds"]'), function (nextInput) {
+        var curInput = curForm.querySelector(
+          'input[type="checkbox"][name="PetIds"][value="' + String(nextInput.value).replace(/"/g, '\\"') + '"]'
+        );
+        if (!curInput) return;
+        curInput.checked = !!nextInput.checked;
+        curInput.disabled = !!nextInput.disabled;
+        var curLab = curInput.closest('label.behavior-pet-row, label.hotel-pet-pick');
+        var nextLab = nextInput.closest('label.behavior-pet-row, label.hotel-pet-pick');
+        if (curLab && nextLab) curLab.className = nextLab.className;
       });
 
       // Optional preference chips (✓ prefix) without rebuilding filters
@@ -1674,35 +1723,55 @@
         return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
       }
 
-      function targets() {
-        var list = Array.prototype.slice.call(shell.querySelectorAll('[data-how-glow] .how-num'));
+      function getHowNums() {
+        return Array.prototype.slice.call(shell.querySelectorAll('[data-how-glow] .how-num'))
+          .filter(isVisible);
+      }
+
+      function getCta() {
         var primary = shell.querySelector('[data-appt-primary-cta]');
         var tabCta = shell.querySelector('[data-how-cta].tabs-cta, .tabs-cta[data-how-cta]');
-        var cta = isVisible(primary) ? primary : (isVisible(tabCta) ? tabCta : null);
-        if (cta) list.push(cta);
-        return list;
+        return isVisible(primary) ? primary : (isVisible(tabCta) ? tabCta : null);
       }
 
       var index = 0;
-      var timer = null;
+      var pulseOffTimer = null;
 
-      function clearGlow(list) {
+      function clearGlow() {
         shell.querySelectorAll('.is-glow').forEach(function (el) {
           el.classList.remove('is-glow');
         });
       }
 
-      function tick() {
-        var list = targets();
+      // Próximas: cycle how-steps + CTA every 1.5s.
+      function tickHow() {
+        var how = getHowNums();
+        if (!how.length) return;
         clearGlow();
+        var list = how.slice();
+        var cta = getCta();
+        if (cta) list.push(cta);
         if (!list.length) return;
         if (index >= list.length) index = 0;
         list[index].classList.add('is-glow');
         index = (index + 1) % list.length;
       }
 
-      tick();
-      window.setInterval(tick, 1500);
+      // Historial: soft halo on + Reservar every 4s (brief pulse, not sustained).
+      function tickHistoryPulse() {
+        if (getHowNums().length) return;
+        var cta = getCta();
+        if (!cta) return;
+        clearGlow();
+        cta.classList.add('is-glow');
+        if (pulseOffTimer) window.clearTimeout(pulseOffTimer);
+        pulseOffTimer = window.setTimeout(clearGlow, 1100);
+      }
+
+      tickHow();
+      window.setInterval(tickHow, 1500);
+      window.setTimeout(tickHistoryPulse, 800);
+      window.setInterval(tickHistoryPulse, 4000);
     });
   }
 

@@ -73,36 +73,53 @@
             <p class="muted small">@Model.CheckIn → @Model.CheckOut · @Model.Nights @L["Book_Nights"]</p>
         }
 
-        <h3 class="section-title" id="hotel-need-pet">@CatalogLocalizer.Loc("¿Cuántas mascotas?", "How many pets?")</h3>
-        <div class="pet-count-row">
-            <div class="stepper">
-                <a class="stepper-btn" href="?When=@Model.When&CheckIn=@Model.CheckIn&CheckOut=@Model.CheckOut&PetCount=@(Math.Max(1, Model.PetCount-1))&PetId=@Model.PetId&groomerId=@(Model.CanSelectHotel ? Model.GroomerId : null)@string.Concat(Model.Filters.Select(f => "&Filters=" + Uri.EscapeDataString(f)))">−</a>
-                <strong>@Model.PetCount</strong>
-                <a class="stepper-btn" href="?When=@Model.When&CheckIn=@Model.CheckIn&CheckOut=@Model.CheckOut&PetCount=@(Math.Min(6, Model.PetCount+1))&PetId=@Model.PetId&groomerId=@(Model.CanSelectHotel ? Model.GroomerId : null)@string.Concat(Model.Filters.Select(f => "&Filters=" + Uri.EscapeDataString(f)))">+</a>
+        <h3 class="section-title" id="hotel-need-pet">@CatalogLocalizer.Loc("¿Qué mascotas viajan?", "Which pets are staying?")</h3>
+        @if (Model.Pets.Any())
+        {
+            <p class="muted small" style="margin:-6px 0 10px">
+                @CatalogLocalizer.Loc("Activa una o varias (máx. 6).", "Turn on one or more (max 6).")
+                @if (Model.PetCount > 0)
+                {
+                    <span>· @Model.PetCount @(Model.PetCount == 1
+                        ? CatalogLocalizer.Loc("seleccionada", "selected")
+                        : CatalogLocalizer.Loc("seleccionadas", "selected"))</span>
+                }
+            </p>
+            <div class="behavior-pet-list hotel-pet-list" role="group" aria-label="@CatalogLocalizer.Loc("Mascotas", "Pets")">
+                @foreach (var p in Model.Pets)
+                {
+                    var on = Model.PetIds.Contains(p.Id);
+                    <label class="behavior-pet-row @(on ? "is-on" : null)">
+                        <span class="care-pet-emoji" aria-hidden="true">@PetSpecies.Emoji(p.Species)</span>
+                        <span class="care-pet-copy">
+                            <strong>@p.Name</strong>
+                            <small class="muted">@PetSpecies.Label(p.Species)@(!string.IsNullOrWhiteSpace(p.Breed) ? $" · {p.Breed}" : "")</small>
+                        </span>
+                        <span class="biz-switch">
+                            <input type="checkbox" name="PetIds" value="@p.Id" @(on ? "checked" : null)
+                                   @(Model.PetCount >= 6 && !on ? "disabled" : null)
+                                   aria-label="@p.Name" />
+                            <span class="biz-switch-track" aria-hidden="true"></span>
+                        </span>
+                    </label>
+                }
             </div>
-            @if (Model.Pets.Any())
+            <a class="apple-text-link" asp-page="/Pets/Create" asp-route-returnUrl="@(ViewContext.HttpContext.Request.Path + ViewContext.HttpContext.Request.QueryString)" style="display:inline-block;margin:8px 0 14px">
+                @CatalogLocalizer.Loc("+ Agregar otra mascota", "+ Add another pet")
+            </a>
+            <input type="hidden" name="PetCount" value="@Model.PetCount" />
+            @if (Model.PetId > 0)
             {
-                <select class="form-control pet-select-inline" name="PetId">
-                    @foreach (var p in Model.Pets)
-                    {
-                        if (p.Id == Model.PetId)
-                        {
-                            <option value="@p.Id" selected>@PetSpecies.Emoji(p.Species) @p.Name</option>
-                        }
-                        else
-                        {
-                            <option value="@p.Id">@PetSpecies.Emoji(p.Species) @p.Name</option>
-                        }
-                    }
-                </select>
+                <input type="hidden" name="PetId" value="@Model.PetId" />
             }
-            else
-            {
-                <a class="btn btn-outline btn-sm" asp-page="/Pets/Create">@CatalogLocalizer.Loc("+ Mascota", "+ Pet")</a>
-                <p class="field-error" style="margin:8px 0 0" role="alert">@CatalogLocalizer.Loc("Necesitas una mascota para reservar.", "You need a pet to book.")</p>
-            }
-        </div>
-        <input type="hidden" name="PetCount" value="@Model.PetCount" />
+        }
+        else
+        {
+            <div class="pet-count-row">
+                <a class="btn btn-outline btn-sm" asp-page="/Pets/Create" asp-route-returnUrl="@(ViewContext.HttpContext.Request.Path + ViewContext.HttpContext.Request.QueryString)">@CatalogLocalizer.Loc("+ Mascota", "+ Pet")</a>
+                <p class="field-error" style="margin:8px 0 0" role="alert">@CatalogLocalizer.Loc("Necesitas una mascota para reservar.", "You need a pet to continue.")</p>
+            </div>
+        }
 
         @if (Model.CanSelectHotel && Model.AllFilterLabels.Any())
         {
@@ -132,9 +149,12 @@
         }
         else if (!Model.Results.Any())
         {
+            var speciesHint = string.Join(", ", Model.SelectedPets
+                .Select(p => PetSpecies.Label(p.Species))
+                .Distinct(StringComparer.OrdinalIgnoreCase));
             <div class="empty">@CatalogLocalizer.Loc(
-                $"No hay hoteles para {PetSpecies.Label(Model.SelectedPet!.Species)} con esos filtros.",
-                $"No hotels for {PetSpecies.Label(Model.SelectedPet!.Species)} match these filters.")</div>
+                $"No hay hoteles para {speciesHint} con esos filtros.",
+                $"No hotels for {speciesHint} match these filters.")</div>
         }
         else
         {
@@ -223,11 +243,15 @@
     ViewData["PromoSubtotal"] = Model.PromoSubtotal > 0 ? Model.PromoSubtotal : Model.Estimate;
     ViewData["PromoDiscount"] = Model.DiscountAmount;
     ViewData["PromoError"] = Model.PromoError;
-    var multi = new List<BookingSummaryMultiHidden>();
+    var multi = new List<BookingSummaryMultiHidden>
+    {
+        new() { Name = "PetIds", Values = Model.PetIds.Select(id => id.ToString()) }
+    };
     if (Model.Filters.Count > 0)
         multi.Add(new BookingSummaryMultiHidden { Name = "Filters", Values = Model.Filters });
     if (Model.ExtraIds.Count > 0)
         multi.Add(new BookingSummaryMultiHidden { Name = "ExtraIds", Values = Model.ExtraIds.Select(id => id.ToString()) });
+    var petSummary = string.Join(", ", Model.SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
     <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
     {
         BodyId = "hotel-summary-body",
@@ -248,11 +272,9 @@
             new BookingSummaryLine { LabelEs = "Noches", LabelEn = "Nights", Value = Model.Nights.ToString() },
             new BookingSummaryLine
             {
-                LabelEs = "Mascota",
-                LabelEn = "Pet",
-                Value = Model.SelectedPet != null
-                    ? $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name} × {Model.PetCount}"
-                    : $"— × {Model.PetCount}"
+                LabelEs = Model.SelectedPets.Count == 1 ? "Mascota" : "Mascotas",
+                LabelEn = Model.SelectedPets.Count == 1 ? "Pet" : "Pets",
+                Value = string.IsNullOrEmpty(petSummary) ? "—" : petSummary
             },
             new BookingSummaryLine
             {

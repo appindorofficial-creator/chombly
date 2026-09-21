@@ -38,6 +38,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int PetId { get; set; }
 
+    /// <summary>Selected pets for the stay (multi-select). Drives PetCount / PetId.</summary>
+    [BindProperty(SupportsGet = true)]
+    public List<int> PetIds { get; set; } = new();
+
     [BindProperty(SupportsGet = true)]
     public List<string> Filters { get; set; } = new();
 
@@ -70,9 +74,10 @@ public class IndexModel : PageModel
     public GroomerProfile? SelectedHotel { get; set; }
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
+    public List<Pet> SelectedPets { get; set; } = new();
 
-    /// <summary>Hotel cards can be chosen only after a pet is selected.</summary>
-    public bool CanSelectHotel => SelectedPet != null;
+    /// <summary>Hotel cards can be chosen only after at least one pet is selected.</summary>
+    public bool CanSelectHotel => SelectedPets.Count > 0;
     public PaymentMethod? DefaultPayment { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
     public int Nights { get; set; } = 1;
@@ -122,24 +127,25 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedPet == null)
+        if (SelectedPets.Count == 0)
         {
             ErrorMessage = Pets.Count == 0
                 ? CatalogLocalizer.Loc(
                     "Agrega una mascota para continuar.",
                     "Add a pet to continue.")
                 : CatalogLocalizer.Loc(
-                    "Elige una mascota para continuar.",
-                    "Choose a pet to continue.");
+                    "Elige al menos una mascota para continuar.",
+                    "Choose at least one pet to continue.");
             Pay = true;
             return Page();
         }
 
-        if (!SelectedHotel.AcceptsSpecies(SelectedPet.Species))
+        var rejected = SelectedPets.FirstOrDefault(p => !SelectedHotel.AcceptsSpecies(p.Species));
+        if (rejected != null)
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                $"Este hotel no atiende {SelectedPet.Species}.",
-                $"This hotel does not accept {SelectedPet.Species}.");
+                $"Este hotel no atiende {rejected.Species}.",
+                $"This hotel does not accept {rejected.Species}.");
             Pay = true;
             return Page();
         }
@@ -154,8 +160,8 @@ public class IndexModel : PageModel
 
         var nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
         var selectedExtras = Extras.Where(e => ExtraIds.Contains(e.Id)).ToList();
-        var unit = SelectedService.PriceFor(SelectedPet.Size);
-        var subtotal = unit * nights * Math.Max(1, PetCount) + selectedExtras.Sum(e => e.Price);
+        var subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * nights)
+            + selectedExtras.Sum(e => e.Price);
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
         {
@@ -172,9 +178,11 @@ public class IndexModel : PageModel
         var deposit = Math.Round(total * 0.35m, 2);
         if (deposit < 15) deposit = Math.Min(15, total);
 
-        var noteParts = new List<string>();
-        if (PetCount > 1)
-            noteParts.Add(CatalogLocalizer.Loc($"{PetCount} mascotas", $"{PetCount} pets"));
+        var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+        var noteParts = new List<string>
+        {
+            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}")
+        };
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
         if (PaymentMethodId.HasValue)
         {
@@ -186,7 +194,7 @@ public class IndexModel : PageModel
         var appt = new Appointment
         {
             ClientId = userId,
-            PetId = SelectedPet.Id,
+            PetId = SelectedPet!.Id,
             GroomerId = SelectedHotel.Id,
             ServiceId = SelectedService.Id,
             ScheduledAt = cin.Date.AddHours(14),
@@ -197,7 +205,7 @@ public class IndexModel : PageModel
             DepositPaid = deposit,
             PromoCode = discount > 0 ? promo.NormalizedCode : null,
             DiscountAmount = discount,
-            Notes = noteParts.Count > 0 ? string.Join(" · ", noteParts) : null
+            Notes = string.Join(" · ", noteParts)
         };
 
         foreach (var ex in selectedExtras)
@@ -222,7 +230,7 @@ public class IndexModel : PageModel
         {
             UserId = SelectedHotel.UserId,
             Title = "Nueva reserva de hotel",
-            Message = $"{SelectedPet.Name} · {nights} noche(s).",
+            Message = $"{petNames} · {nights} noche(s).",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -249,8 +257,6 @@ public class IndexModel : PageModel
         CheckIn = cin.ToString("yyyy-MM-dd");
         CheckOut = cout.ToString("yyyy-MM-dd");
         Nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
-        if (PetCount < 1) PetCount = 1;
-        if (PetCount > 6) PetCount = 6;
 
         double? userLat = null, userLng = null;
         if (_auth.CurrentUserId is int userId)
@@ -260,13 +266,20 @@ public class IndexModel : PageModel
             userLng = user?.Longitude;
 
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-            if (PetId == 0 && Pets.Count > 0) PetId = Pets[0].Id;
-            SelectedPet = Pets.FirstOrDefault(p => p.Id == PetId);
+            NormalizeSelectedPets();
 
             Payments = await _db.PaymentMethods.Where(p => p.UserId == userId).OrderByDescending(p => p.IsDefault).ToListAsync();
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
+        }
+        else
+        {
+            PetIds = new List<int>();
+            PetCount = 0;
+            PetId = 0;
+            SelectedPet = null;
+            SelectedPets = new List<Pet>();
         }
 
         // Don't keep a hotel selection (or confirm sheet) until a pet is chosen.
@@ -284,9 +297,9 @@ public class IndexModel : PageModel
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
 
-        // Results are pet-specific (dog hotel vs bird hotel, etc.).
-        if (SelectedPet != null)
-            hotels = hotels.Where(h => h.AcceptsSpecies(SelectedPet.Species)).ToList();
+        // Results must accept every selected pet species.
+        if (SelectedPets.Count > 0)
+            hotels = hotels.Where(h => SelectedPets.All(p => h.AcceptsSpecies(p.Species))).ToList();
         else
             hotels = new List<GroomerProfile>();
 
@@ -363,16 +376,15 @@ public class IndexModel : PageModel
                     .OrderBy(e => e.Price)
                     .ToListAsync();
 
-                if (SelectedService != null && SelectedPet != null)
+                if (SelectedService != null && SelectedPets.Count > 0)
                 {
-                    var unit = SelectedService.PriceFor(SelectedPet.Size);
                     var extrasTotal = Extras.Where(e => ExtraIds.Contains(e.Id)).Sum(e => e.Price);
-                    Estimate = unit * Nights * Math.Max(1, PetCount) + extrasTotal;
+                    Estimate = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * Nights) + extrasTotal;
                     await ApplyPromoAsync();
                 }
                 else if (SelectedService != null)
                 {
-                    Estimate = SelectedService.PriceSmall * Nights * Math.Max(1, PetCount);
+                    Estimate = SelectedService.PriceSmall * Nights;
                     await ApplyPromoAsync();
                 }
             }
@@ -423,6 +435,27 @@ public class IndexModel : PageModel
         {
             PromoError = promo.ErrorMessage;
         }
+    }
+
+    private void NormalizeSelectedPets()
+    {
+        PetIds ??= new List<int>();
+        var owned = Pets.Select(p => p.Id).ToHashSet();
+
+        // Legacy single PetId / PetCount URLs → seed PetIds.
+        if (PetIds.Count == 0 && PetId > 0 && owned.Contains(PetId))
+            PetIds.Add(PetId);
+
+        PetIds = PetIds.Where(owned.Contains).Distinct().Take(6).ToList();
+
+        // If still empty and user has exactly one pet, auto-select it.
+        if (PetIds.Count == 0 && Pets.Count == 1)
+            PetIds.Add(Pets[0].Id);
+
+        SelectedPets = Pets.Where(p => PetIds.Contains(p.Id)).ToList();
+        PetCount = SelectedPets.Count;
+        PetId = SelectedPets.FirstOrDefault()?.Id ?? 0;
+        SelectedPet = SelectedPets.FirstOrDefault();
     }
 
     private void ResolveDates(out DateTime cin, out DateTime cout)

@@ -3699,18 +3699,22 @@ body.chat-layout .chat-page {
 .hotel-flow.has-summary.is-summary-collapsed { padding-bottom: 108px; }
 
 /* Full-page checkout (Amazon / Mercado Libre style) — replaces the old bottom sheet. */
-.hotel-flow.has-checkout-sticky { padding-bottom: 108px; }
+.hotel-flow.has-checkout-sticky {
+  /* Sticky bar (~88px) + gap + bottom nav + safe area */
+  padding-bottom: calc(var(--nav-h, 68px) + 100px + env(safe-area-inset-bottom, 0px));
+}
 .hotel-flow.is-checkout { padding-bottom: 24px; }
 
 .checkout-sticky {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 0;
+  /* Sit above the bottom nav (nav is a sibling stacking context). */
+  bottom: calc(var(--nav-h, 68px) + env(safe-area-inset-bottom, 0px));
   width: min(100%, var(--app-max, 480px));
-  z-index: 40;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 28%);
+  z-index: 45;
+  padding: 10px 14px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.92) 22%, #fff 42%);
   pointer-events: none;
 }
 .checkout-sticky-inner {
@@ -3721,27 +3725,33 @@ body.chat-layout .chat-page {
   padding: 12px 14px;
   border-radius: 18px;
   background: #fff;
-  border: 1px solid var(--border);
-  box-shadow: 0 10px 28px rgba(20, 40, 30, 0.14);
+  border: 1.5px solid rgba(15, 61, 47, 0.12);
+  box-shadow:
+    0 12px 32px rgba(20, 40, 30, 0.16),
+    0 0 0 1px rgba(125, 211, 33, 0.12);
 }
 .checkout-sticky-meta {
   flex: 1;
   min-width: 0;
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 .checkout-sticky-label {
-  font-size: .72rem;
+  font-size: .68rem;
+  font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
 }
 .checkout-sticky-price {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  font-weight: 800;
   color: var(--forest);
-  line-height: 1.1;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 .checkout-sticky-biz {
+  font-size: .78rem;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -3749,9 +3759,11 @@ body.chat-layout .chat-page {
 }
 .checkout-sticky-cta {
   flex: 0 0 auto;
-  padding: 12px 16px;
+  padding: 13px 18px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(31, 42, 38, 0.18);
 }
 
 .checkout-page {
@@ -5199,6 +5211,9 @@ a.vet-modality-emergency:hover {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.hotel-flow .hotel-pet-list {
+  margin-bottom: 4px;
 }
 .behavior-pet-row {
   display: flex;

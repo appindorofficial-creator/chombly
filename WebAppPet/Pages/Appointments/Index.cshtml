@@ -79,6 +79,8 @@
                 </div>
             }
 
+            @if (Model.Tab != "history")
+            {
             <section class="how-card" data-how-glow aria-labelledby="appt-how-title">
                 <h3 id="appt-how-title">@L["Appt_HowTitle"]</h3>
                 <ol class="how-steps">
@@ -105,6 +107,7 @@
                     </li>
                 </ol>
             </section>
+            }
         }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>

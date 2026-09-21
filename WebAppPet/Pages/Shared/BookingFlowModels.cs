@@ -121,8 +121,8 @@ public sealed class BookingSummarySheetModel
     /// <summary>URL to go back to editing the booking (FullPage back / edit link).</summary>
     public string? EditHref { get; init; }
 
-    public string ContinueLabelEs { get; init; } = "Continuar al pago";
-    public string ContinueLabelEn { get; init; } = "Continue to payment";
+    public string ContinueLabelEs { get; init; } = "Continuar";
+    public string ContinueLabelEn { get; init; } = "Continue";
 }
 
 public enum BookingCheckoutPresentation
