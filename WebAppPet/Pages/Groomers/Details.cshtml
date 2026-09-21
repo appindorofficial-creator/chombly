@@ -3,6 +3,7 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = Model.Groomer?.BusinessName ?? L["Detail_Business"].Value;
+    ViewData["LangCompact"] = true;
 }
 @if (Model.Groomer == null)
 {
@@ -19,9 +20,9 @@ else
                asp-page="./Index"
                asp-route-category="@g.Category?.Slug"
                asp-route-service="@Model.Service"
-               aria-label="@L["Search_Filters"]"
-               title="@L["Search_Filters"]">
-                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5h18l-7 8v5l-4 2v-7L3 5z"/></svg>
+               aria-label="@CatalogLocalizer.Loc("Volver", "Back")"
+               title="@CatalogLocalizer.Loc("Volver al listado", "Back to list")">
+                <svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
             </a>
             <partial name="_FavoriteHeart" model="(g.Id, Model.IsFavorite, (string?)null)" />
         </div>

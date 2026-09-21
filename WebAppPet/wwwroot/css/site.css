@@ -3666,6 +3666,24 @@ body.chat-layout .chat-page {
 .hotel-flow.has-summary { padding-bottom: min(82vh, 620px); }
 .hotel-flow.has-summary.is-summary-collapsed { padding-bottom: 108px; }
 
+/* Booking: short form — don't reserve ~full viewport under the sheet. */
+.hotel-flow.booking-flow.has-summary,
+.hotel-flow.booking-flow.has-summary.is-summary-collapsed,
+.page-booking .hotel-flow.has-summary,
+.page-booking .hotel-flow.has-summary.is-summary-collapsed {
+  padding-bottom: 120px;
+}
+.page-booking .hotel-summary,
+.booking-summary.hotel-summary {
+  bottom: 0;
+}
+.page-booking .hotel-summary:not(.is-collapsed) .hotel-summary-inner,
+.booking-summary.hotel-summary:not(.is-collapsed) .hotel-summary-inner {
+  min-height: 0 !important;
+  max-height: min(88dvh, 680px) !important;
+  height: auto;
+}
+
 .hotel-summary {
   position: fixed;
   left: 50%;

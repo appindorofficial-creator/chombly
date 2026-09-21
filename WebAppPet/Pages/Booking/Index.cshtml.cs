@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
+using WebAppPet.Pages.Shared;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Booking;
@@ -14,13 +15,20 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly PromoCodeService _promo;
+    private readonly AvailabilityService _availability;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public IndexModel(AppDbContext db, AuthService auth, PromoCodeService promo, IStringLocalizer<SharedResource> L)
+    public IndexModel(
+        AppDbContext db,
+        AuthService auth,
+        PromoCodeService promo,
+        AvailabilityService availability,
+        IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
         _promo = promo;
+        _availability = availability;
         _L = L;
     }
 
@@ -31,32 +39,35 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Service { get; set; }
 
-    [BindProperty]
-    public int Step { get; set; } = 1;
-
     [BindProperty(SupportsGet = true)]
     public int ServiceId { get; set; }
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public int PetId { get; set; }
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public string Date { get; set; } = string.Empty;
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public string EndDate { get; set; } = string.Empty;
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public string Time { get; set; } = string.Empty;
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public string? Notes { get; set; }
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public List<int> SelectedExtraIds { get; set; } = new();
 
     [BindProperty]
     public string? PromoCode { get; set; }
+
+    [BindProperty]
+    public bool AcceptTerms { get; set; }
+
+    [BindProperty]
+    public int? PaymentMethodId { get; set; }
 
     public GroomerProfile? Groomer { get; set; }
     public bool IsOvernight { get; set; }
@@ -68,8 +79,15 @@ public class IndexModel : PageModel
         "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
     };
 
-    /// <summary>Slots still in the future for the selected (or today) date.</summary>
-    public List<string> AvailableTimeSlots => GetAvailableTimeSlots(Date);
+    public HashSet<string> PastSlots { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> OccupiedSlots { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> OutsideHoursSlots { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Slots that can still be booked for the selected date.</summary>
+    public List<string> BookableTimeSlots { get; private set; } = new();
+
+    public bool DayIsOpen { get; private set; } = true;
+    public string? HoursLabel { get; private set; }
 
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
@@ -82,16 +100,183 @@ public class IndexModel : PageModel
     public string? PromoError { get; set; }
     public string? ErrorMessage { get; set; }
 
+    public PaymentMethod? DefaultPayment { get; set; }
+    public List<PaymentMethod> Payments { get; set; } = new();
+
+    /// <summary>Service + pet + valid schedule — enough to show the summary sheet.</summary>
+    public bool CanShowSummary { get; private set; }
+
+    /// <summary>Service already chosen (from Details or single offering) — hide the picker.</summary>
+    public bool ServiceLocked { get; private set; }
+
+    public string BookingReturnPath =>
+        $"/Booking/Index?groomerId={GroomerId}"
+        + (ServiceId > 0 ? $"&serviceId={ServiceId}" : "")
+        + (!string.IsNullOrWhiteSpace(Service) ? $"&service={Uri.EscapeDataString(Service)}" : "")
+        + (PetId > 0 ? $"&petId={PetId}" : "")
+        + (!string.IsNullOrWhiteSpace(Date) ? $"&date={Uri.EscapeDataString(Date)}" : "")
+        + (!string.IsNullOrWhiteSpace(Time) ? $"&time={Uri.EscapeDataString(Time)}" : "")
+        + (!string.IsNullOrWhiteSpace(EndDate) ? $"&endDate={Uri.EscapeDataString(EndDate)}" : "");
+
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is null)
-            return RedirectToPage("/Account/Login");
+            return RedirectToPage("/Account/Login", new { returnUrl = BookingReturnPath });
 
         await LoadAsync();
         if (Groomer == null) return RedirectToPage("/Groomers/Index");
-        Step = 1;
+
         ApplyServicePreselect();
+        if (ServiceId == 0 && Services.Count == 1)
+            ServiceId = Services[0].Id;
+        ServiceLocked = ServiceId > 0 && Services.Any(s => s.Id == ServiceId);
+
+        if (PetId == 0 && Pets.Count == 1)
+            PetId = Pets[0].Id;
+
+        EnsureDateDefaults();
+        await LoadDayAvailabilityAsync();
+        await PrepareConfirmAsync(applyPromo: false);
+        await LoadPaymentsAsync();
+        EvaluateCanShowSummary();
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostBookAsync()
+    {
+        if (_auth.CurrentUserId is not int userId)
+            return RedirectToPage("/Account/Login", new { returnUrl = BookingReturnPath });
+
+        await LoadAsync();
+        if (Groomer == null) return RedirectToPage("/Groomers/Index");
+
+        ApplyServicePreselect();
+        EnsureDateDefaults();
+        await LoadDayAvailabilityAsync();
+        await PrepareConfirmAsync(applyPromo: true);
+        await LoadPaymentsAsync();
+
+        if (!AcceptTerms)
+        {
+            var msg = CatalogLocalizer.Loc(
+                "Debes aceptar los términos para continuar.",
+                "You must accept the terms to continue.");
+            ModelState.AddModelError(nameof(AcceptTerms), msg);
+            ErrorMessage = msg;
+            EvaluateCanShowSummary();
+            return Page();
+        }
+
+        if (SelectedService == null || SelectedPet == null)
+        {
+            ErrorMessage = _L["Booking_MissingData"].Value;
+            EvaluateCanShowSummary();
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(PromoCode) && !string.IsNullOrEmpty(PromoError))
+        {
+            EvaluateCanShowSummary();
+            return Page();
+        }
+
+        if (!Groomer.AcceptsSpecies(SelectedPet.Species))
+        {
+            ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, SelectedPet.Species);
+            EvaluateCanShowSummary();
+            return Page();
+        }
+
+        DateTime scheduled;
+        DateTime? endAt = null;
+        var nights = 0;
+
+        if (IsOvernight)
+        {
+            if (!DateTime.TryParse(Date, out var cin) || !DateTime.TryParse(EndDate, out var cout) || cout <= cin)
+            {
+                ErrorMessage = _L["Booking_InvalidDates"].Value;
+                EvaluateCanShowSummary();
+                return Page();
+            }
+            if (IsOvernightCheckInInPast(cin.Date))
+            {
+                ErrorMessage = _L["Booking_DateNotPast"].Value;
+                EvaluateCanShowSummary();
+                return Page();
+            }
+            scheduled = AppTimeZones.LocalDateAndTimeToUtc(cin.Date, TimeSpan.FromHours(14));
+            endAt = AppTimeZones.LocalDateAndTimeToUtc(cout.Date, TimeSpan.FromHours(11));
+            nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
+        }
+        else
+        {
+            if (!TryResolveDayServiceStartUtc(out scheduled, out var scheduleError))
+            {
+                ErrorMessage = scheduleError ?? _L["Booking_InvalidDateTime"].Value;
+                EvaluateCanShowSummary();
+                return Page();
+            }
+            if (scheduled <= DateTime.UtcNow)
+            {
+                ErrorMessage = _L["Booking_DateNotPast"].Value;
+                EvaluateCanShowSummary();
+                return Page();
+            }
+        }
+
+        if (PaymentMethodId.HasValue || DefaultPayment != null)
+        {
+            var pm = Payments.FirstOrDefault(p => p.Id == PaymentMethodId) ?? DefaultPayment;
+            if (pm != null)
+                PaymentMethodId = pm.Id;
+        }
+
+        var appt = new Appointment
+        {
+            ClientId = userId,
+            PetId = PetId,
+            GroomerId = GroomerId,
+            ServiceId = ServiceId,
+            ScheduledAt = scheduled,
+            EndAt = endAt,
+            Nights = nights,
+            Status = AppointmentStatus.Pending,
+            TotalPrice = EstimatedTotal,
+            DepositPaid = Deposit,
+            PromoCode = DiscountAmount > 0 ? PromoCode?.Trim().ToUpperInvariant() : null,
+            DiscountAmount = DiscountAmount,
+            Notes = Notes
+        };
+
+        foreach (var ex in SelectedExtras)
+        {
+            appt.Extras.Add(new AppointmentExtra
+            {
+                ServiceExtraId = ex.Id,
+                Name = ex.Name,
+                Price = ex.Price
+            });
+        }
+
+        _db.Appointments.Add(appt);
+        _db.Notifications.Add(new AppNotification
+        {
+            UserId = userId,
+            Title = "Reserva enviada",
+            Message = $"Tu solicitud en {Groomer.BusinessName} está pendiente de confirmación.",
+            Type = "appointment"
+        });
+        _db.Notifications.Add(new AppNotification
+        {
+            UserId = Groomer.UserId,
+            Title = "Nueva solicitud de reserva",
+            Message = $"{SelectedPet.Name} · {SelectedService.Name}.",
+            Type = "appointment"
+        });
+        await _db.SaveChangesAsync();
+
+        return RedirectToPage("./Confirm", new { id = appt.Id });
     }
 
     private void ApplyServicePreselect()
@@ -121,226 +306,6 @@ public class IndexModel : PageModel
             ServiceId = partial.Id;
     }
 
-    public async Task<IActionResult> OnPostAsync(string handler)
-    {
-        if (_auth.CurrentUserId is not int userId)
-            return RedirectToPage("/Account/Login");
-
-        await LoadAsync();
-        if (Groomer == null) return RedirectToPage("/Groomers/Index");
-
-        if (handler == "Back")
-        {
-            Step = Math.Max(1, Step - 1);
-            ModelState.Remove(nameof(Step));
-            if (Step == 2)
-                EnsureScheduleDefaults();
-            await PrepareConfirmAsync(applyPromo: Step == 4);
-            return Page();
-        }
-
-        if (handler == "ApplyPromo")
-        {
-            Step = 4;
-            ModelState.Remove(nameof(Step));
-            await PrepareConfirmAsync(applyPromo: true);
-            return Page();
-        }
-
-        if (handler == "RefreshSchedule")
-        {
-            Step = 2;
-            ModelState.Remove(nameof(Step));
-            EnsureScheduleDefaults();
-            return Page();
-        }
-
-        if (handler == "Next")
-        {
-            if (Step == 1)
-            {
-                if (ServiceId == 0 || !Services.Any(s => s.Id == ServiceId))
-                {
-                    ErrorMessage = _L["Booking_SelectService"].Value;
-                    ServiceId = 0;
-                    return Page();
-                }
-            }
-
-            if (Step == 2)
-            {
-                EnsureScheduleDefaults();
-                if (IsOvernight)
-                {
-                    if (!DateTime.TryParse(Date, out var cin) || !DateTime.TryParse(EndDate, out var cout) || cout <= cin)
-                    {
-                        ErrorMessage = _L["Booking_CheckDates"].Value;
-                        return Page();
-                    }
-                    if (IsOvernightCheckInInPast(cin.Date))
-                    {
-                        ErrorMessage = _L["Booking_DateNotPast"].Value;
-                        return Page();
-                    }
-                }
-                else if (string.IsNullOrWhiteSpace(Date) || string.IsNullOrWhiteSpace(Time))
-                {
-                    ErrorMessage = _L["Booking_SelectDateTime"].Value;
-                    return Page();
-                }
-                else if (!TryResolveDayServiceStartUtc(out var startUtc, out var scheduleError))
-                {
-                    ErrorMessage = scheduleError;
-                    return Page();
-                }
-                else if (startUtc <= DateTime.UtcNow)
-                {
-                    ErrorMessage = _L["Booking_DateNotPast"].Value;
-                    return Page();
-                }
-            }
-
-            if (Step == 3)
-            {
-                if (PetId == 0)
-                {
-                    ErrorMessage = _L["Booking_SelectPet"].Value;
-                    return Page();
-                }
-                var petCheck = Pets.FirstOrDefault(p => p.Id == PetId);
-                if (petCheck != null && !Groomer.AcceptsSpecies(petCheck.Species))
-                {
-                    ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, petCheck.Species);
-                    return Page();
-                }
-            }
-
-            Step = Math.Min(4, Step + 1);
-            ModelState.Remove(nameof(Step));
-            if (Step == 2)
-                EnsureScheduleDefaults();
-            await PrepareConfirmAsync(applyPromo: Step == 4);
-            return Page();
-        }
-
-        if (handler == "Confirm")
-        {
-            await PrepareConfirmAsync(applyPromo: true);
-            if (SelectedService == null || SelectedPet == null)
-            {
-                ErrorMessage = _L["Booking_MissingData"].Value;
-                Step = 1;
-                ModelState.Remove(nameof(Step));
-                return Page();
-            }
-
-            if (!string.IsNullOrWhiteSpace(PromoCode) && !string.IsNullOrEmpty(PromoError))
-            {
-                Step = 4;
-                ModelState.Remove(nameof(Step));
-                return Page();
-            }
-
-            if (!Groomer.AcceptsSpecies(SelectedPet.Species))
-            {
-                ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, SelectedPet.Species);
-                Step = 3;
-                ModelState.Remove(nameof(Step));
-                return Page();
-            }
-
-            DateTime scheduled;
-            DateTime? endAt = null;
-            var nights = 0;
-
-            if (IsOvernight)
-            {
-                if (!DateTime.TryParse(Date, out var cin) || !DateTime.TryParse(EndDate, out var cout) || cout <= cin)
-                {
-                    ErrorMessage = _L["Booking_InvalidDates"].Value;
-                    Step = 2;
-                    ModelState.Remove(nameof(Step));
-                    return Page();
-                }
-                if (IsOvernightCheckInInPast(cin.Date))
-                {
-                    ErrorMessage = _L["Booking_DateNotPast"].Value;
-                    Step = 2;
-                    ModelState.Remove(nameof(Step));
-                    return Page();
-                }
-                scheduled = AppTimeZones.LocalDateAndTimeToUtc(cin.Date, TimeSpan.FromHours(14)); // check-in 2pm local
-                endAt = AppTimeZones.LocalDateAndTimeToUtc(cout.Date, TimeSpan.FromHours(11));    // check-out 11am local
-                nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
-            }
-            else
-            {
-                if (!TryResolveDayServiceStartUtc(out scheduled, out var scheduleError))
-                {
-                    ErrorMessage = scheduleError ?? _L["Booking_InvalidDateTime"].Value;
-                    Step = 2;
-                    ModelState.Remove(nameof(Step));
-                    return Page();
-                }
-                if (scheduled <= DateTime.UtcNow)
-                {
-                    ErrorMessage = _L["Booking_DateNotPast"].Value;
-                    Step = 2;
-                    ModelState.Remove(nameof(Step));
-                    return Page();
-                }
-            }
-
-            var appt = new Appointment
-            {
-                ClientId = userId,
-                PetId = PetId,
-                GroomerId = GroomerId,
-                ServiceId = ServiceId,
-                ScheduledAt = scheduled,
-                EndAt = endAt,
-                Nights = nights,
-                Status = AppointmentStatus.Pending,
-                TotalPrice = EstimatedTotal,
-                DepositPaid = Deposit,
-                PromoCode = DiscountAmount > 0 ? PromoCode?.Trim().ToUpperInvariant() : null,
-                DiscountAmount = DiscountAmount,
-                Notes = Notes
-            };
-
-            foreach (var ex in SelectedExtras)
-            {
-                appt.Extras.Add(new AppointmentExtra
-                {
-                    ServiceExtraId = ex.Id,
-                    Name = ex.Name,
-                    Price = ex.Price
-                });
-            }
-
-            _db.Appointments.Add(appt);
-            _db.Notifications.Add(new AppNotification
-            {
-                UserId = userId,
-                Title = "Reserva enviada",
-                Message = $"Tu solicitud en {Groomer.BusinessName} está pendiente de confirmación.",
-                Type = "appointment"
-            });
-            _db.Notifications.Add(new AppNotification
-            {
-                UserId = Groomer.UserId,
-                Title = "Nueva solicitud de reserva",
-                Message = $"{SelectedPet.Name} · {SelectedService.Name}.",
-                Type = "appointment"
-            });
-            await _db.SaveChangesAsync();
-
-            return RedirectToPage("./Confirm", new { id = appt.Id });
-        }
-
-        return Page();
-    }
-
     private async Task LoadAsync()
     {
         Groomer = await _db.Groomers
@@ -356,6 +321,18 @@ public class IndexModel : PageModel
 
         if (_auth.CurrentUserId is int userId)
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).ToListAsync();
+
+        ServiceLocked = ServiceId > 0 && Services.Any(s => s.Id == ServiceId);
+    }
+
+    private async Task LoadPaymentsAsync()
+    {
+        if (_auth.CurrentUserId is not int userId) return;
+        Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
+            .OrderByDescending(p => p.IsDefault).ThenBy(p => p.Id).ToListAsync();
+        DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
+        if (PaymentMethodId == null && DefaultPayment != null)
+            PaymentMethodId = DefaultPayment.Id;
     }
 
     private async Task PrepareConfirmAsync(bool applyPromo)
@@ -368,94 +345,191 @@ public class IndexModel : PageModel
         Subtotal = 0;
         DiscountAmount = 0;
         EstimatedTotal = 0;
+        Deposit = 0;
         PromoError = null;
 
-        if (SelectedService != null && SelectedPet != null)
+        if (SelectedService == null || SelectedPet == null)
+            return;
+
+        var unit = SelectedService.PriceFor(SelectedPet.Size);
+        if (IsOvernight && DateTime.TryParse(Date, out var cin) && DateTime.TryParse(EndDate, out var cout) && cout > cin)
         {
-            var unit = SelectedService.PriceFor(SelectedPet.Size);
-            if (IsOvernight && DateTime.TryParse(Date, out var cin) && DateTime.TryParse(EndDate, out var cout) && cout > cin)
-            {
-                Nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
-                Subtotal = unit * Nights;
-            }
-            else
-            {
-                Subtotal = unit;
-            }
+            Nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
+            Subtotal = unit * Nights;
+        }
+        else
+        {
+            Subtotal = unit;
+        }
 
-            Subtotal += SelectedExtras.Sum(e => e.Price);
-            EstimatedTotal = Subtotal;
+        Subtotal += SelectedExtras.Sum(e => e.Price);
+        EstimatedTotal = Subtotal;
 
-            if (applyPromo)
+        if (applyPromo)
+        {
+            var promo = await _promo.TryApplyAsync(_auth.CurrentUserId, PromoCode, Subtotal);
+            if (!string.IsNullOrWhiteSpace(PromoCode))
             {
-                var promo = await _promo.TryApplyAsync(_auth.CurrentUserId, PromoCode, Subtotal);
-                if (!string.IsNullOrWhiteSpace(PromoCode))
+                if (promo.IsValid)
                 {
-                    if (promo.IsValid)
-                    {
-                        DiscountAmount = promo.DiscountAmount;
-                        EstimatedTotal = promo.FinalTotal;
-                        PromoCode = promo.NormalizedCode;
-                    }
-                    else if (promo.ErrorMessage != null)
-                    {
-                        PromoError = promo.ErrorMessage;
-                        DiscountAmount = 0;
-                        EstimatedTotal = Subtotal;
-                    }
+                    DiscountAmount = promo.DiscountAmount;
+                    EstimatedTotal = promo.FinalTotal;
+                    PromoCode = promo.NormalizedCode;
+                }
+                else if (promo.ErrorMessage != null)
+                {
+                    PromoError = promo.ErrorMessage;
+                    DiscountAmount = 0;
+                    EstimatedTotal = Subtotal;
                 }
             }
-
-            Deposit = Math.Round(EstimatedTotal * 0.35m, 2);
-            if (Deposit < 15) Deposit = Math.Min(15, EstimatedTotal);
         }
+
+        Deposit = Math.Round(EstimatedTotal * 0.35m, 2);
+        if (Deposit < 15) Deposit = Math.Min(15, EstimatedTotal);
     }
 
-    private List<string> GetAvailableTimeSlots(string? dateValue)
+    private void EvaluateCanShowSummary()
     {
-        var day = AppTimeZones.TodayLocalDate();
-        if (!string.IsNullOrWhiteSpace(dateValue) && DateTime.TryParse(dateValue, out var parsed))
-            day = parsed.Date;
+        CanShowSummary = SelectedService != null && SelectedPet != null;
+        if (!CanShowSummary) return;
 
-        var nowUtc = DateTime.UtcNow;
-        var available = new List<string>();
-        foreach (var label in TimeSlots)
+        if (IsOvernight)
         {
-            if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var tod)) continue;
-            var utc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
-            if (utc > nowUtc)
-                available.Add(label);
+            CanShowSummary = DateTime.TryParse(Date, out var cin)
+                && DateTime.TryParse(EndDate, out var cout)
+                && cout > cin
+                && !IsOvernightCheckInInPast(cin.Date);
+            return;
         }
-        return available;
+
+        CanShowSummary = DayIsOpen
+            && BookableTimeSlots.Count > 0
+            && TryResolveDayServiceStartUtc(out var start, out _)
+            && start > DateTime.UtcNow;
     }
 
-    private void EnsureScheduleDefaults()
+    private void EnsureDateDefaults()
     {
         if (string.IsNullOrWhiteSpace(Date))
             Date = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
 
-        if (IsOvernight)
-        {
-            if (string.IsNullOrWhiteSpace(EndDate) && DateTime.TryParse(Date, out var cin))
-                EndDate = cin.Date.AddDays(1).ToString("yyyy-MM-dd");
+        if (IsOvernight && string.IsNullOrWhiteSpace(EndDate) && DateTime.TryParse(Date, out var cin))
+            EndDate = cin.Date.AddDays(1).ToString("yyyy-MM-dd");
+    }
+
+    private async Task LoadDayAvailabilityAsync()
+    {
+        PastSlots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        OccupiedSlots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        OutsideHoursSlots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        BookableTimeSlots = new List<string>();
+        DayIsOpen = true;
+        HoursLabel = null;
+
+        if (IsOvernight || Groomer == null)
             return;
+
+        if (!DateTime.TryParse(Date, out var dayParsed))
+            dayParsed = AppTimeZones.TodayLocalDate();
+        var day = dayParsed.Date;
+
+        if (Groomer.OffersEmergency24x7)
+        {
+            DayIsOpen = true;
+            HoursLabel = CatalogLocalizer.Loc("24 horas", "24 hours");
+        }
+        else
+        {
+            DayIsOpen = await _availability.IsAvailableOnAsync(GroomerId, day);
         }
 
-        var available = GetAvailableTimeSlots(Date);
-        if (available.Count == 0)
+        BusinessWeeklyHour? week = null;
+        if (!Groomer.OffersEmergency24x7)
+        {
+            week = await _db.WeeklyHours.AsNoTracking()
+                .FirstOrDefaultAsync(h => h.GroomerId == GroomerId && h.DayOfWeek == (int)day.DayOfWeek);
+            if (week != null && week.IsOpen)
+                HoursLabel = $"{week.OpenLabel}–{week.CloseLabel}";
+        }
+
+        if (!DayIsOpen)
         {
             Time = "";
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(Time) || !available.Contains(Time, StringComparer.OrdinalIgnoreCase))
-            Time = available[0];
+        PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
+        await LoadOccupiedSlotsAsync(day);
+
+        foreach (var label in TimeSlots)
+        {
+            if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var tod)) continue;
+            var minutes = (int)tod.TotalMinutes;
+
+            if (!Groomer.OffersEmergency24x7
+                && week != null
+                && week.IsOpen
+                && !AvailabilityService.IsWithinOpenWindow(minutes, week.OpenMinutes, week.CloseMinutes))
+            {
+                OutsideHoursSlots.Add(label);
+                continue;
+            }
+
+            if (PastSlots.Contains(label) || OccupiedSlots.Contains(label))
+                continue;
+
+            BookableTimeSlots.Add(label);
+        }
+
+        if (BookableTimeSlots.Count == 0)
+        {
+            Time = "";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Time)
+            || !BookableTimeSlots.Contains(Time, StringComparer.OrdinalIgnoreCase))
+            Time = BookableTimeSlots[0];
+    }
+
+    private async Task LoadOccupiedSlotsAsync(DateTime day)
+    {
+        OccupiedSlots.Clear();
+        var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
+        var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
+        var taken = await _db.Appointments.AsNoTracking()
+            .Where(a => a.GroomerId == GroomerId
+                        && a.Status != AppointmentStatus.Cancelled
+                        && a.ScheduledAt >= from
+                        && a.ScheduledAt < to)
+            .Select(a => a.ScheduledAt)
+            .ToListAsync();
+
+        foreach (var utc in taken)
+        {
+            var local = AppTimeZones.ToAppLocal(utc);
+            foreach (var label in TimeSlots)
+            {
+                if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var slotTod)) continue;
+                if (slotTod == local.TimeOfDay)
+                    OccupiedSlots.Add(label);
+            }
+        }
     }
 
     private bool TryResolveDayServiceStartUtc(out DateTime startUtc, out string? error)
     {
         startUtc = default;
         error = null;
+
+        if (!DayIsOpen)
+        {
+            error = CatalogLocalizer.Loc(
+                "El negocio no atiende ese día. Elige otra fecha.",
+                "This business is closed that day. Choose another date.");
+            return false;
+        }
 
         if (string.IsNullOrWhiteSpace(Date) || string.IsNullOrWhiteSpace(Time))
         {
@@ -475,16 +549,17 @@ public class IndexModel : PageModel
             return false;
         }
 
-        var available = GetAvailableTimeSlots(Date);
-        if (available.Count == 0)
+        if (BookableTimeSlots.Count == 0)
         {
             error = _L["Booking_NoFutureSlots"].Value;
             return false;
         }
 
-        if (!available.Contains(Time, StringComparer.OrdinalIgnoreCase))
+        if (!BookableTimeSlots.Contains(Time, StringComparer.OrdinalIgnoreCase))
         {
-            error = _L["Booking_DateNotPast"].Value;
+            error = CatalogLocalizer.Loc(
+                "Ese horario no está disponible. Elige otro.",
+                "That time isn't available. Choose another.");
             return false;
         }
 
@@ -498,9 +573,6 @@ public class IndexModel : PageModel
         return true;
     }
 
-    /// <summary>
-    /// Overnight check-in is treated as 2pm local; same-day check-in after 2pm is past.
-    /// </summary>
     private static bool IsOvernightCheckInInPast(DateTime checkInDate)
     {
         var today = AppTimeZones.TodayLocalDate();

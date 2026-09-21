@@ -1,12 +1,13 @@
 @model WebAppPet.Pages.Shared.BookingTimeSlotsModel
 @using System.Linq
-@* Shared AM/PM time chips: past and occupied slots are disabled. *@
+@* Shared AM/PM time chips: past, occupied, and outside-hours slots are disabled. *@
 <div class="when-row" style="flex-wrap:wrap">
     @foreach (var t in Model.Slots)
     {
         var past = Model.PastSlots.Contains(t, StringComparer.OrdinalIgnoreCase);
         var taken = Model.OccupiedSlots.Contains(t, StringComparer.OrdinalIgnoreCase);
-        var blocked = past || taken;
+        var outside = Model.OutsideHoursSlots.Contains(t, StringComparer.OrdinalIgnoreCase);
+        var blocked = past || taken || outside;
         var selected = !blocked
             && !string.IsNullOrWhiteSpace(Model.Selected)
             && string.Equals(Model.Selected, t, StringComparison.OrdinalIgnoreCase);
@@ -20,7 +21,9 @@
                 ? CatalogLocalizer.Loc(" · pasado", " · past")
                 : taken
                     ? CatalogLocalizer.Loc(" · ocupado", " · taken")
-                    : "")
+                    : outside
+                        ? CatalogLocalizer.Loc(" · cerrado", " · closed")
+                        : "")
         </label>
     }
 </div>

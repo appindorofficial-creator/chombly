@@ -8,6 +8,8 @@ public sealed class BookingPetPickerModel
 {
     public required IReadOnlyList<Pet> Pets { get; init; }
     public int PetId { get; init; }
+    /// <summary>When set, "Add pet" links return here after create.</summary>
+    public string? ReturnUrl { get; init; }
 }
 
 public sealed class BookingGateNoteModel
@@ -41,6 +43,8 @@ public sealed class BookingTimeSlotsModel
     public string? Selected { get; init; }
     public IReadOnlyCollection<string> PastSlots { get; init; } = Array.Empty<string>();
     public IReadOnlyCollection<string> OccupiedSlots { get; init; } = Array.Empty<string>();
+    /// <summary>Slots outside the business weekly open window for the selected day.</summary>
+    public IReadOnlyCollection<string> OutsideHoursSlots { get; init; } = Array.Empty<string>();
     public string InputName { get; init; } = "Slot";
 }
 
@@ -100,6 +104,9 @@ public sealed class BookingSummarySheetModel
 
     public IReadOnlyList<BookingSummaryHidden> HiddenFields { get; init; } = [];
     public IReadOnlyList<BookingSummaryMultiHidden> MultiHiddenFields { get; init; } = [];
+
+    /// <summary>Optional extra CSS classes on the root aside (e.g. booking-summary).</summary>
+    public string? ExtraClass { get; init; }
 }
 
 /// <summary>Shared date helpers for Walkers / Daycare / Trainers booking flows.</summary>

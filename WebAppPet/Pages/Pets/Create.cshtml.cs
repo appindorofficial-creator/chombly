@@ -74,6 +74,9 @@ public class CreateModel : PageModel
     [BindProperty]
     public string? Notes { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     public IReadOnlyList<(string Value, string Label, string LabelEn, string Emoji, string BreedHint, string BreedHintEn)> SpeciesOptions =>
         PetSpecies.All;
 
@@ -193,6 +196,10 @@ public class CreateModel : PageModel
         await _db.SaveChangesAsync(cancellationToken);
         TempData["CelebratePet"] = "1";
         TempData["CelebratePetName"] = name;
+
+        if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
+
         return RedirectToPage("./Index");
     }
 

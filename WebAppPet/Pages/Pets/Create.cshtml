@@ -4,7 +4,9 @@
     ViewData["Title"] = L["Pets_Add"].Value;
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("./Index");
+    ViewData["OnboardBackHref"] = !string.IsNullOrWhiteSpace(Model.ReturnUrl) && Url.IsLocalUrl(Model.ReturnUrl)
+        ? Model.ReturnUrl
+        : Url.Page("./Index");
     ViewData["BodyClass"] = "page-pets-create";
     var HideNav = true;
     var en = CultureCookie.IsEnglish();

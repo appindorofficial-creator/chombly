@@ -9,7 +9,7 @@
     if (string.IsNullOrWhiteSpace(payReturn) || payReturn == "/")
         payReturn = "/Index";
 }
-<aside class="hotel-summary @(startCollapsed ? "is-collapsed" : null)"
+<aside class="hotel-summary @(Model.ExtraClass) @(startCollapsed ? "is-collapsed" : null)"
        data-hotel-summary
        @(startCollapsed ? "data-summary-start-collapsed=1" : null)>
     <button type="button"
