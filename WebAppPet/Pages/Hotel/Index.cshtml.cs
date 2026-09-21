@@ -50,6 +50,9 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Notes { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public bool Pay { get; set; }
+
     [BindProperty]
     public bool AcceptTerms { get; set; }
 
@@ -87,6 +90,8 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadAsync();
+        if (Pay && !(SelectedHotel != null && SelectedPet != null))
+            Pay = false;
         return Page();
     }
 
@@ -104,6 +109,7 @@ public class IndexModel : PageModel
                 "You must accept the Terms & Conditions.");
             ModelState.AddModelError(nameof(AcceptTerms), msg);
             ErrorMessage = msg;
+            Pay = true;
             return Page();
         }
 
@@ -112,6 +118,7 @@ public class IndexModel : PageModel
             ErrorMessage = CatalogLocalizer.Loc(
                 "Elige un hotel para continuar.",
                 "Choose a hotel to continue.");
+            Pay = true;
             return Page();
         }
 
@@ -124,6 +131,7 @@ public class IndexModel : PageModel
                 : CatalogLocalizer.Loc(
                     "Elige una mascota para continuar.",
                     "Choose a pet to continue.");
+            Pay = true;
             return Page();
         }
 
@@ -132,6 +140,7 @@ public class IndexModel : PageModel
             ErrorMessage = CatalogLocalizer.Loc(
                 $"Este hotel no atiende {SelectedPet.Species}.",
                 $"This hotel does not accept {SelectedPet.Species}.");
+            Pay = true;
             return Page();
         }
 
@@ -139,6 +148,7 @@ public class IndexModel : PageModel
         if (cout <= cin)
         {
             ErrorMessage = "Revisa las fechas de check-in y check-out.";
+            Pay = true;
             return Page();
         }
 
@@ -153,6 +163,7 @@ public class IndexModel : PageModel
             ErrorMessage = promo.ErrorMessage;
             Estimate = subtotal;
             PromoSubtotal = subtotal;
+            Pay = true;
             return Page();
         }
 
@@ -222,6 +233,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostApplyPromoAsync()
     {
         await LoadAsync();
+        Pay = true;
         return Page();
     }
 

@@ -3,97 +3,128 @@
     ViewData["TermsChecked"] = Model.AcceptTerms;
     if (!string.IsNullOrEmpty(Model.TermsStep))
         ViewData["TermsStep"] = Model.TermsStep;
-    var startCollapsed = Model.StartCollapsed;
     var estimate = Model.Estimate.ToString("0");
-    var payReturn = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var payReturn = Model.ContinueHref
+        ?? $"{Context.Request.Path}{Context.Request.QueryString}";
     if (string.IsNullOrWhiteSpace(payReturn) || payReturn == "/")
         payReturn = "/Index";
+    var editHref = Model.EditHref;
+    var isSticky = Model.Presentation == BookingCheckoutPresentation.StickyContinue;
 }
-<aside class="hotel-summary @(Model.ExtraClass) @(startCollapsed ? "is-collapsed" : null)"
-       data-hotel-summary
-       @(startCollapsed ? "data-summary-start-collapsed=1" : null)>
-    <button type="button"
-            class="hotel-summary-scrim"
-            data-summary-toggle
-            aria-label="@CatalogLocalizer.Loc("Cerrar resumen", "Close summary")"
-            tabindex="-1"></button>
-    <div class="hotel-summary-inner">
-        <div class="hotel-summary-grabber" aria-hidden="true"><span></span></div>
-        <div class="hotel-summary-toolbar">
-            <h3>@CatalogLocalizer.Loc(Model.TitleEs, Model.TitleEn)</h3>
-            <button type="button"
-                    class="hotel-summary-toggle"
-                    data-summary-toggle
-                    aria-expanded="@(startCollapsed ? "false" : "true")"
-                    aria-controls="@Model.BodyId"
-                    aria-label="@CatalogLocalizer.Loc("Minimizar", "Minimize")">
-                <span data-label-min @(startCollapsed ? "hidden" : null) class="hotel-summary-chevron" aria-hidden="true">▾</span>
-                <span data-label-max @(startCollapsed ? null : "hidden") class="hotel-summary-chevron" aria-hidden="true">▴</span>
-            </button>
-        </div>
-        <button type="button"
-                class="hotel-summary-peek"
-                data-summary-toggle
-                aria-controls="@Model.BodyId">
-            <div class="hotel-summary-peek-row">
-                <div class="hotel-summary-peek-copy">
-                    <strong>@Model.BusinessName</strong>
-                    <small>@CatalogLocalizer.Loc("Toca para expandir", "Tap to expand")</small>
-                </div>
-                <strong class="hotel-summary-peek-price">$@estimate</strong>
+
+@if (isSticky)
+{
+    <aside class="checkout-sticky @(Model.ExtraClass)" data-checkout-sticky data-hotel-summary>
+        <div class="checkout-sticky-inner">
+            <div class="checkout-sticky-meta">
+                <span class="checkout-sticky-label">@CatalogLocalizer.Loc("Total", "Total")</span>
+                <strong class="checkout-sticky-price">$@estimate</strong>
+                <small class="checkout-sticky-biz">@Model.BusinessName</small>
             </div>
-        </button>
-        <div class="hotel-summary-body" id="@Model.BodyId" data-summary-body>
-            <p class="hotel-summary-edit-hint">
-                <button type="button" class="hotel-summary-edit-link" data-summary-toggle>
-                    ← @CatalogLocalizer.Loc(Model.EditHintEs, Model.EditHintEn)
-                </button>
-            </p>
-            <div class="summary-hotel">
+            <a class="btn btn-primary checkout-sticky-cta"
+               href="@(Model.ContinueHref ?? "#")">
+                @CatalogLocalizer.Loc(Model.ContinueLabelEs, Model.ContinueLabelEn)
+            </a>
+        </div>
+    </aside>
+}
+else
+{
+    <div class="checkout-page @(Model.ExtraClass)" data-checkout-page data-hotel-summary>
+        <section class="checkout-hero card card-pad">
+            <div class="checkout-merchant">
                 <img src="@(Model.ImageUrl ?? Model.FallbackImage)" alt="" />
                 <div>
-                    <strong>@Model.BusinessName</strong>
-                    <div class="muted small">@Model.Subtitle</div>
+                    <p class="checkout-kicker">@CatalogLocalizer.Loc("Estás reservando en", "You're booking at")</p>
+                    <h2>@Model.BusinessName</h2>
+                    <p class="muted small mb-0">@Model.Subtitle</p>
                 </div>
             </div>
-            @if (Model.Lines is { Count: > 0 })
+            @if (!string.IsNullOrWhiteSpace(editHref))
             {
-                <div class="summary-lines">
-                    @foreach (var line in Model.Lines)
-                    {
-                        <div>
-                            <span>@CatalogLocalizer.Loc(line.LabelEs, line.LabelEn)</span>
-                            <strong>@line.Value</strong>
-                        </div>
-                    }
-                </div>
+                <a class="apple-text-link checkout-edit" href="@editHref">
+                    ← @CatalogLocalizer.Loc(Model.EditHintEs, Model.EditHintEn)
+                </a>
             }
-            @if (!string.IsNullOrWhiteSpace(Model.CustomerNotes))
-            {
-                <div class="summary-lines summary-notes-line">
-                    <div>
+        </section>
+
+        @if (Model.Lines is { Count: > 0 } || !string.IsNullOrWhiteSpace(Model.CustomerNotes))
+        {
+            <section class="checkout-card card card-pad">
+                <h3 class="checkout-card-title">@CatalogLocalizer.Loc("Resumen del pedido", "Order summary")</h3>
+                @if (Model.Lines is { Count: > 0 })
+                {
+                    <div class="checkout-lines">
+                        @foreach (var line in Model.Lines)
+                        {
+                            <div class="checkout-line">
+                                <span>@CatalogLocalizer.Loc(line.LabelEs, line.LabelEn)</span>
+                                <strong>@line.Value</strong>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.CustomerNotes))
+                {
+                    <div class="checkout-line checkout-notes">
                         <span>@CatalogLocalizer.Loc("Notas", "Notes")</span>
                         <strong>@Model.CustomerNotes</strong>
                     </div>
-                </div>
+                }
+            </section>
+        }
+
+        <form method="post" class="checkout-form">
+            @foreach (var h in Model.HiddenFields)
+            {
+                <input type="hidden" name="@h.Name" value="@h.Value" />
             }
-
-            <form method="post">
-                @foreach (var h in Model.HiddenFields)
+            @foreach (var group in Model.MultiHiddenFields)
+            {
+                foreach (var v in group.Values)
                 {
-                    <input type="hidden" name="@h.Name" value="@h.Value" />
+                    <input type="hidden" name="@group.Name" value="@v" />
                 }
-                @foreach (var group in Model.MultiHiddenFields)
-                {
-                    foreach (var v in group.Values)
-                    {
-                        <input type="hidden" name="@group.Name" value="@v" />
-                    }
-                }
+            }
+            <input type="hidden" name="Pay" value="true" />
 
+            <section class="checkout-card card card-pad">
+                <h3 class="checkout-card-title">@CatalogLocalizer.Loc("Cupón", "Promo code")</h3>
                 <partial name="_PromoCode" />
+            </section>
 
-                <div class="summary-total">
+            <section class="checkout-card card card-pad">
+                <h3 class="checkout-card-title">@CatalogLocalizer.Loc(Model.PaymentHeadingEs, Model.PaymentHeadingEn)</h3>
+                @if (Model.DefaultPayment != null)
+                {
+                    <div class="checkout-pay-row">
+                        <div class="checkout-pay-card">
+                            <span class="checkout-pay-ico" aria-hidden="true">💳</span>
+                            <div>
+                                <strong>@Model.DefaultPayment.Brand</strong>
+                                <div class="muted small">•••• @Model.DefaultPayment.Last4</div>
+                            </div>
+                        </div>
+                        <a class="apple-text-link" href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)">
+                            @CatalogLocalizer.Loc("Cambiar", "Change")
+                        </a>
+                    </div>
+                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-block"
+                       href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)">
+                        @CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")
+                    </a>
+                    <p class="muted small" style="margin-top:8px">
+                        @CatalogLocalizer.Loc("También puedes continuar y pagar después (demo).", "You can also continue and pay later (demo).")
+                    </p>
+                }
+            </section>
+
+            <section class="checkout-card card card-pad checkout-totals">
+                <div class="checkout-total-row">
                     <span>@CatalogLocalizer.Loc(Model.TotalLabelEs, Model.TotalLabelEn)</span>
                     <strong>$@estimate</strong>
                 </div>
@@ -101,29 +132,13 @@
                 {
                     <p class="summary-note">@CatalogLocalizer.Loc(Model.NoteEs, Model.NoteEn)</p>
                 }
-
-                <h4 class="summary-sub">@CatalogLocalizer.Loc(Model.PaymentHeadingEs, Model.PaymentHeadingEn)</h4>
-                @if (Model.DefaultPayment != null)
-                {
-                    <div class="pay-row">
-                        <span>💳 @Model.DefaultPayment.Brand •••• @Model.DefaultPayment.Last4</span>
-                        <a href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)">@CatalogLocalizer.Loc("Cambiar", "Change")</a>
-                    </div>
-                    <input type="hidden" name="PaymentMethodId" value="@Model.DefaultPayment.Id" />
-                }
-                else
-                {
-                    <a class="btn btn-outline btn-block btn-sm"
-                       href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)"
-                       style="margin-bottom:10px">@CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")</a>
-                }
-
                 <partial name="_AcceptTerms" />
+            </section>
 
+            <div class="checkout-submit-bar">
                 <button class="btn btn-primary btn-block" type="submit" asp-page-handler="Book"
                         data-terms-submit
                         disabled="@(Model.AcceptTerms ? null : "disabled")"
-                        style="margin-top:10px"
                         aria-describedby="AcceptTerms-error">
                     @if (Model.ShowSecureLockOnSubmit)
                     {
@@ -133,9 +148,11 @@
                 </button>
                 @if (Model.ShowSecureFooter)
                 {
-                    <p class="muted small" style="text-align:center;margin-top:8px">@CatalogLocalizer.Loc("Pago seguro y encriptado", "Secure encrypted payment")</p>
+                    <p class="muted small center" style="margin-top:8px">
+                        @CatalogLocalizer.Loc("Pago seguro y encriptado", "Secure encrypted payment")
+                    </p>
                 }
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
-</aside>
+}

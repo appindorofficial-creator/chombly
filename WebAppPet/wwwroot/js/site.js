@@ -1815,6 +1815,8 @@
 
     sheets.forEach(function (sheet) {
       if (sheet.dataset.summaryBound === '1') return;
+      // Full-page / sticky checkout — not the legacy collapsible sheet.
+      if (sheet.hasAttribute('data-checkout-sticky') || sheet.hasAttribute('data-checkout-page')) return;
       sheet.dataset.summaryBound = '1';
 
       var flow = document.querySelector('.hotel-flow');

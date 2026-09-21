@@ -3698,6 +3698,150 @@ body.chat-layout .chat-page {
 .hotel-flow.has-summary { padding-bottom: min(82vh, 620px); }
 .hotel-flow.has-summary.is-summary-collapsed { padding-bottom: 108px; }
 
+/* Full-page checkout (Amazon / Mercado Libre style) — replaces the old bottom sheet. */
+.hotel-flow.has-checkout-sticky { padding-bottom: 108px; }
+.hotel-flow.is-checkout { padding-bottom: 24px; }
+
+.checkout-sticky {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(100%, var(--app-max, 480px));
+  z-index: 40;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 28%);
+  pointer-events: none;
+}
+.checkout-sticky-inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 28px rgba(20, 40, 30, 0.14);
+}
+.checkout-sticky-meta {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.checkout-sticky-label {
+  font-size: .72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.checkout-sticky-price {
+  font-size: 1.25rem;
+  color: var(--forest);
+  line-height: 1.1;
+}
+.checkout-sticky-biz {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.checkout-sticky-cta {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.checkout-page {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 28px;
+}
+.checkout-hero .checkout-merchant {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.checkout-merchant img {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.checkout-kicker {
+  margin: 0 0 2px;
+  font-size: .75rem;
+  color: var(--muted);
+}
+.checkout-merchant h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.checkout-edit {
+  display: inline-block;
+  margin-top: 12px;
+}
+.checkout-card-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+.checkout-lines,
+.checkout-line {
+  display: grid;
+  gap: 10px;
+}
+.checkout-line {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.checkout-line:last-child { border-bottom: 0; padding-bottom: 0; }
+.checkout-line span { color: var(--muted); font-size: .9rem; }
+.checkout-line strong { text-align: right; font-size: .95rem; }
+.checkout-pay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.checkout-pay-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.checkout-pay-ico {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--lime-soft);
+}
+.checkout-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+.checkout-total-row strong {
+  font-size: 1.35rem;
+  color: var(--brand);
+}
+.checkout-submit-bar {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(255,255,255,0), #fff 35%);
+  z-index: 5;
+}
+
 /* Booking: short form — don't reserve ~full viewport under the sheet. */
 .hotel-flow.booking-flow.has-summary,
 .hotel-flow.booking-flow.has-summary.is-summary-collapsed,

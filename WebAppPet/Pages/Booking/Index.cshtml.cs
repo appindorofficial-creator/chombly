@@ -60,6 +60,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public List<int> SelectedExtraIds { get; set; } = new();
 
+    /// <summary>When true, show the full-page checkout instead of the configure form.</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool Pay { get; set; }
+
     [BindProperty]
     public string? PromoCode { get; set; }
 
@@ -139,6 +143,8 @@ public class IndexModel : PageModel
         await PrepareConfirmAsync(applyPromo: false);
         await LoadPaymentsAsync();
         EvaluateCanShowSummary();
+        if (Pay && !CanShowSummary)
+            Pay = false;
         return Page();
     }
 
@@ -164,6 +170,7 @@ public class IndexModel : PageModel
             ModelState.AddModelError(nameof(AcceptTerms), msg);
             ErrorMessage = msg;
             EvaluateCanShowSummary();
+            Pay = true;
             return Page();
         }
 
@@ -171,12 +178,14 @@ public class IndexModel : PageModel
         {
             ErrorMessage = _L["Booking_MissingData"].Value;
             EvaluateCanShowSummary();
+            Pay = true;
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(PromoCode) && !string.IsNullOrEmpty(PromoError))
         {
             EvaluateCanShowSummary();
+            Pay = true;
             return Page();
         }
 
@@ -184,6 +193,7 @@ public class IndexModel : PageModel
         {
             ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, SelectedPet.Species);
             EvaluateCanShowSummary();
+            Pay = true;
             return Page();
         }
 
@@ -197,12 +207,14 @@ public class IndexModel : PageModel
             {
                 ErrorMessage = _L["Booking_InvalidDates"].Value;
                 EvaluateCanShowSummary();
+                Pay = true;
                 return Page();
             }
             if (IsOvernightCheckInInPast(cin.Date))
             {
                 ErrorMessage = _L["Booking_DateNotPast"].Value;
                 EvaluateCanShowSummary();
+                Pay = true;
                 return Page();
             }
             scheduled = AppTimeZones.LocalDateAndTimeToUtc(cin.Date, TimeSpan.FromHours(14));
@@ -215,12 +227,14 @@ public class IndexModel : PageModel
             {
                 ErrorMessage = scheduleError ?? _L["Booking_InvalidDateTime"].Value;
                 EvaluateCanShowSummary();
+                Pay = true;
                 return Page();
             }
             if (scheduled <= DateTime.UtcNow)
             {
                 ErrorMessage = _L["Booking_DateNotPast"].Value;
                 EvaluateCanShowSummary();
+                Pay = true;
                 return Page();
             }
         }
@@ -277,6 +291,22 @@ public class IndexModel : PageModel
         await _db.SaveChangesAsync();
 
         return RedirectToPage("./Confirm", new { id = appt.Id });
+    }
+
+    public async Task<IActionResult> OnPostApplyPromoAsync()
+    {
+        if (_auth.CurrentUserId is null)
+            return RedirectToPage("/Account/Login", new { returnUrl = BookingReturnPath });
+
+        await LoadAsync();
+        ApplyServicePreselect();
+        EnsureDateDefaults();
+        await LoadDayAvailabilityAsync();
+        await PrepareConfirmAsync(applyPromo: true);
+        await LoadPaymentsAsync();
+        EvaluateCanShowSummary();
+        Pay = true;
+        return Page();
     }
 
     private void ApplyServicePreselect()

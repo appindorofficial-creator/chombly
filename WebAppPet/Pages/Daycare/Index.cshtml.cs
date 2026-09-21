@@ -72,6 +72,9 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public bool More { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public bool Pay { get; set; }
+
     [BindProperty]
     public bool AcceptTerms { get; set; }
 
@@ -119,6 +122,8 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadAsync();
+        if (Pay && !(GroomerId.HasValue && SelectedPet != null && HasDate))
+            Pay = false;
         return Page();
     }
 
@@ -136,12 +141,14 @@ public class IndexModel : PageModel
                 "You must accept the Terms & Conditions.");
             ModelState.AddModelError(nameof(AcceptTerms), msg);
             ErrorMessage = msg;
+            Pay = true;
             return Page();
         }
 
         if (SelectedDaycare == null || SelectedService == null || SelectedPet == null)
         {
             ErrorMessage = CatalogLocalizer.Loc("Elige guardería y mascota para continuar.", "Choose a daycare and pet to continue.");
+            Pay = true;
             return Page();
         }
 
@@ -150,6 +157,7 @@ public class IndexModel : PageModel
             ErrorMessage = CatalogLocalizer.Loc(
                 $"Esta guardería no atiende {SelectedPet.Species}.",
                 $"This daycare does not accept {SelectedPet.Species}.");
+            Pay = true;
             return Page();
         }
 
@@ -158,6 +166,7 @@ public class IndexModel : PageModel
         if (end <= start)
         {
             ErrorMessage = "Revisa el horario personalizado.";
+            Pay = true;
             return Page();
         }
 
@@ -171,6 +180,7 @@ public class IndexModel : PageModel
             ErrorMessage = promo.ErrorMessage;
             Estimate = subtotal;
             PromoSubtotal = subtotal;
+            Pay = true;
             return Page();
         }
 
@@ -241,6 +251,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostApplyPromoAsync()
     {
         await LoadAsync();
+        Pay = true;
         return Page();
     }
 

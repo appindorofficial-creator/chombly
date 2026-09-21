@@ -2,18 +2,110 @@
 @model WebAppPet.Pages.Booking.IndexModel
 @using WebAppPet.Pages.Shared
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Reservar", "Reserve");
+    ViewData["Title"] = Model.Pay
+        ? CatalogLocalizer.Loc("Pago", "Checkout")
+        : CatalogLocalizer.Loc("Reservar", "Reserve");
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["BodyClass"] = "page-booking";
-    ViewData["OnboardBackHref"] = Url.Page("/Groomers/Details", new { id = Model.GroomerId, service = Model.Service });
+    var configureHref = BookingCheckoutUrls.ForPage(ViewContext, pay: false);
+    var checkoutHref = BookingCheckoutUrls.ForPage(ViewContext, pay: true);
+    ViewData["OnboardBackHref"] = Model.Pay
+        ? configureHref
+        : Url.Page("/Groomers/Details", new { id = Model.GroomerId, service = Model.Service });
     var HideNav = true;
     var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
     var minEndDate = AppTimeZones.TodayLocalDate().AddDays(1).ToString("yyyy-MM-dd");
+    var showCheckout = Model.Pay && Model.CanShowSummary;
+    var showSticky = !Model.Pay && Model.CanShowSummary;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow booking-flow @(Model.CanShowSummary ? "has-summary" : "") is-summary-collapsed @(HideNav ? "no-nav" : "")">
+    <div class="home-body hotel-flow booking-flow @(showSticky ? "has-checkout-sticky" : "") @(showCheckout ? "is-checkout" : "") @(HideNav ? "no-nav" : "")">
+
+        @if (showCheckout && Model.Groomer != null && Model.SelectedService != null && Model.SelectedPet != null)
+        {
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Confirmar y pagar", "Confirm and pay")</h1>
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+
+            ViewData["PromoCode"] = Model.PromoCode;
+            ViewData["PromoSubtotal"] = Model.Subtotal;
+            ViewData["PromoDiscount"] = Model.DiscountAmount;
+            ViewData["PromoError"] = Model.PromoError;
+            var multi = new List<BookingSummaryMultiHidden>();
+            if (Model.SelectedExtraIds.Count > 0)
+                multi.Add(new BookingSummaryMultiHidden { Name = "SelectedExtraIds", Values = Model.SelectedExtraIds.Select(id => id.ToString()) });
+
+            var scheduleLine = Model.IsOvernight
+                ? $"{Model.Date} → {Model.EndDate}"
+                : $"{Model.Date} · {Model.Time}";
+            var extrasLabel = Model.SelectedExtras.Count == 0
+                ? CatalogLocalizer.Loc("Ninguno", "None")
+                : string.Join(", ", Model.SelectedExtras.Select(e => CatalogLocalizer.Text(e.Name)));
+
+            <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
+            {
+                BodyId = "booking-checkout-body",
+                Presentation = BookingCheckoutPresentation.FullPage,
+                ExtraClass = "booking-checkout",
+                TitleEs = "Pago",
+                TitleEn = "Checkout",
+                EditHintEs = "Volver a editar la reserva",
+                EditHintEn = "Back to edit booking",
+                EditHref = configureHref,
+                ContinueHref = checkoutHref,
+                BusinessName = Model.Groomer.BusinessName,
+                ImageUrl = Model.Groomer.ImageUrl,
+                FallbackImage = "/images/pet-other.svg",
+                Subtitle = CatalogLocalizer.Text(Model.SelectedService.Name),
+                Lines =
+                [
+                    new BookingSummaryLine
+                    {
+                        LabelEs = Model.IsOvernight ? "Fechas" : "Fecha",
+                        LabelEn = Model.IsOvernight ? "Dates" : "Date",
+                        Value = scheduleLine
+                    },
+                    new BookingSummaryLine
+                    {
+                        LabelEs = "Mascota",
+                        LabelEn = "Pet",
+                        Value = $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}"
+                    },
+                    new BookingSummaryLine { LabelEs = "Extras", LabelEn = "Extras", Value = extrasLabel }
+                ],
+                CustomerNotes = Model.Notes,
+                TotalLabelEs = "Total estimado",
+                TotalLabelEn = "Estimated total",
+                Estimate = Model.EstimatedTotal,
+                NoteEs = $"Anticipo estimado: ${Model.Deposit:0.00}. La reserva queda pendiente de confirmación.",
+                NoteEn = $"Estimated deposit: ${Model.Deposit:0.00}. Booking stays pending confirmation.",
+                DefaultPayment = Model.DefaultPayment,
+                AcceptTerms = Model.AcceptTerms,
+                SubmitLabelEs = "Confirmar reserva",
+                SubmitLabelEn = "Confirm booking",
+                ShowSecureLockOnSubmit = true,
+                ShowSecureFooter = true,
+                HiddenFields =
+                [
+                    new BookingSummaryHidden { Name = "GroomerId", Value = Model.GroomerId.ToString() },
+                    new BookingSummaryHidden { Name = "ServiceId", Value = Model.ServiceId.ToString() },
+                    new BookingSummaryHidden { Name = "Service", Value = Model.Service },
+                    new BookingSummaryHidden { Name = "PetId", Value = Model.PetId.ToString() },
+                    new BookingSummaryHidden { Name = "Date", Value = Model.Date },
+                    new BookingSummaryHidden { Name = "EndDate", Value = Model.EndDate },
+                    new BookingSummaryHidden { Name = "Time", Value = Model.Time },
+                    new BookingSummaryHidden { Name = "Notes", Value = Model.Notes },
+                    new BookingSummaryHidden { Name = "PaymentMethodId", Value = Model.PaymentMethodId?.ToString() }
+                ],
+                MultiHiddenFields = multi
+            })" />
+        }
+        else
+        {
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reserva", "Booking")</h1>
         @if (Model.Groomer != null)
         {
@@ -180,83 +272,34 @@
         }
 
         <partial name="_TrustBanner" />
+
+            @if (showSticky && Model.Groomer != null && Model.SelectedService != null && Model.SelectedPet != null)
+            {
+                <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
+                {
+                    BodyId = "booking-sticky",
+                    Presentation = BookingCheckoutPresentation.StickyContinue,
+                    ExtraClass = "booking-checkout-sticky",
+                    TitleEs = "Resumen",
+                    TitleEn = "Summary",
+                    EditHintEs = "",
+                    EditHintEn = "",
+                    ContinueHref = checkoutHref,
+                    BusinessName = Model.Groomer.BusinessName,
+                    ImageUrl = Model.Groomer.ImageUrl,
+                    FallbackImage = "/images/pet-other.svg",
+                    Subtitle = CatalogLocalizer.Text(Model.SelectedService.Name),
+                    Estimate = Model.EstimatedTotal,
+                    DefaultPayment = Model.DefaultPayment,
+                    AcceptTerms = Model.AcceptTerms,
+                    SubmitLabelEs = "Confirmar",
+                    SubmitLabelEn = "Confirm"
+                })" />
+            }
+        }
     </div>
     @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
 </div>
-
-@if (Model.CanShowSummary && Model.Groomer != null && Model.SelectedService != null && Model.SelectedPet != null)
-{
-    ViewData["PromoCode"] = Model.PromoCode;
-    ViewData["PromoSubtotal"] = Model.Subtotal;
-    ViewData["PromoDiscount"] = Model.DiscountAmount;
-    ViewData["PromoError"] = Model.PromoError;
-    var multi = new List<BookingSummaryMultiHidden>();
-    if (Model.SelectedExtraIds.Count > 0)
-        multi.Add(new BookingSummaryMultiHidden { Name = "SelectedExtraIds", Values = Model.SelectedExtraIds.Select(id => id.ToString()) });
-
-    var scheduleLine = Model.IsOvernight
-        ? $"{Model.Date} → {Model.EndDate}"
-        : $"{Model.Date} · {Model.Time}";
-    var extrasLabel = Model.SelectedExtras.Count == 0
-        ? CatalogLocalizer.Loc("Ninguno", "None")
-        : string.Join(", ", Model.SelectedExtras.Select(e => CatalogLocalizer.Text(e.Name)));
-
-    <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
-    {
-        BodyId = "booking-summary-body",
-        StartCollapsed = true,
-        ExtraClass = "booking-summary",
-        TitleEs = "Resumen",
-        TitleEn = "Summary",
-        EditHintEs = "Seguir editando la reserva",
-        EditHintEn = "Keep editing the booking",
-        BusinessName = Model.Groomer.BusinessName,
-        ImageUrl = Model.Groomer.ImageUrl,
-        FallbackImage = "/images/pet-other.svg",
-        Subtitle = CatalogLocalizer.Text(Model.SelectedService.Name),
-        Lines =
-        [
-            new BookingSummaryLine
-            {
-                LabelEs = Model.IsOvernight ? "Fechas" : "Fecha",
-                LabelEn = Model.IsOvernight ? "Dates" : "Date",
-                Value = scheduleLine
-            },
-            new BookingSummaryLine
-            {
-                LabelEs = "Mascota",
-                LabelEn = "Pet",
-                Value = $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}"
-            },
-            new BookingSummaryLine { LabelEs = "Extras", LabelEn = "Extras", Value = extrasLabel }
-        ],
-        CustomerNotes = Model.Notes,
-        TotalLabelEs = "Total estimado",
-        TotalLabelEn = "Estimated total",
-        Estimate = Model.EstimatedTotal,
-        NoteEs = $"Anticipo estimado: ${Model.Deposit:0.00}. La reserva queda pendiente de confirmación.",
-        NoteEn = $"Estimated deposit: ${Model.Deposit:0.00}. Booking stays pending confirmation.",
-        DefaultPayment = Model.DefaultPayment,
-        AcceptTerms = Model.AcceptTerms,
-        SubmitLabelEs = "Enviar reserva",
-        SubmitLabelEn = "Submit booking",
-        ShowSecureLockOnSubmit = false,
-        ShowSecureFooter = false,
-        HiddenFields =
-        [
-            new BookingSummaryHidden { Name = "GroomerId", Value = Model.GroomerId.ToString() },
-            new BookingSummaryHidden { Name = "ServiceId", Value = Model.ServiceId.ToString() },
-            new BookingSummaryHidden { Name = "Service", Value = Model.Service },
-            new BookingSummaryHidden { Name = "PetId", Value = Model.PetId.ToString() },
-            new BookingSummaryHidden { Name = "Date", Value = Model.Date },
-            new BookingSummaryHidden { Name = "EndDate", Value = Model.EndDate },
-            new BookingSummaryHidden { Name = "Time", Value = Model.Time },
-            new BookingSummaryHidden { Name = "Notes", Value = Model.Notes },
-            new BookingSummaryHidden { Name = "PaymentMethodId", Value = Model.PaymentMethodId?.ToString() }
-        ],
-        MultiHiddenFields = multi
-    })" />
-}
 
 @if (Model.IsOvernight)
 {

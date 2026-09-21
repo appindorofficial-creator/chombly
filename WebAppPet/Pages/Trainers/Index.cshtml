@@ -1,14 +1,30 @@
 @page
+@using WebAppPet.Pages.Shared
 @model WebAppPet.Pages.Trainers.IndexModel
 @{
+    var configureHref = BookingCheckoutUrls.ForPage(ViewContext, pay: false);
+    var checkoutHref = BookingCheckoutUrls.ForPage(ViewContext, pay: true);
+    var showCheckout = Model.Pay && (Model.GroomerId.HasValue && Model.SelectedPet != null && Model.HasDate && Model.HasSlot);
+    var showSticky = !Model.Pay && (Model.GroomerId.HasValue && Model.SelectedPet != null && Model.HasDate && Model.HasSlot);
+
     ViewData["Title"] = L["Trainers_Title"].Value;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Index");
+    ViewData["OnboardBackHref"] = Model.Pay ? configureHref : Url.Page("/Index");
     var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow @(Model.GroomerId.HasValue ? "has-summary" : "")@(!string.IsNullOrEmpty(Model.ErrorMessage) && Model.GroomerId.HasValue ? " is-summary-collapsed" : "")">
+    <div class="home-body hotel-flow @(showSticky ? "has-checkout-sticky" : null) @(showCheckout ? "is-checkout" : null)">
+        @if (showCheckout)
+        {
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Confirmar y pagar", "Confirm and pay")</h1>
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+        }
+        else
+        {
         <h1 class="app-page-heading">@L["Trainers_Title"]</h1>
         <p class="muted small">@L["Book_AllInOne"]</p>
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -215,9 +231,7 @@
     }
 
     <partial name="_TrustBanner" />
-    </div>
-    <div class="bottom-nav-clearance" aria-hidden="true"></div>
-</div>
+        }
 
 @if (Model.SelectedTrainer != null && Model.SelectedService != null)
 {
@@ -231,7 +245,9 @@
     <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
     {
         BodyId = "trainers-summary-body",
-        StartCollapsed = !string.IsNullOrEmpty(Model.ErrorMessage),
+        Presentation = showCheckout ? BookingCheckoutPresentation.FullPage : BookingCheckoutPresentation.StickyContinue,
+        ContinueHref = checkoutHref,
+        EditHref = configureHref,
         TitleEs = "Confirmar reserva",
         TitleEn = "Confirm booking",
         EditHintEs = "Seguir editando la reserva",
@@ -264,3 +280,6 @@
         MultiHiddenFields = multi
     })" />
 }
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

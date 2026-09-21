@@ -94,6 +94,9 @@ public class IndexModel : PageModel
     public HashSet<string> OccupiedSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> PastSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    [BindProperty(SupportsGet = true)]
+    public bool Pay { get; set; }
+
     [BindProperty]
     public bool AcceptTerms { get; set; }
 
@@ -153,6 +156,8 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadAsync();
+        if (Pay && !(GroomerId.HasValue && SelectedPet != null && HasDate && HasSlot))
+            Pay = false;
         return Page();
     }
 
@@ -170,6 +175,7 @@ public class IndexModel : PageModel
                 "You must accept the Terms & Conditions.");
             ModelState.AddModelError(nameof(AcceptTerms), msg);
             ErrorMessage = msg;
+            Pay = true;
             return Page();
         }
 
@@ -178,6 +184,7 @@ public class IndexModel : PageModel
             ErrorMessage = CatalogLocalizer.Loc(
                 "Elige entrenador y mascota para continuar.",
                 "Choose a trainer and pet to continue.");
+            Pay = true;
             return Page();
         }
 
@@ -186,6 +193,7 @@ public class IndexModel : PageModel
             ErrorMessage = CatalogLocalizer.Loc(
                 $"Este entrenador no atiende {PetSpecies.Label(SelectedPet.Species)}.",
                 $"This trainer does not serve {PetSpecies.Label(SelectedPet.Species)}.");
+            Pay = true;
             return Page();
         }
 
@@ -194,6 +202,7 @@ public class IndexModel : PageModel
         if (!TryResolveSchedule(SelectedTrainer.Id, out var start, out var scheduleError))
         {
             ErrorMessage = scheduleError;
+            Pay = true;
             return Page();
         }
 
@@ -205,6 +214,7 @@ public class IndexModel : PageModel
             ErrorMessage = promo.ErrorMessage;
             Estimate = subtotal;
             PromoSubtotal = subtotal;
+            Pay = true;
             return Page();
         }
 
@@ -268,6 +278,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostApplyPromoAsync()
     {
         await LoadAsync();
+        Pay = true;
         return Page();
     }
 

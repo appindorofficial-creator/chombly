@@ -50,6 +50,14 @@ public class DetailsModel : PageModel
         Photos = await _db.GroomerPhotos.Where(p => p.GroomerId == id).ToListAsync();
         Reviews = await _reviews.ListForGroomerAsync(id, 20);
 
+        // Keep seeded Rating/ReviewCount aligned with real Reviews rows.
+        var realCount = await _db.Reviews.AsNoTracking().CountAsync(r => r.GroomerId == id);
+        if (Groomer.ReviewCount != realCount)
+        {
+            await _reviews.RecalculateAsync(id);
+            await _db.Entry(Groomer).ReloadAsync();
+        }
+
         if (!string.IsNullOrWhiteSpace(Service))
         {
             var match = Services.FirstOrDefault(s =>

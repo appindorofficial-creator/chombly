@@ -1,6 +1,7 @@
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace WebAppPet.Pages.Shared;
 
@@ -107,6 +108,50 @@ public sealed class BookingSummarySheetModel
 
     /// <summary>Optional extra CSS classes on the root aside (e.g. booking-summary).</summary>
     public string? ExtraClass { get; init; }
+
+    /// <summary>
+    /// StickyContinue = Amazon-style bottom bar on configure screen.
+    /// FullPage = dedicated checkout screen (payment / promo / confirm).
+    /// </summary>
+    public BookingCheckoutPresentation Presentation { get; init; } = BookingCheckoutPresentation.FullPage;
+
+    /// <summary>URL to open full checkout (required for StickyContinue).</summary>
+    public string? ContinueHref { get; init; }
+
+    /// <summary>URL to go back to editing the booking (FullPage back / edit link).</summary>
+    public string? EditHref { get; init; }
+
+    public string ContinueLabelEs { get; init; } = "Continuar al pago";
+    public string ContinueLabelEn { get; init; } = "Continue to payment";
+}
+
+public enum BookingCheckoutPresentation
+{
+    StickyContinue,
+    FullPage
+}
+
+/// <summary>Build configure vs pay URLs while preserving the current query string.</summary>
+public static class BookingCheckoutUrls
+{
+    public static string ForRequest(HttpRequest request, bool pay)
+    {
+        var pairs = new List<KeyValuePair<string, string?>>();
+        foreach (var kv in request.Query)
+        {
+            if (string.Equals(kv.Key, "pay", StringComparison.OrdinalIgnoreCase))
+                continue;
+            foreach (var v in kv.Value)
+                pairs.Add(new KeyValuePair<string, string?>(kv.Key, v));
+        }
+        if (pay)
+            pairs.Add(new KeyValuePair<string, string?>("pay", "true"));
+
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(request.Path, pairs);
+    }
+
+    public static string ForPage(Microsoft.AspNetCore.Mvc.Rendering.ViewContext view, bool pay)
+        => ForRequest(view.HttpContext.Request, pay);
 }
 
 /// <summary>Shared date helpers for Walkers / Daycare / Trainers booking flows.</summary>
