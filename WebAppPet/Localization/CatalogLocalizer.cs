@@ -201,6 +201,98 @@ public static class CatalogLocalizer
         ["Mestizo / mixto"] = "Mixed / mix",
         ["Paseos individuales con foto del paseo. Acepta perros grandes. Sin escaleras."] =
             "Individual walks with a walk photo. Accepts large dogs. No stairs.",
+        ["Grooming para perros, gatos y más."] =
+            "Grooming for dogs, cats, and more.",
+        ["Grooming para perros, gatos y más"] =
+            "Grooming for dogs, cats, and more",
+        ["Daycare con áreas de juego, siesta y cámaras en vivo."] =
+            "Daycare with play areas, nap time, and live cameras.",
+        ["Daycare con áreas de juego, siesta y cámaras en vivo"] =
+            "Daycare with play areas, nap time, and live cameras",
+        ["Entrenador certificado. Obediencia, cachorros y modificación de conducta. A domicilio, centro o virtual. Clases en el parque. Flexible en horario."] =
+            "Certified trainer. Obedience, puppies, and behavior modification. At home, at a facility, or virtual. Park classes. Flexible schedule.",
+        ["Entrenador certificado. Obediencia, cachorros y modificación de conducta. A domicilio, centro o virtual. Clases en el parque. Flexible en horario"] =
+            "Certified trainer. Obedience, puppies, and behavior modification. At home, at a facility, or virtual. Park classes. Flexible schedule",
+        ["Consultas multi-especie."] = "Multi-species checkups.",
+        ["Consultas multi-especie"] = "Multi-species checkups",
+
+        // About / Sobre nosotros (GroomerProfile.About — stored in Spanish)
+        ["Veterinario local licenciado en Carolina del Norte."] =
+            "Local veterinarian licensed in North Carolina.",
+        ["Veterinario local licenciado en Carolina del Norte"] =
+            "Local veterinarian licensed in North Carolina",
+        ["Orientación internacional. Licenciado en Colombia."] =
+            "International guidance. Licensed in Colombia.",
+        ["Orientación internacional. Licenciado en Colombia"] =
+            "International guidance. Licensed in Colombia",
+        ["Orientación internacional. Licenciada en El Salvador. Experiencia con razas pequeñas."] =
+            "International guidance. Licensed in El Salvador. Experience with small breeds.",
+        ["Orientación internacional. Licenciada en El Salvador. Experiencia con razas pequeñas"] =
+            "International guidance. Licensed in El Salvador. Experience with small breeds",
+        ["Orientación internacional. Licenciado en México. Enfoque en nutrición y razas grandes."] =
+            "International guidance. Licensed in Mexico. Focus on nutrition and large breeds.",
+        ["Orientación internacional. Licenciado en México. Enfoque en nutrición y razas grandes"] =
+            "International guidance. Licensed in Mexico. Focus on nutrition and large breeds",
+        ["Clínica de urgencias veterinarias 24/7."] =
+            "24/7 veterinary emergency clinic.",
+        ["Clínica de urgencias veterinarias 24/7"] =
+            "24/7 veterinary emergency clinic",
+        ["Especialista en comportamiento canino. Plan educativo; no diagnostica ni medica."] =
+            "Canine behavior specialist. Educational plan; does not diagnose or prescribe.",
+        ["Especialista en comportamiento canino. Plan educativo; no diagnostica ni medica"] =
+            "Canine behavior specialist. Educational plan; does not diagnose or prescribe",
+        ["Clínica veterinaria en Neiva: consultas, vacunas y belleza canina. Datos demo Chombly."] =
+            "Veterinary clinic in Neiva: checkups, vaccines, and dog grooming. Chombly demo data.",
+        ["Clínica veterinaria en Neiva: consultas, vacunas y belleza canina. Datos demo Chombly"] =
+            "Veterinary clinic in Neiva: checkups, vaccines, and dog grooming. Chombly demo data",
+        ["Urgencias veterinarias 24/7 en Neiva. Hospitalización y cuidado crítico (demo)."] =
+            "24/7 veterinary emergencies in Neiva. Hospitalization and critical care (demo).",
+        ["Urgencias veterinarias 24/7 en Neiva. Hospitalización y cuidado crítico (demo)"] =
+            "24/7 veterinary emergencies in Neiva. Hospitalization and critical care (demo)",
+        ["Peluquería canina y felina en barrio La Rioja. Baños medicados y estética (demo)."] =
+            "Dog and cat grooming in La Rioja. Medicated baths and styling (demo).",
+        ["Peluquería canina y felina en barrio La Rioja. Baños medicados y estética (demo)"] =
+            "Dog and cat grooming in La Rioja. Medicated baths and styling (demo)",
+        ["Peluquería y spa en el centro de Neiva. Perros y gatos (demo)."] =
+            "Grooming and spa in downtown Neiva. Dogs and cats (demo).",
+        ["Peluquería y spa en el centro de Neiva. Perros y gatos (demo)"] =
+            "Grooming and spa in downtown Neiva. Dogs and cats (demo)",
+        ["Hospedaje nocturno y cuidado tipo hotel para mascotas en Neiva (demo)."] =
+            "Overnight boarding and hotel-style pet care in Neiva (demo).",
+        ["Hospedaje nocturno y cuidado tipo hotel para mascotas en Neiva (demo)"] =
+            "Overnight boarding and hotel-style pet care in Neiva (demo)",
+        ["Guardería diurna con recreación y supervisión en Neiva (demo)."] =
+            "Daycare with recreation and supervision in Neiva (demo).",
+        ["Guardería diurna con recreación y supervisión en Neiva (demo)"] =
+            "Daycare with recreation and supervision in Neiva (demo)",
+        ["Paseos profesionales por parques y zonas de Neiva (demo)."] =
+            "Professional walks through parks and areas of Neiva (demo).",
+        ["Paseos profesionales por parques y zonas de Neiva (demo)"] =
+            "Professional walks through parks and areas of Neiva (demo)",
+        ["Entrenamiento y modificación de conducta en Neiva. Plan educativo (demo)."] =
+            "Training and behavior modification in Neiva. Educational plan (demo).",
+        ["Entrenamiento y modificación de conducta en Neiva. Plan educativo (demo)"] =
+            "Training and behavior modification in Neiva. Educational plan (demo)",
+        ["Clínica, spa y pet shop al sur de Neiva, vía Caguán (demo)."] =
+            "Clinic, spa, and pet shop in southern Neiva, Caguán road (demo).",
+        ["Clínica, spa y pet shop al sur de Neiva, vía Caguán (demo)"] =
+            "Clinic, spa, and pet shop in southern Neiva, Caguán road (demo)",
+        ["Baño, peluquería, guardería y tip de adiestramiento en un solo lugar (demo)."] =
+            "Bath, grooming, daycare, and training tips in one place (demo).",
+        ["Baño, peluquería, guardería y tip de adiestramiento en un solo lugar (demo)"] =
+            "Bath, grooming, daycare, and training tips in one place (demo)",
+        ["El mejor centro de atenciòn para tu mascota"] =
+            "The best care center for your pet",
+        ["El mejor centro de atención para tu mascota"] =
+            "The best care center for your pet",
+        ["El mejor centro de atenciòn para tu mascota."] =
+            "The best care center for your pet.",
+        ["El mejor centro de atención para tu mascota."] =
+            "The best care center for your pet.",
+        ["Negocio de prueba en Neiva para validar el alta sin pedir cuenta otra vez."] =
+            "Test business in Neiva to validate signup without creating another account.",
+        ["Negocio de prueba en Neiva para validar el alta sin pedir cuenta otra vez"] =
+            "Test business in Neiva to validate signup without creating another account",
 
         // Appointment notes (stored fragments)
         ["Horario:"] = "Schedule:",
@@ -245,6 +337,73 @@ public static class CatalogLocalizer
         ["con"] = "with",
         ["cámaras"] = "cameras",
         ["camaras"] = "cameras",
+        // About word fallbacks
+        ["Veterinario"] = "Veterinarian",
+        ["Veterinaria"] = "Veterinary",
+        ["local"] = "local",
+        ["licenciado"] = "licensed",
+        ["licenciada"] = "licensed",
+        ["Orientación"] = "Guidance",
+        ["internacional"] = "international",
+        ["Clínica"] = "Clinic",
+        ["urgencias"] = "emergencies",
+        ["veterinarias"] = "veterinary",
+        ["Especialista"] = "Specialist",
+        ["comportamiento"] = "behavior",
+        ["canino"] = "canine",
+        ["canina"] = "canine",
+        ["felina"] = "feline",
+        ["Plan"] = "Plan",
+        ["educativo"] = "educational",
+        ["diagnostica"] = "diagnose",
+        ["medica"] = "prescribe",
+        ["consultas"] = "checkups",
+        ["vacunas"] = "vaccines",
+        ["belleza"] = "grooming",
+        ["Hospitalización"] = "Hospitalization",
+        ["cuidado"] = "care",
+        ["crítico"] = "critical",
+        ["critico"] = "critical",
+        ["Peluquería"] = "Grooming",
+        ["Baños"] = "Baths",
+        ["medicados"] = "medicated",
+        ["estética"] = "styling",
+        ["estetica"] = "styling",
+        ["nocturno"] = "overnight",
+        ["tipo"] = "style",
+        ["hotel"] = "hotel",
+        ["mascotas"] = "pets",
+        ["diurna"] = "daytime",
+        ["recreación"] = "recreation",
+        ["recreacion"] = "recreation",
+        ["supervisión"] = "supervision",
+        ["supervision"] = "supervision",
+        ["Paseos"] = "Walks",
+        ["profesionales"] = "professional",
+        ["parques"] = "parks",
+        ["zonas"] = "areas",
+        ["Entrenamiento"] = "Training",
+        ["modificación"] = "modification",
+        ["modificacion"] = "modification",
+        ["conducta"] = "behavior",
+        ["adiestramiento"] = "training",
+        ["atención"] = "care",
+        ["atencion"] = "care",
+        ["atenciòn"] = "care",
+        ["mejor"] = "best",
+        ["centro"] = "center",
+        ["Negocio"] = "Business",
+        ["prueba"] = "test",
+        ["validar"] = "validate",
+        ["alta"] = "signup",
+        ["Experiencia"] = "Experience",
+        ["Enfoque"] = "Focus",
+        ["nutrición"] = "nutrition",
+        ["nutricion"] = "nutrition",
+        ["razas"] = "breeds",
+        ["pequeñas"] = "small",
+        ["pequenas"] = "small",
+        ["grandes"] = "large",
     };
 
     private static readonly (string Es, string En)[] NotePrefixes =
@@ -268,7 +427,66 @@ public static class CatalogLocalizer
             && Map.TryGetValue(trimmedEnd, out en))
             return en + key[trimmedEnd.Length..];
 
+        // Multi-sentence About / catalog blurbs: localize each sentence
+        if (key.Contains('.') || key.Contains('!') || key.Contains('?'))
+        {
+            var sentences = SplitSentences(key);
+            if (sentences.Count > 1)
+            {
+                var localized = new List<string>(sentences.Count);
+                var any = false;
+                foreach (var s in sentences)
+                {
+                    var piece = s.Trim();
+                    if (piece.Length == 0) { localized.Add(s); continue; }
+                    var body = piece.TrimEnd('.', '!', '?', '…');
+                    var punct = piece[body.Length..];
+                    if (Map.TryGetValue(piece, out var full)
+                        || Map.TryGetValue(body, out full)
+                        || Map.TryGetValue(body + ".", out full))
+                    {
+                        // Prefer mapped value; keep original trailing punct if map had none
+                        if (full.Length > 0 && ".!?…".IndexOf(full[^1]) >= 0)
+                            localized.Add(full);
+                        else
+                            localized.Add(full + (punct.Length > 0 ? punct : "."));
+                        any = true;
+                    }
+                    else
+                    {
+                        localized.Add(TranslateWords(piece));
+                        if (!string.Equals(localized[^1], piece, StringComparison.Ordinal))
+                            any = true;
+                    }
+                }
+                if (any) return string.Join(" ", localized).Replace("  ", " ").Trim();
+            }
+        }
+
+        // Long About blurbs: prefer full map only — avoid mixed ES/EN from partial word swaps
+        if (key.Length > 50 && key.Count(c => c == ' ') >= 5)
+            return key;
+
         return TranslateWords(key);
+    }
+
+    private static List<string> SplitSentences(string text)
+    {
+        var list = new List<string>();
+        var start = 0;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (c is not ('.' or '!' or '?' or '…')) continue;
+            // Keep decimal-like tokens together (rare in About)
+            if (c == '.' && i + 1 < text.Length && char.IsDigit(text[i + 1])) continue;
+            list.Add(text[start..(i + 1)]);
+            start = i + 1;
+            while (start < text.Length && char.IsWhiteSpace(text[start])) start++;
+            i = start - 1;
+        }
+        if (start < text.Length) list.Add(text[start..]);
+        return list;
     }
 
     private static string TranslateWords(string text)
