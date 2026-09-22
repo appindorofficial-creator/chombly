@@ -1,0 +1,48 @@
+@page "/Business/Explore/Profile"
+@model WebAppPet.Pages.Business.Explore.ProfileModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = L["Nav_Profile"].Value;
+    ViewData["BodyClass"] = "page-biz-explore";
+}
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <partial name="_ExploreBanner" />
+
+        <div class="profile-card">
+            <div class="profile-avatar" aria-hidden="true">
+                <img src="~/images/chombly-profile-avatar.png" asp-append-version="true" alt="" />
+            </div>
+            <h2>@BusinessExploreDemo.OwnerName</h2>
+            <ul class="profile-facts">
+                <li class="profile-fact">
+                    <span class="profile-fact-ico" aria-hidden="true">🏪</span>
+                    <span class="profile-fact-value">@BusinessExploreDemo.BusinessName</span>
+                </li>
+                <li class="profile-fact">
+                    <span class="profile-fact-ico" aria-hidden="true">📍</span>
+                    <span class="profile-fact-value">@BusinessExploreDemo.City</span>
+                </li>
+                <li class="profile-fact">
+                    <span class="profile-fact-ico" aria-hidden="true">📞</span>
+                    <span class="profile-fact-value">@BusinessExploreDemo.Phone</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="menu-list menu-chombly">
+            <p class="menu-section-label">@CatalogLocalizer.Loc("Negocio", "Business")</p>
+            <a asp-page="./Index"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💼</span> @L["Profile_BusinessPanel"]</span><span class="chev" aria-hidden="true">›</span></a>
+            <a asp-page="./Business"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🏪</span> @L["Groomer_Business"]</span><span class="chev" aria-hidden="true">›</span></a>
+            <a asp-page="./Appointments"><span class="menu-left"><span class="menu-ico" aria-hidden="true">📅</span> @L["Groomer_Bookings"]</span><span class="chev" aria-hidden="true">›</span></a>
+            <a asp-page="./Availability"><span class="menu-left"><span class="menu-ico" aria-hidden="true">⏰</span> @L["Groomer_Schedule"]</span><span class="chev" aria-hidden="true">›</span></a>
+
+            <p class="menu-section-label">@CatalogLocalizer.Loc("Cuenta", "Account")</p>
+            <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✨</span> @L["Onboard_EnterBiz"]</span><span class="chev" aria-hidden="true">›</span></a>
+            <a asp-page="/Account/Login" asp-route-returnUrl="/Groomer/Dashboard"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🔑</span> @L["Login_Title"]</span><span class="chev" aria-hidden="true">›</span></a>
+            <a asp-page="/Welcome" asp-route-returnUrl="/Business/Explore/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">↩</span> @L["Home_SeeWelcome"]</span><span class="chev" aria-hidden="true">›</span></a>
+        </div>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

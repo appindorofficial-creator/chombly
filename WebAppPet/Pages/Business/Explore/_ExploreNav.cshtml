@@ -1,0 +1,22 @@
+@{
+    var current = (string?)ViewData["ExploreTab"] ?? "dashboard";
+    var cats = ViewData["ProviderCategories"] as IList<string> ?? BusinessExploreDemo.CategoryLabels.ToList();
+}
+<div class="provider-banner">
+    <strong>@L["Profile_BusinessPanel"]</strong>
+    @if (cats is { Count: > 0 })
+    {
+        <span class="provider-cat-badges">
+            @foreach (var cat in cats)
+            {
+                <span class="badge badge-purple">@cat</span>
+            }
+        </span>
+    }
+</div>
+<div class="tabs tabs-wrap" style="margin-bottom:16px">
+    <a class="@(current == "dashboard" ? "active" : "")" asp-page="./Index">@L["Nav_Home"]</a>
+    <a class="@(current == "appointments" ? "active" : "")" asp-page="./Appointments">@L["Groomer_Bookings"]</a>
+    <a class="@(current == "availability" ? "active" : "")" asp-page="./Availability">@L["Groomer_Agenda"]</a>
+    <a class="@(current == "business" ? "active" : "")" asp-page="./Business">@L["Groomer_Business"]</a>
+</div>

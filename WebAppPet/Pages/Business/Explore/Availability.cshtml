@@ -1,0 +1,86 @@
+@page "/Business/Explore/Availability"
+@model WebAppPet.Pages.Business.Explore.AvailabilityModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = L["Groomer_Schedule"].Value;
+    ViewData["BodyClass"] = "page-biz-explore";
+    var openWeek = Model.WeekEdit.Count(d => d.IsOpen);
+    var openDays = Model.Days.Count(d => d.IsAvailable);
+    var closedDays = Model.Days.Count(d => !d.IsAvailable);
+    var openLabel = L["Biz_Open"].Value;
+    var closedLabel = CatalogLocalizer.Loc("Cerrado", "Closed");
+}
+<div class="onboard onboard-app agenda-page">
+    <partial name="_OnboardTop" />
+    <div class="home-body hotel-flow">
+        <partial name="_ExploreBanner" />
+        <partial name="_ExploreNav" />
+
+        <header class="agenda-head">
+            <h1 class="app-page-heading">@L["Groomer_Agenda"]</h1>
+            <p class="muted small agenda-lead">@CatalogLocalizer.Loc("Define tu horario semanal. La agenda de citas se genera a partir de él.", "Set your weekly hours. Bookings are generated from this schedule.")</p>
+        </header>
+
+        <div class="agenda-stats">
+            <div class="agenda-stat">
+                <strong>@openWeek</strong>
+                <span>@CatalogLocalizer.Loc("Abiertos / sem", "Open / wk")</span>
+            </div>
+            <div class="agenda-stat">
+                <strong>@openDays</strong>
+                <span>@CatalogLocalizer.Loc("Disponibles", "Available")</span>
+            </div>
+            <div class="agenda-stat">
+                <strong>@closedDays</strong>
+                <span>@CatalogLocalizer.Loc("Cerrados", "Closed")</span>
+            </div>
+        </div>
+
+        <h3 class="section-title agenda-section-title">@CatalogLocalizer.Loc("Horario semanal", "Weekly hours")</h3>
+        <div class="agenda-week-list">
+            @foreach (var day in Model.WeekEdit)
+            {
+                <article class="agenda-day-card @(day.IsOpen ? "is-open" : "is-closed")">
+                    <div class="agenda-day-toggle">
+                        <span class="agenda-day-meta">
+                            <strong>@day.Label</strong>
+                            <span class="agenda-day-status">@(day.IsOpen ? openLabel : closedLabel)</span>
+                        </span>
+                        <span class="agenda-switch">
+                            <input type="checkbox" checked="@(day.IsOpen ? "checked" : null)" disabled aria-label="@day.Label" />
+                            <span class="agenda-switch-track" aria-hidden="true"></span>
+                        </span>
+                    </div>
+                    <div class="agenda-day-times">
+                        <div class="form-group">
+                            <label class="small muted">@L["Biz_Opens"]</label>
+                            <input class="form-control" type="time" value="@day.OpenTime" disabled />
+                        </div>
+                        <div class="form-group">
+                            <label class="small muted">@L["Biz_Closes"]</label>
+                            <input class="form-control" type="time" value="@day.CloseTime" disabled />
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+        <button class="btn btn-primary btn-block agenda-primary-btn" type="button" disabled style="opacity:.7">
+            @CatalogLocalizer.Loc("Guardar horario y regenerar 60 días", "Save hours and regenerate 60 days")
+        </button>
+
+        <h3 class="section-title agenda-section-title">@CatalogLocalizer.Loc("Próximos 30 días", "Next 30 days")</h3>
+        <div class="agenda-cal-grid">
+            @foreach (var d in Model.Days)
+            {
+                <div class="agenda-cal-cell @(d.IsAvailable ? "is-open" : "is-closed")">
+                    <span class="agenda-cal-btn" style="pointer-events:none">
+                        <span class="agenda-cal-dow">@d.Day.ToString("ddd")</span>
+                        <span class="agenda-cal-num">@d.Day.Day</span>
+                        <span class="agenda-cal-state">@(d.IsAvailable ? openLabel : closedLabel)</span>
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

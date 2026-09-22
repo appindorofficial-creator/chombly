@@ -1,0 +1,72 @@
+@page "/Business/Explore"
+@model WebAppPet.Pages.Business.Explore.IndexModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = L["Nav_Home"].Value;
+    ViewData["BodyClass"] = "page-biz-explore";
+    var upcoming = BusinessExploreDemo.Appointments("upcoming")
+        .Concat(BusinessExploreDemo.Appointments("requests"))
+        .OrderBy(a => a.When)
+        .Take(3)
+        .ToList();
+}
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <partial name="_ExploreBanner" />
+        <partial name="_ExploreNav" />
+
+        <div class="card card-pad" style="margin-bottom:14px">
+            <h3 style="margin:0 0 6px">@CatalogLocalizer.Loc("Estado de publicación", "Publish status")</h3>
+            <p class="muted small" style="margin:0">@CatalogLocalizer.Loc("✓ Publicado — los clientes ya pueden encontrarte.", "✓ Published — customers can find you now.")</p>
+            <div class="muted small" style="margin-top:8px">
+                @L["Groomer_Agenda"]: @BusinessExploreDemo.OpenWeekDays @CatalogLocalizer.Loc("días abiertos/semana", "open days/week")
+                · @L["Groomer_Services"]: @BusinessExploreDemo.ServiceCount
+            </div>
+        </div>
+
+        <h2 style="margin:0 0 4px">@string.Format(L["Home_HeroHello"].Value, BusinessExploreDemo.OwnerName)</h2>
+        <p class="muted small" style="margin:0 0 16px">
+            @BusinessExploreDemo.BusinessName
+            <span>· @string.Join(" · ", BusinessExploreDemo.CategoryLabels)</span>
+        </p>
+
+        <div class="promo-banner" style="margin-top:0">
+            <div style="flex:1">
+                <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos de hoy", "Today's earnings")</span>
+                <strong style="font-size:1.6rem">$@BusinessExploreDemo.TodayIncome.ToString("0.00")</strong>
+                <span class="small">@BusinessExploreDemo.TodayCompleted @CatalogLocalizer.Loc("citas completadas", "completed bookings")</span>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+            <div class="card card-pad" style="text-align:center">
+                <div style="font-size:1.6rem;font-weight:900;color:var(--purple)">@BusinessExploreDemo.UpcomingCount</div>
+                <div class="muted small">@L["Appt_Upcoming"]</div>
+            </div>
+            <div class="card card-pad" style="text-align:center">
+                <div style="font-size:1.6rem;font-weight:900;color:var(--purple)">@BusinessExploreDemo.PendingCount</div>
+                <div class="muted small">@CatalogLocalizer.Loc("Nuevas solicitudes", "New requests")</div>
+            </div>
+        </div>
+
+        <h3 class="section-title">@CatalogLocalizer.Loc("Agenda próxima", "Upcoming schedule")</h3>
+        @foreach (var a in upcoming)
+        {
+            <div class="appt-card">
+                <div class="row">
+                    <img src="@PetSpecies.DefaultPhoto(a.Species)" alt="@a.PetName" style="border-radius:50%" />
+                    <div style="flex:1">
+                        <strong>@a.PetName · @CatalogLocalizer.Text(a.Service)</strong>
+                        <div class="muted small">@a.ClientName</div>
+                        <div class="muted small">@a.When.ToString("ddd d MMM · h:mm tt")</div>
+                    </div>
+                    <span class="badge @(a.Status == AppointmentStatus.Confirmed ? "badge-green" : "badge-orange")">
+                        @(a.Status == AppointmentStatus.Confirmed ? L["Appt_Status_Confirmed"].Value : L["Appt_Status_Pending"].Value)
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

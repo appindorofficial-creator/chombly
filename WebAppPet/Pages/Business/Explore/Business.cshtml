@@ -1,0 +1,87 @@
+@page "/Business/Explore/Business"
+@model WebAppPet.Pages.Business.Explore.BusinessModel
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = L["Groomer_Business"].Value;
+    ViewData["BodyClass"] = "page-biz-explore biz-page";
+    var catCount = BusinessExploreDemo.Categories.Count;
+    var svcCount = BusinessExploreDemo.Services.Count;
+}
+<div class="onboard onboard-app biz-page">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <partial name="_ExploreBanner" />
+        <partial name="_ExploreNav" />
+
+        <header class="biz-head">
+            <h1 class="app-page-heading">@L["Groomer_Business"]</h1>
+            <p class="muted small biz-lead">@L["BizPanel_Lead"]</p>
+        </header>
+
+        <div class="biz-tip">
+            <p class="biz-tip-kicker">@L["BizPanel_PublicProfile"]</p>
+            <p class="biz-tip-copy">@BusinessExploreDemo.BusinessName · @catCount @L["BizPanel_CategoriesLower"] · @svcCount @L["BizPanel_ServicesLower"]</p>
+        </div>
+
+        <div class="biz-stats">
+            <div class="biz-stat">
+                <strong>@catCount</strong>
+                <span>@L["BizPanel_Categories"]</span>
+            </div>
+            <div class="biz-stat">
+                <strong>@svcCount</strong>
+                <span>@L["Groomer_Services"]</span>
+            </div>
+            <div class="biz-stat">
+                <strong>2</strong>
+                <span>@L["BizPanel_Extras"]</span>
+            </div>
+        </div>
+
+        <section class="biz-panel" style="--i:0">
+            <h3 class="biz-panel-title">@L["BizPanel_BasicDetails"]</h3>
+            <div class="form-group">
+                <label>@L["Biz_BusinessName"]</label>
+                <input class="form-control" value="@BusinessExploreDemo.BusinessName" disabled />
+            </div>
+            <div class="form-group">
+                <label>@L["BizPanel_Categories"]</label>
+                <div class="biz-cat-grid">
+                    @foreach (var c in BusinessExploreDemo.Categories)
+                    {
+                        <label class="biz-cat-card active">
+                            <img src="/images/categories/cat-@(c.Slug)-v2.png" alt="" />
+                            <strong>@c.Name</strong>
+                        </label>
+                    }
+                </div>
+            </div>
+            <div class="form-group">
+                <label>@L["Common_Phone"]</label>
+                <input class="form-control" value="@BusinessExploreDemo.Phone" disabled />
+            </div>
+            <div class="form-group">
+                <label>@L["Common_Address"]</label>
+                <input class="form-control" value="@BusinessExploreDemo.City" disabled />
+            </div>
+            <div class="form-group">
+                <label>@L["BizPanel_About"]</label>
+                <textarea class="form-control" rows="3" disabled>@BusinessExploreDemo.About</textarea>
+            </div>
+        </section>
+
+        <section class="biz-panel" style="--i:1">
+            <h3 class="biz-panel-title">@L["Groomer_Services"]</h3>
+            @foreach (var s in BusinessExploreDemo.Services)
+            {
+                <div class="card card-pad" style="margin-bottom:8px">
+                    <strong>@CatalogLocalizer.Text(s.Name)</strong>
+                    <div class="muted small">$@s.Price.ToString("0") / @s.Unit</div>
+                </div>
+            }
+        </section>
+
+        <button class="btn btn-primary btn-block" type="button" disabled style="opacity:.7;margin-top:12px">@L["BizPanel_Save"]</button>
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

@@ -1,0 +1,62 @@
+@page "/Business/Explore/Appointments"
+@model WebAppPet.Pages.Business.Explore.AppointmentsModel
+@{
+    ViewData["Title"] = L["Groomer_Bookings"].Value;
+    ViewData["BodyClass"] = "page-biz-explore";
+}
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+        <partial name="_ExploreBanner" />
+        <partial name="_ExploreNav" />
+
+        <div class="tabs">
+            <a class="@(Model.Tab == "requests" ? "active" : "")" asp-page="./Appointments" asp-route-tab="requests">@CatalogLocalizer.Loc("Solicitudes", "Requests")</a>
+            <a class="@(Model.Tab == "upcoming" ? "active" : "")" asp-page="./Appointments" asp-route-tab="upcoming">@L["Appt_Upcoming"]</a>
+            <a class="@(Model.Tab == "history" ? "active" : "")" asp-page="./Appointments" asp-route-tab="history">@L["Appt_History"]</a>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="empty">@CatalogLocalizer.Loc("No hay citas en esta sección.", "No bookings in this section.")</div>
+        }
+
+        @foreach (var a in Model.Items)
+        {
+            <div class="appt-card">
+                <div class="row" style="margin-bottom:10px">
+                    <img src="@PetSpecies.DefaultPhoto(a.Species)" alt="@a.PetName" style="border-radius:50%" />
+                    <div style="flex:1">
+                        <strong>@a.PetName · @CatalogLocalizer.Text(a.Service)</strong>
+                        <div class="muted small">@a.When.ToString("ddd d MMM yyyy · h:mm tt")</div>
+                        <span class="price">$@a.Price.ToString("0.00")</span>
+                    </div>
+                    <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
+                </div>
+
+                <div class="card-pad" style="background:var(--purple-soft);border-radius:12px;padding:10px 12px;margin-bottom:10px">
+                    <strong class="small">@CatalogLocalizer.Loc("Cliente y mascota", "Client & pet")</strong>
+                    <div class="muted small">👤 @a.ClientName · 📞 @a.Phone</div>
+                    <div class="muted small">@PetSpecies.Emoji(a.Species) @PetSpecies.Label(a.Species)</div>
+                    @if (a.Anxious)
+                    {
+                        <div class="muted small">⚠️ @CatalogLocalizer.Loc("Ansioso.", "Anxious.")</div>
+                    }
+                </div>
+
+                @if (a.Status == AppointmentStatus.Pending)
+                {
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-block btn-sm" type="button" disabled style="background:#fee2e2;color:#991b1b;opacity:.7">@L["Admin_Reject"]</button>
+                        <button class="btn btn-primary btn-block btn-sm" type="button" disabled style="opacity:.7">@CatalogLocalizer.Loc("Aceptar", "Accept")</button>
+                    </div>
+                }
+                else if (a.Status == AppointmentStatus.Confirmed)
+                {
+                    <button class="btn btn-primary btn-block btn-sm" type="button" disabled style="opacity:.7">@CatalogLocalizer.Loc("Marcar como completada", "Mark as completed")</button>
+                }
+            </div>
+        }
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

@@ -120,6 +120,19 @@
   <data name="Promo_ErrLogin" xml:space="preserve"><value>Sign in to use a promo code.</value></data>
   <data name="Home_BizCta" xml:space="preserve"><value>Have a hotel, clinic or daycare?</value></data>
   <data name="Home_BizCtaSub" xml:space="preserve"><value>List it on Chombly and get bookings.</value></data>
+  <data name="Home_BizExploreTitle" xml:space="preserve"><value>Grow your business on Chombly</value></data>
+  <data name="Home_BizExploreSubtitle" xml:space="preserve"><value>List your services, get bookings, and manage your schedule in one place.</value></data>
+  <data name="Home_BizOfferTitle" xml:space="preserve"><value>What you can offer</value></data>
+  <data name="Home_BizModulesTitle" xml:space="preserve"><value>Panel modules</value></data>
+  <data name="Home_BizModuleBookings" xml:space="preserve"><value>Manage requests and confirmed appointments.</value></data>
+  <data name="Home_BizModuleAgenda" xml:space="preserve"><value>Set weekly hours and availability.</value></data>
+  <data name="Home_BizModuleBusiness" xml:space="preserve"><value>Profile, prices, photos, and categories.</value></data>
+  <data name="Home_BizModuleAnalytics" xml:space="preserve"><value>Track earnings and performance.</value></data>
+  <data name="Home_BizModuleVerify" xml:space="preserve"><value>Licenses and publish checklist.</value></data>
+  <data name="Home_BizModulePayouts" xml:space="preserve"><value>Review payouts and settlements.</value></data>
+  <data name="Home_BizExploreCta" xml:space="preserve"><value>Ready to reach pet families</value></data>
+  <data name="BizExplore_BannerTitle" xml:space="preserve"><value>Business panel preview</value></data>
+  <data name="BizExplore_BannerSub" xml:space="preserve"><value>Explore how Chombly works for your business. Register to activate these screens with your own data.</value></data>
   <data name="Home_SeeWelcome" xml:space="preserve"><value>See welcome tour</value></data>
   <data name="Home_FromPrice" xml:space="preserve"><value>From</value></data>
   <data name="Home_CareTitle" xml:space="preserve"><value>Ongoing care</value></data>

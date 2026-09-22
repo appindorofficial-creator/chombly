@@ -18,8 +18,10 @@
     var hideNav = ViewData["HideNav"] as bool? == true;
     var path = Context.Request.Path.Value ?? "";
     var isAuthed = User.Identity?.IsAuthenticated == true;
+    var bizExplore = ViewData["BusinessExplore"] as bool? == true
+        || BusinessExploreMode.IsActive(Context.Request);
     // Dual-role: Groomer in owner shell sees pet-owner nav.
-    var isBiz = Auth.IsBusinessShell;
+    var isBiz = Auth.IsBusinessShell || bizExplore;
     bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase);
     var onNotifications = IsActive("/Account/Notifications");
@@ -35,9 +37,23 @@
     var notifFromHome = NotifFrom("/Index") || NotifFrom("/Groomer/Dashboard") || (onNotifications && notifReturn == "/");
     var notifFromAppt = NotifFrom("/Appointments") || NotifFrom("/Groomer/Appointments");
     var notifFromProfile = onNotifications && !notifFromHome && !notifFromAppt;
-    var homeHref = isBiz
-        ? Url.Page("/Groomer/Dashboard")
-        : (isAuthed ? Url.Page("/Index") : Url.Page("/Index", new { browse = true }));
+    var homeHref = bizExplore && !Auth.IsBusinessShell
+        ? Url.Page("/Business/Explore/Index")
+        : isBiz
+            ? Url.Page("/Groomer/Dashboard")
+            : (isAuthed ? Url.Page("/Index") : Url.Page("/Index", new { browse = true }));
+    var bizHref = bizExplore && !Auth.IsBusinessShell
+        ? Url.Page("/Business/Explore/Business")
+        : Url.Page("/Groomer/Business");
+    var apptHref = bizExplore && !Auth.IsBusinessShell
+        ? Url.Page("/Business/Explore/Appointments")
+        : Url.Page("/Groomer/Appointments");
+    var scheduleHref = bizExplore && !Auth.IsBusinessShell
+        ? Url.Page("/Business/Explore/Availability")
+        : Url.Page("/Groomer/Availability");
+    var profileHref = bizExplore && !Auth.IsBusinessShell
+        ? Url.Page("/Business/Explore/Profile")
+        : Url.Page("/Account/Profile");
 }
 <body class="@(ViewData["BodyClass"] as string)">
 <div class="app-shell">
@@ -49,23 +65,24 @@
             <span class="bottom-nav-indicator" aria-hidden="true"></span>
             @if (isBiz)
             {
-                <a href="@homeHref" class="@(IsActive("/Groomer/Dashboard") || path == "/" || notifFromHome ? "active" : "")">
+                var exploreHomeActive = bizExplore && path.Equals("/Business/Explore", StringComparison.OrdinalIgnoreCase);
+                <a href="@homeHref" class="@((!bizExplore && (IsActive("/Groomer/Dashboard") || path == "/")) || exploreHomeActive || notifFromHome ? "active" : "")">
                     <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg></span>
                     @L["Nav_Home"]
                 </a>
-                <a asp-page="/Groomer/Business" class="@(IsActive("/Groomer/Business") ? "active" : "")">
+                <a href="@bizHref" class="@((bizExplore ? IsActive("/Business/Explore/Business") : IsActive("/Groomer/Business")) ? "active" : "")">
                     <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg></span>
                     @L["Groomer_Business"]
                 </a>
-                <a asp-page="/Groomer/Appointments" class="@(IsActive("/Groomer/Appointments") || notifFromAppt ? "active" : "")">
+                <a href="@apptHref" class="@((bizExplore ? IsActive("/Business/Explore/Appointments") : IsActive("/Groomer/Appointments")) || notifFromAppt ? "active" : "")">
                     <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v16H4V4h3V2zm11 8H6v8h12v-8z"/></svg></span>
                     @L["Groomer_Bookings"]
                 </a>
-                <a asp-page="/Groomer/Availability" class="@(IsActive("/Groomer/Availability") ? "active" : "")">
+                <a href="@scheduleHref" class="@((bizExplore ? IsActive("/Business/Explore/Availability") : IsActive("/Groomer/Availability")) ? "active" : "")">
                     <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 10.5V7h-2v7l5 3 1-1.7-4-2.8z"/></svg></span>
                     @L["Groomer_Schedule"]
                 </a>
-                <a asp-page="/Account/Profile" class="@(IsActive("/Account/Profile") || notifFromProfile ? "active" : "")">
+                <a href="@profileHref" class="@((bizExplore ? IsActive("/Business/Explore/Profile") : IsActive("/Account/Profile")) || notifFromProfile ? "active" : "")">
                     <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></span>
                     @L["Nav_Profile"]
                 </a>

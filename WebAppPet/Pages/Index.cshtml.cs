@@ -26,6 +26,13 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public bool Browse { get; set; }
 
+    /// <summary>Welcome Negocios “Explorar servicios” — business-oriented home instead of family marketplace.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? For { get; set; }
+
+    public bool IsBusinessExplore =>
+        string.Equals(For, "business", StringComparison.OrdinalIgnoreCase);
+
     public string City { get; set; } = string.Empty;
     public string? GreetingName { get; set; }
     public bool IsGuest { get; set; }
@@ -40,6 +47,14 @@ public class IndexModel : PageModel
         // Dual-role (Indor-style): only force business home when shell is business.
         if (_auth.IsBusinessShell)
             return RedirectToPage("/Groomer/Dashboard");
+        if (IsBusinessExplore)
+        {
+            BusinessExploreMode.Enable(Response);
+            return RedirectToPage("/Business/Explore/Index");
+        }
+
+        BusinessExploreMode.Clear(Response);
+
         if (IsGuest && !Browse)
             return Redirect("/Welcome");
 

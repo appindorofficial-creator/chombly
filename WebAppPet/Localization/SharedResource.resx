@@ -126,6 +126,19 @@
   <data name="Promo_ErrLogin" xml:space="preserve"><value>Inicia sesión para usar un código promocional.</value></data>
   <data name="Home_BizCta" xml:space="preserve"><value>¿Tienes un hotel, clínica o guardería?</value></data>
   <data name="Home_BizCtaSub" xml:space="preserve"><value>Publícalo en Chombly y recibe reservas.</value></data>
+  <data name="Home_BizExploreTitle" xml:space="preserve"><value>Haz crecer tu negocio en Chombly</value></data>
+  <data name="Home_BizExploreSubtitle" xml:space="preserve"><value>Publica tus servicios, recibe reservas y gestiona tu agenda en un solo lugar.</value></data>
+  <data name="Home_BizOfferTitle" xml:space="preserve"><value>Qué puedes ofrecer</value></data>
+  <data name="Home_BizModulesTitle" xml:space="preserve"><value>Módulos del panel</value></data>
+  <data name="Home_BizModuleBookings" xml:space="preserve"><value>Gestiona solicitudes y citas confirmadas.</value></data>
+  <data name="Home_BizModuleAgenda" xml:space="preserve"><value>Define horarios y disponibilidad semanal.</value></data>
+  <data name="Home_BizModuleBusiness" xml:space="preserve"><value>Perfil, precios, fotos y categorías.</value></data>
+  <data name="Home_BizModuleAnalytics" xml:space="preserve"><value>Sigue ingresos y desempeño.</value></data>
+  <data name="Home_BizModuleVerify" xml:space="preserve"><value>Licencias y checklist para publicar.</value></data>
+  <data name="Home_BizModulePayouts" xml:space="preserve"><value>Revisa pagos y liquidaciones.</value></data>
+  <data name="Home_BizExploreCta" xml:space="preserve"><value>Listo para aparecer ante familias</value></data>
+  <data name="BizExplore_BannerTitle" xml:space="preserve"><value>Vista previa del panel de negocio</value></data>
+  <data name="BizExplore_BannerSub" xml:space="preserve"><value>Explora cómo funciona Chombly para tu negocio. Regístrate para activar estas pantallas con tus datos.</value></data>
   <data name="Home_SeeWelcome" xml:space="preserve"><value>Ver presentación</value></data>
   <data name="Home_FromPrice" xml:space="preserve"><value>Desde</value></data>
   <data name="Home_CareTitle" xml:space="preserve"><value>Cuidado continuo</value></data>
