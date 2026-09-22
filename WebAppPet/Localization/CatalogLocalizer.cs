@@ -14,6 +14,9 @@ public static class CatalogLocalizer
         ["Baño y cepillado"] = "Bath & brush",
         ["Baño básico"] = "Basic bath",
         ["Baño adicional"] = "Extra bath",
+        ["Baño extra durante la estadía"] = "Extra bath during the stay",
+        ["Si tu mascota necesita medicación durante la estadía"] =
+            "If your pet needs medication during the stay",
         ["Baño al final del día"] = "End-of-day bath",
         ["Grooming completo"] = "Full grooming",
         ["Grooming para gatos"] = "Cat grooming",
@@ -60,6 +63,8 @@ public static class CatalogLocalizer
         ["Otro"] = "Other",
         ["Administración de medicamentos"] = "Medication administration",
         ["Cámara privada"] = "Private camera",
+        ["Acceso a cámara privada de la suite durante la estadía"] =
+            "Private suite camera access during the stay",
         ["Transporte (ida y vuelta)"] = "Round-trip transport",
 
         // Amenities / prefs

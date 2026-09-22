@@ -597,6 +597,12 @@
   <data name="BizPanel_Amenities" xml:space="preserve"><value>Amenities</value></data>
   <data name="BizPanel_AmenityPh" xml:space="preserve"><value>24/7 cameras</value></data>
   <data name="BizPanel_ExtraPh" xml:space="preserve"><value>Extra bath</value></data>
+  <data name="BizPanel_PrivateCamera" xml:space="preserve"><value>Private camera</value></data>
+  <data name="BizPanel_PrivateCameraOffer" xml:space="preserve"><value>Offer private camera on bookings</value></data>
+  <data name="BizPanel_PrivateCameraHint" xml:space="preserve"><value>Guests can add it as a hotel booking extra (different from 24/7 cameras on the listing).</value></data>
+  <data name="BizPanel_PrivateCameraPrice" xml:space="preserve"><value>Extra price</value></data>
+  <data name="BizPanel_HotelExtras" xml:space="preserve"><value>Hotel extras</value></data>
+  <data name="BizPanel_HotelExtrasHint" xml:space="preserve"><value>Set each extra’s price (use $0 if you include it at no charge).</value></data>
   <data name="BizPanel_Updated" xml:space="preserve"><value>Business updated.</value></data>
   <data name="BizPanel_ErrCategory" xml:space="preserve"><value>Select at least one service category.</value></data>
   <data name="Groomer_Agenda" xml:space="preserve"><value>Schedule</value></data>

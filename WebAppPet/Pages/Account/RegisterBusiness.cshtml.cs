@@ -76,6 +76,16 @@ public class RegisterBusinessModel : PageModel
     [BindProperty] public string ConfirmPassword { get; set; } = string.Empty;
     [BindProperty] public bool AcceptTerms { get; set; }
 
+    /// <summary>Hotel category: offer bookable private-camera extra.</summary>
+    [BindProperty] public bool OffersPrivateCamera { get; set; }
+    [BindProperty] public decimal PrivateCameraPrice { get; set; } = HotelPrivateCameraExtra.DefaultPrice;
+    [BindProperty] public decimal ExtraBathPrice { get; set; } = HotelCoreExtras.BathDefaultPrice;
+    [BindProperty] public decimal ExtraMedsPrice { get; set; } = HotelCoreExtras.MedsDefaultPrice;
+
+    public bool IsHotelSelected =>
+        Categories.Any(c => CategoryIds.Contains(c.Id)
+            && string.Equals(c.Slug, "hotel", StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Market inferred from step-1 city / GPS (US → mi, Colombia → km).</summary>
     public BusinessMarket DetectedMarket =>
         BusinessMarketResolver.ResolveUser(
@@ -554,6 +564,13 @@ public class RegisterBusinessModel : PageModel
         await _db.SaveChangesAsync();
         await _availability.SaveWeeklyAndGenerateAsync(profile.Id, Week, days: 60);
 
+        if (IsHotelSelected)
+        {
+            await HotelCoreExtras.SyncAsync(_db, profile.Id, ExtraBathPrice, ExtraMedsPrice);
+            if (OffersPrivateCamera)
+                await HotelPrivateCameraExtra.SyncAsync(_db, profile.Id, true, PrivateCameraPrice);
+        }
+
         _db.Notifications.Add(new AppNotification
         {
             UserId = user.Id,
@@ -643,7 +660,11 @@ public class RegisterBusinessModel : PageModel
                 CoverUrl = CoverUrl,
                 ServiceNames = ServiceNames?.ToList() ?? new(),
                 ServicePrices = ServicePrices?.ToList() ?? new(),
-                AcceptTerms = AcceptTerms
+                AcceptTerms = AcceptTerms,
+                OffersPrivateCamera = OffersPrivateCamera,
+                PrivateCameraPrice = PrivateCameraPrice,
+                ExtraBathPrice = ExtraBathPrice,
+                ExtraMedsPrice = ExtraMedsPrice
             };
             HttpContext.Session.SetString(DraftSessionKey, JsonSerializer.Serialize(draft));
         }
@@ -693,6 +714,16 @@ public class RegisterBusinessModel : PageModel
             ServiceNames = draft.ServiceNames ?? new();
             ServicePrices = draft.ServicePrices ?? new();
             AcceptTerms = draft.AcceptTerms;
+            OffersPrivateCamera = draft.OffersPrivateCamera;
+            PrivateCameraPrice = draft.PrivateCameraPrice < 0
+                ? HotelPrivateCameraExtra.DefaultPrice
+                : draft.PrivateCameraPrice;
+            ExtraBathPrice = draft.ExtraBathPrice < 0
+                ? HotelCoreExtras.BathDefaultPrice
+                : draft.ExtraBathPrice;
+            ExtraMedsPrice = draft.ExtraMedsPrice < 0
+                ? HotelCoreExtras.MedsDefaultPrice
+                : draft.ExtraMedsPrice;
         }
         catch
         {
@@ -729,6 +760,10 @@ public class RegisterBusinessModel : PageModel
         public List<string>? ServiceNames { get; set; }
         public List<decimal>? ServicePrices { get; set; }
         public bool AcceptTerms { get; set; }
+        public bool OffersPrivateCamera { get; set; }
+        public decimal PrivateCameraPrice { get; set; }
+        public decimal ExtraBathPrice { get; set; }
+        public decimal ExtraMedsPrice { get; set; }
     }
 
     private sealed class BizRegWeekDay

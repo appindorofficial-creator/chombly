@@ -195,7 +195,7 @@
                             class="btn @(selected ? "btn-primary" : "btn-outline") btn-block"
                             name="groomerId"
                             value="@h.Id"
-                            onclick="var h=this.form.querySelector('input[name=groomerId][type=hidden]'); if(h) h.disabled=true;">
+                            onclick="var hid=this.form.querySelector('input[name=groomerId][type=hidden]'); if(hid){ hid.disabled=false; hid.value=this.value; }">
                         @(selected
                             ? CatalogLocalizer.Loc("Seleccionado ✓", "Selected ✓")
                             : CatalogLocalizer.Loc("Reservar", "Reserve"))
@@ -209,17 +209,46 @@
             }
         }
 
-        @if (Model.CanSelectHotel && Model.Extras.Any())
+        @if (Model.CanSelectHotel && Model.ExtraOptions.Any())
         {
             <h3 class="section-title">@CatalogLocalizer.Loc("Extras", "Extras") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
+            <p class="muted small" style="margin-top:-6px">
+                @(Model.SelectedHotel == null
+                    ? CatalogLocalizer.Loc("Elige un hotel para ver qué extras ofrece.", "Pick a hotel to see which extras it offers.")
+                    : CatalogLocalizer.Loc("Solo puedes elegir extras que ofrece este hotel.", "You can only pick extras this hotel offers."))
+            </p>
             <div class="extras-grid">
-                @foreach (var e in Model.Extras)
+                @foreach (var e in Model.ExtraOptions)
                 {
-                    var on = Model.ExtraIds.Contains(e.Id);
-                    <label class="extra-chip @(on ? "active" : "")">
-                        <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") />
-                        @CatalogLocalizer.Text(e.Name)
-                        <span class="muted small">+$@e.Price.ToString("0")</span>
+                    var on = e.Available && e.ExtraId is int eid && Model.ExtraIds.Contains(eid);
+                    <label class="extra-chip @(on ? "active" : "") @(!e.Available ? "is-disabled" : "")"
+                           title="@(e.Available
+                               ? CatalogLocalizer.Text(e.Description ?? e.Name)
+                               : CatalogLocalizer.Loc("Este hotel no ofrece este extra", "This hotel doesn’t offer this extra"))">
+                        @if (e.Available && e.ExtraId is int extraId)
+                        {
+                            <input type="checkbox" name="ExtraIds" value="@extraId" @(on ? "checked" : null) />
+                        }
+                        else
+                        {
+                            <input type="checkbox" disabled tabindex="-1" />
+                        }
+                        <span class="extra-chip-copy">
+                            <strong>@CatalogLocalizer.Text(e.Name)</strong>
+                            @if (!string.IsNullOrWhiteSpace(e.Description))
+                            {
+                                <small class="muted">@CatalogLocalizer.Text(e.Description)</small>
+                            }
+                            else if (HotelCoreExtras.MatchesBath(e.Name))
+                            {
+                                <small class="muted">@CatalogLocalizer.Loc("Baño extra durante la estadía", "Extra bath during the stay")</small>
+                            }
+                        </span>
+                        <span class="muted small">+$@e.Price.ToString("0.##")</span>
+                        @if (!e.Available)
+                        {
+                            <span class="extra-chip-na">@CatalogLocalizer.Loc("No disponible", "Unavailable")</span>
+                        }
                     </label>
                 }
             </div>

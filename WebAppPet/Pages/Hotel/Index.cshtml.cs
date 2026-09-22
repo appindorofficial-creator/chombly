@@ -71,6 +71,8 @@ public class IndexModel : PageModel
     public List<HotelCardVm> Results { get; set; } = new();
     public List<string> AllFilterLabels { get; set; } = new();
     public List<ServiceExtra> Extras { get; set; } = new();
+    /// <summary>Catalog of extras from listed hotels; availability depends on the selected hotel.</summary>
+    public List<HotelExtraOptionVm> ExtraOptions { get; set; } = new();
     public GroomerProfile? SelectedHotel { get; set; }
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
@@ -370,10 +372,15 @@ public class IndexModel : PageModel
             if (SelectedHotel != null)
             {
                 SelectedService = SelectedHotel.Services.OrderBy(s => s.PriceSmall).FirstOrDefault();
+                await HotelCoreExtras.EnsureMissingAsync(_db, new[] { SelectedHotel.Id });
                 Extras = await _db.ServiceExtras
                     .Where(e => e.GroomerId == SelectedHotel.Id && e.IsActive)
                     .OrderBy(e => e.Price)
                     .ToListAsync();
+
+                // Drop selections that this hotel does not offer.
+                var offeredIds = Extras.Select(e => e.Id).ToHashSet();
+                ExtraIds = ExtraIds.Where(id => offeredIds.Contains(id)).ToList();
 
                 if (SelectedService != null && SelectedPets.Count > 0)
                 {
@@ -390,28 +397,66 @@ public class IndexModel : PageModel
         }
         else
         {
-            // Extras genéricos: unión de extras de hoteles listados (solo lectura hasta elegir hotel).
-            // Materialize first — EF cannot translate GroupBy + OrderBy + First reliably on SQL Server.
-            var ids = hotels.Select(h => h.Id).ToList();
-            if (ids.Count == 0)
-            {
-                Extras = new List<ServiceExtra>();
-            }
-            else
-            {
-                var raw = await _db.ServiceExtras
-                    .AsNoTracking()
-                    .Where(e => ids.Contains(e.GroomerId) && e.IsActive)
-                    .ToListAsync();
+            Extras = new List<ServiceExtra>();
+            ExtraIds = new List<int>();
+        }
 
-                Extras = raw
-                    .Where(e => !string.IsNullOrWhiteSpace(e.Name))
-                    .GroupBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
-                    .Select(g => g.OrderBy(x => x.Price).First())
-                    .OrderBy(e => e.Price)
-                    .Take(8)
-                    .ToList();
+        // Catalog from visible hotels; bath + meds are always offered (price set by each hotel).
+        var catalogIds = Results.Select(r => r.Hotel.Id).ToList();
+        if (SelectedHotel != null && !catalogIds.Contains(SelectedHotel.Id))
+            catalogIds.Add(SelectedHotel.Id);
+        await HotelCoreExtras.EnsureMissingAsync(_db, catalogIds);
+        await BuildExtraOptionsAsync(catalogIds);
+    }
+
+    private async Task BuildExtraOptionsAsync(List<int> hotelIds)
+    {
+        ExtraOptions = new List<HotelExtraOptionVm>();
+        if (hotelIds.Count == 0) return;
+
+        var raw = await _db.ServiceExtras
+            .AsNoTracking()
+            .Where(e => hotelIds.Contains(e.GroomerId) && e.IsActive)
+            .ToListAsync();
+        if (raw.Count == 0) return;
+
+        var byName = raw
+            .Where(e => !string.IsNullOrWhiteSpace(e.Name))
+            .GroupBy(e => e.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => HotelCoreExtras.IsCore(g.Key) ? 0 : 1)
+            .ThenBy(g => g.Min(x => x.Price))
+            .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(8);
+
+        foreach (var g in byName)
+        {
+            var isCore = HotelCoreExtras.IsCore(g.Key);
+            var offered = SelectedHotel == null
+                ? null
+                : g.FirstOrDefault(e => e.GroomerId == SelectedHotel.Id);
+            string? coreDesc = null;
+            decimal? coreDefault = null;
+            if (HotelCoreExtras.MatchesBath(g.Key))
+            {
+                coreDesc = HotelCoreExtras.BathDescription;
+                coreDefault = HotelCoreExtras.BathDefaultPrice;
             }
+            else if (HotelCoreExtras.MatchesMeds(g.Key))
+            {
+                coreDesc = HotelCoreExtras.MedsDescription;
+                coreDefault = HotelCoreExtras.MedsDefaultPrice;
+            }
+
+            ExtraOptions.Add(new HotelExtraOptionVm
+            {
+                Name = g.First().Name,
+                Description = offered?.Description
+                    ?? (isCore ? coreDesc : null)
+                    ?? g.Select(x => x.Description).FirstOrDefault(d => !string.IsNullOrWhiteSpace(d)),
+                Price = offered?.Price ?? (isCore ? coreDefault ?? g.Min(x => x.Price) : g.Min(x => x.Price)),
+                ExtraId = offered?.Id,
+                Available = offered != null
+            });
         }
     }
 
@@ -496,5 +541,14 @@ public class IndexModel : PageModel
         public List<string> Features { get; set; } = new();
         public bool Recommended { get; set; }
         public bool AvailableToday { get; set; }
+    }
+
+    public class HotelExtraOptionVm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal Price { get; set; }
+        public int? ExtraId { get; set; }
+        public bool Available { get; set; }
     }
 }

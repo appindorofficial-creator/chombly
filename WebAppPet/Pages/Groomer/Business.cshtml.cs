@@ -51,6 +51,14 @@ public class BusinessModel : GroomerPageModel
     [BindProperty] public string NewServiceUnit { get; set; } = "sesion";
     [BindProperty] public decimal NewServicePrice { get; set; }
 
+    /// <summary>Hotel-only: offer bookable “Cámara privada” extra.</summary>
+    [BindProperty] public bool OffersPrivateCamera { get; set; }
+    [BindProperty] public decimal PrivateCameraPrice { get; set; } = HotelPrivateCameraExtra.DefaultPrice;
+    [BindProperty] public decimal ExtraBathPrice { get; set; } = HotelCoreExtras.BathDefaultPrice;
+    [BindProperty] public decimal ExtraMedsPrice { get; set; } = HotelCoreExtras.MedsDefaultPrice;
+
+    public bool IsHotelBusiness { get; private set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
@@ -103,6 +111,15 @@ public class BusinessModel : GroomerPageModel
         g.IsFeatured = IsFeatured;
         g.IsActive = IsActive;
         await Db.SaveChangesAsync();
+
+        if (IsHotelFromCategories(selected))
+        {
+            await HotelCoreExtras.SyncAsync(Db, g.Id, ExtraBathPrice, ExtraMedsPrice);
+            await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, OffersPrivateCamera, PrivateCameraPrice);
+        }
+        else
+            await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, enabled: false);
+
         Message = _L["BizPanel_Updated"].Value;
         await FillAsync();
         return Page();
@@ -130,11 +147,19 @@ public class BusinessModel : GroomerPageModel
         if (await LoadGroomerAsync() is IActionResult r) return r;
         if (!string.IsNullOrWhiteSpace(NewExtraName))
         {
+            var name = NewExtraName.Trim();
+            if (HotelCoreExtras.IsManagedHotelExtra(name))
+            {
+                Message = _L["BizPanel_HotelExtrasHint"].Value;
+                await FillAsync();
+                return RedirectToPage((string?)null, (string?)null, "biz-hotel-extras");
+            }
+
             Db.ServiceExtras.Add(new ServiceExtra
             {
                 GroomerId = Profile!.Id,
-                Name = NewExtraName.Trim(),
-                Price = NewExtraPrice,
+                Name = name,
+                Price = NewExtraPrice < 0 ? 0 : NewExtraPrice,
                 IsActive = true
             });
             await Db.SaveChangesAsync();
@@ -191,5 +216,23 @@ public class BusinessModel : GroomerPageModel
         Amenities = await Db.Amenities.Where(a => a.GroomerId == g.Id).OrderBy(a => a.SortOrder).ToListAsync();
         Extras = await Db.ServiceExtras.Where(e => e.GroomerId == g.Id).ToListAsync();
         Services = await Db.Services.Where(s => s.GroomerId == g.Id).ToListAsync();
+        IsHotelBusiness = IsHotelFromCategories(CategoryIds)
+            || string.Equals(g.Category?.Slug, "hotel", StringComparison.OrdinalIgnoreCase);
+        if (IsHotelBusiness)
+        {
+            var cam = await HotelPrivateCameraExtra.GetAsync(Db, g.Id);
+            OffersPrivateCamera = cam.Enabled;
+            PrivateCameraPrice = cam.Price;
+            var core = await HotelCoreExtras.GetPricesAsync(Db, g.Id);
+            ExtraBathPrice = core.BathPrice;
+            ExtraMedsPrice = core.MedsPrice;
+        }
+    }
+
+    private bool IsHotelFromCategories(IEnumerable<int> categoryIds)
+    {
+        var ids = categoryIds?.ToHashSet() ?? new HashSet<int>();
+        return Categories.Any(c => ids.Contains(c.Id)
+            && string.Equals(c.Slug, "hotel", StringComparison.OrdinalIgnoreCase));
     }
 }

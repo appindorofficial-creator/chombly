@@ -4305,10 +4305,46 @@ a.btn.is-disabled {
 .extra-chip {
   padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--border);
   background: #fff; font-size: .78rem; font-weight: 600; cursor: pointer;
-  display: flex; flex-direction: column; gap: 2px;
+  display: flex; flex-direction: column; gap: 2px; min-width: 140px; max-width: 100%;
+  position: relative;
 }
 .extra-chip input { display: none; }
 .extra-chip.active { border-color: var(--brand); background: var(--brand-soft); }
+.extra-chip-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+}
+.extra-chip-copy strong { font-weight: 700; }
+.extra-chip-copy small { font-weight: 500; font-size: .68rem; }
+.extra-chip.is-disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  background: #f3f4f3;
+  border-style: dashed;
+  pointer-events: none;
+}
+.extra-chip-na {
+  font-size: .62rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.extra-chip-std {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: var(--brand-dark);
+  background: color-mix(in srgb, var(--brand) 28%, #fff);
+}
 
 .trust-bar {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;

@@ -181,6 +181,34 @@
                 </label>
             </section>
 
+            @if (Model.IsHotelBusiness)
+            {
+                <section class="biz-panel" style="--i:4" id="biz-hotel-extras">
+                    <h3 class="biz-panel-title">@L["BizPanel_HotelExtras"]</h3>
+                    <p class="muted small biz-hint">@L["BizPanel_HotelExtrasHint"]</p>
+                    <div class="form-group">
+                        <label>@CatalogLocalizer.Text(HotelCoreExtras.BathName)</label>
+                        <input class="form-control" asp-for="ExtraBathPrice" type="number" step="0.01" min="0" style="max-width:160px" />
+                    </div>
+                    <div class="form-group">
+                        <label>@CatalogLocalizer.Text(HotelCoreExtras.MedsName)</label>
+                        <input class="form-control" asp-for="ExtraMedsPrice" type="number" step="0.01" min="0" style="max-width:160px" />
+                    </div>
+                    <label class="biz-pref-row">
+                        <span>@L["BizPanel_PrivateCameraOffer"]</span>
+                        <span class="biz-switch">
+                            <input asp-for="OffersPrivateCamera" type="checkbox" />
+                            <span class="biz-switch-track" aria-hidden="true"></span>
+                        </span>
+                    </label>
+                    <div class="form-group" style="margin-top:10px">
+                        <label>@L["BizPanel_PrivateCameraPrice"]</label>
+                        <input class="form-control" asp-for="PrivateCameraPrice" type="number" step="0.01" min="0" style="max-width:160px" />
+                    </div>
+                    <p class="muted small biz-hint">@L["BizPanel_PrivateCameraHint"]</p>
+                </section>
+            }
+
             <button class="btn btn-primary btn-block biz-primary-btn" type="submit">@L["BizPanel_Save"]</button>
         </form>
 
@@ -226,11 +254,11 @@
 
         <h3 id="biz-extras" class="section-title biz-section-title">@L["BizPanel_Extras"]</h3>
         <div class="biz-list">
-            @foreach (var e in Model.Extras)
+            @foreach (var e in Model.Extras.Where(x => !HotelCoreExtras.IsManagedHotelExtra(x.Name)))
             {
                 <article class="biz-item-card biz-item-card--row">
                     <strong>@CatalogLocalizer.Text(e.Name)</strong>
-                    <span class="price">+$@e.Price.ToString("0")</span>
+                    <span class="price">+$@e.Price.ToString("0.##")</span>
                 </article>
             }
         </div>
