@@ -27,8 +27,8 @@
 
         <h2 style="margin:0 0 4px">@string.Format(L["Home_HeroHello"].Value, BusinessExploreDemo.OwnerName)</h2>
         <p class="muted small" style="margin:0 0 16px">
-            @BusinessExploreDemo.BusinessName
-            <span>· @string.Join(" · ", BusinessExploreDemo.CategoryLabels)</span>
+            @CatalogLocalizer.Loc("Peluquería Luna", "Luna Grooming")
+            <span>· @CatalogLocalizer.Loc("Peluquería", "Grooming") · @CatalogLocalizer.Loc("Guardería", "Daycare")</span>
         </p>
 
         <div class="promo-banner" style="margin-top:0">

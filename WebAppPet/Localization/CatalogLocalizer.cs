@@ -294,6 +294,14 @@ public static class CatalogLocalizer
         ["Negocio de prueba en Neiva para validar el alta sin pedir cuenta otra vez"] =
             "Test business in Neiva to validate signup without creating another account",
 
+        // Business Explore demo (Welcome → Negocios → Explorar)
+        ["Peluquería Luna"] = "Luna Grooming",
+        ["Baño, corte y spa para perros y gatos. Atención personalizada y productos hipoalergénicos."] =
+            "Bath, haircut, and spa for dogs and cats. Personalized care and hypoallergenic products.",
+        ["Baño, corte y spa para perros y gatos. Atención personalizada y productos hipoalergénicos"] =
+            "Bath, haircut, and spa for dogs and cats. Personalized care and hypoallergenic products",
+        ["Corte de uñas"] = "Nail trim",
+
         // Appointment notes (stored fragments)
         ["Horario:"] = "Schedule:",
         ["Pago:"] = "Payment:",

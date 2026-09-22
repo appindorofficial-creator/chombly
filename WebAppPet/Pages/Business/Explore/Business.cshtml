@@ -20,7 +20,7 @@
 
         <div class="biz-tip">
             <p class="biz-tip-kicker">@L["BizPanel_PublicProfile"]</p>
-            <p class="biz-tip-copy">@BusinessExploreDemo.BusinessName · @catCount @L["BizPanel_CategoriesLower"] · @svcCount @L["BizPanel_ServicesLower"]</p>
+            <p class="biz-tip-copy">@CatalogLocalizer.Loc("Peluquería Luna", "Luna Grooming") · @catCount @L["BizPanel_CategoriesLower"] · @svcCount @L["BizPanel_ServicesLower"]</p>
         </div>
 
         <div class="biz-stats">
@@ -42,16 +42,22 @@
             <h3 class="biz-panel-title">@L["BizPanel_BasicDetails"]</h3>
             <div class="form-group">
                 <label>@L["Biz_BusinessName"]</label>
-                <input class="form-control" value="@BusinessExploreDemo.BusinessName" disabled />
+                <input class="form-control" value="@CatalogLocalizer.Loc("Peluquería Luna", "Luna Grooming")" disabled />
             </div>
             <div class="form-group">
                 <label>@L["BizPanel_Categories"]</label>
                 <div class="biz-cat-grid">
                     @foreach (var c in BusinessExploreDemo.Categories)
                     {
+                        var catLabel = c.Slug switch
+                        {
+                            "grooming" => L["Grooming_Title"].Value,
+                            "daycare" => L["Daycare_Title"].Value,
+                            _ => CatalogLocalizer.Text(c.Name)
+                        };
                         <label class="biz-cat-card active">
                             <img src="/images/categories/cat-@(c.Slug)-v2.png" alt="" />
-                            <strong>@c.Name</strong>
+                            <strong>@catLabel</strong>
                         </label>
                     }
                 </div>
@@ -66,7 +72,7 @@
             </div>
             <div class="form-group">
                 <label>@L["BizPanel_About"]</label>
-                <textarea class="form-control" rows="3" disabled>@BusinessExploreDemo.About</textarea>
+                <textarea class="form-control" rows="3" disabled>@CatalogLocalizer.Loc("Baño, corte y spa para perros y gatos. Atención personalizada y productos hipoalergénicos.", "Bath, haircut, and spa for dogs and cats. Personalized care and hypoallergenic products.")</textarea>
             </div>
         </section>
 
@@ -76,7 +82,7 @@
             {
                 <div class="card card-pad" style="margin-bottom:8px">
                     <strong>@CatalogLocalizer.Text(s.Name)</strong>
-                    <div class="muted small">$@s.Price.ToString("0") / @s.Unit</div>
+                    <div class="muted small">$@s.Price.ToString("0") / @CatalogLocalizer.Text(s.Unit)</div>
                 </div>
             }
         </section>
