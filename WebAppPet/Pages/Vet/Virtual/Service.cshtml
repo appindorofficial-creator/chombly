@@ -5,47 +5,148 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Servicio y precio", "Service & price");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Safety", new { consultationId = Model.ConsultationId });
+    var hasVcpr = Model.Consultation?.HasActiveVcpr == true;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Servicio y precio", "Service & price")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("El alcance importa más que el precio", "Scope matters more than price")</p>
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
+    <div class="home-body hotel-flow vet-service-page">
+        <header class="vet-service-hero">
+            <p class="vet-service-kicker">@CatalogLocalizer.Loc("Paso de servicio", "Service step")</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Servicio y precio", "Service & price")</h1>
+            <p class="muted small vet-service-lead">
+                @CatalogLocalizer.Loc(
+                    "Elige el alcance: orientación, conducta o consulta local (esta última puede requerir VCPR).",
+                    "Pick the scope: guidance, behavior, or local consult (local may need a VCPR).")
+            </p>
+        </header>
 
-    @if (Model.HasCare && Model.CareRemaining > 0)
-    {
-        <form method="post" asp-page-handler="UseCare" style="margin-bottom:14px">
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" style="margin:0 0 14px">@Model.ErrorMessage</div>
+        }
+
+        @if (Model.HasCare && Model.CareRemaining > 0)
+        {
+            <section class="vet-service-care" aria-label="@CatalogLocalizer.Loc("Beneficio Care", "Care benefit")">
+                <div class="vet-service-care-copy">
+                    <strong>@CatalogLocalizer.Loc("Tienes Care activo", "You have active Care")</strong>
+                    <p class="muted small mb-0">
+                        @CatalogLocalizer.Loc(
+                            $"Puedes usar 1 consulta rápida internacional ({Model.CareRemaining} restante) sin pagar de nuevo.",
+                            $"You can use 1 international quick consult ({Model.CareRemaining} left) without paying again.")
+                    </p>
+                </div>
+                <form method="post" asp-page-handler="UseCare">
+                    <input type="hidden" asp-for="ConsultationId" />
+                    <button type="submit" class="btn btn-outline btn-block">
+                        @CatalogLocalizer.Loc("Usar consulta de Care", "Use Care consult")
+                    </button>
+                </form>
+                <p class="muted small" style="margin:10px 0 0;text-align:center">
+                    <a asp-page="/Plans/ChomblyCare" asp-route-consultationId="@Model.ConsultationId">
+                        @CatalogLocalizer.Loc("Gestionar plan Care", "Manage Care plan")
+                    </a>
+                </p>
+            </section>
+        }
+
+        <form method="post" class="vet-service-form" data-vet-service>
             <input type="hidden" asp-for="ConsultationId" />
-            <button type="submit" class="btn btn-primary btn-block">
-                @CatalogLocalizer.Loc($"Usar consulta rápida de Care ({Model.CareRemaining} restante)", $"Use Care quick consult ({Model.CareRemaining} left)")
+
+            <div class="vet-service-section-head">
+                <h2 class="section-title">@CatalogLocalizer.Loc("Elige un servicio", "Choose a service")</h2>
+                <p class="muted small">@CatalogLocalizer.Loc("Toca una opción para continuar.", "Tap an option to continue.")</p>
+            </div>
+
+            <div class="vet-service-options" role="radiogroup" aria-label="@CatalogLocalizer.Loc("Servicios", "Services")">
+                @foreach (var item in Model.Items)
+                {
+                    var isCare = item.Code == ServiceCatalogCodes.ChomblyCare;
+                    if (isCare && Model.HasCare) { continue; }
+                    var isLocal = item.Code == ServiceCatalogCodes.VetLocal30;
+                    var isIntl = item.Code == ServiceCatalogCodes.VetIntl30;
+                    var isBehavior = item.Code == ServiceCatalogCodes.BehaviorSession;
+                    var selected = string.Equals(Model.ServiceCode, item.Code, StringComparison.Ordinal);
+                    var icon = isCare ? "💚" : isIntl ? "🌍" : isBehavior ? "🧩" : isLocal ? "🏥" : "•";
+                    var priceSuffix = isCare
+                        ? CatalogLocalizer.Loc("/mes", "/mo")
+                        : CatalogLocalizer.Loc("/30 min", "/30 min");
+                    <label class="vet-service-option@(selected ? " is-selected" : "")">
+                        <input type="radio"
+                               name="ServiceCode"
+                               value="@item.Code"
+                               data-service-option
+                               @(selected ? "checked" : null) />
+                        <span class="vet-service-option-inner">
+                            <span class="vet-service-option-ico" aria-hidden="true">@icon</span>
+                            <span class="vet-service-option-body">
+                                <span class="vet-service-option-top">
+                                    <strong class="vet-service-option-name">@ServiceCatalogService.DisplayName(item)</strong>
+                                    <span class="vet-service-option-price">$@item.Price.ToString("0.##")<span class="vet-service-option-unit">@priceSuffix</span></span>
+                                </span>
+                                <span class="vet-service-option-scope">@ServiceCatalogService.DisplayScope(item)</span>
+                                <span class="vet-service-option-badges">
+                                    @if (isCare)
+                                    {
+                                        <span class="vet-service-badge">@CatalogLocalizer.Loc("Membresía", "Membership")</span>
+                                    }
+                                    @if (isLocal && !hasVcpr)
+                                    {
+                                        <span class="vet-service-badge vet-service-badge-warn">@CatalogLocalizer.Loc("Requiere VCPR", "Needs VCPR")</span>
+                                    }
+                                    @if (isLocal && hasVcpr)
+                                    {
+                                        <span class="vet-service-badge vet-service-badge-ok">@CatalogLocalizer.Loc("VCPR activa", "Active VCPR")</span>
+                                    }
+                                    @if (isIntl)
+                                    {
+                                        <span class="vet-service-badge">@CatalogLocalizer.Loc("Sin receta EE.UU.", "No U.S. Rx")</span>
+                                    }
+                                </span>
+                            </span>
+                            <span class="vet-service-option-tick" aria-hidden="true"></span>
+                        </span>
+                    </label>
+                }
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary btn-block vet-service-submit"
+                    data-service-submit
+                    disabled
+                    aria-disabled="true"
+                    data-label-continue="@L["Common_Continue"].Value"
+                    data-label-pick="@CatalogLocalizer.Loc("Elige un servicio para continuar", "Choose a service to continue")">
+                @CatalogLocalizer.Loc("Elige un servicio para continuar", "Choose a service to continue")
             </button>
         </form>
-    }
-
-    <form method="post" class="stack" style="gap:12px">
-        <input type="hidden" asp-for="ConsultationId" />
-        @foreach (var item in Model.Items)
-        {
-            var isCare = item.Code == ServiceCatalogCodes.ChomblyCare;
-            <label class="radio-card @(Model.ServiceCode == item.Code ? "is-selected" : "")">
-                <input type="radio" name="ServiceCode" value="@item.Code" checked="@(Model.ServiceCode == item.Code)" />
-                <span>
-                    <strong>@ServiceCatalogService.DisplayName(item)</strong>
-                    <span class="price-tag">$@item.Price.ToString("0.##")@(isCare ? CatalogLocalizer.Loc("/mes", "/mo") : CatalogLocalizer.Loc(" / 30 min", " / 30 min"))</span>
-                    <span class="muted small" style="display:block;margin-top:4px">@ServiceCatalogService.DisplayScope(item)</span>
-                    @if (isCare)
-                    {
-                        <span class="badge" style="margin-top:6px">@(Model.HasCare ? CatalogLocalizer.Loc("Gestionar plan", "Manage plan") : CatalogLocalizer.Loc("Activar membresía", "Activate membership"))</span>
-                    }
-                </span>
-            </label>
-        }
-        <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
-    </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+<script>
+(function () {
+  var form = document.querySelector('[data-vet-service]');
+  if (!form) return;
+  var btn = form.querySelector('[data-service-submit]');
+  var options = form.querySelectorAll('[data-service-option]');
+  if (!btn) return;
+  var labelContinue = btn.getAttribute('data-label-continue') || btn.textContent;
+  var labelPick = btn.getAttribute('data-label-pick') || labelContinue;
+
+  function sync() {
+    var selected = Array.prototype.some.call(options, function (r) { return r.checked; });
+    btn.disabled = !selected;
+    btn.setAttribute('aria-disabled', selected ? 'false' : 'true');
+    btn.textContent = selected ? labelContinue : labelPick;
+    form.querySelectorAll('.vet-service-option').forEach(function (lab) {
+      var input = lab.querySelector('[data-service-option]');
+      lab.classList.toggle('is-selected', !!(input && input.checked));
+    });
+  }
+
+  form.addEventListener('change', function (e) {
+    if (e.target && e.target.hasAttribute('data-service-option')) sync();
+  });
+  sync();
+})();
+</script>

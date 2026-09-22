@@ -164,13 +164,11 @@ public class SafetyModel : PageModel
         return await ContinueAfterClearSafetyAsync(Consultation);
     }
 
-    private async Task<IActionResult> ContinueAfterClearSafetyAsync(Consultation c)
+    private Task<IActionResult> ContinueAfterClearSafetyAsync(Consultation c)
     {
-        if (!c.HasActiveVcpr)
-            return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
-
-        c.Status = ConsultationStatus.EligibilityVerified;
-        await _flow.TouchAsync(c);
-        return RedirectToPage("/Vet/Virtual/Service", new { consultationId = ConsultationId });
+        // Always offer Service next. VCPR is enforced only when picking local clinical care
+        // (VetLocal30), not for guidance / international orientation.
+        return Task.FromResult<IActionResult>(
+            RedirectToPage("/Vet/Virtual/Service", new { consultationId = ConsultationId }));
     }
 }

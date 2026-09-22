@@ -5247,6 +5247,209 @@ a.vet-modality-emergency:hover {
   }
 }
 
+/* Virtual Service picker */
+.vet-service-page {
+  padding-bottom: 8px;
+}
+.vet-service-hero {
+  margin-bottom: 14px;
+}
+.vet-service-kicker {
+  margin: 0 0 4px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--forest);
+  opacity: .75;
+}
+.vet-service-lead {
+  margin: 4px 0 0;
+}
+.vet-service-care {
+  margin: 0 0 16px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(182, 231, 64, 0.55);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(182, 231, 64, 0.2) 0%, transparent 55%),
+    #fff;
+}
+.vet-service-care-copy {
+  margin-bottom: 12px;
+}
+.vet-service-care-copy strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--forest-deep);
+  font-weight: 800;
+}
+.vet-service-section-head {
+  margin: 0 0 10px;
+}
+.vet-service-section-head .section-title {
+  margin-bottom: 2px;
+}
+.vet-service-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.vet-service-option {
+  display: block;
+  margin: 0;
+  cursor: pointer;
+  position: relative;
+  animation: vet-safety-in .4s ease both;
+}
+.vet-service-option:nth-child(1) { animation-delay: .03s; }
+.vet-service-option:nth-child(2) { animation-delay: .06s; }
+.vet-service-option:nth-child(3) { animation-delay: .09s; }
+.vet-service-option:nth-child(4) { animation-delay: .12s; }
+.vet-service-option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.vet-service-option-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 12px 14px 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(15, 61, 47, 0.12);
+  background: linear-gradient(165deg, #f7faf5 0%, #fff 62%);
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.vet-service-option:active .vet-service-option-inner {
+  transform: scale(.99);
+}
+.vet-service-option-ico {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  background: rgba(182, 231, 64, 0.28);
+  line-height: 1;
+}
+.vet-service-option-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.vet-service-option-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.vet-service-option-name {
+  color: var(--forest-deep);
+  font-size: .98rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.vet-service-option-price {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: .95rem;
+  color: var(--forest);
+  white-space: nowrap;
+}
+.vet-service-option-unit {
+  font-weight: 600;
+  font-size: .72rem;
+  opacity: .7;
+  margin-left: 2px;
+}
+.vet-service-option-scope {
+  display: block;
+  font-size: .78rem;
+  line-height: 1.35;
+  color: #5b6b63;
+}
+.vet-service-option-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.vet-service-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 700;
+  background: rgba(182, 231, 64, 0.35);
+  color: var(--forest-deep);
+}
+.vet-service-badge-warn {
+  background: #fff1e8;
+  color: #9a3412;
+}
+.vet-service-badge-ok {
+  background: rgba(15, 61, 47, 0.1);
+  color: var(--forest-deep);
+}
+.vet-service-option-tick {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 2px solid rgba(15, 61, 47, 0.22);
+  background: #fff;
+  position: relative;
+}
+.vet-service-option-tick::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: transparent;
+  transform: scale(0);
+  transition: transform .12s ease;
+}
+.vet-service-option.is-selected .vet-service-option-inner,
+.vet-service-option:has(input:checked) .vet-service-option-inner {
+  border-color: rgba(15, 61, 47, 0.45);
+  background: linear-gradient(165deg, #f0f9e4 0%, #fff 70%);
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.35);
+}
+.vet-service-option.is-selected .vet-service-option-tick,
+.vet-service-option:has(input:checked) .vet-service-option-tick {
+  border-color: var(--forest-deep);
+  background: var(--forest-deep);
+}
+.vet-service-option.is-selected .vet-service-option-tick::after,
+.vet-service-option:has(input:checked) .vet-service-option-tick::after {
+  background: var(--lime);
+  transform: scale(1);
+}
+.vet-service-submit:disabled,
+.vet-service-submit[disabled] {
+  opacity: .48;
+  cursor: not-allowed;
+  box-shadow: none;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vet-service-option {
+    animation: none;
+  }
+  .vet-service-option:active .vet-service-option-inner {
+    transform: none;
+  }
+}
+
 .care-upsell {
   position: relative;
   border: 1.5px solid rgba(182, 231, 64, 0.65);

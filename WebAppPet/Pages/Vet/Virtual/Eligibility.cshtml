@@ -9,17 +9,20 @@
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Falta revisión presencial", "In-person exam needed")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("No podemos habilitar consulta clínica local con receta", "We cannot enable local clinical care with prescriptions")</p>
+        <p class="muted small">@CatalogLocalizer.Loc("Para teleconsulta clínica local con receta", "For local clinical teleconsult with prescriptions")</p>
     <div class="card card-pad" style="margin-bottom:16px">
         <p>
             @CatalogLocalizer.Loc(
-                "En Carolina del Norte, la telemedicina veterinaria local requiere una VCPR previa que no puede establecerse solo por medios electrónicos. Puedes ir a una clínica presencial o recibir orientación internacional (sin receta de EE.UU.).",
-                "In North Carolina, local veterinary telemedicine requires a prior VCPR that cannot be established by electronic means alone. You can visit a clinic in person or get international guidance (no U.S. prescription).")
+                "La telemedicina veterinaria local con receta requiere una VCPR previa presencial. Puedes seguir con orientación (sin receta de EE.UU.), ir a una clínica, o elegir orientación internacional.",
+                "Local veterinary telemedicine with prescriptions needs a prior in-person VCPR. You can continue with guidance (no U.S. prescription), visit a clinic, or choose international guidance.")
         </p>
     </div>
 
     <div class="stack" style="gap:12px">
-        <a class="btn btn-primary btn-block" asp-page="/Groomers/Index" asp-route-category="vet">
+        <a class="btn btn-primary btn-block" asp-page="/Vet/Virtual/Service" asp-route-consultationId="@Model.ConsultationId">
+            @CatalogLocalizer.Loc("Elegir orientación u otro servicio", "Choose guidance or another service")
+        </a>
+        <a class="btn btn-outline btn-block" asp-page="/Groomers/Index" asp-route-category="vet">
             @CatalogLocalizer.Loc("Buscar clínica cercana", "Find a nearby clinic")
         </a>
         <a class="btn btn-outline btn-block" asp-page="/Vet/International/Home" asp-route-consultationId="@Model.ConsultationId">
