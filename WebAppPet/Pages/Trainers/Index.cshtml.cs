@@ -78,6 +78,9 @@ public class IndexModel : PageModel
     public int PetId { get; set; }
 
     [BindProperty(SupportsGet = true)]
+    public List<int> PetIds { get; set; } = new();
+
+    [BindProperty(SupportsGet = true)]
     public List<string> Prefs { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
@@ -112,6 +115,7 @@ public class IndexModel : PageModel
     public GroomerProfile? SelectedTrainer { get; set; }
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
+    public List<Pet> SelectedPets { get; set; } = new();
     public PaymentMethod? DefaultPayment { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
     public decimal UnitPrice { get; set; }
@@ -132,15 +136,14 @@ public class IndexModel : PageModel
         && !OccupiedSlots.Contains(Slot);
     public bool HasDate => BookingDate.TryParseSelected(Date, out _);
 
-    /// <summary>Steps 1–6 complete: need, date, time, place, sessions, and pet.</summary>
+    /// <summary>Steps 1–6 complete: need, date, time, place, sessions, and pet(s).</summary>
     public bool HasBookingBasics =>
         HasNeed
         && HasDate
         && HasSlot
         && HasPlace
         && HasSessions
-        && PetId > 0
-        && SelectedPet != null;
+        && SelectedPets.Count > 0;
 
     public bool CanSelectTrainer => HasBookingBasics;
 
@@ -179,7 +182,7 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedTrainer == null || SelectedService == null || SelectedPet == null)
+        if (SelectedTrainer == null || SelectedService == null || SelectedPets.Count == 0)
         {
             ErrorMessage = CatalogLocalizer.Loc(
                 "Elige entrenador y mascota para continuar.",
@@ -188,11 +191,12 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (!SelectedTrainer.AcceptsSpecies(SelectedPet.Species))
+        var rejected = SelectedPets.FirstOrDefault(p => !SelectedTrainer.AcceptsSpecies(p.Species));
+        if (rejected != null)
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                $"Este entrenador no atiende {PetSpecies.Label(SelectedPet.Species)}.",
-                $"This trainer does not serve {PetSpecies.Label(SelectedPet.Species)}.");
+                $"Este entrenador no atiende {PetSpecies.Label(rejected.Species)}.",
+                $"This trainer does not serve {PetSpecies.Label(rejected.Species)}.");
             Pay = true;
             return Page();
         }
@@ -206,7 +210,7 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var subtotal = UnitPrice * Sessions;
+        var subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size)) * Sessions;
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
         {
@@ -223,8 +227,10 @@ public class IndexModel : PageModel
         var deposit = Math.Round(total * 0.35m, 2);
         if (deposit < 15) deposit = Math.Min(15, total);
 
+        var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
         {
+            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"),
             $"{CatalogLocalizer.Loc("Tipo:", "Type:")} {NeedLabel}",
             $"{CatalogLocalizer.Loc("Lugar:", "Place:")} {PlaceLabel}",
             PackageLabel,
@@ -241,7 +247,7 @@ public class IndexModel : PageModel
         var appt = new Appointment
         {
             ClientId = userId,
-            PetId = SelectedPet.Id,
+            PetId = SelectedPet!.Id,
             GroomerId = SelectedTrainer.Id,
             ServiceId = SelectedService.Id,
             ScheduledAt = start,
@@ -267,7 +273,7 @@ public class IndexModel : PageModel
         {
             UserId = SelectedTrainer.UserId,
             Title = "Nueva reserva de training",
-            Message = $"{SelectedPet.Name} · {NeedLabel} · {PackageLabel}.",
+            Message = $"{petNames} · {NeedLabel} · {PackageLabel}.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -315,13 +321,25 @@ public class IndexModel : PageModel
             userLng = user?.Longitude;
 
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-            SelectedPet = PetId > 0 ? Pets.FirstOrDefault(p => p.Id == PetId) : null;
+            PetIds ??= new();
+            var pid = PetId;
+            BookingPetSelection.Normalize(Pets, PetIds, ref pid, out var selected);
+            PetId = pid;
+            SelectedPets = selected;
+            SelectedPet = selected.FirstOrDefault();
 
             Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.IsDefault).ToListAsync();
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
+        }
+        else
+        {
+            PetIds = new List<int>();
+            PetId = 0;
+            SelectedPet = null;
+            SelectedPets = new List<Pet>();
         }
 
         var trainers = await _db.Groomers
@@ -332,6 +350,11 @@ public class IndexModel : PageModel
             .OrderByDescending(g => g.IsFeatured)
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
+
+        if (SelectedPets.Count > 0)
+            trainers = trainers.Where(t => SelectedPets.All(p => t.AcceptsSpecies(p.Species))).ToList();
+        else
+            trainers = new List<GroomerProfile>();
 
         var todayMap = await _availability.TodayMapAsync(trainers.Select(t => t.Id));
 
@@ -363,7 +386,9 @@ public class IndexModel : PageModel
 
             var svc = PickService(t.Services);
             var unit = svc != null
-                ? (SelectedPet != null ? svc.PriceFor(SelectedPet.Size) : svc.PriceSmall)
+                ? (SelectedPets.Count > 0
+                    ? SelectedPets.Sum(p => svc.PriceFor(p.Size))
+                    : svc.PriceSmall)
                 : t.StartingPrice;
 
             return new TrainerCardVm
@@ -400,8 +425,8 @@ public class IndexModel : PageModel
                 SelectedService = PickService(SelectedTrainer.Services);
                 if (SelectedService != null)
                 {
-                    UnitPrice = SelectedPet != null
-                        ? SelectedService.PriceFor(SelectedPet.Size)
+                    UnitPrice = SelectedPets.Count > 0
+                        ? SelectedPets.Sum(p => SelectedService.PriceFor(p.Size))
                         : SelectedService.PriceSmall;
                     Estimate = UnitPrice * (HasSessions ? Sessions : 1);
                     await ApplyPromoAsync();

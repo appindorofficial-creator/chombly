@@ -35,7 +35,10 @@
             ViewData["PromoSubtotal"] = Model.Subtotal;
             ViewData["PromoDiscount"] = Model.DiscountAmount;
             ViewData["PromoError"] = Model.PromoError;
-            var multi = new List<BookingSummaryMultiHidden>();
+            var multi = new List<BookingSummaryMultiHidden>
+            {
+                new() { Name = "PetIds", Values = Model.PetIds.Select(id => id.ToString()) }
+            };
             if (Model.SelectedExtraIds.Count > 0)
                 multi.Add(new BookingSummaryMultiHidden { Name = "SelectedExtraIds", Values = Model.SelectedExtraIds.Select(id => id.ToString()) });
 
@@ -45,6 +48,7 @@
             var extrasLabel = Model.SelectedExtras.Count == 0
                 ? CatalogLocalizer.Loc("Ninguno", "None")
                 : string.Join(", ", Model.SelectedExtras.Select(e => CatalogLocalizer.Text(e.Name)));
+            var petSummary = string.Join(", ", Model.SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
 
             <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
             {
@@ -71,9 +75,9 @@
                     },
                     new BookingSummaryLine
                     {
-                        LabelEs = "Mascota",
-                        LabelEn = "Pet",
-                        Value = $"{PetSpecies.Emoji(Model.SelectedPet.Species)} {Model.SelectedPet.Name}"
+                        LabelEs = Model.SelectedPets.Count == 1 ? "Mascota" : "Mascotas",
+                        LabelEn = Model.SelectedPets.Count == 1 ? "Pet" : "Pets",
+                        Value = string.IsNullOrEmpty(petSummary) ? "—" : petSummary
                     },
                     new BookingSummaryLine { LabelEs = "Extras", LabelEn = "Extras", Value = extrasLabel }
                 ],
@@ -237,7 +241,7 @@
                 var petStep = Model.Extras.Any() ? 4 : 3;
                 var notesStep = petStep + 1;
             }
-            <h3 class="section-title">@CatalogLocalizer.Loc($"{petStep}. ¿Para qué mascota?", $"{petStep}. Which pet?")</h3>
+            <h3 class="section-title">@CatalogLocalizer.Loc($"{petStep}. ¿Para qué mascotas?", $"{petStep}. Which pets?")</h3>
             @if (Model.Groomer != null)
             {
                 <p class="muted small" style="margin-top:-6px">@CatalogLocalizer.Loc("Atiende:", "Serves:")
@@ -252,7 +256,49 @@
             }
             else
             {
-                <partial name="_BookingPetPicker" model="new BookingPetPickerModel { Pets = Model.Pets, PetId = Model.PetId, ReturnUrl = Model.BookingReturnPath }" />
+                <p class="muted small" style="margin:-2px 0 10px">
+                    @CatalogLocalizer.Loc("Activa una o varias (máx. 6).", "Turn on one or more (max 6).")
+                    @if (Model.SelectedPets.Count > 0)
+                    {
+                        <span>· @Model.SelectedPets.Count @(Model.SelectedPets.Count == 1
+                            ? CatalogLocalizer.Loc("seleccionada", "selected")
+                            : CatalogLocalizer.Loc("seleccionadas", "selected"))</span>
+                    }
+                </p>
+                <div class="behavior-pet-list hotel-pet-list" role="group" aria-label="@CatalogLocalizer.Loc("Mascotas", "Pets")">
+                    @foreach (var p in Model.Pets)
+                    {
+                        var accepted = Model.Groomer == null || Model.Groomer.AcceptsSpecies(p.Species);
+                        var on = Model.PetIds.Contains(p.Id);
+                        <label class="behavior-pet-row @(on ? "is-on" : null) @(!accepted ? "is-disabled" : null)">
+                            <span class="care-pet-emoji" aria-hidden="true">@PetSpecies.Emoji(p.Species)</span>
+                            <span class="care-pet-copy">
+                                <strong>@p.Name</strong>
+                                <small class="muted">
+                                    @PetSpecies.Label(p.Species)@(!string.IsNullOrWhiteSpace(p.Breed) ? $" · {p.Breed}" : "")
+                                    @if (!accepted)
+                                    {
+                                        <span> · @CatalogLocalizer.Loc("no atendida aquí", "not served here")</span>
+                                    }
+                                </small>
+                            </span>
+                            <span class="biz-switch">
+                                <input type="checkbox" name="PetIds" value="@p.Id"
+                                       @(on ? "checked" : null)
+                                       @(!accepted || (Model.SelectedPets.Count >= 6 && !on) ? "disabled" : null)
+                                       aria-label="@p.Name" />
+                                <span class="biz-switch-track" aria-hidden="true"></span>
+                            </span>
+                        </label>
+                    }
+                </div>
+                <a class="apple-text-link" asp-page="/Pets/Create" asp-route-returnUrl="@Model.BookingReturnPath" style="display:inline-block;margin:8px 0 4px">
+                    @CatalogLocalizer.Loc("+ Agregar otra mascota", "+ Add another pet")
+                </a>
+                @if (Model.PetId > 0)
+                {
+                    <input type="hidden" name="PetId" value="@Model.PetId" />
+                }
             }
 
             <h3 class="section-title">@CatalogLocalizer.Loc($"{notesStep}. Notas", $"{notesStep}. Notes") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
@@ -266,8 +312,8 @@
         {
             <p class="muted small center" style="margin:16px 0 8px">
                 @CatalogLocalizer.Loc(
-                    "Completa servicio, agenda y mascota para ver el resumen.",
-                    "Complete service, schedule, and pet to see the summary.")
+                    "Completa servicio, agenda y mascota(s) para ver el resumen.",
+                    "Complete service, schedule, and pet(s) to see the summary.")
             </p>
         }
 

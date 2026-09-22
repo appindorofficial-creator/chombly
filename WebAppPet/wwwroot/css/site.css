@@ -5235,6 +5235,10 @@ a.vet-modality-emergency:hover {
   background: rgba(125, 211, 33, 0.06);
   box-shadow: 0 0 0 1px rgba(125, 211, 33, 0.28);
 }
+.behavior-pet-row.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .behavior-pet-row .biz-switch {
   margin-left: auto;
 }

@@ -1,0 +1,73 @@
+@model WebAppPet.Pages.Shared.BookingPetMultiPickerModel
+@* Multi-pet switches for Hotel-style booking flows. *@
+<h3 class="section-title">@CatalogLocalizer.Loc(Model.TitleEs, Model.TitleEn)</h3>
+@if (!Model.Pets.Any())
+{
+    <div class="alert alert-info">
+        @CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")
+        @if (!string.IsNullOrWhiteSpace(Model.ReturnUrl))
+        {
+            <a class="apple-text-link" asp-page="/Pets/Create" asp-route-returnUrl="@Model.ReturnUrl" style="margin:0">@CatalogLocalizer.Loc("+ Agregar mascota", "+ Add pet")</a>
+        }
+        else
+        {
+            <a class="apple-text-link" asp-page="/Pets/Create" style="margin:0">@CatalogLocalizer.Loc("+ Agregar mascota", "+ Add pet")</a>
+        }
+    </div>
+}
+else
+{
+    var selectedCount = Model.PetIds.Count;
+    <p class="muted small" style="margin:-6px 0 10px">
+        @CatalogLocalizer.Loc(Model.HintEs, Model.HintEn)
+        @if (selectedCount > 0)
+        {
+            <span>· @selectedCount @(selectedCount == 1
+                ? CatalogLocalizer.Loc("seleccionada", "selected")
+                : CatalogLocalizer.Loc("seleccionadas", "selected"))</span>
+        }
+    </p>
+    <div class="behavior-pet-list hotel-pet-list" role="group" aria-label="@CatalogLocalizer.Loc("Mascotas", "Pets")">
+        @foreach (var p in Model.Pets)
+        {
+            var allowed = BookingPetSelection.IsAllowed(p, Model.AllowedSpecies);
+            var on = Model.PetIds.Contains(p.Id);
+            <label class="behavior-pet-row @(on ? "is-on" : null) @(!allowed ? "is-disabled" : null)">
+                <span class="care-pet-emoji" aria-hidden="true">@PetSpecies.Emoji(p.Species)</span>
+                <span class="care-pet-copy">
+                    <strong>@p.Name</strong>
+                    <small class="muted">
+                        @PetSpecies.Label(p.Species)@(!string.IsNullOrWhiteSpace(p.Breed) ? $" · {p.Breed}" : "")
+                        @if (!allowed)
+                        {
+                            <span> · @CatalogLocalizer.Loc("no aplica en este servicio", "not for this service")</span>
+                        }
+                    </small>
+                </span>
+                <span class="biz-switch">
+                    <input type="checkbox" name="PetIds" value="@p.Id"
+                           @(on ? "checked" : null)
+                           @(!allowed || (selectedCount >= Model.Max && !on) ? "disabled" : null)
+                           aria-label="@p.Name" />
+                    <span class="biz-switch-track" aria-hidden="true"></span>
+                </span>
+            </label>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ReturnUrl))
+    {
+        <a class="apple-text-link" asp-page="/Pets/Create" asp-route-returnUrl="@Model.ReturnUrl" style="display:inline-block;margin:8px 0 4px">
+            @CatalogLocalizer.Loc("+ Agregar otra mascota", "+ Add another pet")
+        </a>
+    }
+    else
+    {
+        <a class="apple-text-link" asp-page="/Pets/Create" style="display:inline-block;margin:8px 0 4px">
+            @CatalogLocalizer.Loc("+ Agregar otra mascota", "+ Add another pet")
+        </a>
+    }
+    @if (Model.ShowPrimaryPetIdHidden && Model.PrimaryPetId > 0)
+    {
+        <input type="hidden" name="PetId" value="@Model.PrimaryPetId" />
+    }
+}

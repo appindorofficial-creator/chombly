@@ -13,6 +13,70 @@ public sealed class BookingPetPickerModel
     public string? ReturnUrl { get; init; }
 }
 
+/// <summary>Multi-pet switch picker (Hotel / Booking / Daycare / Walkers / Trainers).</summary>
+public sealed class BookingPetMultiPickerModel
+{
+    public required IReadOnlyList<Pet> Pets { get; init; }
+    public required IReadOnlyList<int> PetIds { get; init; }
+    public string? ReturnUrl { get; init; }
+    public string TitleEs { get; init; } = "¿Para qué mascotas?";
+    public string TitleEn { get; init; } = "Which pets?";
+    public string HintEs { get; init; } = "Activa una o varias (máx. 6).";
+    public string HintEn { get; init; } = "Turn on one or more (max 6).";
+    /// <summary>When set, other species are shown disabled.</summary>
+    public IReadOnlyCollection<string>? AllowedSpecies { get; init; }
+    public int Max { get; init; } = 6;
+    public bool ShowPrimaryPetIdHidden { get; init; } = true;
+    public int PrimaryPetId { get; init; }
+}
+
+/// <summary>Shared normalize for multi-pet booking flows.</summary>
+public static class BookingPetSelection
+{
+    public static void Normalize(
+        IReadOnlyList<Pet> pets,
+        List<int> petIds,
+        ref int petId,
+        out List<Pet> selected,
+        IEnumerable<string>? allowedSpecies = null,
+        int max = 6)
+    {
+        petIds ??= new List<int>();
+        var owned = pets.Select(p => p.Id).ToHashSet();
+        var allowed = allowedSpecies?
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (petIds.Count == 0 && petId > 0 && owned.Contains(petId))
+            petIds.Add(petId);
+
+        IEnumerable<Pet> pool = pets;
+        if (allowed is { Count: > 0 })
+            pool = pets.Where(p => allowed.Contains(p.Species));
+
+        var poolIds = pool.Select(p => p.Id).ToHashSet();
+        var normalized = petIds.Where(poolIds.Contains).Distinct().Take(max).ToList();
+        petIds.Clear();
+        petIds.AddRange(normalized);
+
+        var poolList = pool.ToList();
+        if (petIds.Count == 0 && poolList.Count == 1)
+            petIds.Add(poolList[0].Id);
+
+        selected = pets.Where(p => petIds.Contains(p.Id)).ToList();
+        petId = selected.FirstOrDefault()?.Id ?? 0;
+    }
+
+    public static string NamesSummary(IEnumerable<Pet> pets) =>
+        string.Join(", ", pets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+
+    public static bool IsAllowed(Pet pet, IReadOnlyCollection<string>? allowedSpecies)
+    {
+        if (allowedSpecies is null || allowedSpecies.Count == 0) return true;
+        return allowedSpecies.Contains(pet.Species, StringComparer.OrdinalIgnoreCase);
+    }
+}
+
 public sealed class BookingGateNoteModel
 {
     public required string Id { get; init; }

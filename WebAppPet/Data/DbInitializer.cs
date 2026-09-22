@@ -28,6 +28,7 @@ public static class DbInitializer
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
         await EnsureNeivaDemoProvidersAsync(db);
+        await EnsureDaycareAcceptsCatsAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
         await EnsureCompensationDefaultsAsync(db);
         await new Services.AvailabilityService(db).EnsureDefaultWeeklyHoursAsync();
@@ -1478,7 +1479,7 @@ public static class DbInitializer
             "+5788641102", daycareId, null,
             28000m, "/ día", "Día completo", "Guardería diurna", 480, 28000m,
             imageSlug: "daycare", rating: 4.7, reviews: 41,
-            species: PetSpecies.Dog);
+            species: $"{PetSpecies.Dog},{PetSpecies.Cat}");
 
         // Walkers
         await EnsureBizAsync(
@@ -1609,6 +1610,35 @@ public static class DbInitializer
                 """);
         }
         catch { /* ignore */ }
+    }
+
+    /// <summary>
+    /// Daycares that should accept cats as well as dogs (demo + known catalog names).
+    /// </summary>
+    private static async Task EnsureDaycareAcceptsCatsAsync(AppDbContext db)
+    {
+        var names = new[] { "Guardería Día Ceibas", "Happy Paws Playhouse" };
+        var daycares = await db.Groomers
+            .Where(g => names.Contains(g.BusinessName))
+            .ToListAsync();
+        if (daycares.Count == 0) return;
+
+        var changed = false;
+        foreach (var g in daycares)
+        {
+            if (PetSpecies.ListIncludes(g.AcceptedSpecies, PetSpecies.Cat))
+                continue;
+
+            var list = PetSpecies.ParseList(g.AcceptedSpecies).ToList();
+            if (!list.Any(s => s.Equals(PetSpecies.Dog, StringComparison.OrdinalIgnoreCase)))
+                list.Insert(0, PetSpecies.Dog);
+            list.Add(PetSpecies.Cat);
+            g.AcceptedSpecies = string.Join(",", list.Distinct(StringComparer.OrdinalIgnoreCase));
+            changed = true;
+        }
+
+        if (changed)
+            await db.SaveChangesAsync();
     }
 
     private static async Task EnsureAdminAsync(AppDbContext db)

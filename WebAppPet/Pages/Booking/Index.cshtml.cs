@@ -45,6 +45,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int PetId { get; set; }
 
+    /// <summary>Selected pets for this booking (multi-select). Drives PetId primary.</summary>
+    [BindProperty(SupportsGet = true)]
+    public List<int> PetIds { get; set; } = new();
+
     [BindProperty(SupportsGet = true)]
     public string Date { get; set; } = string.Empty;
 
@@ -95,6 +99,7 @@ public class IndexModel : PageModel
 
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
+    public List<Pet> SelectedPets { get; set; } = new();
     public List<ServiceExtra> SelectedExtras { get; set; } = new();
     public int Nights { get; set; }
     public decimal Subtotal { get; set; }
@@ -117,7 +122,8 @@ public class IndexModel : PageModel
         $"/Booking/Index?groomerId={GroomerId}"
         + (ServiceId > 0 ? $"&serviceId={ServiceId}" : "")
         + (!string.IsNullOrWhiteSpace(Service) ? $"&service={Uri.EscapeDataString(Service)}" : "")
-        + (PetId > 0 ? $"&petId={PetId}" : "")
+        + string.Concat(PetIds.Select(id => $"&PetIds={id}"))
+        + (PetId > 0 && PetIds.Count == 0 ? $"&petId={PetId}" : "")
         + (!string.IsNullOrWhiteSpace(Date) ? $"&date={Uri.EscapeDataString(Date)}" : "")
         + (!string.IsNullOrWhiteSpace(Time) ? $"&time={Uri.EscapeDataString(Time)}" : "")
         + (!string.IsNullOrWhiteSpace(EndDate) ? $"&endDate={Uri.EscapeDataString(EndDate)}" : "");
@@ -135,8 +141,7 @@ public class IndexModel : PageModel
             ServiceId = Services[0].Id;
         ServiceLocked = ServiceId > 0 && Services.Any(s => s.Id == ServiceId);
 
-        if (PetId == 0 && Pets.Count == 1)
-            PetId = Pets[0].Id;
+        NormalizeSelectedPets();
 
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
@@ -157,6 +162,7 @@ public class IndexModel : PageModel
         if (Groomer == null) return RedirectToPage("/Groomers/Index");
 
         ApplyServicePreselect();
+        NormalizeSelectedPets();
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
         await PrepareConfirmAsync(applyPromo: true);
@@ -174,9 +180,13 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedService == null || SelectedPet == null)
+        if (SelectedService == null || SelectedPets.Count == 0)
         {
-            ErrorMessage = _L["Booking_MissingData"].Value;
+            ErrorMessage = SelectedPets.Count == 0 && Pets.Count > 0
+                ? CatalogLocalizer.Loc(
+                    "Elige al menos una mascota para continuar.",
+                    "Choose at least one pet to continue.")
+                : _L["Booking_MissingData"].Value;
             EvaluateCanShowSummary();
             Pay = true;
             return Page();
@@ -189,9 +199,10 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (!Groomer.AcceptsSpecies(SelectedPet.Species))
+        var rejected = SelectedPets.FirstOrDefault(p => !Groomer.AcceptsSpecies(p.Species));
+        if (rejected != null)
         {
-            ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, SelectedPet.Species);
+            ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, rejected.Species);
             EvaluateCanShowSummary();
             Pay = true;
             return Page();
@@ -246,10 +257,17 @@ public class IndexModel : PageModel
                 PaymentMethodId = pm.Id;
         }
 
+        var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+        var noteParts = new List<string>
+        {
+            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}")
+        };
+        if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
+
         var appt = new Appointment
         {
             ClientId = userId,
-            PetId = PetId,
+            PetId = SelectedPet!.Id,
             GroomerId = GroomerId,
             ServiceId = ServiceId,
             ScheduledAt = scheduled,
@@ -260,7 +278,7 @@ public class IndexModel : PageModel
             DepositPaid = Deposit,
             PromoCode = DiscountAmount > 0 ? PromoCode?.Trim().ToUpperInvariant() : null,
             DiscountAmount = DiscountAmount,
-            Notes = Notes
+            Notes = string.Join(" · ", noteParts)
         };
 
         foreach (var ex in SelectedExtras)
@@ -285,7 +303,7 @@ public class IndexModel : PageModel
         {
             UserId = Groomer.UserId,
             Title = "Nueva solicitud de reserva",
-            Message = $"{SelectedPet.Name} · {SelectedService.Name}.",
+            Message = $"{petNames} · {SelectedService.Name}.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -300,6 +318,7 @@ public class IndexModel : PageModel
 
         await LoadAsync();
         ApplyServicePreselect();
+        NormalizeSelectedPets();
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
         await PrepareConfirmAsync(applyPromo: true);
@@ -368,7 +387,8 @@ public class IndexModel : PageModel
     private async Task PrepareConfirmAsync(bool applyPromo)
     {
         SelectedService = await _db.Services.FirstOrDefaultAsync(s => s.Id == ServiceId);
-        SelectedPet = await _db.Pets.FirstOrDefaultAsync(p => p.Id == PetId);
+        // SelectedPets already normalized from owned pets; keep SelectedPet as primary.
+        SelectedPet = SelectedPets.FirstOrDefault();
         SelectedExtras = Extras.Where(e => SelectedExtraIds.Contains(e.Id)).ToList();
 
         Nights = 0;
@@ -378,20 +398,17 @@ public class IndexModel : PageModel
         Deposit = 0;
         PromoError = null;
 
-        if (SelectedService == null || SelectedPet == null)
+        if (SelectedService == null || SelectedPets.Count == 0)
             return;
 
-        var unit = SelectedService.PriceFor(SelectedPet.Size);
+        var nights = 1;
         if (IsOvernight && DateTime.TryParse(Date, out var cin) && DateTime.TryParse(EndDate, out var cout) && cout > cin)
         {
-            Nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
-            Subtotal = unit * Nights;
-        }
-        else
-        {
-            Subtotal = unit;
+            nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
+            Nights = nights;
         }
 
+        Subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * nights);
         Subtotal += SelectedExtras.Sum(e => e.Price);
         EstimatedTotal = Subtotal;
 
@@ -419,9 +436,28 @@ public class IndexModel : PageModel
         if (Deposit < 15) Deposit = Math.Min(15, EstimatedTotal);
     }
 
+    private void NormalizeSelectedPets()
+    {
+        PetIds ??= new List<int>();
+        var owned = Pets.Select(p => p.Id).ToHashSet();
+
+        if (PetIds.Count == 0 && PetId > 0 && owned.Contains(PetId))
+            PetIds.Add(PetId);
+
+        PetIds = PetIds.Where(owned.Contains).Distinct().Take(6).ToList();
+
+        if (PetIds.Count == 0 && Pets.Count == 1
+            && (Groomer == null || Groomer.AcceptsSpecies(Pets[0].Species)))
+            PetIds.Add(Pets[0].Id);
+
+        SelectedPets = Pets.Where(p => PetIds.Contains(p.Id)).ToList();
+        PetId = SelectedPets.FirstOrDefault()?.Id ?? 0;
+        SelectedPet = SelectedPets.FirstOrDefault();
+    }
+
     private void EvaluateCanShowSummary()
     {
-        CanShowSummary = SelectedService != null && SelectedPet != null;
+        CanShowSummary = SelectedService != null && SelectedPets.Count > 0;
         if (!CanShowSummary) return;
 
         if (IsOvernight)

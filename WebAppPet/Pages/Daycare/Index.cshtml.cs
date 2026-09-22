@@ -58,6 +58,9 @@ public class IndexModel : PageModel
     public int PetId { get; set; }
 
     [BindProperty(SupportsGet = true)]
+    public List<int> PetIds { get; set; } = new();
+
+    [BindProperty(SupportsGet = true)]
     public List<string> Prefs { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
@@ -91,6 +94,7 @@ public class IndexModel : PageModel
     public GroomerProfile? SelectedDaycare { get; set; }
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
+    public List<Pet> SelectedPets { get; set; } = new();
     public PaymentMethod? DefaultPayment { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
     public decimal Estimate { get; set; }
@@ -110,12 +114,11 @@ public class IndexModel : PageModel
             && TimeSpan.TryParse(CustomStart, out _)
             && TimeSpan.TryParse(CustomEnd, out _));
 
-    /// <summary>Steps 1–3 complete: date, schedule, and pet.</summary>
+    /// <summary>Steps 1–3 complete: date, schedule, and pet(s).</summary>
     public bool HasBookingBasics =>
         HasDate
         && HasSchedule
-        && PetId > 0
-        && SelectedPet != null;
+        && SelectedPets.Count > 0;
 
     public bool CanSelectDaycare => HasBookingBasics;
 
@@ -145,18 +148,19 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedDaycare == null || SelectedService == null || SelectedPet == null)
+        if (SelectedDaycare == null || SelectedService == null || SelectedPets.Count == 0)
         {
             ErrorMessage = CatalogLocalizer.Loc("Elige guardería y mascota para continuar.", "Choose a daycare and pet to continue.");
             Pay = true;
             return Page();
         }
 
-        if (!SelectedDaycare.AcceptsSpecies(SelectedPet.Species))
+        var rejected = SelectedPets.FirstOrDefault(p => !SelectedDaycare.AcceptsSpecies(p.Species));
+        if (rejected != null)
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                $"Esta guardería no atiende {SelectedPet.Species}.",
-                $"This daycare does not accept {SelectedPet.Species}.");
+                $"Esta guardería no atiende {rejected.Species}.",
+                $"This daycare does not accept {rejected.Species}.");
             Pay = true;
             return Page();
         }
@@ -171,7 +175,7 @@ public class IndexModel : PageModel
         }
 
         var selectedExtras = Extras.Where(e => ExtraIds.Contains(e.Id)).ToList();
-        var basePrice = PriceForSchedule(SelectedService, SelectedPet);
+        var basePrice = SelectedPets.Sum(p => PriceForSchedule(SelectedService, p));
         var subtotal = basePrice + selectedExtras.Sum(e => e.Price);
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
@@ -189,8 +193,10 @@ public class IndexModel : PageModel
         var deposit = Math.Round(total * 0.35m, 2);
         if (deposit < 15) deposit = Math.Min(15, total);
 
+        var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
         {
+            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"),
             $"{CatalogLocalizer.Loc("Horario:", "Schedule:")} {ScheduleLabel}"
         };
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
@@ -204,7 +210,7 @@ public class IndexModel : PageModel
         var appt = new Appointment
         {
             ClientId = userId,
-            PetId = SelectedPet.Id,
+            PetId = SelectedPet!.Id,
             GroomerId = SelectedDaycare.Id,
             ServiceId = SelectedService.Id,
             ScheduledAt = start,
@@ -240,7 +246,7 @@ public class IndexModel : PageModel
         {
             UserId = SelectedDaycare.UserId,
             Title = "Nueva reserva de daycare",
-            Message = $"{SelectedPet.Name} · {day:d} · {ScheduleLabel}.",
+            Message = $"{petNames} · {day:d} · {ScheduleLabel}.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -278,13 +284,25 @@ public class IndexModel : PageModel
             userLng = user?.Longitude;
 
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-            SelectedPet = PetId > 0 ? Pets.FirstOrDefault(p => p.Id == PetId) : null;
+            PetIds ??= new();
+            var pid = PetId;
+            BookingPetSelection.Normalize(Pets, PetIds, ref pid, out var selected);
+            PetId = pid;
+            SelectedPets = selected;
+            SelectedPet = selected.FirstOrDefault();
 
             Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.IsDefault).ToListAsync();
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
+        }
+        else
+        {
+            PetIds = new List<int>();
+            PetId = 0;
+            SelectedPet = null;
+            SelectedPets = new List<Pet>();
         }
 
         var daycares = await _db.Groomers
@@ -295,6 +313,11 @@ public class IndexModel : PageModel
             .OrderByDescending(g => g.IsFeatured)
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
+
+        if (SelectedPets.Count > 0)
+            daycares = daycares.Where(d => SelectedPets.All(p => d.AcceptsSpecies(p.Species))).ToList();
+        else
+            daycares = new List<GroomerProfile>();
 
         var todayMap = await _availability.TodayMapAsync(daycares.Select(d => d.Id));
 
@@ -328,7 +351,9 @@ public class IndexModel : PageModel
 
             var svc = PickService(d.Services);
             var price = svc != null
-                ? (SelectedPet != null ? PriceForSchedule(svc, SelectedPet) : PriceForSchedule(svc, null))
+                ? (SelectedPets.Count > 0
+                    ? SelectedPets.Sum(p => PriceForSchedule(svc, p))
+                    : PriceForSchedule(svc, null))
                 : d.StartingPrice;
 
             return new DaycareCardVm
@@ -371,9 +396,9 @@ public class IndexModel : PageModel
                     .OrderBy(e => e.Price)
                     .ToListAsync();
 
-                if (SelectedService != null)
+                if (SelectedService != null && SelectedPets.Count > 0)
                 {
-                    var basePrice = PriceForSchedule(SelectedService, SelectedPet);
+                    var basePrice = SelectedPets.Sum(p => PriceForSchedule(SelectedService, p));
                     Estimate = basePrice + Extras.Where(e => ExtraIds.Contains(e.Id)).Sum(e => e.Price);
                     await ApplyPromoAsync();
                 }

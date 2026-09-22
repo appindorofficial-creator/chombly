@@ -52,6 +52,9 @@ public class IndexModel : PageModel
     public int PetId { get; set; }
 
     [BindProperty(SupportsGet = true)]
+    public List<int> PetIds { get; set; } = new();
+
+    [BindProperty(SupportsGet = true)]
     public List<string> Prefs { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
@@ -81,6 +84,7 @@ public class IndexModel : PageModel
     public GroomerProfile? SelectedWalker { get; set; }
     public GroomerService? SelectedService { get; set; }
     public Pet? SelectedPet { get; set; }
+    public List<Pet> SelectedPets { get; set; } = new();
     public PaymentMethod? DefaultPayment { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
     public decimal Estimate { get; set; }
@@ -105,13 +109,12 @@ public class IndexModel : PageModel
     /// <summary>Minutes shown on cards/estimates; 60 until the user picks a duration.</summary>
     public int DisplayDuration => HasDuration ? Duration : 60;
 
-    /// <summary>Steps 1–4 complete: date, time, duration, and pet.</summary>
+    /// <summary>Steps 1–4 complete: date, time, duration, and pet(s).</summary>
     public bool HasBookingBasics =>
         HasDate
         && HasSlot
         && HasDuration
-        && PetId > 0
-        && SelectedPet != null;
+        && SelectedPets.Count > 0;
 
     /// <summary>Walker cards can be chosen only after steps 1–4.</summary>
     public bool CanSelectWalker => HasBookingBasics;
@@ -151,18 +154,21 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedWalker == null || SelectedService == null || SelectedPet == null)
+        if (SelectedWalker == null || SelectedService == null || SelectedPets.Count == 0)
         {
             ErrorMessage = CatalogLocalizer.Loc("Elige paseador y mascota para continuar.", "Choose a walker and pet to continue.");
             Pay = true;
             return Page();
         }
 
-        if (!SelectedWalker.AcceptsSpecies(SelectedPet.Species))
+        var rejected = SelectedPets.FirstOrDefault(p =>
+            !string.Equals(p.Species, PetSpecies.Dog, StringComparison.OrdinalIgnoreCase)
+            || !SelectedWalker.AcceptsSpecies(p.Species));
+        if (rejected != null)
         {
             ErrorMessage = CatalogLocalizer.Loc(
-                $"Este paseador no atiende {SelectedPet.Species}.",
-                $"This walker does not accept {SelectedPet.Species}.");
+                $"Este paseador no atiende {rejected.Species}.",
+                $"This walker does not accept {rejected.Species}.");
             Pay = true;
             return Page();
         }
@@ -177,7 +183,7 @@ public class IndexModel : PageModel
 
         var endUtc = startUtc.AddMinutes(Duration);
 
-        var subtotal = PriceForDuration(SelectedService, SelectedPet);
+        var subtotal = SelectedPets.Sum(p => PriceForDuration(SelectedService, p));
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
         {
@@ -194,8 +200,10 @@ public class IndexModel : PageModel
         var deposit = Math.Round(total * 0.35m, 2);
         if (deposit < 10) deposit = Math.Min(10, total);
 
+        var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
         {
+            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"),
             CatalogLocalizer.Loc($"Paseo {Duration} min", $"Walk {Duration} min")
         };
         if (Prefs.Count > 0)
@@ -211,7 +219,7 @@ public class IndexModel : PageModel
         var appt = new Appointment
         {
             ClientId = userId,
-            PetId = SelectedPet.Id,
+            PetId = SelectedPet!.Id,
             GroomerId = SelectedWalker.Id,
             ServiceId = SelectedService.Id,
             ScheduledAt = startUtc,
@@ -237,7 +245,7 @@ public class IndexModel : PageModel
         {
             UserId = SelectedWalker.UserId,
             Title = "Nueva solicitud de paseo",
-            Message = $"{SelectedPet.Name} · {AppTimeZones.FormatShort(startUtc)} · {Duration} min.",
+            Message = $"{petNames} · {AppTimeZones.FormatShort(startUtc)} · {Duration} min.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -281,13 +289,25 @@ public class IndexModel : PageModel
             userLng = user?.Longitude;
 
             Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-            SelectedPet = PetId > 0 ? Pets.FirstOrDefault(p => p.Id == PetId) : null;
+            PetIds ??= new();
+            var pid = PetId;
+            BookingPetSelection.Normalize(Pets, PetIds, ref pid, out var selected, allowedSpecies: new[] { PetSpecies.Dog });
+            PetId = pid;
+            SelectedPets = selected;
+            SelectedPet = selected.FirstOrDefault();
 
             Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.IsDefault).ToListAsync();
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
+        }
+        else
+        {
+            PetIds = new List<int>();
+            PetId = 0;
+            SelectedPet = null;
+            SelectedPets = new List<Pet>();
         }
 
         var walkers = await _db.Groomers
@@ -298,6 +318,13 @@ public class IndexModel : PageModel
             .OrderByDescending(g => g.IsFeatured)
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
+
+        walkers = walkers.Where(w => w.AcceptsSpecies(PetSpecies.Dog)).ToList();
+
+        if (SelectedPets.Count > 0)
+            walkers = walkers.Where(w => SelectedPets.All(p => w.AcceptsSpecies(p.Species))).ToList();
+        else
+            walkers = new List<GroomerProfile>();
 
         var todayMap = await _availability.TodayMapAsync(walkers.Select(w => w.Id));
 
@@ -330,7 +357,11 @@ public class IndexModel : PageModel
 
             var svc = PickService(w.Services);
             var mins = PricingMinutes;
-            var price = svc != null ? PriceForDuration(svc, SelectedPet) : ScalePrice(w.StartingPrice, 60, mins);
+            var price = svc != null
+                ? (SelectedPets.Count > 0
+                    ? SelectedPets.Sum(p => PriceForDuration(svc, p))
+                    : PriceForDuration(svc, null))
+                : ScalePrice(w.StartingPrice, 60, mins);
 
             return new WalkerCardVm
             {
@@ -364,9 +395,9 @@ public class IndexModel : PageModel
             if (SelectedWalker != null)
             {
                 SelectedService = PickService(SelectedWalker.Services);
-                if (SelectedService != null)
+                if (SelectedService != null && SelectedPets.Count > 0)
                 {
-                    Estimate = PriceForDuration(SelectedService, SelectedPet);
+                    Estimate = SelectedPets.Sum(p => PriceForDuration(SelectedService, p));
                     await ApplyPromoAsync();
                 }
             }
