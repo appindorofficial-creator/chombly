@@ -36,6 +36,7 @@ public class IndexModel : PageModel
     public string City { get; set; } = string.Empty;
     public string? GreetingName { get; set; }
     public bool IsGuest { get; set; }
+    public bool InPresentationTour { get; set; }
     public List<ServiceCategory> Categories { get; set; } = new();
     public List<GroomerProfile> Featured { get; set; } = new();
     public List<string> PopularServices { get; set; } = new();
@@ -53,7 +54,8 @@ public class IndexModel : PageModel
             return RedirectToPage("/Business/Explore/Index");
         }
 
-        BusinessExploreMode.Clear(Response);
+        // Keep tour cookie so Inicio/Perfil can offer “Salir de presentación”.
+        InPresentationTour = BusinessExploreMode.IsActive(Request);
 
         if (IsGuest && !Browse)
             return Redirect("/Welcome");

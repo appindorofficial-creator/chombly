@@ -20,5 +20,6 @@ public abstract class ExplorePageModel : PageModel
         ViewData["OnboardShowNotif"] = false;
         ViewData["ExploreTab"] = tab;
         ViewData["ProviderCategories"] = BusinessExploreDemo.CategoryLabels.ToList();
+        ViewData["OnboardBackHref"] = Url.Page("./Exit");
     }
 }

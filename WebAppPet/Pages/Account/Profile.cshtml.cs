@@ -21,9 +21,12 @@ public class ProfileModel : PageModel
     public bool HasGpsLocation { get; set; }
     public bool CanSwitchShell { get; set; }
     public bool IsBusinessShell { get; set; }
+    public bool InPresentationTour { get; set; }
 
     public async Task OnGetAsync()
     {
+        InPresentationTour = BusinessExploreMode.IsActive(Request);
+
         if (_auth.CurrentUserId is not int id)
             return;
 

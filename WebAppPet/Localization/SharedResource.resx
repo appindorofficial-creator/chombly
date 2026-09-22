@@ -139,7 +139,10 @@
   <data name="Home_BizExploreCta" xml:space="preserve"><value>Listo para aparecer ante familias</value></data>
   <data name="BizExplore_BannerTitle" xml:space="preserve"><value>Vista previa del panel de negocio</value></data>
   <data name="BizExplore_BannerSub" xml:space="preserve"><value>Explora cómo funciona Chombly para tu negocio. Regístrate para activar estas pantallas con tus datos.</value></data>
+  <data name="BizExplore_BackAccount" xml:space="preserve"><value>Volver a mi cuenta</value></data>
+  <data name="BizExplore_BackFamilies" xml:space="preserve"><value>Volver a Familias</value></data>
   <data name="Home_SeeWelcome" xml:space="preserve"><value>Ver presentación</value></data>
+  <data name="Home_ExitWelcome" xml:space="preserve"><value>Salir de presentación</value></data>
   <data name="Home_FromPrice" xml:space="preserve"><value>Desde</value></data>
   <data name="Home_CareTitle" xml:space="preserve"><value>Cuidado continuo</value></data>
   <data name="Home_CareSub" xml:space="preserve"><value>Veterinaria, Chombly Care y comportamiento</value></data>

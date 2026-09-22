@@ -13,8 +13,7 @@
     else if (loggedIn)
         backHref = Url.Page("/Account/Profile");
     var backLabel = !string.IsNullOrWhiteSpace(backHref)
-        && backHref.Contains("/Account/Profile", StringComparison.OrdinalIgnoreCase)
-        ? L["Welcome_BackProfile"].Value
+        ? L["Home_ExitWelcome"].Value
         : L["Welcome_BackHome"].Value;
 }
 <div class="onboard" data-audience="families">

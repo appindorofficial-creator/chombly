@@ -18,8 +18,11 @@
     var hideNav = ViewData["HideNav"] as bool? == true;
     var path = Context.Request.Path.Value ?? "";
     var isAuthed = User.Identity?.IsAuthenticated == true;
-    var bizExplore = ViewData["BusinessExplore"] as bool? == true
-        || BusinessExploreMode.IsActive(Context.Request);
+    // Preview nav only while on /Business/Explore/* — never sticky via cookie on family pages.
+    var bizExplore = path.Equals("/Business/Explore", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/Business/Explore/", StringComparison.OrdinalIgnoreCase);
+    if (bizExplore && path.Equals("/Business/Explore/Exit", StringComparison.OrdinalIgnoreCase))
+        bizExplore = false;
     // Dual-role: Groomer in owner shell sees pet-owner nav.
     var isBiz = Auth.IsBusinessShell || bizExplore;
     bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
