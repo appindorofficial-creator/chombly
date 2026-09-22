@@ -529,12 +529,30 @@ public static class CatalogLocalizer
     public static string Notes(string? notes)
     {
         if (string.IsNullOrWhiteSpace(notes)) return notes ?? "";
+        // Pet is shown separately on Confirm/Details — drop redundant "Mascotas:/Pets:" segments.
+        notes = StripPetRosterSegments(notes);
+        if (string.IsNullOrWhiteSpace(notes)) return "";
         if (!IsEnglish()) return notes;
 
         var parts = notes.Split(" · ", StringSplitOptions.None);
         for (var i = 0; i < parts.Length; i++)
             parts[i] = LocalizeNotePart(parts[i]);
         return string.Join(" · ", parts);
+    }
+
+    /// <summary>True when notes still have customer-facing content after dropping pet roster prefixes.</summary>
+    public static bool HasCustomerNotes(string? notes) =>
+        !string.IsNullOrWhiteSpace(StripPetRosterSegments(notes));
+
+    private static string StripPetRosterSegments(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return "";
+        var kept = notes.Split(" · ", StringSplitOptions.None)
+            .Select(p => p.Trim())
+            .Where(p => p.Length > 0
+                && !p.StartsWith("Mascotas:", StringComparison.OrdinalIgnoreCase)
+                && !p.StartsWith("Pets:", StringComparison.OrdinalIgnoreCase));
+        return string.Join(" · ", kept);
     }
 
     private static string LocalizeNotePart(string part)

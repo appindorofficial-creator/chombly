@@ -203,9 +203,10 @@ public class IndexModel : PageModel
         var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
         {
-            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"),
             CatalogLocalizer.Loc($"Paseo {Duration} min", $"Walk {Duration} min")
         };
+        if (SelectedPets.Count > 1)
+            noteParts.Insert(0, CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"));
         if (Prefs.Count > 0)
             noteParts.Add("Prefs: " + string.Join(", ", Prefs.Select(CatalogLocalizer.Text)));
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());

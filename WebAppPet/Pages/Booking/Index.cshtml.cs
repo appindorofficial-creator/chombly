@@ -258,10 +258,10 @@ public class IndexModel : PageModel
         }
 
         var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
-        var noteParts = new List<string>
-        {
-            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}")
-        };
+        var noteParts = new List<string>();
+        // Multi-pet only: primary pet is already on Appointment.PetId / Confirm "Mascota".
+        if (SelectedPets.Count > 1)
+            noteParts.Add(CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"));
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
 
         var appt = new Appointment
@@ -278,7 +278,7 @@ public class IndexModel : PageModel
             DepositPaid = Deposit,
             PromoCode = DiscountAmount > 0 ? PromoCode?.Trim().ToUpperInvariant() : null,
             DiscountAmount = DiscountAmount,
-            Notes = string.Join(" · ", noteParts)
+            Notes = noteParts.Count > 0 ? string.Join(" · ", noteParts) : null
         };
 
         foreach (var ex in SelectedExtras)

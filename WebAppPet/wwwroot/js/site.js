@@ -931,6 +931,7 @@
       bindSoftFilters(scopeEl);
       bindToggleSingleChips(scopeEl);
       bindHotelSummaryToggle(document);
+      bindCheckoutStickyCta(scopeEl);
       bindFeedbackForms(scopeEl);
       bindCopyActions(scopeEl);
       bindConfirmForms(scopeEl);
@@ -1407,6 +1408,36 @@
       });
     }
 
+    /** Sticky continue must POST current form state (Notes, pets…) not a stale ContinueHref. */
+    function bindCheckoutStickyCta(root) {
+      var scope = root || document;
+      scope.querySelectorAll('a.checkout-sticky-cta').forEach(function (a) {
+        if (a.dataset.payFormBound === '1') return;
+        a.dataset.payFormBound = '1';
+        a.addEventListener('click', function (e) {
+          var flow = a.closest('.hotel-flow') || document.querySelector('.hotel-flow');
+          if (!flow) return;
+          var form = flow.querySelector('form[id$="-filter-form"]') || flow.querySelector('form');
+          if (!form) return;
+          var method = (form.getAttribute('method') || 'get').toLowerCase();
+          if (method !== 'get') return;
+
+          e.preventDefault();
+          e.stopImmediatePropagation();
+
+          var pay = form.querySelector('input[name="Pay"], input[name="pay"]');
+          if (!pay) {
+            pay = document.createElement('input');
+            pay.type = 'hidden';
+            pay.name = 'Pay';
+            form.appendChild(pay);
+          }
+          pay.value = 'true';
+          softNavigateHotelFlow(form, null);
+        }, true);
+      });
+    }
+
     // Expose for inline fallbacks if needed
     window.chomblySoftFilter = softNavigateHotelFlow;
 
@@ -1477,6 +1508,9 @@
         softNavigateHotelFlow(form, e.submitter || null);
       });
     });
+
+    // Sticky "Continuar" must include live form fields (Notes, pets, etc.) — not a stale ?pay= URL.
+    bindCheckoutStickyCta(scope);
 
     // Same-path filter links (stepper +/−, choose provider) → soft fetch
     scope.querySelectorAll('.hotel-flow a[href]').forEach(function (a) {

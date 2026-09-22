@@ -179,10 +179,9 @@ public class IndexModel : PageModel
         if (deposit < 15) deposit = Math.Min(15, total);
 
         var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
-        var noteParts = new List<string>
-        {
-            CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}")
-        };
+        var noteParts = new List<string>();
+        if (SelectedPets.Count > 1)
+            noteParts.Add(CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"));
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
         if (PaymentMethodId.HasValue)
         {
@@ -205,7 +204,7 @@ public class IndexModel : PageModel
             DepositPaid = deposit,
             PromoCode = discount > 0 ? promo.NormalizedCode : null,
             DiscountAmount = discount,
-            Notes = string.Join(" · ", noteParts)
+            Notes = noteParts.Count > 0 ? string.Join(" · ", noteParts) : null
         };
 
         foreach (var ex in selectedExtras)
