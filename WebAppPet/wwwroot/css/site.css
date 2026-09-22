@@ -5172,6 +5172,24 @@ a.vet-modality-emergency:hover {
   color: #9a3412;
   font-weight: 800;
 }
+.vet-safety-choice {
+  margin: 0 0 8px;
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(220, 107, 47, 0.4);
+  background: linear-gradient(165deg, #fff7ed 0%, #fff 70%);
+  animation: vet-safety-in .35s ease both;
+}
+.vet-safety-choice .section-title {
+  margin: 0 0 8px;
+  color: #9a3412;
+}
+.vet-safety-choice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
 .vet-safety-flag-none {
   border-style: dashed;
   background: linear-gradient(165deg, #f7faf5 0%, #fff 70%);
@@ -5198,14 +5216,14 @@ a.vet-modality-emergency:hover {
   pointer-events: none;
 }
 .vet-safety-submit.is-emergency {
-  background: #c2410c;
-  border-color: #c2410c;
+  background: #ea580c;
+  border-color: #ea580c;
   color: #fff;
-  box-shadow: 0 8px 20px rgba(194, 65, 12, 0.28);
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.22);
 }
 .vet-safety-submit.is-emergency:hover {
-  background: #9a3412;
-  border-color: #9a3412;
+  background: #c2410c;
+  border-color: #c2410c;
 }
 @keyframes vet-safety-in {
   from {
@@ -5220,7 +5238,8 @@ a.vet-modality-emergency:hover {
 @media (prefers-reduced-motion: reduce) {
   .vet-safety-vcpr,
   .vet-safety-flag,
-  .vet-safety-emergency-hint {
+  .vet-safety-emergency-hint,
+  .vet-safety-choice {
     animation: none;
   }
   .vet-safety-flag:active {

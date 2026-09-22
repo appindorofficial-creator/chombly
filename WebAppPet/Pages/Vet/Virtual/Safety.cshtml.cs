@@ -31,6 +31,10 @@ public class SafetyModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int ConsultationId { get; set; }
 
+    /// <summary>Force the checklist form (skip path choice) so the user can change answers.</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool Edit { get; set; }
+
     [BindProperty] public bool BreathingTrouble { get; set; }
     [BindProperty] public bool Seizures { get; set; }
     [BindProperty] public bool Unconscious { get; set; }
@@ -45,6 +49,9 @@ public class SafetyModel : PageModel
     public bool HasVcpr { get; set; }
     public string? ErrorMessage { get; set; }
 
+    /// <summary>After red flags are saved: let the user choose emergency vs continue virtual.</summary>
+    public bool ShowPathChoice { get; set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is null)
@@ -54,7 +61,33 @@ public class SafetyModel : PageModel
         if (Consultation?.PetId is null) return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = ConsultationId });
 
         HasVcpr = await _vcpr.HasActiveAsync(Consultation.PetId.Value, Consultation.PetUsState);
+
+        HydrateAnswers(Consultation);
+
+        // After red flags (or return from Emergency): soft choice unless user asked to edit.
+        if (!Edit
+            && Consultation.HasRedFlags
+            && Consultation.Status is ConsultationStatus.SafetyScreened or ConsultationStatus.EscalatedToEmergency)
+        {
+            ShowPathChoice = true;
+        }
+
         return Page();
+    }
+
+    private void HydrateAnswers(Consultation c)
+    {
+        var a = _safety.Deserialize(c.SafetyAnswersJson);
+        if (a is null) return;
+        BreathingTrouble = a.BreathingTrouble;
+        Seizures = a.Seizures;
+        Unconscious = a.Unconscious;
+        SevereBleeding = a.SevereBleeding;
+        ToxinIngestion = a.ToxinIngestion;
+        ExtremePain = a.ExtremePain;
+        CannotUrinate = a.CannotUrinate;
+        SafetyNotes = a.Notes;
+        NoRedFlags = !c.HasRedFlags;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -88,17 +121,56 @@ public class SafetyModel : PageModel
         Consultation.Status = ConsultationStatus.SafetyScreened;
         await _flow.TouchAsync(Consultation);
 
-        if (Consultation.HasRedFlags)
+        if (hasRed)
         {
             await _audit.LogAsync("safety_flagged", _auth.CurrentUserId, "Consultation", Consultation.Id, answers);
-            return RedirectToPage("/Vet/Emergency", new { consultationId = ConsultationId });
+            ShowPathChoice = true;
+            return Page();
         }
 
-        if (!Consultation.HasActiveVcpr)
+        return await ContinueAfterClearSafetyAsync(Consultation);
+    }
+
+    public async Task<IActionResult> OnPostGoEmergencyAsync()
+    {
+        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+
+        Consultation = await _flow.GetOwnedAsync(ConsultationId);
+        if (Consultation is null) return RedirectToPage("/Vet/Index");
+
+        await _audit.LogAsync("safety_chose_emergency", _auth.CurrentUserId, "Consultation", Consultation.Id,
+            new { consultationId = ConsultationId });
+        return RedirectToPage("/Vet/Emergency", new { consultationId = ConsultationId });
+    }
+
+    public async Task<IActionResult> OnPostContinueVirtualAsync()
+    {
+        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+
+        Consultation = await _flow.GetOwnedAsync(ConsultationId);
+        if (Consultation?.PetId is null) return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = ConsultationId });
+
+        HasVcpr = await _vcpr.HasActiveAsync(Consultation.PetId.Value, Consultation.PetUsState);
+
+        // Keep HasRedFlags for clinical context; resume Virtual as guidance (not emergency booking).
+        if (Consultation.Status == ConsultationStatus.EscalatedToEmergency)
+            Consultation.Status = ConsultationStatus.SafetyScreened;
+        Consultation.Modality = VetModality.Virtual;
+        await _flow.TouchAsync(Consultation);
+
+        await _audit.LogAsync("safety_chose_continue_virtual", _auth.CurrentUserId, "Consultation", Consultation.Id,
+            new { hasRedFlags = Consultation.HasRedFlags });
+
+        return await ContinueAfterClearSafetyAsync(Consultation);
+    }
+
+    private async Task<IActionResult> ContinueAfterClearSafetyAsync(Consultation c)
+    {
+        if (!c.HasActiveVcpr)
             return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
 
-        Consultation.Status = ConsultationStatus.EligibilityVerified;
-        await _flow.TouchAsync(Consultation);
+        c.Status = ConsultationStatus.EligibilityVerified;
+        await _flow.TouchAsync(c);
         return RedirectToPage("/Vet/Virtual/Service", new { consultationId = ConsultationId });
     }
 }

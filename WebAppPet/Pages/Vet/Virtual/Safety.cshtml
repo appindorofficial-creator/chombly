@@ -48,99 +48,133 @@
             </div>
         </div>
 
-        <form method="post" class="vet-safety-form" data-vet-safety>
-            <input type="hidden" asp-for="ConsultationId" />
-
-            <div class="vet-safety-section-head">
-                <h2 class="section-title">@CatalogLocalizer.Loc("¿Hay alguna bandera roja ahora?", "Any red flags right now?")</h2>
+        @if (Model.ShowPathChoice)
+        {
+            <section class="vet-safety-choice" role="region" aria-labelledby="vet-safety-choice-title">
+                <h2 id="vet-safety-choice-title" class="section-title">@CatalogLocalizer.Loc("Detectamos signos de alerta", "We detected warning signs")</h2>
                 <p class="muted small">
                     @CatalogLocalizer.Loc(
-                        "Marca lo que está ocurriendo, o “Ninguna de estas”. Si hay una bandera roja, te llevamos a emergencia (sin cobro en la app).",
-                        "Check what is happening, or “None of these”. A red flag sends you to emergency care (no in-app charge).")
+                        "La orientación virtual no sustituye una urgencia. Si tu mascota está en peligro, busca atención inmediata. Si aún quieres orientación (no clínica de emergencia), puedes seguir.",
+                        "Virtual guidance does not replace an emergency. If your pet is in danger, seek care now. You can still continue for guidance only (not emergency clinical care).")
                 </p>
-            </div>
+                <div class="vet-safety-choice-actions">
+                    <form method="post" asp-page-handler="GoEmergency">
+                        <input type="hidden" asp-for="ConsultationId" />
+                        <button type="submit" class="btn btn-primary btn-block">
+                            @CatalogLocalizer.Loc("Ver opciones de emergencia", "See emergency options")
+                        </button>
+                    </form>
+                    <form method="post" asp-page-handler="ContinueVirtual">
+                        <input type="hidden" asp-for="ConsultationId" />
+                        <button type="submit" class="btn btn-outline btn-block">
+                            @CatalogLocalizer.Loc("Continuar con orientación virtual", "Continue with virtual guidance")
+                        </button>
+                    </form>
+                </div>
+                <p class="muted small" style="margin-top:12px;margin-bottom:0">
+                    <a asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@Model.ConsultationId" asp-route-edit="true">
+                        @CatalogLocalizer.Loc("← Volver a editar las respuestas", "← Edit answers again")
+                    </a>
+                </p>
+            </section>
+        }
+        else
+        {
+            <form method="post" class="vet-safety-form" data-vet-safety>
+                <input type="hidden" asp-for="ConsultationId" />
 
-            <div class="vet-safety-flags" role="group" aria-label="@CatalogLocalizer.Loc("Signos de alerta", "Warning signs")">
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="BreathingTrouble" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">😮‍💨</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dificultad para respirar", "Breathing trouble")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="Seizures" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">⚡</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Convulsiones", "Seizures")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="Unconscious" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">💫</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Inconsciente o colapso", "Unconscious or collapsed")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="SevereBleeding" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">🩸</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Sangrado severo", "Severe bleeding")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="ToxinIngestion" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">☠️</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Ingesta de tóxico / veneno", "Toxin / poison ingestion")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="ExtremePain" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">😣</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dolor extremo", "Extreme pain")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag">
-                    <input type="checkbox" asp-for="CannotUrinate" data-safety-flag />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">🚫</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("No puede orinar", "Cannot urinate")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-                <label class="vet-safety-flag vet-safety-flag-none">
-                    <input type="checkbox" asp-for="NoRedFlags" data-safety-none />
-                    <span class="vet-safety-flag-ico" aria-hidden="true">✓</span>
-                    <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Ninguna de estas", "None of these")</span>
-                    <span class="vet-safety-flag-tick" aria-hidden="true"></span>
-                </label>
-            </div>
+                <div class="vet-safety-section-head">
+                    <h2 class="section-title">@CatalogLocalizer.Loc("¿Hay alguna bandera roja ahora?", "Any red flags right now?")</h2>
+                    <p class="muted small">
+                        @CatalogLocalizer.Loc(
+                            "Marca lo que está ocurriendo, o “Ninguna de estas”. Si hay signos graves, te pediremos cómo quieres seguir (emergencia u orientación).",
+                            "Check what is happening, or “None of these”. Serious signs ask how you want to continue (emergency or guidance).")
+                    </p>
+                </div>
 
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="alert alert-danger" style="margin:0 0 14px">@Model.ErrorMessage</div>
-            }
+                <div class="vet-safety-flags" role="group" aria-label="@CatalogLocalizer.Loc("Signos de alerta", "Warning signs")">
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="BreathingTrouble" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">😮‍💨</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dificultad para respirar", "Breathing trouble")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="Seizures" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">⚡</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Convulsiones", "Seizures")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="Unconscious" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">💫</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Inconsciente o colapso", "Unconscious or collapsed")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="SevereBleeding" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">🩸</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Sangrado severo", "Severe bleeding")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="ToxinIngestion" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">☠️</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Ingesta de tóxico / veneno", "Toxin / poison ingestion")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="ExtremePain" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">😣</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dolor extremo", "Extreme pain")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag">
+                        <input type="checkbox" asp-for="CannotUrinate" data-safety-flag />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">🚫</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("No puede orinar", "Cannot urinate")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                    <label class="vet-safety-flag vet-safety-flag-none">
+                        <input type="checkbox" asp-for="NoRedFlags" data-safety-none />
+                        <span class="vet-safety-flag-ico" aria-hidden="true">✓</span>
+                        <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Ninguna de estas", "None of these")</span>
+                        <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                    </label>
+                </div>
 
-            <div class="vet-safety-notes">
-                <label class="vet-safety-notes-label" for="SafetyNotes">@CatalogLocalizer.Loc("Notas adicionales", "Additional notes") <span class="muted">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></label>
-                <textarea class="vet-safety-notes-input" asp-for="SafetyNotes" id="SafetyNotes" rows="3"
-                          placeholder="@CatalogLocalizer.Loc("Algo más que deba saber el equipo…", "Anything else the care team should know…")"></textarea>
-            </div>
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger" style="margin:0 0 14px">@Model.ErrorMessage</div>
+                }
 
-            <div class="vet-safety-emergency-hint" data-safety-emergency-hint hidden role="status">
-                <strong>@CatalogLocalizer.Loc("Atención inmediata", "Immediate care")</strong>
-                <p class="muted small mb-0">@CatalogLocalizer.Loc("Con una bandera roja te llevamos a emergencia: llamada y ruta, sin reserva ni pago en la app.", "A red flag routes you to emergency: call and directions, with no in-app booking or payment.")</p>
-            </div>
+                <div class="vet-safety-notes">
+                    <label class="vet-safety-notes-label" for="SafetyNotes">@CatalogLocalizer.Loc("Notas adicionales", "Additional notes") <span class="muted">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></label>
+                    <textarea class="vet-safety-notes-input" asp-for="SafetyNotes" id="SafetyNotes" rows="3"
+                              placeholder="@CatalogLocalizer.Loc("Algo más que deba saber el equipo…", "Anything else the care team should know…")"></textarea>
+                </div>
 
-            <button type="submit"
-                    class="btn btn-primary btn-block vet-safety-submit"
-                    data-safety-submit
-                    disabled
-                    aria-disabled="true"
-                    data-label-continue="@CatalogLocalizer.Loc("Continuar con la consulta", "Continue to consultation")"
-                    data-label-emergency="@CatalogLocalizer.Loc("Ir a emergencia", "Go to emergency")"
-                    data-label-pick="@CatalogLocalizer.Loc("Elige una opción para continuar", "Choose an option to continue")">
-                @CatalogLocalizer.Loc("Elige una opción para continuar", "Choose an option to continue")
-            </button>
-        </form>
+                <div class="vet-safety-emergency-hint" data-safety-emergency-hint hidden role="status">
+                    <strong>@CatalogLocalizer.Loc("Signos graves", "Serious signs")</strong>
+                    <p class="muted small mb-0">@CatalogLocalizer.Loc("En el siguiente paso podrás ir a emergencia o seguir con orientación virtual (no sustituye una urgencia).", "Next you’ll choose emergency care or continue with virtual guidance (it does not replace an emergency).")</p>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary btn-block vet-safety-submit"
+                        data-safety-submit
+                        disabled
+                        aria-disabled="true"
+                        data-label-continue="@CatalogLocalizer.Loc("Continuar", "Continue")"
+                        data-label-pick="@CatalogLocalizer.Loc("Elige una opción para continuar", "Choose an option to continue")">
+                    @CatalogLocalizer.Loc("Elige una opción para continuar", "Choose an option to continue")
+                </button>
+            </form>
+        }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+@if (!Model.ShowPathChoice)
+{
 <script>
 (function () {
   var form = document.querySelector('[data-vet-safety]');
@@ -151,7 +185,6 @@
   var flags = form.querySelectorAll('[data-safety-flag]');
   if (!btn) return;
   var labelContinue = btn.getAttribute('data-label-continue') || btn.textContent;
-  var labelEmergency = btn.getAttribute('data-label-emergency') || btn.textContent;
   var labelPick = btn.getAttribute('data-label-pick') || labelContinue;
   var syncing = false;
 
@@ -173,7 +206,7 @@
       var ready = red || !!(none && none.checked);
       btn.disabled = !ready;
       btn.setAttribute('aria-disabled', ready ? 'false' : 'true');
-      btn.textContent = !ready ? labelPick : (red ? labelEmergency : labelContinue);
+      btn.textContent = ready ? labelContinue : labelPick;
       btn.classList.toggle('is-emergency', red);
       form.classList.toggle('has-red-flag', red);
       if (hint) hint.hidden = !red;
@@ -192,3 +225,4 @@
   sync();
 })();
 </script>
+}

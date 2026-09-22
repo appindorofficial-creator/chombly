@@ -3,7 +3,9 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Emergencia", "Emergency");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
+    ViewData["OnboardBackHref"] = Model.ConsultationId is int cid
+        ? Url.Page("/Vet/Virtual/Safety", new { consultationId = cid })
+        : Url.Page("/Vet/Index");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -45,6 +47,15 @@
                 </article>
             }
         </div>
+    }
+
+    @if (Model.ConsultationId is int backId)
+    {
+        <p class="muted small" style="margin-top:20px;margin-bottom:0">
+            <a asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@backId">
+                @CatalogLocalizer.Loc("← Volver y elegir orientación virtual", "← Back and choose virtual guidance")
+            </a>
+        </p>
     }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
