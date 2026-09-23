@@ -198,7 +198,6 @@ public class PaymentMethodsModel : PageModel
     {
         CardValidator.FailReason.CardNumberRequired => _L["Pay_ErrCardRequired"].Value,
         CardValidator.FailReason.CardNumberInvalid => _L["Pay_ErrCardInvalid"].Value,
-        CardValidator.FailReason.CardNumberLuhn => _L["Pay_ErrCardLuhn"].Value,
         CardValidator.FailReason.ExpiryRequired => _L["Pay_ErrExpiryRequired"].Value,
         CardValidator.FailReason.ExpiryFormat => _L["Pay_ErrExpiryFormat"].Value,
         CardValidator.FailReason.ExpiryMonth => _L["Pay_ErrExpiryMonth"].Value,

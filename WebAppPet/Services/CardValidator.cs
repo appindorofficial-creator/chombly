@@ -4,8 +4,8 @@ using System.Text.RegularExpressions;
 namespace WebAppPet.Services;
 
 /// <summary>
-/// Format validation for simulated card storage (Luhn, expiry, CVV, holder).
-/// Does not contact banks or payment providers.
+/// Format validation for simulated card storage (length, expiry, CVV, holder).
+/// Does not run Luhn or contact banks — demo saves brand + last 4 only.
 /// </summary>
 public static partial class CardValidator
 {
@@ -28,7 +28,6 @@ public static partial class CardValidator
         None,
         CardNumberRequired,
         CardNumberInvalid,
-        CardNumberLuhn,
         ExpiryRequired,
         ExpiryFormat,
         ExpiryMonth,
@@ -56,6 +55,7 @@ public static partial class CardValidator
     public static string DigitsOnly(string? value) =>
         new string((value ?? string.Empty).Where(char.IsDigit).ToArray());
 
+    /// <summary>Optional checksum helper (not required for simulated save).</summary>
     public static bool PassesLuhn(string digits)
     {
         if (digits.Length is < MinCardDigits or > MaxCardDigits)
@@ -221,9 +221,6 @@ public static partial class CardValidator
 
         if (digits.Length is < MinCardDigits or > MaxCardDigits || !digits.All(char.IsDigit))
             return Fail(FailReason.CardNumberInvalid);
-
-        if (!PassesLuhn(digits))
-            return Fail(FailReason.CardNumberLuhn);
 
         var brand = DetectBrand(digits);
         var expectedCvv = CvvLengthFor(brand);

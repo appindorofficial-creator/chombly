@@ -548,11 +548,11 @@
   <data name="Pay_BrandUnknown" xml:space="preserve"><value>Card</value></data>
   <data name="Pay_Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Pay_DeleteConfirm" xml:space="preserve"><value>Delete this card?</value></data>
-  <data name="Pay_Disclaimer" xml:space="preserve"><value>Simulated payment: only the brand and last 4 digits are stored. The number must have a valid format (Luhn check). Real charge verification requires a payment provider later.</value></data>
+  <data name="Pay_Disclaimer" xml:space="preserve"><value>Simulated payment: only the brand and last 4 digits are stored. Use 13–19 digits; expiry must be a valid future month (MM/YY).</value></data>
   <data name="Pay_ErrGeneric" xml:space="preserve"><value>Please check your card details.</value></data>
   <data name="Pay_ErrCardRequired" xml:space="preserve"><value>Card number is required.</value></data>
   <data name="Pay_ErrCardInvalid" xml:space="preserve"><value>Card number must be 13–19 digits.</value></data>
-  <data name="Pay_ErrCardLuhn" xml:space="preserve"><value>Card number is not valid (failed format check).</value></data>
+  <data name="Pay_ErrCardLuhn" xml:space="preserve"><value>Card number is not valid.</value></data>
   <data name="Pay_ErrExpiryRequired" xml:space="preserve"><value>Expiry date is required.</value></data>
   <data name="Pay_ErrExpiryFormat" xml:space="preserve"><value>Use MM/YY for the expiry date.</value></data>
   <data name="Pay_ErrExpiryMonth" xml:space="preserve"><value>Expiry month must be between 01 and 12.</value></data>

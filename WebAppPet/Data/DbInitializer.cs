@@ -30,6 +30,7 @@ public static class DbInitializer
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
         await EnsureNeivaDemoProvidersAsync(db);
+        await EnsureCanonicalGroomingServiceNamesAsync(db);
         await EnsureDaycareAcceptsCatsAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
         await EnsureCompensationDefaultsAsync(db);
@@ -1642,8 +1643,33 @@ public static class DbInitializer
             "Baño, peluquería, guardería y tip de adiestramiento en un solo lugar (demo).",
             "+5788641101", groomingId,
             new[] { daycareId, trainersId }.Where(x => x.HasValue).Select(x => x!.Value).ToArray(),
-            30000m, "/ servicio", "Baño y secado", "Estética y cuidado diario", 45, 30000m,
+            30000m, "/ servicio", "Baño y cepillado", "Estética y cuidado diario", 45, 30000m,
             imageSlug: "grooming", rating: 4.5, reviews: 33);
+    }
+
+    /// <summary>
+    /// Prod had both "Baño y secado" (Neiva demo) and "Baño y cepillado" — same offering, two Home chips.
+    /// </summary>
+    private static async Task EnsureCanonicalGroomingServiceNamesAsync(AppDbContext db)
+    {
+        var aliases = await db.Services
+            .Where(s => s.Name == "Baño y secado")
+            .ToListAsync();
+        if (aliases.Count == 0) return;
+
+        foreach (var s in aliases)
+        {
+            var hasCanon = await db.Services.AnyAsync(x =>
+                x.GroomerId == s.GroomerId
+                && x.Id != s.Id
+                && x.Name == "Baño y cepillado");
+            if (hasCanon)
+                db.Services.Remove(s);
+            else
+                s.Name = "Baño y cepillado";
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task EnsureCountryCatalogSeedAsync(AppDbContext db)

@@ -306,6 +306,8 @@
                 <textarea class="form-control" name="Notes" rows="3" maxlength="200"
                           placeholder="@CatalogLocalizer.Loc("¿Hay algo que debamos saber?", "Is there anything we should know?")">@Model.Notes</textarea>
             </div>
+            @* Soft-nav: swap only summary/sticky after this marker; keep the configure fields mounted. *@
+            <div id="booking-results" hidden aria-hidden="true"></div>
         </form>
 
         @if (!Model.CanShowSummary)

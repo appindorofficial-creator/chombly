@@ -1498,6 +1498,33 @@
           var min = t.getAttribute('min');
           if (min && t.value && t.value < min) t.value = min;
         }
+
+        // Time chips: update URL + active state locally. Avoid soft-nav flash unless
+        // the sticky summary still needs to appear (pets already chosen).
+        if (t.matches && t.matches('input[type="radio"]') && t.closest('.when-chip')) {
+          form.querySelectorAll('label.when-chip').forEach(function (lab) {
+            var inp = lab.querySelector('input[type="radio"]');
+            lab.classList.toggle('active', !!(inp && inp.checked && !inp.disabled));
+          });
+          try {
+            var action = form.getAttribute('action') || window.location.pathname;
+            var params = new URLSearchParams(new FormData(form));
+            Array.from(params.keys()).forEach(function (k) {
+              var v = params.get(k);
+              if (v === '' || v == null) params.delete(k);
+            });
+            var url = action + (params.toString() ? ('?' + params.toString()) : '');
+            history.replaceState(null, '', url);
+          } catch (_) { }
+
+          var flow = form.closest('.hotel-flow');
+          if (flow && flow.querySelector('[data-hotel-summary]')) return;
+          if (flow && flow.classList.contains('booking-flow')) {
+            var petChosen = !!form.querySelector('input[name="PetIds"]:checked');
+            if (!petChosen) return;
+          }
+        }
+
         // Notes: wait for blur-driven change only (already onchange); still soft-nav once
         softNavigateHotelFlow(form);
       });

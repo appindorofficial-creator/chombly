@@ -13,6 +13,7 @@ public static class CatalogLocalizer
     {
         // Services
         ["Baño y cepillado"] = "Bath & brush",
+        ["Baño y secado"] = "Bath & brush",
         ["Baño básico"] = "Basic bath",
         ["Baño adicional"] = "Extra bath",
         ["Baño extra durante la estadía"] = "Extra bath during the stay",

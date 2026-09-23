@@ -55,7 +55,7 @@
             <label for="CardNumber">@L["Pay_CardNumber"]</label>
             <input class="form-control" asp-for="CardNumber" id="CardNumber"
                    inputmode="numeric" autocomplete="cc-number" maxlength="23"
-                   placeholder="ACCT-000003" data-pay-field="number" />
+                   placeholder="4242 4242 4242 4242" data-pay-field="number" />
             <span class="muted small" id="pay-brand" aria-live="polite"></span>
         </div>
         <div style="display:flex;gap:10px">
@@ -93,7 +93,6 @@
   var msgs = {
     cardRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCardRequired"].Value)),
     cardInvalid: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCardInvalid"].Value)),
-    cardLuhn: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrCardLuhn"].Value)),
     expiryRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryRequired"].Value)),
     expiryFormat: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryFormat"].Value)),
     expiryMonth: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Pay_ErrExpiryMonth"].Value)),
@@ -105,18 +104,6 @@
   };
 
   function digitsOnly(s) { return String(s || '').replace(/\D/g, ''); }
-
-  function luhnOk(d) {
-    if (d.length < 13 || d.length > 19) return false;
-    var sum = 0, alt = false;
-    for (var i = d.length - 1; i >= 0; i--) {
-      var n = d.charCodeAt(i) - 48;
-      if (alt) { n *= 2; if (n > 9) n -= 9; }
-      sum += n;
-      alt = !alt;
-    }
-    return sum % 10 === 0;
-  }
 
   function detectBrand(d) {
     if (!d) return { name: '', cvvLen: 3 };
@@ -182,7 +169,6 @@
     var digits = digitsOnly(numEl && numEl.value);
     if (!digits) return msgs.cardRequired;
     if (digits.length < 13 || digits.length > 19) return msgs.cardInvalid;
-    if (!luhnOk(digits)) return msgs.cardLuhn;
     var brand = detectBrand(digits);
     var expErr = validateExpiry(expEl && expEl.value);
     if (expErr) return expErr;

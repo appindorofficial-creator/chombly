@@ -565,11 +565,11 @@
   <data name="Pay_BrandUnknown" xml:space="preserve"><value>Tarjeta</value></data>
   <data name="Pay_Delete" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Pay_DeleteConfirm" xml:space="preserve"><value>¿Eliminar esta tarjeta?</value></data>
-  <data name="Pay_Disclaimer" xml:space="preserve"><value>Pago simulado: solo se guarda la marca y los últimos 4 dígitos. El número debe tener un formato válido (algoritmo de Luhn). La verificación real del cargo requiere un proveedor de pagos más adelante.</value></data>
+  <data name="Pay_Disclaimer" xml:space="preserve"><value>Pago simulado: solo se guarda la marca y los últimos 4 dígitos. Usa 13–19 dígitos; el vencimiento debe ser un mes futuro válido (MM/AA).</value></data>
   <data name="Pay_ErrGeneric" xml:space="preserve"><value>Revisa los datos de la tarjeta.</value></data>
   <data name="Pay_ErrCardRequired" xml:space="preserve"><value>El número de tarjeta es obligatorio.</value></data>
   <data name="Pay_ErrCardInvalid" xml:space="preserve"><value>El número de tarjeta debe tener entre 13 y 19 dígitos.</value></data>
-  <data name="Pay_ErrCardLuhn" xml:space="preserve"><value>El número de tarjeta no es válido (no pasa la verificación de formato).</value></data>
+  <data name="Pay_ErrCardLuhn" xml:space="preserve"><value>El número de tarjeta no es válido.</value></data>
   <data name="Pay_ErrExpiryRequired" xml:space="preserve"><value>La fecha de vencimiento es obligatoria.</value></data>
   <data name="Pay_ErrExpiryFormat" xml:space="preserve"><value>Usa el formato MM/AA para el vencimiento.</value></data>
   <data name="Pay_ErrExpiryMonth" xml:space="preserve"><value>El mes de vencimiento debe estar entre 01 y 12.</value></data>

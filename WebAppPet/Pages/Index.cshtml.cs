@@ -107,7 +107,7 @@ public class IndexModel : PageModel
             .ToListAsync();
         PopularServices = homeServices
             .Where(s => BusinessMarketResolver.MatchesHomeMarket(s.Groomer, homeCountry))
-            .GroupBy(s => s.Name)
+            .GroupBy(s => CanonicalPopularServiceName(s.Name))
             .OrderByDescending(g => g.Count())
             .Select(g => g.Key)
             .Take(8)
@@ -127,6 +127,19 @@ public class IndexModel : PageModel
         }
 
         return Page();
+    }
+
+    /// <summary>Merge near-duplicate grooming labels so Home chips don't show the same service twice.</summary>
+    private static string CanonicalPopularServiceName(string? name)
+    {
+        var n = (name ?? string.Empty).Trim();
+        if (n.Length == 0) return n;
+        if (string.Equals(n, "Baño y secado", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(n, "Bath & dry", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(n, "Bath and dry", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(n, "Bath y secado", StringComparison.OrdinalIgnoreCase))
+            return "Baño y cepillado";
+        return n;
     }
 
     public string TypeLabel(GroomerType t) => t switch
