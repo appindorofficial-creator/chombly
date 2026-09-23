@@ -21,7 +21,7 @@ public class BehaviorFlowService
         if (uid is null) return null;
         return await _db.BehaviorCases
             .Include(c => c.Pet)
-            .Include(c => c.Provider)
+            .Include(c => c.Provider)!.ThenInclude(p => p!.Category)
             .FirstOrDefaultAsync(c => c.Id == id && c.ClientId == uid.Value, ct);
     }
 
