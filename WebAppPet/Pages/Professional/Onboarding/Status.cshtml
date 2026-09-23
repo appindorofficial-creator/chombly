@@ -8,6 +8,22 @@
     ViewData["GroomerTab"] = "onboarding";
     ViewData["LangCompact"] = true;
     var a = Model.Application;
+    string StatusLabel(ProfessionalOnboardingStatus s) => s switch
+    {
+        ProfessionalOnboardingStatus.Draft => CatalogLocalizer.Loc("Borrador", "Draft"),
+        ProfessionalOnboardingStatus.Submitted => CatalogLocalizer.Loc("Enviada", "Submitted"),
+        ProfessionalOnboardingStatus.UnderReview => CatalogLocalizer.Loc("En revisión", "Under review"),
+        ProfessionalOnboardingStatus.Approved => CatalogLocalizer.Loc("Aprobada", "Approved"),
+        ProfessionalOnboardingStatus.Rejected => CatalogLocalizer.Loc("Rechazada", "Rejected"),
+        _ => s.ToString()
+    };
+    string TrackLabel(ProfessionalOnboardingTrack t) => t switch
+    {
+        ProfessionalOnboardingTrack.Local => CatalogLocalizer.Loc("Local", "Local"),
+        ProfessionalOnboardingTrack.International => CatalogLocalizer.Loc("Internacional", "International"),
+        ProfessionalOnboardingTrack.Behavior => CatalogLocalizer.Loc("Conducta", "Behavior"),
+        _ => t.ToString()
+    };
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -23,8 +39,8 @@
     else
     {
         <div class="card card-pad @(a.Status == ProfessionalOnboardingStatus.Approved ? "vet-vcpr-ok" : a.Status == ProfessionalOnboardingStatus.Rejected ? "vet-vcpr-missing" : "")">
-            <strong>@a.Status</strong>
-            <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Trayectoria", "Track"): @a.Track</span>
+            <strong>@StatusLabel(a.Status)</strong>
+            <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Trayectoria", "Track"): @TrackLabel(a.Track)</span>
             <span class="muted small" style="display:block">@a.LegalName · @a.ClinicOrPracticeName</span>
             <span class="muted small" style="display:block">@a.LicenseJurisdiction · @a.LicenseNumber</span>
             @if (a.SubmittedUtc is DateTime sub)

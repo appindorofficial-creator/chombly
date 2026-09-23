@@ -1,12 +1,16 @@
 @page
 @model WebAppPet.Pages.Account.NotificationsModel
 @using WebAppPet.Localization
+@using WebAppPet.Services
+@inject AuthService Auth
 @{
     ViewData["Title"] = L["Profile_Notifications"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Model.BackHref;
     var HideNav = ViewData["HideNav"] as bool? == true;
     var i = 0;
+    var businessShell = Auth.IsBusinessShell;
+    var isAdmin = Auth.IsAdmin;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -39,13 +43,21 @@
         <div class="notif-list">
         @foreach (var n in Model.Items)
         {
+            var href = NotificationDeepLink.Resolve(n, businessShell, isAdmin)!;
             <div class="notif-swipe" style="--i:@i">
                 <div class="notif-swipe-bg" aria-hidden="true">
                     <span>🗑️</span>
                     <span>@L["Common_Delete"]</span>
                 </div>
-                <div class="notif-item @(n.IsRead ? "" : "unread")" data-notif-swipe>
-                    <strong>@NotificationLocalizer.Title(n.Title)</strong>
+                <div class="notif-item @(n.IsRead ? "" : "unread") is-openable" data-notif-swipe>
+                    <a class="notif-item-open" href="@href">
+                        <span class="notif-item-body">
+                            <strong>@NotificationLocalizer.Title(n.Title)</strong>
+                            <span class="muted small notif-item-msg">@NotificationLocalizer.Message(n.Message)</span>
+                            <span class="muted small notif-item-time">@AppTimeZones.FormatShort(n.CreatedAt)</span>
+                        </span>
+                        <span class="notif-item-chev" aria-hidden="true">›</span>
+                    </a>
                     <form method="post" asp-page-handler="Delete" class="notif-delete-form"
                           data-confirm
                           data-confirm-title="@L["Notif_DeleteTitle"]"
@@ -57,8 +69,6 @@
                         <input type="hidden" asp-for="ReturnUrl" />
                         <button type="submit" tabindex="-1">@L["Notif_Delete"]</button>
                     </form>
-                    <p class="muted small notif-item-msg">@NotificationLocalizer.Message(n.Message)</p>
-                    <p class="muted small notif-item-time">@AppTimeZones.FormatShort(n.CreatedAt)</p>
                 </div>
             </div>
             i++;

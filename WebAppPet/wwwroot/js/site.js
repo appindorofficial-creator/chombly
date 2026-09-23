@@ -294,6 +294,7 @@
       var dragging = false;
       var axis = null;
       var maxSwipe = 88;
+      var suppressClick = false;
 
       function setX(x) {
         dx = Math.max(-maxSwipe, Math.min(0, x));
@@ -323,7 +324,8 @@
 
       card.addEventListener('pointerdown', function (e) {
         if (e.button != null && e.button !== 0) return;
-        if (e.target.closest('button, a, input, label')) return;
+        if (e.target.closest('button, input, label')) return;
+        suppressClick = false;
         dragging = true;
         axis = null;
         startX = e.clientX;
@@ -348,6 +350,7 @@
           }
         }
         if (axis !== 'x') return;
+        suppressClick = true;
         e.preventDefault();
         setX(mx);
       });
@@ -355,8 +358,12 @@
       function endDrag() {
         if (!dragging && !card.classList.contains('is-dragging')) return;
         card.classList.remove('is-dragging');
-        if (dx <= -56) triggerDelete();
-        else reset();
+        if (dx <= -56) {
+          suppressClick = true;
+          triggerDelete();
+          return;
+        }
+        reset();
       }
 
       card.addEventListener('pointerup', endDrag);
@@ -364,6 +371,15 @@
       card.addEventListener('lostpointercapture', function () {
         if (card.classList.contains('is-dragging')) endDrag();
       });
+      // Block navigation when the gesture was a horizontal swipe-to-delete.
+      card.addEventListener('click', function (e) {
+        if (!suppressClick) return;
+        if (e.target.closest('a.notif-item-open')) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        suppressClick = false;
+      }, true);
     });
   }
 
