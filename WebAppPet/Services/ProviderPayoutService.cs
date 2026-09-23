@@ -89,13 +89,18 @@ public class ProviderPayoutService
             _ => 20m
         };
 
+        var country = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == providerUserId)
+            .Select(u => u.CountryCode)
+            .FirstOrDefaultAsync(ct);
+
         _db.ProviderCompensationRules.Add(new ProviderCompensationRule
         {
             ProviderUserId = providerUserId,
             ServiceType = serviceType,
             CommissionPercent = pct,
             FlatFeeUsd = defaults?.FlatFeeUsd,
-            PayoutCurrency = "USD",
+            PayoutCurrency = AppMoney.Code(country),
             IsActive = true,
             EffectiveFrom = DateTime.UtcNow,
             Notes = "Activated on professional onboarding approval",

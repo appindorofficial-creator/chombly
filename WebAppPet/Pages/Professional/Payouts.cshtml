@@ -51,7 +51,7 @@
             {
                 <div style="margin-bottom:8px">
                     <strong>@ServiceLabel(r.ServiceType)</strong>
-                    <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @r.PayoutCurrency
+                    <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @AppMoney.Code()
                         @if (r.ProviderUserId is null) { <text>· @L["Payout_PlatformDefault"]</text> }
                     </span>
                 </div>

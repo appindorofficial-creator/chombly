@@ -64,7 +64,7 @@ public class PayoutsModel : PageModel
                     _auth.CurrentUserId);
                 Message = string.Format(
                     _L["Payout_SummaryCreated"].Value,
-                    payout.NetAmountUsd.ToString("0.00"),
+                    AppMoney.Format(payout.NetAmountUsd),
                     payout.ConsultationCount);
             }
         }
