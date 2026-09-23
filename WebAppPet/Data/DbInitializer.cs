@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Models;
+using WebAppPet.Services;
 
 namespace WebAppPet.Data;
 
@@ -36,7 +37,62 @@ public static class DbInitializer
         await EnsureDaycareAcceptsCatsAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
         await EnsureCompensationDefaultsAsync(db);
-        await new Services.AvailabilityService(db).EnsureDefaultWeeklyHoursAsync();
+        var availability = new Services.AvailabilityService(db);
+        await availability.EnsureDefaultWeeklyHoursAsync();
+        await BackfillColombiaWallClockAppointmentsAsync(db);
+    }
+
+    /// <summary>
+    /// Legacy rows stored Colombia wall-clock as Unspecified; display treats Unspecified as UTC
+    /// (e.g. 09:00 → 4:00 a.m.). Convert those to real UTC once.
+    /// </summary>
+    private static async Task BackfillColombiaWallClockAppointmentsAsync(AppDbContext db)
+    {
+        var rows = await db.Appointments
+            .Include(a => a.Groomer)!.ThenInclude(g => g!.User)
+            .Where(a => a.Groomer != null)
+            .ToListAsync();
+
+        var changed = false;
+        foreach (var a in rows)
+        {
+            var market = BusinessMarketResolver.Resolve(a.Groomer);
+            if (market != BusinessMarket.Colombia)
+                continue;
+
+            if (TryNormalizeColombiaWallClock(a.ScheduledAt, out var startUtc))
+            {
+                a.ScheduledAt = startUtc;
+                changed = true;
+            }
+
+            if (a.EndAt is DateTime end && TryNormalizeColombiaWallClock(end, out var endUtc))
+            {
+                a.EndAt = endUtc;
+                changed = true;
+            }
+        }
+
+        if (changed)
+            await db.SaveChangesAsync();
+    }
+
+    private static bool TryNormalizeColombiaWallClock(DateTime stored, out DateTime utc)
+    {
+        utc = default;
+        // Already looks like UTC daytime for Colombia bookings (13–23 ≈ 8am–6pm local).
+        if (stored.Hour is >= 13 and <= 23)
+            return false;
+
+        var asLocal = AppTimeZones.ToAppLocal(stored, BusinessMarket.Colombia);
+        // Treating Unspecified-as-UTC yields pre-dawn local, but the raw hour looks like daytime wall clock.
+        if (asLocal.Hour < 6 && stored.Hour is >= 6 and <= 22)
+        {
+            utc = AppTimeZones.LocalDateAndTimeToUtc(stored.Date, stored.TimeOfDay, BusinessMarket.Colombia);
+            return utc != stored;
+        }
+
+        return false;
     }
 
     private static async Task EnsureSqliteExtraCategoryIdsAsync(AppDbContext db)

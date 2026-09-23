@@ -25,7 +25,7 @@
                     <h3>@g.BusinessName</h3>
                     <div class="meta-row">
                         <span class="stars">★ @g.Rating.ToString("0.0")</span>
-                        <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")</span>
+                        <span class="price">@L["Home_FromPrice"] @AppMoney.Format(g.StartingPrice)</span>
                     </div>
                 </div>
             </a>

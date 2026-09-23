@@ -34,7 +34,7 @@
         <div class="promo-banner" style="margin-top:0">
             <div style="flex:1">
                 <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos de hoy", "Today's earnings")</span>
-                <strong style="font-size:1.6rem">$@BusinessExploreDemo.TodayIncome.ToString("0.00")</strong>
+                <strong style="font-size:1.6rem">@AppMoney.Format(BusinessExploreDemo.TodayIncome)</strong>
                 <span class="small">@BusinessExploreDemo.TodayCompleted @CatalogLocalizer.Loc("citas completadas", "completed bookings")</span>
             </div>
         </div>

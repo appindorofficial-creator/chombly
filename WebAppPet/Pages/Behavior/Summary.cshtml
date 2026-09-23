@@ -43,7 +43,7 @@
                 </div>
                 @if (c != null)
                 {
-                    <span class="vet-match-badge">$@c.PriceCharged.ToString("0.##")</span>
+                    <span class="vet-match-badge">@AppMoney.Format(c.PriceCharged)</span>
                 }
             </div>
 

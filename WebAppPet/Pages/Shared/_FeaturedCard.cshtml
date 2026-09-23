@@ -29,7 +29,7 @@
             @if (g.StartingPrice > 0)
             {
                 <div class="meta-row">
-                    <span class="price">@Model.FromPriceLabel $@g.StartingPrice.ToString("0")</span>
+                    <span class="price">@Model.FromPriceLabel @AppMoney.Format(g.StartingPrice)</span>
                 </div>
             }
         </div>

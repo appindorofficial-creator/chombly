@@ -86,7 +86,7 @@
                             <span class="vet-service-option-body">
                                 <span class="vet-service-option-top">
                                     <strong class="vet-service-option-name">@ServiceCatalogService.DisplayName(item)</strong>
-                                    <span class="vet-service-option-price">$@item.Price.ToString("0.##")<span class="vet-service-option-unit">@priceSuffix</span></span>
+                                    <span class="vet-service-option-price">@AppMoney.Format(item.Price)<span class="vet-service-option-unit">@priceSuffix</span></span>
                                 </span>
                                 <span class="vet-service-option-scope">@ServiceCatalogService.DisplayScope(item)</span>
                                 <span class="vet-service-option-badges">

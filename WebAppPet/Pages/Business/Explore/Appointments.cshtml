@@ -29,7 +29,7 @@
                     <div style="flex:1">
                         <strong>@a.PetName · @CatalogLocalizer.Text(a.Service)</strong>
                         <div class="muted small">@a.When.ToString("ddd d MMM yyyy · h:mm tt")</div>
-                        <span class="price">$@a.Price.ToString("0.00")</span>
+                        <span class="price">@AppMoney.Format(a.Price)</span>
                     </div>
                     <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
                 </div>

@@ -1,7 +1,6 @@
 @model WebAppPet.Pages.Shared.BookingSummarySheetModel
 @{
     ViewData["TermsChecked"] = Model.AcceptTerms;
-    var estimate = Model.Estimate.ToString("0");
     var payReturn = Model.ContinueHref
         ?? $"{Context.Request.Path}{Context.Request.QueryString}";
     if (string.IsNullOrWhiteSpace(payReturn) || payReturn == "/")
@@ -16,7 +15,7 @@
         <div class="checkout-sticky-inner">
             <div class="checkout-sticky-meta">
                 <span class="checkout-sticky-label">@CatalogLocalizer.Loc("Total", "Total")</span>
-                <strong class="checkout-sticky-price">$@estimate</strong>
+                <strong class="checkout-sticky-price">@AppMoney.Format(Model.Estimate)</strong>
                 <small class="checkout-sticky-biz">@Model.BusinessName</small>
             </div>
             <a class="btn btn-primary checkout-sticky-cta"
@@ -121,7 +120,7 @@ else
             <section class="checkout-card card card-pad checkout-totals">
                 <div class="checkout-total-row">
                     <span>@CatalogLocalizer.Loc(Model.TotalLabelEs, Model.TotalLabelEn)</span>
-                    <strong>$@estimate</strong>
+                    <strong>@AppMoney.Format(Model.Estimate)</strong>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.NoteEs) && !string.IsNullOrEmpty(Model.NoteEn))
                 {

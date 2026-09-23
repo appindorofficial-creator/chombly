@@ -30,8 +30,8 @@
                 <img src="@PetSpecies.PhotoOrDefault(a.Pet.PhotoUrl, a.Pet.Species)" alt="@a.Pet.Name" style="border-radius:50%" />
                 <div style="flex:1">
                     <strong>@a.Pet.Name · @CatalogLocalizer.Text(a.Service.Name)</strong>
-                    <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM yyyy · h:mm tt")</div>
-                    <span class="price">$@a.TotalPrice.ToString("0.00")</span>
+                    <div class="muted small">@AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("ddd d MMM yyyy · h:mm tt")</div>
+                    <span class="price">@AppMoney.Format(a.TotalPrice)</span>
                 </div>
                 <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
             </div>

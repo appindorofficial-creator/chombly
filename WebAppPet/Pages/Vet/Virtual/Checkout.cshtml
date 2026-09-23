@@ -34,7 +34,7 @@
             </p>
             <p class="muted small mb-0" style="margin-top:6px">
                 <strong>@ServiceCatalogService.DisplayName(Model.CatalogItem!)</strong>
-                · $@price.ToString("0.##") / 30 min
+                · @AppMoney.Format(price) / 30 min
             </p>
         </div>
 
@@ -51,7 +51,7 @@
                         <span class="vet-pay-option-body">
                             <span class="vet-pay-option-top">
                                 <strong>@CatalogLocalizer.Loc("Membresía Care", "Care membership")</strong>
-                                <span class="vet-match-badge vet-match-badge-care">$0</span>
+                                <span class="vet-match-badge vet-match-badge-care">@AppMoney.Format(0)</span>
                             </span>
                             <span class="muted small">
                                 @CatalogLocalizer.Loc(
@@ -67,7 +67,7 @@
                     <span class="vet-pay-option-body">
                         <span class="vet-pay-option-top">
                             <strong>@CatalogLocalizer.Loc("Pagar ahora", "Pay now")</strong>
-                            <span class="vet-match-badge">$@price.ToString("0.##")</span>
+                            <span class="vet-match-badge">@AppMoney.Format(price)</span>
                         </span>
                         <span class="muted small">@CatalogLocalizer.Loc("Precio de este veterinario · 30 min", "This veterinarian’s price · 30 min")</span>
                     </span>
@@ -146,8 +146,8 @@
                     disabled
                     aria-disabled="true"
                     data-has-payment="@(Model.DefaultPayment != null ? "1" : "0")"
-                    data-label-care="@CatalogLocalizer.Loc("Confirmar · $0 con Care", "Confirm · $0 with Care")"
-                    data-label-pay="@CatalogLocalizer.Loc($"Pagar ${price:0.##}", $"Pay ${price:0.##}")"
+                    data-label-care="@CatalogLocalizer.Loc($"Confirmar · {AppMoney.Format(0)} con Care", $"Confirm · {AppMoney.Format(0)} with Care")"
+                    data-label-pay="@CatalogLocalizer.Loc($"Pagar {AppMoney.Format(price)}", $"Pay {AppMoney.Format(price)}")"
                     data-label-pick="@CatalogLocalizer.Loc("Acepta términos y alcance para pagar", "Accept terms and scope to pay")"
                     data-label-need-pay="@CatalogLocalizer.Loc("Agrega un método de pago", "Add a payment method")">
                 @CatalogLocalizer.Loc("Acepta términos y alcance para pagar", "Accept terms and scope to pay")

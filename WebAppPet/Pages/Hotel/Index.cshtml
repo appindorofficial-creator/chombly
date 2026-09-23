@@ -182,7 +182,7 @@
                                     <span class="muted small">@item.DistanceLabel</span>
                                 }
                             </div>
-                            <div class="price">@L["Home_FromPrice"] $@item.StartingNight.ToString("0") @CatalogLocalizer.Text("/ noche")</div>
+                            <div class="price">@L["Home_FromPrice"] @AppMoney.Format(item.StartingNight) @CatalogLocalizer.Text("/ noche")</div>
                             <div class="hotel-feats">
                                 @foreach (var feat in item.Features)
                                 {
@@ -255,7 +255,7 @@
                                 }
                             </span>
                             <span class="muted small">
-                                +$@displayPrice.ToString("0.##")
+                                +@AppMoney.Format(displayPrice)
                                 @if (isMeds && medsQty > 1)
                                 {
                                     <text> · @medsQty</text>

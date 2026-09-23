@@ -31,11 +31,13 @@ public class DashboardModel : GroomerPageModel
         OpenWeekDays = await Db.WeeklyHours.CountAsync(h => h.GroomerId == Profile.Id && h.IsOpen);
         ServiceCount = await Db.Services.CountAsync(s => s.GroomerId == Profile.Id);
 
-        var today = DateTime.Today;
+        var todayLocal = AppTimeZones.TodayLocalDate();
+        var todayStartUtc = AppTimeZones.LocalDateAndTimeToUtc(todayLocal, TimeSpan.Zero);
+        var tomorrowStartUtc = AppTimeZones.LocalDateAndTimeToUtc(todayLocal.AddDays(1), TimeSpan.Zero);
         var completedToday = await Db.Appointments
             .Where(a => a.GroomerId == Profile.Id
                 && a.Status == AppointmentStatus.Completed
-                && a.ScheduledAt >= today && a.ScheduledAt < today.AddDays(1))
+                && a.ScheduledAt >= todayStartUtc && a.ScheduledAt < tomorrowStartUtc)
             .ToListAsync();
 
         TodayIncome = completedToday.Sum(a => a.TotalPrice);
@@ -44,10 +46,11 @@ public class DashboardModel : GroomerPageModel
         PendingCount = await Db.Appointments
             .CountAsync(a => a.GroomerId == Profile.Id && a.Status == AppointmentStatus.Pending);
 
+        var nowUtc = DateTime.UtcNow;
         UpcomingCount = await Db.Appointments
             .CountAsync(a => a.GroomerId == Profile.Id
                 && a.Status == AppointmentStatus.Confirmed
-                && a.ScheduledAt >= DateTime.Now);
+                && a.ScheduledAt >= nowUtc);
 
         Upcoming = await Db.Appointments
             .Include(a => a.Pet)
@@ -55,7 +58,7 @@ public class DashboardModel : GroomerPageModel
             .Include(a => a.Client)
             .Where(a => a.GroomerId == Profile.Id
                 && (a.Status == AppointmentStatus.Confirmed || a.Status == AppointmentStatus.Pending)
-                && a.ScheduledAt >= DateTime.Now.AddHours(-2))
+                && a.ScheduledAt >= nowUtc.AddHours(-2))
             .OrderBy(a => a.ScheduledAt)
             .Take(6)
             .ToListAsync();

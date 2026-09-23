@@ -111,7 +111,7 @@ else
                             }
                         </span>
                         <span class="detail-service-meta">
-                            <span class="price">@L["Home_FromPrice"] $@s.PriceSmall.ToString("0")@CatalogLocalizer.Text(Model.UnitLabel(s.BillingUnit))</span>
+                            <span class="price">@L["Home_FromPrice"] @AppMoney.Format(s.PriceSmall)@CatalogLocalizer.Text(Model.UnitLabel(s.BillingUnit))</span>
                             <span class="detail-service-cta" aria-hidden="true">@L["Common_Book"] ›</span>
                         </span>
                     </a>
@@ -136,7 +136,7 @@ else
                                 <div class="muted small">@CatalogLocalizer.Text(e.Description)</div>
                             }
                         </div>
-                        <span class="price">+$@e.Price.ToString("0")</span>
+                        <span class="price">+@AppMoney.Format(e.Price)</span>
                     </div>
                 }
             }

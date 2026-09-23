@@ -17,7 +17,7 @@
         @if (Model.HasCareBenefit)
         {
             <div class="vet-matches-price vet-matches-price-care" role="status">
-                <strong>@CatalogLocalizer.Loc("Membresía Care · $0", "Care membership · $0")</strong>
+                <strong>@CatalogLocalizer.Loc($"Membresía Care · {AppMoney.Format(0)}", $"Care membership · {AppMoney.Format(0)}")</strong>
                 <p class="muted small mb-0">
                     @CatalogLocalizer.Loc(
                         $"Tu consulta rápida va incluida ({Model.CareRemaining} restante este ciclo).",
@@ -28,7 +28,7 @@
         else
         {
             <div class="vet-matches-price" role="status">
-                <strong>@CatalogLocalizer.Loc("Desde", "From") · $@Model.ConsultPrice.ToString("0.##")</strong>
+                <strong>@CatalogLocalizer.Loc("Desde", "From") · @AppMoney.Format(Model.ConsultPrice)</strong>
                 <p class="muted small mb-0">
                     @CatalogLocalizer.Loc("30 min · el precio final depende del veterinario. Care incluye 1 por ciclo.", "30 min · final price depends on the veterinarian. Care includes 1 per cycle.")
                     <a asp-page="/Plans/ChomblyCare" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Ver Care", "See Care")</a>
@@ -78,11 +78,11 @@
                             </div>
                             @if (Model.HasCareBenefit)
                             {
-                                <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc("Care · $0", "Care · $0")</span>
+                                <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc($"Care · {AppMoney.Format(0)}", $"Care · {AppMoney.Format(0)}")</span>
                             }
                             else
                             {
-                                <span class="vet-match-badge">$@m.Price.ToString("0.##")</span>
+                                <span class="vet-match-badge">@AppMoney.Format(m.Price)</span>
                             }
                         </div>
                         <p class="vet-match-langs muted small mb-0">

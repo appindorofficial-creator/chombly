@@ -110,7 +110,7 @@ public class AppointmentsModel : GroomerPageModel
             {
                 UserId = appt.ClientId,
                 Title = title,
-                Message = $"{appt.Groomer.BusinessName} {messageSuffix} ({appt.ScheduledAt:g}).",
+                Message = $"{appt.Groomer.BusinessName} {messageSuffix} ({AppTimeZones.FormatShort(appt.ScheduledAt)}).",
                 Type = "appointment"
             });
             await Db.SaveChangesAsync();

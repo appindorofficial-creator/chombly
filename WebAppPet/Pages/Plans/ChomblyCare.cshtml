@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Chombly Care";
     var price = Model.CatalogItem?.Price ?? 14.99m;
-    var priceLabel = price.ToString("0.00");
+    var priceFmt = AppMoney.Format(price);
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Model.BackHref;
     var careReturn = Url.Page("/Plans/ChomblyCare", new { consultationId = Model.ConsultationId, returnUrl = Model.ReturnUrl })
@@ -44,7 +44,7 @@
         <section class="care-plan-hero" aria-label="Chombly Care">
             <div class="care-plan-price-row">
                 <p class="care-plan-price">
-                    $@priceLabel<span class="care-plan-price-unit">@CatalogLocalizer.Loc("/mes", "/mo")</span>
+                    @priceFmt<span class="care-plan-price-unit">@CatalogLocalizer.Loc("/mes", "/mo")</span>
                 </p>
                 <span class="care-plan-badge">@CatalogLocalizer.Loc("Cancelas cuando quieras", "Cancel anytime")</span>
             </div>
@@ -73,7 +73,7 @@
                 <ul>
                     @if (MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
                     {
-                        <li>@CatalogLocalizer.Loc("Consulta local ($70) ni medicamentos", "Local consult ($70) or medication")</li>
+                        <li>@CatalogLocalizer.Loc($"Consulta local ({AppMoney.Format(70m)}) ni medicamentos", $"Local consult ({AppMoney.Format(70m)}) or medication")</li>
                     }
                     <li>@CatalogLocalizer.Loc("Costos de la clínica de urgencias (los cobra el negocio)", "Emergency clinic fees (charged by the clinic)")</li>
                     @if (MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
@@ -148,8 +148,8 @@
                     <input type="checkbox" asp-for="AcceptRenewal" data-care-renewal />
                     <span>
                         @CatalogLocalizer.Loc(
-                            $"Autorizo el cobro simulado de ${priceLabel}/mes con renovación automática hasta cancelar.",
-                            $"I authorize the simulated ${priceLabel}/mo charge with auto-renewal until I cancel.")
+                            $"Autorizo el cobro simulado de {priceFmt}/mes con renovación automática hasta cancelar.",
+                            $"I authorize the simulated {priceFmt}/mo charge with auto-renewal until I cancel.")
                     </span>
                 </label>
 
@@ -165,7 +165,7 @@
                 <button type="submit" class="btn btn-primary btn-block btn-lg care-plan-submit"
                         data-terms-submit
                         disabled="@(Model.AcceptTerms && Model.AcceptRenewal ? null : "disabled")">
-                    @CatalogLocalizer.Loc($"Suscribirme por ${priceLabel}/mes", $"Subscribe for ${priceLabel}/mo")
+                    @CatalogLocalizer.Loc($"Suscribirme por {priceFmt}/mes", $"Subscribe for {priceFmt}/mo")
                 </button>
             </form>
         }

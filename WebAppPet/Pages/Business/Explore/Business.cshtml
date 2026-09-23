@@ -82,7 +82,7 @@
             {
                 <div class="card card-pad" style="margin-bottom:8px">
                     <strong>@CatalogLocalizer.Text(s.Name)</strong>
-                    <div class="muted small">$@s.Price.ToString("0") / @CatalogLocalizer.Text(s.Unit)</div>
+                    <div class="muted small">@AppMoney.Format(s.Price) / @CatalogLocalizer.Text(s.Unit)</div>
                 </div>
             }
         </section>

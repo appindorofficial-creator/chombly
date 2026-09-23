@@ -10,7 +10,7 @@
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow">
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Veterinario local", "Local veterinarian")</h1>
-        <p class="muted small">$@price.ToString("0.##") · 30 min · @Model.Consultation?.PetUsState</p>
+        <p class="muted small">@AppMoney.Format(price) · 30 min · @Model.Consultation?.PetUsState</p>
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger">@Model.ErrorMessage</div>

@@ -269,5 +269,41 @@ public class AvailabilityService
 
         if (missingIds.Count > 0 || erIds.Count > 0)
             await _db.SaveChangesAsync(ct);
+
+        // Weekly hours alone do not open booking days — generate the rolling agenda when missing.
+        await EnsureUpcomingDayAgendaAsync(ct);
+    }
+
+    /// <summary>
+    /// For each active business with weekly hours but no day rows in the next 30 days,
+    /// generate 60 days from the weekly template (does not overwrite existing day overrides).
+    /// </summary>
+    public async Task EnsureUpcomingDayAgendaAsync(CancellationToken ct = default)
+    {
+        var start = AppTimeZones.TodayLocalDate();
+        var end = start.AddDays(30);
+
+        var needy = await _db.Groomers.AsNoTracking()
+            .Where(g => g.IsActive)
+            .Where(g => _db.WeeklyHours.Any(h => h.GroomerId == g.Id))
+            .Where(g => !_db.DayAvailabilities.Any(d => d.GroomerId == g.Id && d.Day >= start && d.Day < end))
+            .Select(g => g.Id)
+            .ToListAsync(ct);
+
+        foreach (var id in needy)
+            await GenerateFromWeeklyAsync(id, days: 60, replaceExisting: false);
+    }
+
+    /// <summary>Generate agenda if this business has weekly hours but no upcoming day rows.</summary>
+    public async Task EnsureUpcomingDayAgendaForAsync(int groomerId, CancellationToken ct = default)
+    {
+        var start = AppTimeZones.TodayLocalDate();
+        var end = start.AddDays(30);
+        var hasWeek = await _db.WeeklyHours.AsNoTracking().AnyAsync(h => h.GroomerId == groomerId, ct);
+        if (!hasWeek) return;
+        var hasDays = await _db.DayAvailabilities.AsNoTracking()
+            .AnyAsync(d => d.GroomerId == groomerId && d.Day >= start && d.Day < end, ct);
+        if (hasDays) return;
+        await GenerateFromWeeklyAsync(groomerId, days: 60, replaceExisting: false);
     }
 }

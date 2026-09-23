@@ -154,7 +154,7 @@
                             }
                         </div>
                         <div class="muted small">@CatalogLocalizer.Text(item.AvailabilityLabel)</div>
-                        <div class="price">@CatalogLocalizer.Loc("Desde", "From") $@item.UnitPrice.ToString("0") <span class="muted small">@CatalogLocalizer.Text("/ sesión")</span></div>
+                        <div class="price">@CatalogLocalizer.Loc("Desde", "From") @AppMoney.Format(item.UnitPrice) <span class="muted small">@CatalogLocalizer.Text("/ sesión")</span></div>
                     </div>
                 </div>
                 @{
@@ -214,9 +214,9 @@
                 }
                 <div class="summary-total" style="margin-top:8px">
                     <span>@CatalogLocalizer.Loc("Total estimado", "Estimated total")</span>
-                    <strong>$@Model.Estimate.ToString("0")</strong>
+                    <strong>@AppMoney.Format(Model.Estimate)</strong>
                 </div>
-                <p class="muted small">$@Model.UnitPrice.ToString("0") × @Model.Sessions @CatalogLocalizer.Loc("sesiones", "sessions")</p>
+                <p class="muted small">@AppMoney.Format(Model.UnitPrice) × @Model.Sessions @CatalogLocalizer.Loc("sesiones", "sessions")</p>
             </div>
 
             <h3 class="section-title">@CatalogLocalizer.Loc("10. Notas para el entrenador", "10. Notes for the trainer") <span class="muted small">@CatalogLocalizer.Loc("(opcional)", "(optional)")</span></h3>
@@ -262,8 +262,8 @@
         PaymentHeadingEn = "Payment method",
         DefaultPayment = Model.DefaultPayment,
         AcceptTerms = Model.AcceptTerms,
-        SubmitLabelEs = $"Confirmar reserva · ${Model.Estimate:0}",
-        SubmitLabelEn = $"Confirm booking · ${Model.Estimate:0}",
+        SubmitLabelEs = $"Confirmar reserva · {AppMoney.Format(Model.Estimate)}",
+        SubmitLabelEn = $"Confirm booking · {AppMoney.Format(Model.Estimate)}",
         HiddenFields =
         [
             new BookingSummaryHidden { Name = "Need", Value = Model.Need },

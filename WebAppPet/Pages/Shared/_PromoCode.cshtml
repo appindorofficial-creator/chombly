@@ -34,11 +34,11 @@
         <div class="promo-discount-lines" aria-live="polite">
             <div class="promo-line">
                 <span>@L["Promo_Subtotal"]</span>
-                <span>$@subtotal.ToString("0")</span>
+                <span>@AppMoney.Format(subtotal)</span>
             </div>
             <div class="promo-line promo-discount">
                 <span>@normalized</span>
-                <span>−$@discount.ToString("0")</span>
+                <span>−@AppMoney.Format(discount)</span>
             </div>
         </div>
     }

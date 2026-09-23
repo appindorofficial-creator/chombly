@@ -70,16 +70,16 @@ else
         </p>
         @if (a.Extras.Any())
         {
-            <p><strong>@CatalogLocalizer.Loc("Extras", "Extras"):</strong> @string.Join(", ", a.Extras.Select(e => $"{CatalogLocalizer.Text(e.Name)} (+${e.Price:0})"))</p>
+            <p><strong>@CatalogLocalizer.Loc("Extras", "Extras"):</strong> @string.Join(", ", a.Extras.Select(e => $"{CatalogLocalizer.Text(e.Name)} (+{AppMoney.Format(e.Price)})"))</p>
         }
         @if (a.DiscountAmount > 0 && !string.IsNullOrEmpty(a.PromoCode))
         {
             <p class="promo-line promo-discount">
                 <strong>@string.Format(L["Promo_DiscountLine"].Value, a.PromoCode)</strong>
-                <span class="price">−$@a.DiscountAmount.ToString("0.00")</span>
+                <span class="price">−@AppMoney.Format(a.DiscountAmount)</span>
             </p>
         }
-        <p><strong>@CatalogLocalizer.Loc("Total", "Total"):</strong> <span class="price">$@a.TotalPrice.ToString("0.00")</span></p>
+        <p><strong>@CatalogLocalizer.Loc("Total", "Total"):</strong> <span class="price">@AppMoney.Format(a.TotalPrice)</span></p>
         @if (CatalogLocalizer.HasCustomerNotes(a.Notes))
         {
             <p><strong>@CatalogLocalizer.Loc("Notas", "Notes"):</strong> @CatalogLocalizer.Notes(a.Notes)</p>

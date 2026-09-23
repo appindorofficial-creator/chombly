@@ -74,7 +74,7 @@
                         <div class="muted small">@(a.Groomer?.BusinessName)</div>
                         <div class="muted small">@AppTimeZones.FormatDate(a.ScheduledAt)</div>
                     </div>
-                    <span class="price">$@a.TotalPrice.ToString("0")</span>
+                    <span class="price">@AppMoney.Format(a.TotalPrice)</span>
                 </div>
             </div>
         }

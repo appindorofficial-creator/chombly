@@ -32,11 +32,11 @@
                 </div>
                 @if (Model.UsingCare)
                 {
-                    <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc("Care · $0", "Care · $0")</span>
+                    <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc($"Care · {AppMoney.Format(0)}", $"Care · {AppMoney.Format(0)}")</span>
                 }
                 else if (c != null)
                 {
-                    <span class="vet-match-badge">$@c.PriceCharged.ToString("0.##")</span>
+                    <span class="vet-match-badge">@AppMoney.Format(c.PriceCharged)</span>
                 }
             </div>
 

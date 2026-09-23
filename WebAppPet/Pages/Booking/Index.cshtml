@@ -155,7 +155,7 @@
                             <div class="muted small">@CatalogLocalizer.Text(Model.SelectedService.Description)</div>
                         }
                     </div>
-                    <span class="price">@L["Home_FromPrice"] $@Model.SelectedService.PriceSmall.ToString("0")</span>
+                    <span class="price">@L["Home_FromPrice"] @AppMoney.Format(Model.SelectedService.PriceSmall)</span>
                 </div>
             }
             else
@@ -187,7 +187,7 @@
                                 <strong>@CatalogLocalizer.Text(s.Name)</strong>
                                 <div class="muted small">@CatalogLocalizer.Text(s.Description)</div>
                             </div>
-                            <span class="price">@L["Home_FromPrice"] $@s.PriceSmall.ToString("0")</span>
+                            <span class="price">@L["Home_FromPrice"] @AppMoney.Format(s.PriceSmall)</span>
                         </div>
                     </label>
                 }
@@ -250,7 +250,7 @@
                 @foreach (var e in Model.Extras)
                 {
                     <label class="toggle-row" style="cursor:pointer">
-                        <span>@CatalogLocalizer.Text(e.Name) <span class="price">+$@e.Price.ToString("0")</span></span>
+                        <span>@CatalogLocalizer.Text(e.Name) <span class="price">+@AppMoney.Format(e.Price)</span></span>
                         <input type="checkbox" name="SelectedExtraIds" value="@e.Id"
                                @(Model.SelectedExtraIds.Contains(e.Id) ? "checked" : "") />
                     </label>

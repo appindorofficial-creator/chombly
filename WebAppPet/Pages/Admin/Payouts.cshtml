@@ -34,7 +34,7 @@
             <strong>@(p.ProviderUser?.FullName ?? $"User #{p.ProviderUserId}")</strong>
             <span class="muted small" style="display:block">
                 @AppTimeZones.FormatDate(p.PeriodStart) – @AppTimeZones.FormatDate(p.PeriodEnd)
-                · @p.ConsultationCount ítems · Net $@p.NetAmountUsd.ToString("0.00")
+                · @p.ConsultationCount ítems · Net @AppMoney.Format(p.NetAmountUsd)
             </span>
             <form method="post" asp-page-handler="MarkPaid" style="margin-top:8px">
                 <input type="hidden" name="id" value="@p.Id" />
@@ -49,7 +49,7 @@
         <div class="card card-pad" style="margin-bottom:8px">
             <strong>@p.Status</strong> · @(p.ProviderUser?.FullName ?? $"#{p.ProviderUserId}")
             <span class="muted small" style="display:block">
-                Net $@p.NetAmountUsd.ToString("0.00")
+                Net @AppMoney.Format(p.NetAmountUsd)
                 @if (p.PaidUtc is DateTime paid) { <text>· @AppTimeZones.FormatShort(paid)</text> }
                 @if (!string.IsNullOrEmpty(p.ExternalReference)) { <text>· @p.ExternalReference</text> }
             </span>

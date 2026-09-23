@@ -65,7 +65,7 @@
                                 <div class="muted small">@AppTimeZones.FormatShort(a.ScheduledAt)</div>
                                 <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
                             </div>
-                            <span class="price">$@a.TotalPrice.ToString("0")</span>
+                            <span class="price">@AppMoney.Format(a.TotalPrice)</span>
                         </div>
                     </a>
                 }

@@ -26,6 +26,8 @@ public class OnboardingModel : PageModel
     public BusinessMarket Market { get; set; } = BusinessMarket.Unknown;
     public string? MarketLabel { get; set; }
     public List<TrackCard> Tracks { get; set; } = new();
+    /// <summary>False for grooming/hotel/walkers/etc. — vet/behavior tracks only.</summary>
+    public bool ProfessionalTracksApply { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -36,6 +38,7 @@ public class OnboardingModel : PageModel
             return RedirectToPage("/Account/RegisterBusiness");
 
         var profile = await _db.Groomers.AsNoTracking()
+            .Include(g => g.Category)
             .FirstOrDefaultAsync(g => g.UserId == _auth.CurrentUserId);
         HasBusinessProfile = profile is not null;
         if (!HasBusinessProfile)
@@ -52,37 +55,85 @@ public class OnboardingModel : PageModel
             BusinessMarket.UnitedStates => CatalogLocalizer.Loc("Estados Unidos", "United States"),
             _ => null
         };
-        Tracks = BuildTracks(Market);
+
+        var offeredSlugs = await ResolveOfferedSlugsAsync(profile!);
+        ProfessionalTracksApply = NeedsProfessionalTrack(profile!, offeredSlugs);
+        Tracks = ProfessionalTracksApply
+            ? BuildTracks(Market, profile!, offeredSlugs)
+            : [];
         return Page();
     }
 
-    private static List<TrackCard> BuildTracks(BusinessMarket market)
+    private async Task<HashSet<string>> ResolveOfferedSlugsAsync(GroomerProfile profile)
     {
-        var usLocal = new TrackCard(
-            Page: "/Professional/Onboarding/Local",
-            Track: null,
-            Icon: "🇺🇸",
-            TitleEs: "Veterinario EE.UU.",
-            TitleEn: "US veterinarian",
-            BodyEs: "Licencia estatal, clínica y VCPR.",
-            BodyEn: "State license, clinic, and VCPR.",
-            Emphasized: market == BusinessMarket.UnitedStates);
+        var ids = profile.GetOfferedCategoryIds();
+        if (ids.Count == 0) return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var slugs = await _db.Categories.AsNoTracking()
+            .Where(c => ids.Contains(c.Id))
+            .Select(c => c.Slug)
+            .ToListAsync();
+        return slugs.Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
 
-        var colombiaLocal = new TrackCard(
-            Page: "/Professional/Onboarding/International",
-            Track: null,
-            Icon: "🇨🇴",
-            TitleEs: "Veterinario en Colombia",
-            TitleEn: "Veterinarian in Colombia",
-            BodyEs: "País, idiomas y expertise. Sin licencia US / VCPR.",
-            BodyEn: "Country, languages, and expertise. No US license / VCPR.",
-            Emphasized: market == BusinessMarket.Colombia);
+    private static bool NeedsProfessionalTrack(GroomerProfile profile, HashSet<string> offeredSlugs)
+    {
+        if (profile.VetProviderKind != VetProviderKind.None)
+            return true;
+        return offeredSlugs.Contains("vet") || offeredSlugs.Contains("trainers");
+    }
 
-        return market switch
+    /// <summary>Vet/behavior tracks gated by market and what the business actually offers.</summary>
+    private static List<TrackCard> BuildTracks(BusinessMarket market, GroomerProfile profile, HashSet<string> offeredSlugs)
+    {
+        var tracks = new List<TrackCard>();
+        var isVet = profile.VetProviderKind is VetProviderKind.LocalVet or VetProviderKind.InternationalAdvisor
+            || offeredSlugs.Contains("vet");
+        var isBehavior = profile.VetProviderKind == VetProviderKind.BehaviorSpecialist
+            || offeredSlugs.Contains("trainers");
+
+        if (isVet)
         {
-            BusinessMarket.UnitedStates => new List<TrackCard> { usLocal, colombiaLocal },
-            _ => new List<TrackCard> { colombiaLocal, usLocal }
-        };
+            if (market == BusinessMarket.UnitedStates)
+            {
+                tracks.Add(new TrackCard(
+                    Page: "/Professional/Onboarding/Local",
+                    Track: null,
+                    Icon: "🇺🇸",
+                    TitleEs: "Veterinario EE.UU.",
+                    TitleEn: "US veterinarian",
+                    BodyEs: "Licencia estatal, clínica y VCPR.",
+                    BodyEn: "State license, clinic, and VCPR.",
+                    Emphasized: true));
+            }
+            else
+            {
+                tracks.Add(new TrackCard(
+                    Page: "/Professional/Onboarding/International",
+                    Track: null,
+                    Icon: "🇨🇴",
+                    TitleEs: "Veterinario en Colombia",
+                    TitleEn: "Veterinarian in Colombia",
+                    BodyEs: "País, idiomas y expertise. Sin licencia US / VCPR.",
+                    BodyEn: "Country, languages, and expertise. No US license / VCPR.",
+                    Emphasized: true));
+            }
+        }
+
+        if (isBehavior)
+        {
+            tracks.Add(new TrackCard(
+                Page: "/Professional/Onboarding/Local",
+                Track: "behavior",
+                Icon: "🧠",
+                TitleEs: "Conducta / entrenamiento",
+                TitleEn: "Behavior / training",
+                BodyEs: "Credenciales y enfoque educativo (no diagnóstico médico).",
+                BodyEn: "Credentials and educational focus (not a medical diagnosis).",
+                Emphasized: !isVet));
+        }
+
+        return tracks;
     }
 
     public record TrackCard(

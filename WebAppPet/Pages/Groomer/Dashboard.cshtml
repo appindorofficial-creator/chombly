@@ -66,8 +66,8 @@
 
     <div class="promo-banner" style="margin-top:0">
         <div style="flex:1">
-            <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos de hoy", "Today's earnings")</span>
-            <strong style="font-size:1.6rem">$@Model.TodayIncome.ToString("0.00")</strong>
+            <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos de hoy", "Today's earnings") · @AppMoney.CodeLabel()</span>
+            <strong style="font-size:1.6rem">@AppMoney.Format(Model.TodayIncome)</strong>
             <span class="small">@Model.TodayCompleted @CatalogLocalizer.Loc("citas completadas", "completed bookings")</span>
         </div>
     </div>
@@ -96,7 +96,7 @@
                 <div style="flex:1">
                     <strong>@a.Pet.Name · @CatalogLocalizer.Text(a.Service.Name)</strong>
                     <div class="muted small">@a.Client.FullName</div>
-                    <div class="muted small">@a.ScheduledAt.ToString("ddd d MMM · h:mm tt")</div>
+                    <div class="muted small">@AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("ddd d MMM · h:mm tt")</div>
                 </div>
                 <span class="badge @(a.Status == AppointmentStatus.Confirmed ? "badge-green" : "badge-orange")">
                     @(a.Status == AppointmentStatus.Confirmed ? L["Appt_Status_Confirmed"].Value : L["Appt_Status_Pending"].Value)

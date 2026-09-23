@@ -34,6 +34,7 @@ public class AvailabilityModel : GroomerPageModel
     public async Task<IActionResult> OnGetAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
+        await _availability.EnsureUpcomingDayAgendaForAsync(Profile!.Id);
         await LoadAsync();
         return Page();
     }
@@ -123,7 +124,7 @@ public class AvailabilityModel : GroomerPageModel
         }).ToList();
         EnsureWeekLabels(WeekEdit);
 
-        var start = DateTime.Today;
+        var start = AppTimeZones.TodayLocalDate();
         Days = await Db.DayAvailabilities
             .Where(a => a.GroomerId == Profile!.Id && a.Day >= start && a.Day < start.AddDays(30))
             .OrderBy(a => a.Day)

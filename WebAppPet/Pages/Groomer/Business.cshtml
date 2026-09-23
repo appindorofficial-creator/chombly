@@ -218,7 +218,7 @@
             {
                 <article class="biz-item-card">
                     <strong>@CatalogLocalizer.Text(s.Name)</strong>
-                    <div class="muted small">@L["Common_From"] $@s.PriceSmall · @CatalogLocalizer.Text(s.BillingUnit)</div>
+                    <div class="muted small">@L["Common_From"] @AppMoney.Format(s.PriceSmall) · @CatalogLocalizer.Text(s.BillingUnit)</div>
                 </article>
             }
         </div>
@@ -258,7 +258,7 @@
             {
                 <article class="biz-item-card biz-item-card--row">
                     <strong>@CatalogLocalizer.Text(e.Name)</strong>
-                    <span class="price">+$@e.Price.ToString("0.##")</span>
+                    <span class="price">+@AppMoney.Format(e.Price)</span>
                 </article>
             }
         </div>

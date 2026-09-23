@@ -94,6 +94,17 @@ public class BusinessModel : GroomerPageModel
         g.City = City.Trim();
         g.Latitude = Latitude;
         g.Longitude = Longitude;
+        // Keep user home market + license country aligned with location (same as family).
+        var user = await Db.Users.FirstOrDefaultAsync(u => u.Id == g.UserId);
+        if (user != null)
+        {
+            MarketCountry.ApplyFromLocation(user, g.City, g.Latitude, g.Longitude);
+            g.LicenseCountry = user.CountryCode;
+        }
+        else
+        {
+            g.LicenseCountry = MarketCountry.ResolveFromLocation(g.City, g.Latitude, g.Longitude);
+        }
         g.About = About.Trim();
         if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
         {

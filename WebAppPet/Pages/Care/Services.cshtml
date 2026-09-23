@@ -4,6 +4,9 @@
     ViewData["Title"] = CatalogLocalizer.Loc("¿Qué ayuda necesitas?", "What help do you need?");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
+    var intlPrice = AppMoney.Format(30m);
+    var carePrice = AppMoney.Format(14.99m);
+    var behaviorPrice = AppMoney.Format(55m);
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -25,20 +28,20 @@
             <a class="vet-modality-card vet-modality-btn" asp-page="/Vet/International/Home">
                 <span class="vet-modality-icon" aria-hidden="true">🌍</span>
                 <strong>@CatalogLocalizer.Loc("Veterinario como en casa", "Vet like at home")</strong>
-                <span class="muted small">@CatalogLocalizer.Loc("País, raza e idioma · $30 o Care", "Country, breed & language · $30 or Care")</span>
+                <span class="muted small">@CatalogLocalizer.Loc($"País, raza e idioma · {intlPrice} o Care", $"Country, breed & language · {intlPrice} or Care")</span>
             </a>
 
             <a class="vet-modality-card vet-modality-btn" asp-page="/Plans/ChomblyCare" asp-route-returnUrl="/Care/Services">
                 <span class="vet-modality-icon" aria-hidden="true">💚</span>
                 <strong>Chombly Care</strong>
-                <span class="muted small">@CatalogLocalizer.Loc("Plan de orientación y bienestar $14.99/mes — no es seguro", "Guidance & wellness $14.99/mo — not insurance")</span>
+                <span class="muted small">@CatalogLocalizer.Loc($"Plan de orientación y bienestar {carePrice}/mes — no es seguro", $"Guidance & wellness {carePrice}/mo — not insurance")</span>
             </a>
 
             <form method="post" asp-page-handler="StartBehavior" class="vet-modality-card">
                 <button type="submit" class="vet-modality-btn">
                     <span class="vet-modality-icon" aria-hidden="true">🧠</span>
                     <strong>@CatalogLocalizer.Loc("Comportamiento canino", "Dog behavior")</strong>
-                    <span class="muted small">@CatalogLocalizer.Loc("Adicional · evaluación y plan educativo · $55", "Extra · evaluation & educational plan · $55")</span>
+                    <span class="muted small">@CatalogLocalizer.Loc($"Adicional · evaluación y plan educativo · {behaviorPrice}", $"Extra · evaluation & educational plan · {behaviorPrice}")</span>
                 </button>
             </form>
         </div>

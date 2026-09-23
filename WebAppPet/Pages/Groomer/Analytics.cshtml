@@ -16,8 +16,8 @@
 
     <div class="promo-banner" style="margin-top:0">
         <div style="flex:1">
-            <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos del mes", "This month's earnings")</span>
-            <strong style="font-size:1.6rem">$@Model.MonthIncome.ToString("0.00")</strong>
+            <span class="small" style="opacity:.85">@CatalogLocalizer.Loc("Ingresos del mes", "This month's earnings") · @AppMoney.CodeLabel()</span>
+            <strong style="font-size:1.6rem">@AppMoney.Format(Model.MonthIncome)</strong>
         </div>
     </div>
 

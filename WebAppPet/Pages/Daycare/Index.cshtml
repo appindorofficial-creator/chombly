@@ -146,7 +146,7 @@
                                 }
                             </div>
                         }
-                        <div class="price">$@item.StartingPrice.ToString("0") <span class="muted small">@item.PriceUnitLabel</span></div>
+                        <div class="price">@AppMoney.Format(item.StartingPrice) <span class="muted small">@item.PriceUnitLabel</span></div>
                     </div>
                 </div>
                 @{
@@ -203,7 +203,7 @@
             }
             <div class="summary-total" style="margin-top:8px">
                 <span>@CatalogLocalizer.Loc("Total estimado", "Estimated total")</span>
-                <strong>$@Model.Estimate.ToString("0")</strong>
+                <strong>@AppMoney.Format(Model.Estimate)</strong>
             </div>
         </div>
 
@@ -232,7 +232,7 @@
                 {
                     var on = Model.ExtraIds.Contains(e.Id);
                     <label class="toggle-row" style="cursor:pointer">
-                        <span>@CatalogLocalizer.Text(e.Name) <span class="price">+$@e.Price.ToString("0")</span></span>
+                        <span>@CatalogLocalizer.Text(e.Name) <span class="price">+@AppMoney.Format(e.Price)</span></span>
                         <input type="checkbox" name="ExtraIds" value="@e.Id" @(on ? "checked" : "") />
                     </label>
                 }
@@ -283,8 +283,8 @@
         PaymentHeadingEn = "Payment method",
         DefaultPayment = Model.DefaultPayment,
         AcceptTerms = Model.AcceptTerms,
-        SubmitLabelEs = $"Confirmar reserva · ${Model.Estimate:0}",
-        SubmitLabelEn = $"Confirm booking · ${Model.Estimate:0}",
+        SubmitLabelEs = $"Confirmar reserva · {AppMoney.Format(Model.Estimate)}",
+        SubmitLabelEn = $"Confirm booking · {AppMoney.Format(Model.Estimate)}",
         HiddenFields =
         [
             new BookingSummaryHidden { Name = "When", Value = Model.When },

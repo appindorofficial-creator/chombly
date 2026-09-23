@@ -91,8 +91,8 @@
                         · @p.ConsultationCount @L["Payout_Items"]
                     </span>
                     <span class="muted small" style="display:block">
-                        @CatalogLocalizer.Loc("Bruto", "Gross") $@p.GrossAmountUsd.ToString("0.00") · @CatalogLocalizer.Loc("Comisión", "Comm") $@p.CommissionAmountUsd.ToString("0.00")
-                        · <strong class="price-tag">@CatalogLocalizer.Loc("Neto", "Net") $@p.NetAmountUsd.ToString("0.00")</strong>
+                        @CatalogLocalizer.Loc("Bruto", "Gross") @AppMoney.Format(p.GrossAmountUsd) · @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.Format(p.CommissionAmountUsd)
+                        · <strong class="price-tag">@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.Format(p.NetAmountUsd)</strong>
                     </span>
                     @if (!string.IsNullOrEmpty(p.ExternalReference))
                     {

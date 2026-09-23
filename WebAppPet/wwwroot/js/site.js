@@ -1,4 +1,4 @@
-﻿// Chombly site helpers
+// Chombly site helpers
 (function () {
   function sanitizePhone(value) {
     // Solo dígitos, máx. 10 (número local)

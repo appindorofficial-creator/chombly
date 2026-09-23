@@ -5,6 +5,8 @@
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
     var hasPet = !string.IsNullOrWhiteSpace(Model.PetName) || !string.IsNullOrWhiteSpace(Model.PetBreed);
+    var intlPrice = AppMoney.Format(30m);
+    var carePrice = AppMoney.Format(14.99m);
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -20,7 +22,7 @@
         <section class="intl-home-hero" aria-label="@CatalogLocalizer.Loc("Orientación internacional", "International guidance")">
             <div class="intl-home-price-row">
                 <p class="intl-home-price">
-                    $30<span class="intl-home-price-unit">@CatalogLocalizer.Loc("/consulta", "/consult")</span>
+                    @intlPrice<span class="intl-home-price-unit">@CatalogLocalizer.Loc("/consulta", "/consult")</span>
                 </p>
                 <span class="intl-home-badge">@CatalogLocalizer.Loc("O incluida en Care", "Or included in Care")</span>
             </div>
@@ -101,7 +103,7 @@
 
         <p class="muted small center intl-home-care-link">
             <a asp-page="/Plans/ChomblyCare" asp-route-returnUrl="/Vet/International/Home">
-                @CatalogLocalizer.Loc("Ver Chombly Care ($14,99/mes)", "See Chombly Care ($14.99/mo)")
+                @CatalogLocalizer.Loc($"Ver Chombly Care ({carePrice}/mes)", $"See Chombly Care ({carePrice}/mo)")
             </a>
         </p>
     </div>

@@ -33,12 +33,12 @@
             <p style="margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
                 @if (Model.UsingCare)
                 {
-                    <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc("Care · $0", "Care · $0")</span>
-                    <span class="muted small">$@price.ToString("0.##") · 30 min</span>
+                    <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc($"Care · {AppMoney.Format(0)}", $"Care · {AppMoney.Format(0)}")</span>
+                    <span class="muted small">@AppMoney.Format(price) · 30 min</span>
                 }
                 else
                 {
-                    <span class="vet-match-badge">$@price.ToString("0.##") · 30 min</span>
+                    <span class="vet-match-badge">@AppMoney.Format(price) · 30 min</span>
                 }
             </p>
         </div>

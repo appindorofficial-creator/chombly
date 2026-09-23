@@ -6,18 +6,28 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding");
     ViewData["GroomerTab"] = "onboarding";
     ViewData["LangCompact"] = true;
-    var lead = Model.Market switch
+    string lead;
+    if (!Model.ProfessionalTracksApply)
     {
-        BusinessMarket.Colombia => CatalogLocalizer.Loc(
-            "Detectamos tu negocio en Colombia. Elige: veterinario en Colombia o EE.UU.",
-            "We detected your business in Colombia. Choose: veterinarian in Colombia or the US."),
-        BusinessMarket.UnitedStates => CatalogLocalizer.Loc(
-            "Detectamos tu negocio en EE.UU. Elige: veterinario EE.UU. o Colombia.",
-            "We detected your business in the US. Choose: US or Colombia veterinarian."),
-        _ => CatalogLocalizer.Loc(
-            "Elige tu trayectoria: Veterinario en Colombia o Veterinario EE.UU.",
-            "Choose your track: Veterinarian in Colombia or US veterinarian.")
-    };
+        lead = CatalogLocalizer.Loc(
+            "Tu tipo de negocio no requiere incorporación veterinaria ni de conducta. El perfil público se gestiona en Negocio y Agenda.",
+            "Your business type does not need veterinary or behavior onboarding. Manage your public profile under Business and Schedule.");
+    }
+    else
+    {
+        lead = Model.Market switch
+        {
+            BusinessMarket.Colombia => CatalogLocalizer.Loc(
+                "Detectamos tu negocio en Colombia. Elige la incorporación que corresponde a tu servicio.",
+                "We detected your business in Colombia. Choose the onboarding that matches your service."),
+            BusinessMarket.UnitedStates => CatalogLocalizer.Loc(
+                "Detectamos tu negocio en EE.UU. Elige la incorporación que corresponde a tu servicio.",
+                "We detected your business in the US. Choose the onboarding that matches your service."),
+            _ => CatalogLocalizer.Loc(
+                "Continúa con la incorporación profesional según tu mercado y categoría.",
+                "Continue professional onboarding for your market and category.")
+        };
+    }
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -33,20 +43,34 @@
         </p>
     }
 
-    <div class="vet-modality-grid">
-        @foreach (var t in Model.Tracks)
-        {
-            <a class="vet-modality-card @(t.Emphasized ? "is-primary-track" : "")"
-               asp-page="@t.Page"
-               asp-route-track="@t.Track">
-                <div class="vet-modality-btn">
-                    <span class="vet-modality-icon">@t.Icon</span>
-                    <strong>@CatalogLocalizer.Loc(t.TitleEs, t.TitleEn)</strong>
-                    <span class="muted small">@CatalogLocalizer.Loc(t.BodyEs, t.BodyEn)</span>
-                </div>
-            </a>
-        }
-    </div>
+    @if (Model.Tracks.Count > 0)
+    {
+        <div class="vet-modality-grid">
+            @foreach (var t in Model.Tracks)
+            {
+                <a class="vet-modality-card @(t.Emphasized ? "is-primary-track" : "")"
+                   asp-page="@t.Page"
+                   asp-route-track="@t.Track">
+                    <div class="vet-modality-btn">
+                        <span class="vet-modality-icon">@t.Icon</span>
+                        <strong>@CatalogLocalizer.Loc(t.TitleEs, t.TitleEn)</strong>
+                        <span class="muted small">@CatalogLocalizer.Loc(t.BodyEs, t.BodyEn)</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="status" style="margin-top:8px">
+            @CatalogLocalizer.Loc(
+                "Si también ofreces veterinaria o conducta, actívalo en Negocio → Categorías y vuelve aquí.",
+                "If you also offer veterinary or behavior services, enable it under Business → Categories and return here.")
+        </div>
+        <p style="margin-top:12px">
+            <a class="btn btn-primary btn-block" asp-page="/Groomer/Business">@CatalogLocalizer.Loc("Ir a Negocio", "Go to Business")</a>
+        </p>
+    }
 
     <p style="margin-top:16px">
         <a class="btn btn-outline btn-block" asp-page="/Professional/Onboarding/Status">@CatalogLocalizer.Loc("Ver estado de solicitud", "View application status")</a>

@@ -132,7 +132,7 @@
                         <span>@(item.DistanceLabel ?? (string.IsNullOrEmpty(g.City) ? g.Address : g.City))</span>
                         @if (g.StartingPrice > 0)
                         {
-                            <span class="price">@L["Home_FromPrice"] $@g.StartingPrice.ToString("0")@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
+                            <span class="price">@L["Home_FromPrice"] @AppMoney.Format(g.StartingPrice)@(string.IsNullOrEmpty(g.PriceUnit) ? "" : $" {CatalogLocalizer.Text(g.PriceUnit)}")</span>
                         }
                     </div>
                     @if (item.AvailableToday)

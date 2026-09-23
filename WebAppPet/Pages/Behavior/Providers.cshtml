@@ -16,10 +16,10 @@
     <div class="home-body hotel-flow">
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Reservar especialista", "Reserve specialist")</h1>
         <p class="muted small">
-            $@price.ToString("0.##")
+            @AppMoney.Format(price)
             @if (petCount > 1)
             {
-                <text> · @petCount @CatalogLocalizer.Loc("mascotas", "pets") · $@unit.ToString("0.##") @CatalogLocalizer.Loc("c/u", "each")</text>
+                <text> · @petCount @CatalogLocalizer.Loc("mascotas", "pets") · @AppMoney.Format(unit) @CatalogLocalizer.Loc("c/u", "each")</text>
             }
             · @CatalogLocalizer.Loc("servicio separado del plan Care", "separate from Care plan")
         </p>
@@ -102,7 +102,7 @@
                                 {
                                     <div class="muted small">@p.City</div>
                                 }
-                                <div class="price">$@unit.ToString("0") <span class="muted small">/ @CatalogLocalizer.Loc("sesión", "session")</span></div>
+                                <div class="price">@AppMoney.Format(unit) <span class="muted small">/ @CatalogLocalizer.Loc("sesión", "session")</span></div>
                             </div>
                         </div>
                         @{
@@ -187,7 +187,7 @@
 
             <button type="submit" class="btn btn-primary btn-block" data-terms-submit
                     disabled="@((!canConfirm || !Model.AcceptTerms) ? "disabled" : null)">
-                @CatalogLocalizer.Loc($"Confirmar · ${price:0.##}", $"Confirm · ${price:0.##}")
+                @CatalogLocalizer.Loc($"Confirmar · {AppMoney.Format(price)}", $"Confirm · {AppMoney.Format(price)}")
             </button>
             <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>
         </form>
