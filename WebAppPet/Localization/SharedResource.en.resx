@@ -519,6 +519,10 @@
   <data name="Search_EnableLocation" xml:space="preserve"><value>Enable location to see distances.</value></data>
   <data name="Search_UseMyLocation" xml:space="preserve"><value>Use my location</value></data>
   <data name="Search_LocationFail" xml:space="preserve"><value>Could not get your location.</value></data>
+  <data name="Search_LocationDenied" xml:space="preserve"><value>Turn on location permission in the browser or phone Settings.</value></data>
+  <data name="Search_LocationTimeout" xml:space="preserve"><value>Location timed out. Try again outdoors or with a stronger signal.</value></data>
+  <data name="Profile_LocationRefreshFailKeep" xml:space="preserve"><value>Couldn't refresh GPS right now. We'll keep using your saved location.</value></data>
+  <data name="Profile_UpdateLocation" xml:space="preserve"><value>Update location</value></data>
 
   <data name="Book_WhenNeeded" xml:space="preserve"><value>When do you need the service?</value></data>
   <data name="Book_Today" xml:space="preserve"><value>Today</value></data>

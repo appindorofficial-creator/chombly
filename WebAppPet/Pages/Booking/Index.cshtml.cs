@@ -42,6 +42,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int ServiceId { get; set; }
 
+    /// <summary>Selected catalog services (multi-select). Drives ServiceId primary for the appointment FK.</summary>
+    [BindProperty(SupportsGet = true)]
+    public List<int> ServiceIds { get; set; } = new();
+
     [BindProperty(SupportsGet = true)]
     public int PetId { get; set; }
 
@@ -98,6 +102,7 @@ public class IndexModel : PageModel
     public string? HoursLabel { get; private set; }
 
     public GroomerService? SelectedService { get; set; }
+    public List<GroomerService> SelectedServices { get; set; } = new();
     public Pet? SelectedPet { get; set; }
     public List<Pet> SelectedPets { get; set; } = new();
     public List<ServiceExtra> SelectedExtras { get; set; } = new();
@@ -120,13 +125,17 @@ public class IndexModel : PageModel
 
     public string BookingReturnPath =>
         $"/Booking/Index?groomerId={GroomerId}"
-        + (ServiceId > 0 ? $"&serviceId={ServiceId}" : "")
+        + string.Concat(ServiceIds.Select(id => $"&ServiceIds={id}"))
+        + (ServiceId > 0 && ServiceIds.Count == 0 ? $"&serviceId={ServiceId}" : "")
         + (!string.IsNullOrWhiteSpace(Service) ? $"&service={Uri.EscapeDataString(Service)}" : "")
         + string.Concat(PetIds.Select(id => $"&PetIds={id}"))
         + (PetId > 0 && PetIds.Count == 0 ? $"&petId={PetId}" : "")
         + (!string.IsNullOrWhiteSpace(Date) ? $"&date={Uri.EscapeDataString(Date)}" : "")
         + (!string.IsNullOrWhiteSpace(Time) ? $"&time={Uri.EscapeDataString(Time)}" : "")
         + (!string.IsNullOrWhiteSpace(EndDate) ? $"&endDate={Uri.EscapeDataString(EndDate)}" : "");
+
+    public string SelectedServicesLabel =>
+        string.Join(", ", SelectedServices.Select(s => CatalogLocalizer.Text(s.Name)));
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -137,9 +146,14 @@ public class IndexModel : PageModel
         if (Groomer == null) return RedirectToPage("/Groomers/Index");
 
         ApplyServicePreselect();
+        NormalizeSelectedServices();
         if (ServiceId == 0 && Services.Count == 1)
+        {
             ServiceId = Services[0].Id;
-        ServiceLocked = ServiceId > 0 && Services.Any(s => s.Id == ServiceId);
+            NormalizeSelectedServices();
+        }
+        // Only lock the picker when the business offers a single service.
+        ServiceLocked = Services.Count == 1 && SelectedServices.Count == 1;
 
         NormalizeSelectedPets();
 
@@ -162,6 +176,8 @@ public class IndexModel : PageModel
         if (Groomer == null) return RedirectToPage("/Groomers/Index");
 
         ApplyServicePreselect();
+        NormalizeSelectedServices();
+        ServiceLocked = Services.Count == 1 && SelectedServices.Count == 1;
         NormalizeSelectedPets();
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
@@ -180,9 +196,13 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (SelectedService == null || SelectedPets.Count == 0)
+        if (SelectedServices.Count == 0 || SelectedPets.Count == 0)
         {
-            ErrorMessage = SelectedPets.Count == 0 && Pets.Count > 0
+            ErrorMessage = SelectedServices.Count == 0 && Services.Count > 0
+                ? CatalogLocalizer.Loc(
+                    "Elige al menos un servicio para continuar.",
+                    "Choose at least one service to continue.")
+                : SelectedPets.Count == 0 && Pets.Count > 0
                 ? CatalogLocalizer.Loc(
                     "Elige al menos una mascota para continuar.",
                     "Choose at least one pet to continue.")
@@ -258,7 +278,10 @@ public class IndexModel : PageModel
         }
 
         var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+        var serviceNames = SelectedServicesLabel;
         var noteParts = new List<string>();
+        if (SelectedServices.Count > 1)
+            noteParts.Add(CatalogLocalizer.Loc($"Servicios: {serviceNames}", $"Services: {serviceNames}"));
         // Multi-pet only: primary pet is already on Appointment.PetId / Confirm "Mascota".
         if (SelectedPets.Count > 1)
             noteParts.Add(CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"));
@@ -303,7 +326,7 @@ public class IndexModel : PageModel
         {
             UserId = Groomer.UserId,
             Title = "Nueva solicitud de reserva",
-            Message = $"{petNames} · {SelectedService.Name}.",
+            Message = $"{petNames} · {serviceNames}.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync();
@@ -318,6 +341,8 @@ public class IndexModel : PageModel
 
         await LoadAsync();
         ApplyServicePreselect();
+        NormalizeSelectedServices();
+        ServiceLocked = Services.Count == 1 && SelectedServices.Count == 1;
         NormalizeSelectedPets();
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
@@ -355,6 +380,24 @@ public class IndexModel : PageModel
             ServiceId = partial.Id;
     }
 
+    private void NormalizeSelectedServices()
+    {
+        ServiceIds ??= new List<int>();
+        var offered = Services.Select(s => s.Id).ToHashSet();
+
+        if (ServiceIds.Count == 0 && ServiceId > 0 && offered.Contains(ServiceId))
+            ServiceIds.Add(ServiceId);
+
+        ServiceIds = ServiceIds.Where(offered.Contains).Distinct().ToList();
+
+        if (ServiceIds.Count == 0 && Services.Count == 1)
+            ServiceIds.Add(Services[0].Id);
+
+        SelectedServices = Services.Where(s => ServiceIds.Contains(s.Id)).ToList();
+        ServiceId = SelectedServices.FirstOrDefault()?.Id ?? 0;
+        SelectedService = SelectedServices.FirstOrDefault();
+    }
+
     private async Task LoadAsync()
     {
         Groomer = await _db.Groomers
@@ -386,7 +429,8 @@ public class IndexModel : PageModel
 
     private async Task PrepareConfirmAsync(bool applyPromo)
     {
-        SelectedService = await _db.Services.FirstOrDefaultAsync(s => s.Id == ServiceId);
+        SelectedService = SelectedServices.FirstOrDefault()
+            ?? await _db.Services.FirstOrDefaultAsync(s => s.Id == ServiceId);
         // SelectedPets already normalized from owned pets; keep SelectedPet as primary.
         SelectedPet = SelectedPets.FirstOrDefault();
         SelectedExtras = Extras.Where(e => SelectedExtraIds.Contains(e.Id)).ToList();
@@ -398,7 +442,7 @@ public class IndexModel : PageModel
         Deposit = 0;
         PromoError = null;
 
-        if (SelectedService == null || SelectedPets.Count == 0)
+        if (SelectedServices.Count == 0 || SelectedPets.Count == 0)
             return;
 
         var nights = 1;
@@ -408,7 +452,8 @@ public class IndexModel : PageModel
             Nights = nights;
         }
 
-        Subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * nights);
+        Subtotal = SelectedPets.Sum(p =>
+            SelectedServices.Sum(s => s.PriceFor(p.Size) * nights));
         Subtotal += SelectedExtras.Sum(e => e.Price);
         EstimatedTotal = Subtotal;
 
@@ -457,7 +502,7 @@ public class IndexModel : PageModel
 
     private void EvaluateCanShowSummary()
     {
-        CanShowSummary = SelectedService != null && SelectedPets.Count > 0;
+        CanShowSummary = SelectedServices.Count > 0 && SelectedPets.Count > 0;
         if (!CanShowSummary) return;
 
         if (IsOvernight)

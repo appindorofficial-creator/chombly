@@ -1010,7 +1010,15 @@
         form.querySelectorAll('input[type="checkbox"][name="PetIds"]:checked'),
         function (el) { return String(el.value || ''); }
       ).sort().join(',');
-      return [hasDateRow, hasCustomTime, hasPetError, filterCount, pastOrBusy, petCount, petId, petIds].join(':');
+      var serviceIds = Array.prototype.map.call(
+        form.querySelectorAll('input[type="checkbox"][name="ServiceIds"]:checked'),
+        function (el) { return String(el.value || ''); }
+      ).sort().join(',');
+      // Choosing a provider (Walkers/Trainers/…) lives after the results anchor; include it so
+      // soft-nav rebuilds the hidden groomerId that Continuar/Pay depends on.
+      var gidEl = form.querySelector('input[name="groomerId"], input[name="GroomerId"]');
+      var groomerId = gidEl ? String(gidEl.value || '') : '';
+      return [hasDateRow, hasCustomTime, hasPetError, filterCount, pastOrBusy, petCount, petId, petIds, serviceIds, groomerId].join(':');
     }
 
     function replaceRangeBefore(parent, stopNode, nextNodes) {
@@ -1052,6 +1060,22 @@
         else curInput.removeAttribute('max');
         curInput.value = nextInput.value || '';
       });
+      // Provider selection hidden (Walkers / Trainers / Hotel / Daycare / Booking)
+      Array.prototype.forEach.call(
+        nextForm.querySelectorAll('input[type="hidden"][name="groomerId"], input[type="hidden"][name="GroomerId"]'),
+        function (nextInput) {
+          var curInput = curForm.querySelector(
+            'input[name="' + String(nextInput.name).replace(/"/g, '\\"') + '"]'
+          );
+          if (!curInput) {
+            curInput = document.createElement('input');
+            curInput.type = 'hidden';
+            curInput.name = nextInput.name;
+            curForm.appendChild(curInput);
+          }
+          curInput.value = nextInput.value || '';
+        }
+      );
       // Occupied / disabled time slots without rebuilding the whole form
       Array.prototype.forEach.call(nextForm.querySelectorAll('.when-chip'), function (nextLab) {
         var input = nextLab.querySelector('input[type="radio"]');
@@ -1113,6 +1137,18 @@
         curInput.disabled = !!nextInput.disabled;
         var curLab = curInput.closest('label.behavior-pet-row, label.hotel-pet-pick');
         var nextLab = nextInput.closest('label.behavior-pet-row, label.hotel-pet-pick');
+        if (curLab && nextLab) curLab.className = nextLab.className;
+      });
+
+      // Booking multi-service cards
+      Array.prototype.forEach.call(nextForm.querySelectorAll('input[type="checkbox"][name="ServiceIds"]'), function (nextInput) {
+        var curInput = curForm.querySelector(
+          'input[type="checkbox"][name="ServiceIds"][value="' + String(nextInput.value).replace(/"/g, '\\"') + '"]'
+        );
+        if (!curInput) return;
+        curInput.checked = !!nextInput.checked;
+        var curLab = curInput.closest('label.radio-card');
+        var nextLab = nextInput.closest('label.radio-card');
         if (curLab && nextLab) curLab.className = nextLab.className;
       });
 
@@ -1204,6 +1240,29 @@
 
     function applySoftHotelFlow(cur, next) {
       var y = window.scrollY || window.pageYOffset || 0;
+      // Entering/leaving full-page checkout changes the whole tree (filter form ↔ pay form).
+      // Partial slice swaps can leave a truncated pay screen on mobile.
+      var curCheckout = cur.classList && cur.classList.contains('is-checkout');
+      var nextCheckout = next.classList && next.classList.contains('is-checkout');
+      if (curCheckout !== nextCheckout) {
+        var hCheckout = cur.getBoundingClientRect().height;
+        if (hCheckout > 0) cur.style.minHeight = Math.ceil(hCheckout) + 'px';
+        var importedCheckout = document.importNode(next, true);
+        reuseImages(cur, importedCheckout);
+        cur.replaceWith(importedCheckout);
+        try { window.scrollTo(0, 0); } catch (_) { }
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(function () {
+            window.scrollTo(0, 0);
+            importedCheckout.style.minHeight = '';
+          });
+        } else {
+          importedCheckout.style.minHeight = '';
+        }
+        rebindAfterSoftReplace(importedCheckout);
+        return importedCheckout;
+      }
+
       var curForm = cur.querySelector('form[id$="-filter-form"]') || cur.querySelector('form');
       var nextForm = next.querySelector('form[id$="-filter-form"]') || next.querySelector('form');
       var curStartInForm = resultsStartNode(curForm);
@@ -1424,6 +1483,32 @@
 
           e.preventDefault();
           e.stopImmediatePropagation();
+
+          // Sticky sheet often has the authoritative GroomerId/Notes when soft-nav left the
+          // filter form's hidden groomerId stale (provider chosen after the results anchor).
+          var sticky = flow.querySelector('[data-checkout-sticky], [data-hotel-summary]');
+          if (sticky) {
+            sticky.querySelectorAll('input[type="hidden"]').forEach(function (h) {
+              if (!h.name) return;
+              var key = h.name;
+              if (key !== 'GroomerId' && key !== 'groomerId' && key !== 'Notes' && key !== 'Duration' && key !== 'Slot' && key !== 'Date')
+                return;
+              var formName = key === 'GroomerId' ? 'groomerId' : key;
+              var existing = form.querySelector(
+                '[name="' + formName + '"], [name="' + key + '"]'
+              );
+              if (existing) {
+                if (!existing.value || existing.value === '0' || key === 'Notes')
+                  existing.value = h.value || '';
+              } else if (h.value) {
+                var inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = formName;
+                inp.value = h.value;
+                form.appendChild(inp);
+              }
+            });
+          }
 
           var pay = form.querySelector('input[name="Pay"], input[name="pay"]');
           if (!pay) {

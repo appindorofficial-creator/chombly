@@ -122,7 +122,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadAsync();
-        if (Pay && !(GroomerId.HasValue && SelectedPet != null && HasDate && HasSlot))
+        if (Pay && !(GroomerId.HasValue && SelectedPet != null && HasDate && HasSlot && HasDuration))
             Pay = false;
         return Page();
     }

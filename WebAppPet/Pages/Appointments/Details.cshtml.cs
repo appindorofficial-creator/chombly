@@ -100,7 +100,6 @@ public class DetailsModel : PageModel
         var referer = Request.Headers.Referer.ToString();
         if (Uri.TryCreate(referer, UriKind.Absolute, out var uri)
             && string.Equals(uri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase)
-            && !uri.AbsolutePath.Contains("/Appointments/Details", StringComparison.OrdinalIgnoreCase)
             && TryLocalPath(uri.PathAndQuery, out var fromReferer))
         {
             return fromReferer;
@@ -119,7 +118,14 @@ public class DetailsModel : PageModel
             return false;
         if (!Url.IsLocalUrl(value))
             return false;
-        if (value.Contains("/Appointments/Details", StringComparison.OrdinalIgnoreCase))
+
+        var pathOnly = value.Split('?', 2)[0];
+        // Never bounce Details ↔ Chat; both should exit toward the appointments list.
+        if (pathOnly.Contains("/Appointments/Details", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (pathOnly.Equals("/Chat", StringComparison.OrdinalIgnoreCase)
+            || pathOnly.Equals("/Chat/Index", StringComparison.OrdinalIgnoreCase)
+            || pathOnly.StartsWith("/Chat/", StringComparison.OrdinalIgnoreCase))
             return false;
 
         path = value;

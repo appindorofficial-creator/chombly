@@ -3795,7 +3795,14 @@ body.chat-layout .chat-page {
   /* Sticky bar (~88px) + gap + bottom nav + safe area */
   padding-bottom: calc(var(--nav-h, 68px) + 100px + env(safe-area-inset-bottom, 0px));
 }
-.hotel-flow.is-checkout { padding-bottom: 24px; }
+/* Room to scroll past iOS Safari bottom chrome so terms + confirm stay reachable. */
+.hotel-flow.is-checkout {
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+}
+.home-body.no-nav.is-checkout,
+.hotel-flow.no-nav.is-checkout {
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+}
 
 .checkout-sticky {
   position: fixed;
@@ -3861,7 +3868,32 @@ body.chat-layout .chat-page {
 .checkout-page {
   display: grid;
   gap: 12px;
-  padding-bottom: 28px;
+  /* Extra scroll room under sticky confirm (Safari toolbar + home indicator). */
+  padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+.checkout-page .card,
+.checkout-page .checkout-card,
+.checkout-page .checkout-hero,
+.checkout-page .checkout-form {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+/* Label above input so "Código promocional" + Aplicar never blow past the phone width. */
+.checkout-page .promo-code-row {
+  flex-wrap: wrap;
+}
+.checkout-page .promo-code-label {
+  flex: 1 0 100%;
+}
+.checkout-page .promo-code-row .form-control {
+  flex: 1 1 0;
+  width: auto !important;
+  max-width: 100%;
 }
 .checkout-hero .checkout-merchant {
   display: flex;
@@ -3898,25 +3930,34 @@ body.chat-layout .chat-page {
   gap: 10px;
 }
 .checkout-line {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
+  min-width: 0;
 }
 .checkout-line:last-child { border-bottom: 0; padding-bottom: 0; }
-.checkout-line span { color: var(--muted); font-size: .9rem; }
-.checkout-line strong { text-align: right; font-size: .95rem; }
+.checkout-line span { color: var(--muted); font-size: .9rem; min-width: 0; overflow-wrap: anywhere; }
+.checkout-line strong { text-align: right; font-size: .95rem; min-width: 0; overflow-wrap: anywhere; }
 .checkout-pay-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
 }
 .checkout-pay-card {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.checkout-pay-card strong,
+.checkout-pay-card .muted {
+  overflow-wrap: anywhere;
 }
 .checkout-pay-ico {
   width: 40px;
@@ -3933,17 +3974,34 @@ body.chat-layout .chat-page {
   gap: 12px;
   margin-bottom: 8px;
   font-size: 1.05rem;
+  min-width: 0;
+  width: 100%;
+}
+.checkout-total-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .checkout-total-row strong {
+  flex: 0 0 auto;
   font-size: 1.35rem;
   color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
+/* Stick above the home indicator; generous page padding lets iOS Safari scroll past the toolbar. */
 .checkout-submit-bar {
   position: sticky;
   bottom: 0;
-  padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(180deg, rgba(255,255,255,0), #fff 35%);
-  z-index: 5;
+  z-index: 40;
+  margin: 0;
+  padding: 12px 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 32%, #fff 100%);
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.checkout-submit-bar .btn {
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Booking: short form — don't reserve ~full viewport under the sheet. */

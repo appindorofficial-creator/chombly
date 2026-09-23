@@ -536,6 +536,10 @@
   <data name="Search_EnableLocation" xml:space="preserve"><value>Activa ubicación para ver distancias.</value></data>
   <data name="Search_UseMyLocation" xml:space="preserve"><value>Usar mi ubicación</value></data>
   <data name="Search_LocationFail" xml:space="preserve"><value>No se pudo obtener la ubicación.</value></data>
+  <data name="Search_LocationDenied" xml:space="preserve"><value>Activa el permiso de ubicación en el navegador o en Ajustes del teléfono.</value></data>
+  <data name="Search_LocationTimeout" xml:space="preserve"><value>La ubicación tardó demasiado. Intenta de nuevo al aire libre o con mejor señal.</value></data>
+  <data name="Profile_LocationRefreshFailKeep" xml:space="preserve"><value>No pudimos actualizar el GPS ahora. Seguimos usando tu ubicación guardada.</value></data>
+  <data name="Profile_UpdateLocation" xml:space="preserve"><value>Actualizar ubicación</value></data>
 
   <data name="Book_WhenNeeded" xml:space="preserve"><value>¿Cuándo necesitas el servicio?</value></data>
   <data name="Book_Today" xml:space="preserve"><value>Hoy</value></data>

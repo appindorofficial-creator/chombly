@@ -2,15 +2,20 @@
 @model WebAppPet.Pages.Appointments.DetailsModel
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Detalle de cita", "Appointment details");
-    ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Model.BackHref;
-    var HideNav = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = Model.BackHref;
+    var a = Model.Appointment;
+    var appointmentsList = Url.Page("/Appointments/Index") ?? "/Appointments";
+    // Chat must return here with an escape hatch to the list (never Chat↔Details only).
+    var chatReturnUrl = a == null
+        ? appointmentsList
+        : Url.Page("/Appointments/Details", new { id = a.Id, returnUrl = appointmentsList });
 }
-
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <div class="home-body">
     <h1 class="app-page-heading">@CatalogLocalizer.Loc("Detalle de cita", "Appointment details")</h1>
 @if (Model.Appointment == null)
 {
@@ -18,7 +23,7 @@
 }
 else
 {
-    var a = Model.Appointment;
+    a = Model.Appointment;
     <div class="card" style="margin-bottom:14px">
         @{
             var detailImg = !string.IsNullOrWhiteSpace(a.Groomer.ImageUrl)
@@ -81,7 +86,7 @@ else
         }
     </div>
 
-    <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@(Model.ReturnUrl ?? Url.Page("/Appointments/Details", new { id = a.Id }))">@CatalogLocalizer.Loc("Mensaje al negocio", "Message the business")</a>
+    <a class="btn btn-outline btn-block" asp-page="/Chat/Index" asp-route-groomerId="@a.GroomerId" asp-route-appointmentId="@a.Id" asp-route-returnUrl="@chatReturnUrl">@CatalogLocalizer.Loc("Mensaje al negocio", "Message the business")</a>
     @if (!string.IsNullOrEmpty(a.Groomer.Phone))
     {
         <a class="btn btn-outline btn-block" href="tel:@a.Groomer.Phone" style="margin-top:10px">@CatalogLocalizer.Loc("Contactar", "Contact")</a>
@@ -116,5 +121,5 @@ else
     }
 }
     </div>
-    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

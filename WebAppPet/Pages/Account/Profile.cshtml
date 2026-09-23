@@ -79,7 +79,7 @@
                 }
                 <div class="profile-actions">
                     <button type="button" class="btn profile-action-btn" id="btn-profile-loc">
-                        📍 @L["Search_UseMyLocation"]
+                        📍 @(Model.HasGpsLocation ? L["Profile_UpdateLocation"] : L["Search_UseMyLocation"])
                     </button>
                     <a class="btn profile-action-btn" asp-page="/Account/EditProfile">✏️ @L["Profile_Edit"]</a>
                 </div>
@@ -180,9 +180,21 @@
   if (!btn || !navigator.geolocation) return;
   var cityLine = document.getElementById('profile-city-line');
   var gpsStatus = document.getElementById('profile-gps-status');
+  var hadGps = @(Model.HasGpsLocation ? "true" : "false");
   var okMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Profile_LocationGpsOk"].Value));
   var failMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Search_LocationFail"].Value));
+  var deniedMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Search_LocationDenied"].Value));
+  var timeoutMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Search_LocationTimeout"].Value));
+  var keepMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Profile_LocationRefreshFailKeep"].Value));
   var updatedMsg = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(L["Profile_LocationUpdated"].Value));
+
+  function notify(msg, kind) {
+    if (window.ChomblyToast && typeof ChomblyToast.show === 'function') {
+      ChomblyToast.show(msg, { kind: kind || 'error' });
+      return;
+    }
+    alert(msg);
+  }
 
   function reverseCity(lat, lng) {
     return new Promise(function (resolve) {
@@ -212,6 +224,24 @@
     });
   }
 
+  function unlockBtn() {
+    btn.disabled = false;
+    btn.classList.remove('is-active');
+  }
+
+  function onGeoError(err) {
+    unlockBtn();
+    if (hadGps) {
+      // Already have saved coords — don't contradict the green "ready" status.
+      notify(keepMsg, 'info');
+      return;
+    }
+    var code = err && err.code;
+    if (code === 1) notify(deniedMsg, 'error');
+    else if (code === 3) notify(timeoutMsg, 'error');
+    else notify(failMsg, 'error');
+  }
+
   btn.addEventListener('click', function () {
     btn.disabled = true;
     btn.classList.add('is-active');
@@ -232,11 +262,10 @@
         });
         var data = await res.json().catch(function () { return {}; });
         if (!res.ok || !data.ok) {
-          alert(failMsg);
-          btn.disabled = false;
-          btn.classList.remove('is-active');
+          onGeoError(null);
           return;
         }
+        hadGps = true;
         if (cityLine && (data.city || city)) {
           var cityText = cityLine.querySelector('.profile-fact-value');
           if (cityText) cityText.textContent = data.city || city;
@@ -246,18 +275,15 @@
           gpsStatus.className = 'profile-loc-status is-ok';
           gpsStatus.innerHTML = '<span aria-hidden="true">✅</span><span>' + okMsg + '</span>';
         }
-        btn.disabled = false;
-        btn.classList.remove('is-active');
-        alert(updatedMsg);
+        unlockBtn();
+        notify(updatedMsg, 'success');
       } catch (_) {
-        alert(failMsg);
-        btn.disabled = false;
-        btn.classList.remove('is-active');
+        onGeoError(null);
       }
-    }, function () {
-      alert(failMsg);
-      btn.disabled = false;
-      btn.classList.remove('is-active');
+    }, onGeoError, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 120000
     });
   });
 })();

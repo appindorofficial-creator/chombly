@@ -43,8 +43,6 @@ public class IndexModel : PageModel
     /// <summary>Resolved href for the header back control.</summary>
     public string BackHref { get; private set; } = "/Chat/Inbox";
 
-    public bool UseHistoryBack { get; private set; }
-
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is not int userId)
@@ -98,7 +96,6 @@ public class IndexModel : PageModel
 
         // Stick a concrete returnUrl so post-redirect does not treat Chat as Referer.
         var stickyReturn = SafeLocalUrl(ReturnUrl)
-            ?? (UseHistoryBack ? BackHref : null)
             ?? SafeLocalUrl(BackHref)
             ?? Url.Page("/Chat/Inbox");
 
@@ -113,11 +110,11 @@ public class IndexModel : PageModel
 
     private void ResolveBackNavigation()
     {
-        UseHistoryBack = false;
-
         var localReturn = SafeLocalUrl(ReturnUrl);
-        if (localReturn != null)
+        if (localReturn != null && !IsChatIndexPath(localReturn))
         {
+            // Prefer an explicit return target (e.g. appointment details) — never history.back(),
+            // which traps users in a Details ↔ Chat history stack on mobile.
             BackHref = localReturn;
             return;
         }
@@ -132,11 +129,16 @@ public class IndexModel : PageModel
 
             if (!IsChatIndexPath(refererPath))
             {
-                // Same-host previous page (e.g. Details, Appointments) — use history when possible.
                 BackHref = refererPath;
-                UseHistoryBack = true;
                 return;
             }
+        }
+
+        if (AppointmentId is int apptId && apptId > 0)
+        {
+            BackHref = Url.Page("/Appointments/Details", new { id = apptId, returnUrl = Url.Page("/Appointments/Index") })
+                ?? "/Appointments";
+            return;
         }
 
         if (_auth.CurrentUserId is not null)

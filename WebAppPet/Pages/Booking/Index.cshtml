@@ -23,7 +23,7 @@
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow booking-flow @(showSticky ? "has-checkout-sticky" : "") @(showCheckout ? "is-checkout" : "") @(HideNav ? "no-nav" : "")">
 
-        @if (showCheckout && Model.Groomer != null && Model.SelectedService != null && Model.SelectedPet != null)
+        @if (showCheckout && Model.Groomer != null && Model.SelectedServices.Count > 0 && Model.SelectedPet != null)
         {
             <h1 class="app-page-heading">@CatalogLocalizer.Loc("Confirmar y pagar", "Confirm and pay")</h1>
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -37,7 +37,8 @@
             ViewData["PromoError"] = Model.PromoError;
             var multi = new List<BookingSummaryMultiHidden>
             {
-                new() { Name = "PetIds", Values = Model.PetIds.Select(id => id.ToString()) }
+                new() { Name = "PetIds", Values = Model.PetIds.Select(id => id.ToString()) },
+                new() { Name = "ServiceIds", Values = Model.ServiceIds.Select(id => id.ToString()) }
             };
             if (Model.SelectedExtraIds.Count > 0)
                 multi.Add(new BookingSummaryMultiHidden { Name = "SelectedExtraIds", Values = Model.SelectedExtraIds.Select(id => id.ToString()) });
@@ -49,6 +50,7 @@
                 ? CatalogLocalizer.Loc("Ninguno", "None")
                 : string.Join(", ", Model.SelectedExtras.Select(e => CatalogLocalizer.Text(e.Name)));
             var petSummary = string.Join(", ", Model.SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+            var servicesLabel = Model.SelectedServicesLabel;
 
             <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
             {
@@ -64,9 +66,15 @@
                 BusinessName = Model.Groomer.BusinessName,
                 ImageUrl = Model.Groomer.ImageUrl,
                 FallbackImage = "/images/pet-other.svg",
-                Subtitle = CatalogLocalizer.Text(Model.SelectedService.Name),
+                Subtitle = servicesLabel,
                 Lines =
                 [
+                    new BookingSummaryLine
+                    {
+                        LabelEs = Model.SelectedServices.Count == 1 ? "Servicio" : "Servicios",
+                        LabelEn = Model.SelectedServices.Count == 1 ? "Service" : "Services",
+                        Value = string.IsNullOrEmpty(servicesLabel) ? "—" : servicesLabel
+                    },
                     new BookingSummaryLine
                     {
                         LabelEs = Model.IsOvernight ? "Fechas" : "Fecha",
@@ -138,6 +146,7 @@
 
             @if (Model.ServiceLocked && Model.SelectedService != null)
             {
+                <input type="hidden" name="ServiceIds" value="@Model.ServiceId" />
                 <input type="hidden" name="serviceId" value="@Model.ServiceId" />
                 <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("1. Servicio", "1. Service")</h3>
                 <div class="card card-pad" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -153,15 +162,28 @@
             }
             else
             {
-                <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("1. Elige el servicio", "1. Choose a service")</h3>
+                <h3 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("1. Elige los servicios", "1. Choose services")</h3>
                 @if (!Model.Services.Any())
                 {
                     <div class="empty">@CatalogLocalizer.Loc("Este negocio aún no tiene servicios en la base de datos.", "This business has no services in the database yet.")</div>
                 }
+                else
+                {
+                    <p class="muted small" style="margin-top:-6px;margin-bottom:10px">
+                        @CatalogLocalizer.Loc("Activa uno o varios.", "Turn on one or more.")
+                        @if (Model.SelectedServices.Count > 0)
+                        {
+                            <span>· @Model.SelectedServices.Count @(Model.SelectedServices.Count == 1
+                                ? CatalogLocalizer.Loc("seleccionado", "selected")
+                                : CatalogLocalizer.Loc("seleccionados", "selected"))</span>
+                        }
+                    </p>
+                }
                 @foreach (var s in Model.Services)
                 {
+                    var on = Model.ServiceIds.Contains(s.Id);
                     <label class="radio-card">
-                        <input type="radio" name="serviceId" value="@s.Id" @(Model.ServiceId == s.Id ? "checked" : "") />
+                        <input type="checkbox" name="ServiceIds" value="@s.Id" @(on ? "checked" : null) />
                         <div class="inner">
                             <div>
                                 <strong>@CatalogLocalizer.Text(s.Name)</strong>
@@ -321,7 +343,7 @@
 
         <partial name="_TrustBanner" />
 
-            @if (showSticky && Model.Groomer != null && Model.SelectedService != null && Model.SelectedPet != null)
+            @if (showSticky && Model.Groomer != null && Model.SelectedServices.Count > 0 && Model.SelectedPet != null)
             {
                 <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
                 {
@@ -336,7 +358,7 @@
                     BusinessName = Model.Groomer.BusinessName,
                     ImageUrl = Model.Groomer.ImageUrl,
                     FallbackImage = "/images/pet-other.svg",
-                    Subtitle = CatalogLocalizer.Text(Model.SelectedService.Name),
+                    Subtitle = Model.SelectedServicesLabel,
                     Estimate = Model.EstimatedTotal,
                     DefaultPayment = Model.DefaultPayment,
                     AcceptTerms = Model.AcceptTerms,
