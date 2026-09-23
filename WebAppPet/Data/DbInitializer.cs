@@ -30,6 +30,8 @@ public static class DbInitializer
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
         await EnsureNeivaDemoProvidersAsync(db);
+        await EnsureThorPetCoverImageAsync(db);
+        await EnsureMissingUploadCoversAsync(db);
         await EnsureCanonicalGroomingServiceNamesAsync(db);
         await EnsureDaycareAcceptsCatsAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
@@ -1645,6 +1647,48 @@ public static class DbInitializer
             new[] { daycareId, trainersId }.Where(x => x.HasValue).Select(x => x!.Value).ToArray(),
             30000m, "/ servicio", "Baño y cepillado", "Estética y cuidado diario", 45, 30000m,
             imageSlug: "grooming", rating: 4.5, reviews: 33);
+    }
+
+    /// <summary>
+    /// THOR PET cover: illustrated white Persian cat (same flat style as category icons).
+    /// </summary>
+    private static async Task EnsureThorPetCoverImageAsync(AppDbContext db)
+    {
+        const string cover = "/images/biz/thor-pet-persian-white.png";
+        var thor = await db.Groomers.FirstOrDefaultAsync(g => g.BusinessName == "THOR PET");
+        if (thor == null) return;
+        if (string.Equals(thor.ImageUrl, cover, StringComparison.Ordinal)) return;
+        thor.ImageUrl = cover;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Clear ImageUrl when a /uploads/… file is missing on disk so listings use the category icon.
+    /// </summary>
+    private static async Task EnsureMissingUploadCoversAsync(AppDbContext db)
+    {
+        var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        if (!Directory.Exists(webRoot)) return;
+
+        var candidates = await db.Groomers
+            .Where(g => g.ImageUrl != null && g.ImageUrl.StartsWith("/uploads/"))
+            .ToListAsync();
+        if (candidates.Count == 0) return;
+
+        var changed = false;
+        foreach (var g in candidates)
+        {
+            var rel = g.ImageUrl!.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var full = Path.GetFullPath(Path.Combine(webRoot, rel));
+            if (!full.StartsWith(webRoot, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (File.Exists(full)) continue;
+            g.ImageUrl = null;
+            changed = true;
+        }
+
+        if (changed)
+            await db.SaveChangesAsync();
     }
 
     /// <summary>

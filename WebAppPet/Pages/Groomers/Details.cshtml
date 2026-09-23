@@ -13,8 +13,10 @@ else
 {
     var g = Model.Groomer;
     var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
+    var fallback = CatalogImages.Category(g.Category?.Slug);
     <div class="hero-photo">
-        <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+        <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName"
+             onerror="this.onerror=null;this.src='@fallback';" />
         <div class="actions">
             <a class="icon-btn"
                asp-page="./Index"

@@ -2,11 +2,13 @@
 @{
     var g = Model.Groomer;
     var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
+    var fallback = CatalogImages.Category(g.Category?.Slug);
 }
 <div class="groomer-card-wrap featured-card">
     <a class="groomer-card" asp-page="/Groomers/Details" asp-route-id="@g.Id">
         <span class="featured-thumb">
-            <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+            <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName"
+                 onerror="this.onerror=null;this.src='@fallback';" />
         </span>
         <div class="info">
             <h3>@g.BusinessName</h3>

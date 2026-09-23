@@ -104,9 +104,11 @@
         var g = item.Business;
         var isFav = Model.FavoriteIds.Contains(g.Id);
         var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);
+        var fallback = CatalogImages.Category(g.Category?.Slug);
         <div class="groomer-card-wrap">
             <a class="groomer-card" asp-page="./Details" asp-route-id="@g.Id" asp-route-service="@Model.Service">
-                <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName" />
+                <img src="~@thumb" asp-append-version="true" alt="@g.BusinessName"
+                     onerror="this.onerror=null;this.src='@fallback';" />
                 <div class="info">
                     <h3>@g.BusinessName</h3>
                     <div class="meta-row">
