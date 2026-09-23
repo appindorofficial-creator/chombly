@@ -1,81 +1,104 @@
 @page
 @model WebAppPet.Pages.Vet.International.MatchesModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Coincidencias", "Matches");
+    ViewData["Title"] = CatalogLocalizer.Loc("Veterinarios", "Veterinarians");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/Home", new { consultationId = Model.ConsultationId });
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Pet", new { consultationId = Model.ConsultationId, next = "intl" });
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Resultados de coincidencia", "Match results")</h1>
-        @if (!string.IsNullOrEmpty(Model.PreferredCountryName) || !string.IsNullOrEmpty(Model.Consultation?.PreferredBreed))
+    <div class="home-body hotel-flow vet-matches-page">
+        <header class="vet-matches-hero">
+            <p class="vet-matches-kicker">@CatalogLocalizer.Loc("Virtual", "Virtual")</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Elige veterinario", "Choose a veterinarian")</h1>
+            <p class="muted small">@CatalogLocalizer.Loc("Precio según el veterinario · luego agenda y pago.", "Price by veterinarian · then schedule and pay.")</p>
+        </header>
+
+        @if (Model.HasCareBenefit)
         {
-            <div class="intl-match-filters-bar" role="status">
-                <span class="intl-match-filters-bar-label">@CatalogLocalizer.Loc("Tus filtros", "Your filters")</span>
-                @if (!string.IsNullOrEmpty(Model.PreferredCountryName))
+            <div class="vet-matches-price vet-matches-price-care" role="status">
+                <strong>@CatalogLocalizer.Loc("Membresía Care · $0", "Care membership · $0")</strong>
+                <p class="muted small mb-0">
+                    @CatalogLocalizer.Loc(
+                        $"Tu consulta rápida va incluida ({Model.CareRemaining} restante este ciclo).",
+                        $"Your quick consult is included ({Model.CareRemaining} left this cycle).")
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="vet-matches-price" role="status">
+                <strong>@CatalogLocalizer.Loc("Desde", "From") · $@Model.ConsultPrice.ToString("0.##")</strong>
+                <p class="muted small mb-0">
+                    @CatalogLocalizer.Loc("30 min · el precio final depende del veterinario. Care incluye 1 por ciclo.", "30 min · final price depends on the veterinarian. Care includes 1 per cycle.")
+                    <a asp-page="/Plans/ChomblyCare" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Ver Care", "See Care")</a>
+                </p>
+            </div>
+        }
+
+        @if (Model.LanguageChips.Count > 0)
+        {
+            <div class="vet-matches-langs" role="group" aria-label="@CatalogLocalizer.Loc("Idioma", "Language")">
+                <span class="vet-matches-langs-label">@CatalogLocalizer.Loc("Idioma", "Language")</span>
+                @foreach (var chip in Model.LanguageChips)
                 {
-                    <span class="intl-match-filter-chip">@CatalogLocalizer.Loc("País preferido", "Preferred country"): <strong>@Model.PreferredCountryName</strong></span>
-                }
-                @if (!string.IsNullOrEmpty(Model.Consultation?.PreferredBreed))
-                {
-                    <span class="intl-match-filter-chip">@CatalogLocalizer.Loc("Raza", "Breed"): <strong>@Model.Consultation.PreferredBreed</strong></span>
+                    <a class="chip @(chip.Active ? "active" : "")"
+                       asp-page="/Vet/International/Matches"
+                       asp-route-consultationId="@Model.ConsultationId"
+                       asp-route-lang="@chip.Code">
+                        @chip.Label @if (chip.Count > 0) { <text>(@chip.Count)</text> }
+                    </a>
                 }
             </div>
         }
-    <p class="muted small" style="margin-bottom:12px">
-        <a asp-page="/Vet/International/Home" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Volver al inicio", "Back to start")</a>
-        ·
-        <a asp-page="/Vet/International/Countries" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("País", "Country")</a>
-        ·
-        <a asp-page="/Vet/International/BreedMatch" asp-route-consultationId="@Model.ConsultationId">@CatalogLocalizer.Loc("Raza", "Breed")</a>
-    </p>
 
-    @if (Model.Matches.Count == 0)
-    {
-        <p class="muted">
-            @if (!string.IsNullOrEmpty(Model.PreferredCountryName) || !string.IsNullOrEmpty(Model.Consultation?.PreferredBreed))
-            {
-                @CatalogLocalizer.Loc(
-                    "No hay profesionales que coincidan con tus filtros. Prueba otro país o raza.",
-                    "No professionals match your filters. Try another country or breed.")
-            }
-            else
-            {
-                @CatalogLocalizer.Loc("No hay profesionales internacionales disponibles.", "No international professionals available.")
-            }
-        </p>
-    }
-    else
-    {
-        @foreach (var m in Model.Matches)
+        @if (Model.Matches.Count == 0)
         {
-            <form method="post" asp-page-handler="Select" class="card card-pad" style="margin-bottom:10px">
-                <input type="hidden" name="consultationId" value="@Model.ConsultationId" />
-                <input type="hidden" name="providerId" value="@m.Provider.Id" />
-                <strong>@m.Provider.BusinessName</strong>
-                @if (!string.IsNullOrEmpty(m.CountryName))
-                {
-                    <span class="muted small" style="display:block">
-                        @CatalogLocalizer.Loc("Licenciado en", "Licensed in")
-                        <strong>@m.CountryName</strong>
-                        @if (!string.IsNullOrEmpty(m.Provider.LicenseCountry))
-                        {
-                            <text> (@m.Provider.LicenseCountry)</text>
-                        }
-                    </span>
-                }
-                <span class="muted small" style="display:block">@m.Why</span>
-                @if (m.VerifiedBreeds.Count > 0)
-                {
-                    <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Razas verificadas:", "Verified breeds:") @string.Join(", ", m.VerifiedBreeds)</span>
-                }
-                <button type="submit" class="btn btn-outline btn-block" style="margin-top:10px">
-                    @CatalogLocalizer.Loc("Ver perfil y continuar", "View profile & continue")
-                </button>
-            </form>
+            <p class="muted">@CatalogLocalizer.Loc("No hay veterinarios disponibles por ahora.", "No veterinarians available right now.")</p>
         }
-    }
+        else
+        {
+            <div class="vet-matches-list">
+                @foreach (var m in Model.Matches)
+                {
+                    <form method="post" asp-page-handler="Select" class="vet-match-card">
+                        <input type="hidden" name="consultationId" value="@Model.ConsultationId" />
+                        <input type="hidden" name="providerId" value="@m.Provider.Id" />
+                        <input type="hidden" name="lang" value="@Model.Lang" />
+                        <div class="vet-match-card-top">
+                            <div>
+                                <strong class="vet-match-name">@m.Provider.BusinessName</strong>
+                                <span class="muted small" style="display:block">
+                                    @if (!string.IsNullOrEmpty(m.CountryName))
+                                    {
+                                        @m.CountryName <text>· </text>
+                                    }
+                                    ★ @m.Provider.Rating.ToString("0.0")
+                                </span>
+                            </div>
+                            @if (Model.HasCareBenefit)
+                            {
+                                <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc("Care · $0", "Care · $0")</span>
+                            }
+                            else
+                            {
+                                <span class="vet-match-badge">$@m.Price.ToString("0.##")</span>
+                            }
+                        </div>
+                        <p class="vet-match-langs muted small mb-0">
+                            @CatalogLocalizer.Loc("Idiomas", "Languages"): <strong>@m.LanguagesDisplay</strong>
+                            @if (m.SpeaksUserLang)
+                            {
+                                <span class="vet-match-lang-ok"> · @CatalogLocalizer.Loc("coincide contigo", "matches you")</span>
+                            }
+                        </p>
+                        <button type="submit" class="btn btn-primary btn-block" style="margin-top:12px">
+                            @CatalogLocalizer.Loc("Elegir y ver agenda", "Choose & see schedule")
+                        </button>
+                    </form>
+                }
+            </div>
+        }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

@@ -11,12 +11,14 @@ public class EmergencyModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly ChomblyCareService _care;
     private readonly VetAuditService _audit;
 
-    public EmergencyModel(AppDbContext db, AuthService auth, VetAuditService audit)
+    public EmergencyModel(AppDbContext db, AuthService auth, ChomblyCareService care, VetAuditService audit)
     {
         _db = db;
         _auth = auth;
+        _care = care;
         _audit = audit;
     }
 
@@ -24,9 +26,16 @@ public class EmergencyModel : PageModel
     public int? ConsultationId { get; set; }
 
     public List<GroomerProfile> Clinics { get; set; } = new();
+    public bool HasCareMembership { get; set; }
 
     public async Task OnGetAsync()
     {
+        if (_auth.CurrentUserId is int uid)
+        {
+            var sub = await _care.GetActiveAsync(uid);
+            HasCareMembership = sub != null;
+        }
+
         Clinics = await _db.Groomers.AsNoTracking()
             .Include(g => g.Category)
             .Where(g => g.IsActive &&
@@ -63,6 +72,6 @@ public class EmergencyModel : PageModel
         }
 
         await _audit.LogAsync("escalated_emergency", _auth.CurrentUserId, "Consultation", ConsultationId,
-            new { clinics = Clinics.Count });
+            new { clinics = Clinics.Count, care = HasCareMembership });
     }
 }

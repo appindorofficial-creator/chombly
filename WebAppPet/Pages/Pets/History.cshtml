@@ -46,6 +46,13 @@
                         <strong>@VetDisplay.ConsultationTitle(c)</strong>
                         <div class="muted small">@VetDisplay.StatusLabel(c.Status)</div>
                         <div class="muted small">@AppTimeZones.FormatDate(VetDisplay.SortAt(c))</div>
+                        @if (!string.IsNullOrWhiteSpace(c.ClinicalNotes))
+                        {
+                            <div class="vet-history-note">
+                                <span class="muted small">@CatalogLocalizer.Loc("Nota del veterinario", "Vet note"):</span>
+                                @c.ClinicalNotes
+                            </div>
+                        }
                     </div>
                 </div>
             </a>

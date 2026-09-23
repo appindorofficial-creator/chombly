@@ -15,6 +15,7 @@ public static class DbInitializer
         // SQLite local DBs need additive columns before any Groomers queries.
         await EnsureSqliteExtraCategoryIdsAsync(db);
         await EnsureSqliteBehaviorExtraPetIdsAsync(db);
+        await EnsureSqliteUserCountryCodeAsync(db);
 
         // T-SQL ALTERs are SQL Server only (Azure / LocalDB upgrades).
         if (db.Database.IsSqlServer())
@@ -24,6 +25,7 @@ public static class DbInitializer
             await BackfillAcceptedSpeciesAsync(db);
         }
 
+        await BackfillUserCountryCodesAsync(db);
         await EnsureCategoriesAsync(db);
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
@@ -60,6 +62,57 @@ public static class DbInitializer
         {
             // Column already exists
         }
+    }
+
+    private static async Task EnsureSqliteUserCountryCodeAsync(AppDbContext db)
+    {
+        if (!db.Database.IsSqlite()) return;
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                """ALTER TABLE "Users" ADD COLUMN "CountryCode" TEXT NOT NULL DEFAULT 'CO'""");
+        }
+        catch
+        {
+            // Column already exists
+        }
+    }
+
+    /// <summary>
+    /// Fills missing CountryCode from city/GPS. Also upgrades false DEFAULT 'CO'
+    /// when location clearly resolves to the US (column added with CO default).
+    /// </summary>
+    private static async Task BackfillUserCountryCodesAsync(AppDbContext db)
+    {
+        var users = await db.Users
+            .Where(u => u.CountryCode == null
+                        || u.CountryCode == ""
+                        || u.CountryCode == "CO")
+            .Take(2000)
+            .ToListAsync();
+
+        var changed = false;
+        foreach (var u in users)
+        {
+            var inferred = Services.MarketCountry.ResolveFromLocation(u.City, u.Latitude, u.Longitude);
+            if (string.IsNullOrWhiteSpace(u.CountryCode))
+            {
+                u.CountryCode = inferred;
+                changed = true;
+                continue;
+            }
+
+            // ALTER DEFAULT was CO — correct US users stuck on the default.
+            if (string.Equals(u.CountryCode, "CO", StringComparison.OrdinalIgnoreCase)
+                && inferred == "US")
+            {
+                u.CountryCode = "US";
+                changed = true;
+            }
+        }
+
+        if (changed)
+            await db.SaveChangesAsync();
     }
 
     private static async Task EnsureCategoriesAsync(AppDbContext db)
@@ -162,6 +215,10 @@ public static class DbInitializer
             """
             IF OBJECT_ID(N'[Users]', N'U') IS NOT NULL AND COL_LENGTH(N'Users', N'PreferredLanguage') IS NULL
                 ALTER TABLE [Users] ADD [PreferredLanguage] nvarchar(10) NOT NULL CONSTRAINT DF_Users_PreferredLanguage DEFAULT(N'es');
+            """,
+            """
+            IF OBJECT_ID(N'[Users]', N'U') IS NOT NULL AND COL_LENGTH(N'Users', N'CountryCode') IS NULL
+                ALTER TABLE [Users] ADD [CountryCode] nvarchar(2) NOT NULL CONSTRAINT DF_Users_CountryCode DEFAULT(N'CO');
             """,
             """
             IF OBJECT_ID(N'[Categories]', N'U') IS NOT NULL AND COL_LENGTH(N'Categories', N'NameEn') IS NULL
@@ -912,6 +969,7 @@ public static class DbInitializer
                 Email = email,
                 PasswordHash = Services.PasswordHasher.Hash("123456"),
                 City = "Charlotte, NC",
+                CountryCode = "US",
                 Role = UserRole.Groomer,
                 CreatedAt = DateTime.UtcNow
             };
@@ -1307,6 +1365,7 @@ public static class DbInitializer
                 City = "Neiva, Huila",
                 Latitude = 2.9275,
                 Longitude = -75.2875,
+                CountryCode = "CO",
                 Role = UserRole.Groomer,
                 PreferredLanguage = "es",
                 CreatedAt = DateTime.UtcNow
@@ -1653,6 +1712,7 @@ public static class DbInitializer
                 Email = email,
                 PasswordHash = Services.PasswordHasher.Hash("123456"),
                 City = "Charlotte, NC",
+                CountryCode = "US",
                 Role = UserRole.Admin,
                 CreatedAt = DateTime.UtcNow
             });

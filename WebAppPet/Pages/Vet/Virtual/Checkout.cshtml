@@ -1,119 +1,209 @@
 @page
 @model WebAppPet.Pages.Vet.Virtual.CheckoutModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Confirmación y pago", "Confirm & pay");
-    ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = "javascript:history.back()";
-    var price = Model.ChargeAmount;
     var isIntl = Model.CatalogItem?.Code == ServiceCatalogCodes.VetIntl30;
+    ViewData["Title"] = CatalogLocalizer.Loc("Pago", "Payment");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardBackHref"] = isIntl
+        ? Url.Page("/Vet/International/Consent", new { consultationId = Model.ConsultationId })
+        : Url.Page("/Vet/Virtual/Providers", new { consultationId = Model.ConsultationId });
+    var price = Model.CatalogPrice;
+    var payMode = string.IsNullOrWhiteSpace(Model.PayMode)
+        ? (Model.HasCareAvailable ? "care" : "pay")
+        : Model.PayMode;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Confirmación y pago", "Confirm & pay")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("Pago simulado · sin cargo real aún", "Simulated payment · no real charge yet")</p>
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
+    <div class="home-body hotel-flow vet-checkout-page">
+        <header class="vet-matches-hero">
+            <p class="vet-matches-kicker">@CatalogLocalizer.Loc("Virtual", "Virtual")</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Pago", "Payment")</h1>
+            <p class="muted small">@CatalogLocalizer.Loc("Confirma cómo pagar y completa la reserva.", "Choose how to pay and finish booking.")</p>
+        </header>
 
-    <div class="card card-pad" style="margin-bottom:14px">
-        <strong>@(Model.Provider?.BusinessName)</strong>
-        <p class="muted small mb-0">
-            @Model.Consultation?.Pet?.Name ·
-            @(Model.Consultation?.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : "—")
-        </p>
-        <p style="margin-top:8px">
-            <strong>@ServiceCatalogService.DisplayName(Model.CatalogItem!)</strong>
-            @if (Model.UsingCareBenefit)
-            {
-                <span class="price-tag">@CatalogLocalizer.Loc("Incluida · $0", "Included · $0")</span>
-            }
-            else
-            {
-                <span class="price-tag">$@price.ToString("0.##")</span>
-            }
-        </p>
-        <p class="muted small">@ServiceCatalogService.DisplayScope(Model.CatalogItem!)</p>
-        <p class="muted small">
-            @CatalogLocalizer.Loc("Ubicación mascota", "Pet location"): @Model.Consultation?.PetUsState
-            @if (!string.IsNullOrEmpty(Model.Consultation?.ContextCountry))
-            {
-                <span>· @CatalogLocalizer.Loc("País profesional", "Provider country"): @Model.Consultation.ContextCountry</span>
-            }
-        </p>
-    </div>
-
-    <form method="post" class="stack" style="gap:14px">
-        <input type="hidden" asp-for="ConsultationId" />
-
-        @if (!Model.UsingCareBenefit)
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
-            <section>
-                <h2 class="section-title">@CatalogLocalizer.Loc("Método de pago", "Payment method")</h2>
-                @if (Model.Payments.Count == 0)
+            <div class="alert alert-danger" style="margin:0 0 14px">@Model.ErrorMessage</div>
+        }
+
+        <div class="vet-schedule-provider" style="margin-bottom:14px">
+            <strong>@(Model.Provider?.BusinessName)</strong>
+            <p class="muted small mb-0">
+                @Model.Consultation?.Pet?.Name ·
+                @(Model.Consultation?.ScheduledAt is DateTime dt ? AppTimeZones.FormatShort(dt) : "—")
+            </p>
+            <p class="muted small mb-0" style="margin-top:6px">
+                <strong>@ServiceCatalogService.DisplayName(Model.CatalogItem!)</strong>
+                · $@price.ToString("0.##") / 30 min
+            </p>
+        </div>
+
+        <form method="post" class="vet-checkout-form" data-vet-checkout>
+            <input type="hidden" asp-for="ConsultationId" />
+
+            <section class="vet-checkout-pay">
+                <h2 class="section-title">@CatalogLocalizer.Loc("Cómo pagar", "How to pay")</h2>
+
+                @if (Model.HasCareAvailable)
                 {
-                    <p class="muted small">@CatalogLocalizer.Loc("Puedes continuar sin tarjeta (demo) o", "You can continue without a card (demo) or") <a asp-page="/Account/PaymentMethods">@CatalogLocalizer.Loc("agregar una", "add one")</a>.</p>
+                    <label class="vet-pay-option @(payMode == "care" ? "is-selected" : "")">
+                        <input type="radio" name="PayMode" value="care" data-pay-mode @(payMode == "care" ? "checked" : null) />
+                        <span class="vet-pay-option-body">
+                            <span class="vet-pay-option-top">
+                                <strong>@CatalogLocalizer.Loc("Membresía Care", "Care membership")</strong>
+                                <span class="vet-match-badge vet-match-badge-care">$0</span>
+                            </span>
+                            <span class="muted small">
+                                @CatalogLocalizer.Loc(
+                                    $"Consulta rápida incluida ({Model.CareRemaining} restante este ciclo).",
+                                    $"Included quick consult ({Model.CareRemaining} left this cycle).")
+                            </span>
+                        </span>
+                    </label>
+                }
+
+                <label class="vet-pay-option @(payMode == "pay" || !Model.HasCareAvailable ? "is-selected" : "")">
+                    <input type="radio" name="PayMode" value="pay" data-pay-mode @((payMode == "pay" || !Model.HasCareAvailable) ? "checked" : null) />
+                    <span class="vet-pay-option-body">
+                        <span class="vet-pay-option-top">
+                            <strong>@CatalogLocalizer.Loc("Pagar ahora", "Pay now")</strong>
+                            <span class="vet-match-badge">$@price.ToString("0.##")</span>
+                        </span>
+                        <span class="muted small">@CatalogLocalizer.Loc("Precio de este veterinario · 30 min", "This veterinarian’s price · 30 min")</span>
+                    </span>
+                </label>
+            </section>
+
+            <section class="vet-checkout-card" data-pay-card-section hidden="@(payMode != "pay")">
+                <h2 class="section-title">@CatalogLocalizer.Loc("Método de pago", "Payment method")</h2>
+                @{
+                    var payReturn = Url.Page("/Vet/Virtual/Checkout", new { consultationId = Model.ConsultationId }) ?? "/Vet/Virtual/Checkout";
+                    var defaultPay = Model.DefaultPayment;
+                }
+                @if (defaultPay != null)
+                {
+                    <div class="checkout-pay-row">
+                        <div class="checkout-pay-card">
+                            <span class="checkout-pay-ico" aria-hidden="true">💳</span>
+                            <div>
+                                <strong>@defaultPay.Brand</strong>
+                                <div class="muted small">•••• @defaultPay.Last4</div>
+                            </div>
+                        </div>
+                        <a class="apple-text-link" href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)">
+                            @CatalogLocalizer.Loc("Cambiar", "Change")
+                        </a>
+                    </div>
+                    <input type="hidden" name="PaymentMethodId" value="@defaultPay.Id" data-has-payment="1" />
                 }
                 else
                 {
-                    @foreach (var p in Model.Payments)
-                    {
-                        <label class="radio-card">
-                            <input type="radio" name="PaymentMethodId" value="@p.Id" checked="@(Model.PaymentMethodId == p.Id || p.IsDefault)" />
-                            <span>@p.Brand ·••• @p.Last4</span>
-                        </label>
-                    }
+                    <a class="btn btn-outline btn-block"
+                       href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)"
+                       data-add-payment>
+                        @CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")
+                    </a>
                 }
             </section>
-        }
 
-        <section class="vet-consent">
-            <h2 class="section-title">@CatalogLocalizer.Loc("Consentimientos", "Consents")</h2>
-            <label class="check-row">
-                <input type="checkbox" asp-for="AcceptTerms" />
-                <span>
-                    @CatalogLocalizer.Loc("Acepto los", "I accept the")
-                    <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener">@L["Legal_TermsConditions"]</a>
-                    @CatalogLocalizer.Loc("y la", "and")
-                    <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="privacy" target="_blank" rel="noopener">@L["Legal_PrivacyPolicy"]</a>
-                </span>
-            </label>
-            <label class="check-row">
-                <input type="checkbox" asp-for="AcceptScope" />
-                <span>
-                    @if (isIntl)
-                    {
-                        @CatalogLocalizer.Loc(
-                            "Entiendo que es orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.",
-                            "I understand this is international guidance: no U.S. Rx, not an emergency, does not replace a local vet.")
-                    }
-                    else
-                    {
-                        @CatalogLocalizer.Loc(
-                            "Entiendo el alcance de la consulta local y que diagnóstico/receta dependen de la VCPR y la ley.",
-                            "I understand the local consult scope and that diagnosis/Rx depend on VCPR and the law.")
-                    }
-                </span>
-            </label>
-            <label class="check-row">
-                <input type="checkbox" asp-for="AcceptMedia" />
-                <span>@CatalogLocalizer.Loc("Autorizo el uso de fotos/video para esta consulta (opcional).", "I authorize use of photos/video for this consult (optional).")</span>
-            </label>
-        </section>
+            <section class="vet-consent" style="margin-top:14px">
+                <h2 class="section-title">@CatalogLocalizer.Loc("Consentimientos", "Consents")</h2>
+                <label class="check-row">
+                    <input type="checkbox" asp-for="AcceptTerms" data-checkout-terms />
+                    <span>
+                        @CatalogLocalizer.Loc("Acepto los", "I accept the")
+                        <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="terms" target="_blank" rel="noopener">@L["Legal_TermsConditions"]</a>
+                        @CatalogLocalizer.Loc("y la", "and")
+                        <a class="legal-link" asp-page="/Legal/Terms" asp-fragment="privacy" target="_blank" rel="noopener">@L["Legal_PrivacyPolicy"]</a>
+                    </span>
+                </label>
+                <label class="check-row">
+                    <input type="checkbox" asp-for="AcceptScope" data-checkout-scope />
+                    <span>
+                        @if (isIntl)
+                        {
+                            @CatalogLocalizer.Loc(
+                                "Entiendo que es orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.",
+                                "I understand this is international guidance: no U.S. Rx, not an emergency, does not replace a local vet.")
+                        }
+                        else
+                        {
+                            @CatalogLocalizer.Loc(
+                                "Entiendo el alcance de la consulta local y que diagnóstico/receta dependen de la VCPR y la ley.",
+                                "I understand the local consult scope and that diagnosis/Rx depend on VCPR and the law.")
+                        }
+                    </span>
+                </label>
+                <label class="check-row">
+                    <input type="checkbox" asp-for="AcceptMedia" />
+                    <span>@CatalogLocalizer.Loc("Autorizo el uso de fotos/video para esta consulta (opcional).", "I authorize use of photos/video for this consult (optional).")</span>
+                </label>
+            </section>
 
-        <button type="submit" class="btn btn-primary btn-block">
-            @if (Model.UsingCareBenefit)
-            {
-                @CatalogLocalizer.Loc("Confirmar con Chombly Care", "Confirm with Chombly Care")
-            }
-            else
-            {
-                @CatalogLocalizer.Loc($"Pagar ${price:0.##}", $"Pay ${price:0.##}")
-            }
-        </button>
-        <p class="muted small center">@CatalogLocalizer.Loc("Pago seguro simulado · sin cargo real", "Simulated secure payment · no real charge")</p>
-    </form>
+            <button type="submit"
+                    class="btn btn-primary btn-block vet-ready-submit"
+                    style="margin-top:14px"
+                    data-checkout-submit
+                    disabled
+                    aria-disabled="true"
+                    data-has-payment="@(Model.DefaultPayment != null ? "1" : "0")"
+                    data-label-care="@CatalogLocalizer.Loc("Confirmar · $0 con Care", "Confirm · $0 with Care")"
+                    data-label-pay="@CatalogLocalizer.Loc($"Pagar ${price:0.##}", $"Pay ${price:0.##}")"
+                    data-label-pick="@CatalogLocalizer.Loc("Acepta términos y alcance para pagar", "Accept terms and scope to pay")"
+                    data-label-need-pay="@CatalogLocalizer.Loc("Agrega un método de pago", "Add a payment method")">
+                @CatalogLocalizer.Loc("Acepta términos y alcance para pagar", "Accept terms and scope to pay")
+            </button>
+            <p class="muted small center">@CatalogLocalizer.Loc("Pago seguro y encriptado", "Secure encrypted payment")</p>
+        </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+<script>
+(function () {
+  var form = document.querySelector('[data-vet-checkout]');
+  if (!form) return;
+  var btn = form.querySelector('[data-checkout-submit]');
+  var terms = form.querySelector('[data-checkout-terms]');
+  var scope = form.querySelector('[data-checkout-scope]');
+  var cardSec = form.querySelector('[data-pay-card-section]');
+  if (!btn) return;
+  var labelCare = btn.getAttribute('data-label-care') || 'Care';
+  var labelPay = btn.getAttribute('data-label-pay') || 'Pay';
+  var labelPick = btn.getAttribute('data-label-pick') || btn.textContent;
+  var labelNeedPay = btn.getAttribute('data-label-need-pay') || labelPick;
+  var hasPayment = btn.getAttribute('data-has-payment') === '1'
+    || !!form.querySelector('[data-has-payment="1"]');
+
+  function payMode() {
+    var r = form.querySelector('[data-pay-mode]:checked');
+    return r ? r.value : 'pay';
+  }
+
+  function sync() {
+    var mode = payMode();
+    var consents = !!(terms && terms.checked) && !!(scope && scope.checked);
+    var needCard = mode === 'pay' && !hasPayment;
+    var ready = consents && !needCard;
+    btn.disabled = !ready;
+    btn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    if (!consents) btn.textContent = labelPick;
+    else if (needCard) btn.textContent = labelNeedPay;
+    else btn.textContent = mode === 'care' ? labelCare : labelPay;
+    if (cardSec) cardSec.hidden = mode !== 'pay';
+    form.querySelectorAll('.vet-pay-option').forEach(function (lab) {
+      var input = lab.querySelector('[data-pay-mode]');
+      lab.classList.toggle('is-selected', !!(input && input.checked));
+    });
+  }
+
+  form.addEventListener('change', sync);
+  form.addEventListener('submit', function (e) {
+    sync();
+    if (btn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  sync();
+})();
+</script>

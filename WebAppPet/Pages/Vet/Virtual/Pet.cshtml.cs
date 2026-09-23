@@ -14,52 +14,66 @@ public class PetModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ConsultationFlowService _flow;
+    private readonly SafetyScreeningService _safety;
+    private readonly VcprService _vcpr;
+    private readonly VetAuditService _audit;
     private readonly IWebHostEnvironment _env;
 
-    public PetModel(AppDbContext db, AuthService auth, ConsultationFlowService flow, IWebHostEnvironment env)
+    public PetModel(
+        AppDbContext db,
+        AuthService auth,
+        ConsultationFlowService flow,
+        SafetyScreeningService safety,
+        VcprService vcpr,
+        VetAuditService audit,
+        IWebHostEnvironment env)
     {
         _db = db;
         _auth = auth;
         _flow = flow;
+        _safety = safety;
+        _vcpr = vcpr;
+        _audit = audit;
         _env = env;
     }
 
     [BindProperty(SupportsGet = true)]
     public int ConsultationId { get; set; }
 
-    /// <summary>When "intl", continue to international match after pet/location.</summary>
+    /// <summary>intl = guidance matches; local = state-licensed teleconsult.</summary>
     [BindProperty(SupportsGet = true)]
     public string? Next { get; set; }
 
-    [BindProperty]
-    public int PetId { get; set; }
+    /// <summary>Skip soft-choice and show the form again.</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool Edit { get; set; }
 
-    /// <summary>CO or US — primary launch markets.</summary>
-    [BindProperty]
-    public string PetCountry { get; set; } = "CO";
+    [BindProperty] public int PetId { get; set; }
+    [BindProperty] public string PetCountry { get; set; } = "CO";
+    [BindProperty] public string PetUsState { get; set; } = "NC";
+    [BindProperty] public string? Symptoms { get; set; }
+    [BindProperty] public IFormFile? Media1 { get; set; }
+    [BindProperty] public IFormFile? Media2 { get; set; }
 
-    [BindProperty]
-    public string PetUsState { get; set; } = "NC";
-
-    [BindProperty]
-    public string? Symptoms { get; set; }
-
-    [BindProperty]
-    public IFormFile? Media1 { get; set; }
-
-    [BindProperty]
-    public IFormFile? Media2 { get; set; }
+    [BindProperty] public bool BreathingTrouble { get; set; }
+    [BindProperty] public bool Seizures { get; set; }
+    [BindProperty] public bool Unconscious { get; set; }
+    [BindProperty] public bool SevereBleeding { get; set; }
+    [BindProperty] public bool ToxinIngestion { get; set; }
+    [BindProperty] public bool ExtremePain { get; set; }
+    [BindProperty] public bool CannotUrinate { get; set; }
+    [BindProperty] public bool NoRedFlags { get; set; }
 
     public Consultation? Consultation { get; set; }
     public List<Models.Pet> Pets { get; set; } = new();
     public string? ErrorMessage { get; set; }
-
-    /// <summary>True when the location was prefilled from the user's saved profile.</summary>
     public bool StateFromLocation { get; set; }
-
     public string? UserCity { get; set; }
-
+    public string HomeCountryCode { get; set; } = MarketCountry.DefaultIso;
+    public string HomeCountryLabel { get; set; } = "Colombia";
     public BusinessMarket DetectedMarket { get; set; }
+    public bool ShowPathChoice { get; set; }
+    public bool HasVcpr { get; set; }
 
     public static readonly (string Code, string NameEs, string NameEn)[] UsStates =
     {
@@ -78,10 +92,12 @@ public class PetModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is null)
-            return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Pet?consultationId={ConsultationId}" });
+            return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Pet?consultationId={ConsultationId}&next={Next}" });
 
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/Index");
+
+        Next = NormalizeNext(Next, Consultation.ServiceCatalogCode);
 
         Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId).OrderBy(p => p.Name).ToListAsync();
         PetId = Consultation.PetId ?? Pets.FirstOrDefault()?.Id ?? 0;
@@ -89,49 +105,53 @@ public class PetModel : PageModel
 
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == _auth.CurrentUserId.Value);
-        UserCity = string.IsNullOrWhiteSpace(user?.City) ? null : user!.City.Trim();
-        DetectedMarket = BusinessMarketResolver.ResolveUser(user?.City, user?.Latitude, user?.Longitude);
+        ApplyHomeCountry(user);
         var fromLocation = GeoHelper.ResolveUsState(user?.City, user?.Latitude, user?.Longitude);
 
         if (ApplyLocationDefaults(Consultation, fromLocation))
             await _flow.TouchAsync(Consultation);
+
+        if (Consultation.PetId is int pid)
+            HasVcpr = await _vcpr.HasActiveAsync(pid, Consultation.PetUsState);
+
+        // Resume soft choice after Emergency if flags already saved.
+        if (!Edit
+            && Consultation.HasRedFlags
+            && Consultation.Status is ConsultationStatus.SafetyScreened or ConsultationStatus.EscalatedToEmergency)
+        {
+            ShowPathChoice = true;
+            HydrateSafety(Consultation);
+        }
 
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (_auth.CurrentUserId is null)
-            return RedirectToPage("/Account/Login");
+        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
 
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/Index");
 
+        Next = NormalizeNext(Next, Consultation.ServiceCatalogCode);
         Pets = await _db.Pets.Where(p => p.OwnerId == _auth.CurrentUserId).OrderBy(p => p.Name).ToListAsync();
 
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == _auth.CurrentUserId.Value);
-        UserCity = string.IsNullOrWhiteSpace(user?.City) ? null : user!.City.Trim();
-        DetectedMarket = BusinessMarketResolver.ResolveUser(user?.City, user?.Latitude, user?.Longitude);
+        ApplyHomeCountry(user);
 
         if (PetId <= 0 || !Pets.Any(p => p.Id == PetId))
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Selecciona una mascota.", "Select a pet.");
             return Page();
-        }
 
-        PetCountry = NormalizeCountry(PetCountry) is { Length: > 0 } c ? c : "CO";
+        // Home country is fixed from the profile flag — not chosen in this flow.
+        PetCountry = HomeCountryCode;
         if (PetCountry == "US")
         {
             if (string.IsNullOrWhiteSpace(PetUsState))
-            {
-                ErrorMessage = CatalogLocalizer.Loc("Confirma el estado actual de la mascota.", "Confirm the pet's current state.");
                 return Page();
-            }
         }
         else
         {
-            PetCountry = "CO";
             PetUsState = "Other";
         }
 
@@ -143,6 +163,13 @@ public class PetModel : PageModel
             return Page();
         }
 
+        var answers = new SafetyScreeningService.SafetyAnswers(
+            BreathingTrouble, Seizures, Unconscious, SevereBleeding,
+            ToxinIngestion, ExtremePain, CannotUrinate, null);
+        var hasRed = _safety.HasRedFlags(answers);
+        if (!hasRed && !NoRedFlags)
+            return Page(); // UI keeps Continue disabled — no flash alert.
+
         Consultation.PetId = PetId;
         Consultation.PetUsState = PetUsState.Trim().ToUpperInvariant();
         Consultation.ContextCountry = PetCountry;
@@ -152,42 +179,115 @@ public class PetModel : PageModel
         if (Media2 is { Length: > 0 })
             Consultation.MediaUrl2 = await VetMediaStorage.SaveAsync(Media2, _auth.CurrentUserId.Value, _env);
 
+        Consultation.SafetyAnswersJson = _safety.Serialize(answers);
+        Consultation.HasRedFlags = hasRed;
+        Consultation.HasActiveVcpr = await _vcpr.HasActiveAsync(PetId, Consultation.PetUsState);
+        HasVcpr = Consultation.HasActiveVcpr;
+        Consultation.Status = ConsultationStatus.SafetyScreened;
         await _flow.TouchAsync(Consultation);
 
-        if (string.Equals(Next, "intl", StringComparison.OrdinalIgnoreCase))
+        if (hasRed)
         {
-            Consultation.MatchMode = IntlMatchMode.Best;
-            Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
-            if (string.IsNullOrWhiteSpace(Consultation.PreferredBreed) && Consultation.PetId is int petIdForBreed)
-            {
-                var breed = await _db.Pets.AsNoTracking()
-                    .Where(p => p.Id == petIdForBreed)
-                    .Select(p => p.Breed)
-                    .FirstOrDefaultAsync();
-                if (!string.IsNullOrWhiteSpace(breed))
-                    Consultation.PreferredBreed = breed.Trim();
-            }
-            await _flow.TouchAsync(Consultation);
-            return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+            await _audit.LogAsync("safety_flagged", _auth.CurrentUserId, "Consultation", Consultation.Id, answers);
+            ShowPathChoice = true;
+            return Page();
         }
 
-        return RedirectToPage("/Vet/Virtual/Safety", new { consultationId = ConsultationId });
+        return await RouteAfterSafetyAsync(Consultation);
     }
 
-    /// <summary>Returns true when the consultation location fields were corrected.</summary>
+    public async Task<IActionResult> OnPostGoEmergencyAsync()
+    {
+        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+        Consultation = await _flow.GetOwnedAsync(ConsultationId);
+        if (Consultation is null) return RedirectToPage("/Vet/Index");
+        await _audit.LogAsync("safety_chose_emergency", _auth.CurrentUserId, "Consultation", Consultation.Id,
+            new { consultationId = ConsultationId });
+        return RedirectToPage("/Vet/Emergency", new { consultationId = ConsultationId });
+    }
+
+    public async Task<IActionResult> OnPostContinueVirtualAsync()
+    {
+        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+        Consultation = await _flow.GetOwnedAsync(ConsultationId);
+        if (Consultation?.PetId is null) return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = ConsultationId, next = Next });
+
+        Next = NormalizeNext(Next, Consultation.ServiceCatalogCode);
+        if (Consultation.Status == ConsultationStatus.EscalatedToEmergency)
+            Consultation.Status = ConsultationStatus.SafetyScreened;
+        Consultation.Modality = VetModality.Virtual;
+        await _flow.TouchAsync(Consultation);
+        await _audit.LogAsync("safety_chose_continue_virtual", _auth.CurrentUserId, "Consultation", Consultation.Id,
+            new { hasRedFlags = Consultation.HasRedFlags, next = Next });
+
+        return await RouteAfterSafetyAsync(Consultation);
+    }
+
+    private async Task<IActionResult> RouteAfterSafetyAsync(Consultation c)
+    {
+        var next = NormalizeNext(Next, c.ServiceCatalogCode);
+
+        if (string.Equals(next, "local", StringComparison.OrdinalIgnoreCase))
+        {
+            c.ServiceCatalogCode = ServiceCatalogCodes.VetLocal30;
+            c.HasActiveVcpr = c.PetId is int pid && await _vcpr.HasActiveAsync(pid, c.PetUsState);
+            if (!c.HasActiveVcpr)
+            {
+                await _flow.TouchAsync(c);
+                return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
+            }
+
+            c.Status = ConsultationStatus.EligibilityVerified;
+            await _flow.TouchAsync(c);
+            return RedirectToPage("/Vet/Virtual/Providers", new { consultationId = ConsultationId });
+        }
+
+        // Default: guidance / international matches (shortest virtual path).
+        c.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
+        c.MatchMode = IntlMatchMode.Best;
+        if (string.IsNullOrWhiteSpace(c.PreferredBreed) && c.PetId is int petIdForBreed)
+        {
+            var breed = await _db.Pets.AsNoTracking()
+                .Where(p => p.Id == petIdForBreed)
+                .Select(p => p.Breed)
+                .FirstOrDefaultAsync();
+            if (!string.IsNullOrWhiteSpace(breed))
+                c.PreferredBreed = breed.Trim();
+        }
+
+        await _flow.TouchAsync(c);
+        return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+    }
+
+    private void HydrateSafety(Consultation c)
+    {
+        var a = _safety.Deserialize(c.SafetyAnswersJson);
+        if (a is null) return;
+        BreathingTrouble = a.BreathingTrouble;
+        Seizures = a.Seizures;
+        Unconscious = a.Unconscious;
+        SevereBleeding = a.SevereBleeding;
+        ToxinIngestion = a.ToxinIngestion;
+        ExtremePain = a.ExtremePain;
+        CannotUrinate = a.CannotUrinate;
+        NoRedFlags = !c.HasRedFlags;
+    }
+
+    private void ApplyHomeCountry(AppUser? user)
+    {
+        UserCity = string.IsNullOrWhiteSpace(user?.City) ? null : user!.City.Trim();
+        HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+        DetectedMarket = MarketCountry.ToMarket(HomeCountryCode);
+        HomeCountryLabel = HomeCountryCode == "US"
+            ? CatalogLocalizer.Loc("Estados Unidos", "United States")
+            : CatalogLocalizer.Loc("Colombia", "Colombia");
+        PetCountry = HomeCountryCode;
+    }
+
     private bool ApplyLocationDefaults(Consultation consultation, string? fromLocation)
     {
-        var storedCountry = NormalizeCountry(consultation.ContextCountry);
-        var storedState = string.IsNullOrWhiteSpace(consultation.PetUsState)
-            ? null
-            : consultation.PetUsState.Trim();
-        var looksLikeLegacyNcDefault =
-            string.Equals(storedState, "NC", StringComparison.OrdinalIgnoreCase) &&
-            string.IsNullOrWhiteSpace(consultation.ContextCountry);
-
-        PetCountry = ResolvePetCountry(storedCountry, fromLocation, looksLikeLegacyNcDefault);
-        StateFromLocation = DetectedMarket != BusinessMarket.Unknown ||
-                            !string.IsNullOrWhiteSpace(fromLocation);
+        PetCountry = HomeCountryCode;
+        StateFromLocation = !string.IsNullOrWhiteSpace(fromLocation);
 
         if (PetCountry == "CO")
         {
@@ -203,7 +303,13 @@ public class PetModel : PageModel
             return false;
         }
 
-        // United States
+        var storedState = string.IsNullOrWhiteSpace(consultation.PetUsState)
+            ? null
+            : consultation.PetUsState.Trim();
+        var looksLikeLegacyNcDefault =
+            string.Equals(storedState, "NC", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(consultation.ContextCountry, "US", StringComparison.OrdinalIgnoreCase);
+
         if (!string.IsNullOrWhiteSpace(fromLocation) &&
             !string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase) &&
             (consultation.PetId is null || looksLikeLegacyNcDefault))
@@ -243,37 +349,12 @@ public class PetModel : PageModel
         return changed;
     }
 
-    private string ResolvePetCountry(string storedCountry, string? fromLocation, bool looksLikeLegacyNcDefault)
+    private static string NormalizeNext(string? next, string? catalogCode)
     {
-        if (storedCountry is "CO" or "US")
-            return storedCountry;
-
-        if (DetectedMarket == BusinessMarket.Colombia)
-            return "CO";
-
-        if (DetectedMarket == BusinessMarket.UnitedStates)
-            return "US";
-
-        if (fromLocation is not null && !string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase))
-            return "US";
-
-        if (string.Equals(fromLocation, "Other", StringComparison.OrdinalIgnoreCase))
-            return "CO";
-
-        // Ambiguous legacy NC default with no GPS/city signal → keep US state UX.
-        if (looksLikeLegacyNcDefault)
-            return "US";
-
-        // Dual-market default when location is truly unknown.
-        return "CO";
-    }
-
-    private static string NormalizeCountry(string? country)
-    {
-        if (string.IsNullOrWhiteSpace(country)) return "";
-        var t = country.Trim().ToUpperInvariant();
-        if (t is "CO" or "COL" or "COLOMBIA") return "CO";
-        if (t is "US" or "USA" or "UM" or "EEUU" or "EE.UU") return "US";
-        return t is "CO" or "US" ? t : "";
+        if (string.Equals(next, "local", StringComparison.OrdinalIgnoreCase)) return "local";
+        if (string.Equals(next, "intl", StringComparison.OrdinalIgnoreCase)) return "intl";
+        if (string.Equals(catalogCode, ServiceCatalogCodes.VetLocal30, StringComparison.OrdinalIgnoreCase))
+            return "local";
+        return "intl";
     }
 }

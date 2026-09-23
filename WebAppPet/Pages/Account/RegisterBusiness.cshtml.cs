@@ -445,6 +445,11 @@ public class RegisterBusinessModel : PageModel
             existing.Email = email;
             existing.Phone = Phone;
             existing.City = City.Trim();
+            existing.Latitude = Latitude == 0 ? existing.Latitude : Latitude;
+            existing.Longitude = Longitude == 0 ? existing.Longitude : Longitude;
+            if (Latitude != 0 && Longitude != 0)
+                existing.LocationUpdatedAt = DateTime.UtcNow;
+            MarketCountry.ApplyFromLocation(existing, City, Latitude == 0 ? null : Latitude, Longitude == 0 ? null : Longitude);
             existing.Role = UserRole.Groomer;
             user = existing;
         }
@@ -464,8 +469,12 @@ public class RegisterBusinessModel : PageModel
                 PasswordHash = PasswordHasher.Hash(Password),
                 Phone = Phone,
                 City = City.Trim(),
+                Latitude = Latitude == 0 ? null : Latitude,
+                Longitude = Longitude == 0 ? null : Longitude,
+                LocationUpdatedAt = Latitude == 0 && Longitude == 0 ? null : DateTime.UtcNow,
                 Role = UserRole.Groomer
             };
+            MarketCountry.ApplyFromLocation(user);
             _db.Users.Add(user);
         }
 
@@ -513,12 +522,10 @@ public class RegisterBusinessModel : PageModel
             WorkMode = work,
             Type = groomerType,
             ServiceAreaMiles = ToStoredServiceAreaMiles(ServiceAreaMiles),
-            LicenseCountry = DetectedMarket switch
-            {
-                BusinessMarket.Colombia => "CO",
-                BusinessMarket.UnitedStates => "US",
-                _ => null
-            },
+            LicenseCountry = MarketCountry.Normalize(
+                DetectedMarket == BusinessMarket.Unknown
+                    ? user.CountryCode
+                    : MarketCountry.FromMarket(DetectedMarket)),
             Address = string.IsNullOrWhiteSpace(Address) ? City.Trim() : Address.Trim(),
             City = City.Trim(),
             Latitude = Latitude,

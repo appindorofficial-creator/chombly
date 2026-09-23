@@ -26,6 +26,13 @@ public class AppUser
 
     public DateTime? LocationUpdatedAt { get; set; }
 
+    /// <summary>
+    /// Home market country (ISO 3166-1 alpha-2). Set at registration from city/GPS;
+    /// reused as the app-wide flag for timezone, filters, and flow defaults (CO / US).
+    /// </summary>
+    [MaxLength(2)]
+    public string CountryCode { get; set; } = "CO";
+
     public UserRole Role { get; set; } = UserRole.Client;
 
     /// <summary>Preferencia de idioma: es | en.</summary>

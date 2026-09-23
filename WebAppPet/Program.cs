@@ -145,6 +145,8 @@ app.UseRequestLocalization();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+AppTimeZones.Initialize(app.Services.GetRequiredService<IHttpContextAccessor>());
+app.UseMiddleware<AppMarketMiddleware>();
 
 // Entrada pública: invitados ven la presentación; usuarios logueados van al marketplace.
 app.MapGet("/", (HttpContext ctx) =>

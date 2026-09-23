@@ -38,25 +38,32 @@ public class IndexModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostStartVirtualAsync()
+    /// <summary>Legacy entry — treat as guidance (shortest virtual path).</summary>
+    public Task<IActionResult> OnPostStartVirtualAsync() => StartPathAsync("intl", ServiceCatalogCodes.VetIntl30);
+
+    public Task<IActionResult> OnPostStartGuidanceAsync() => StartPathAsync("intl", ServiceCatalogCodes.VetIntl30);
+
+    public Task<IActionResult> OnPostStartLocalAsync() => StartPathAsync("local", ServiceCatalogCodes.VetLocal30);
+
+    private async Task<IActionResult> StartPathAsync(string next, string catalogCode)
     {
         if (_auth.CurrentUserId is null)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Vet" });
 
         var c = await _flow.StartVirtualAsync();
+        c.ServiceCatalogCode = catalogCode;
         if (PetId is int pid && pid > 0)
         {
             var owns = await _db.Pets.AsNoTracking()
                 .AnyAsync(p => p.Id == pid && p.OwnerId == _auth.CurrentUserId);
             if (owns)
-            {
                 c.PetId = pid;
-                await _flow.TouchAsync(c);
-            }
         }
 
+        await _flow.TouchAsync(c);
         await _audit.LogAsync("modality_selected", _auth.CurrentUserId, "Consultation", c.Id,
-            new { modality = nameof(VetModality.Virtual), petId = c.PetId });
-        return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = c.Id });
+            new { next, catalogCode, petId = c.PetId });
+
+        return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = c.Id, next });
     }
 }

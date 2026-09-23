@@ -4,14 +4,35 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Emergencia", "Emergency");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Model.ConsultationId is int cid
-        ? Url.Page("/Vet/Virtual/Safety", new { consultationId = cid })
+        ? Url.Page("/Vet/Virtual/Pet", new { consultationId = cid })
         : Url.Page("/Vet/Index");
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body hotel-flow" data-keep-interactive>
         <h1 class="app-page-heading">@CatalogLocalizer.Loc("Emergencia", "Emergency")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("No cobramos ni reservamos online. Busca atención inmediata.", "We do not charge or book online. Seek care now.")</p>
+
+        @if (Model.HasCareMembership)
+        {
+            <div class="vet-matches-price vet-matches-price-care" role="status" style="margin-bottom:14px">
+                <strong>@CatalogLocalizer.Loc("Gratis con Care", "Free with Care")</strong>
+                <p class="muted small mb-0">
+                    @CatalogLocalizer.Loc(
+                        "Con tu membresía, la guía de emergencia en la app no tiene costo. Busca atención inmediata (clínicas y llamadas).",
+                        "With your membership, in-app emergency guidance has no cost. Seek care now (clinics and calls).")
+                </p>
+            </div>
+        }
+        else
+        {
+            <p class="muted small">
+                @CatalogLocalizer.Loc(
+                    "Sin cobro ni reserva en la app. Con Care, esta guía de emergencia también es gratuita.",
+                    "No in-app charge or booking. With Care, this emergency guidance is also free.")
+                <a asp-page="/Plans/ChomblyCare">@CatalogLocalizer.Loc("Ver Care", "See Care")</a>
+            </p>
+        }
+
     <div class="alert alert-danger" role="alert">
         @CatalogLocalizer.Loc(
             "Si tu mascota está en peligro, llama ahora o ve a una clínica 24/7. La orientación virtual no sustituye una emergencia.",
@@ -31,7 +52,13 @@
                 var dest = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{c.Latitude},{c.Longitude}");
                 var maps = $"https://www.google.com/maps/dir/?api=1&destination={Uri.EscapeDataString(dest)}";
                 <article class="card card-pad">
-                    <strong>@c.BusinessName</strong>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                        <strong>@c.BusinessName</strong>
+                        @if (Model.HasCareMembership)
+                        {
+                            <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc("Gratis Care", "Free · Care")</span>
+                        }
+                    </div>
                     <p class="muted small mb-0">@c.Address · @c.City</p>
                     @if (c.OffersEmergency24x7)
                     {
@@ -52,7 +79,7 @@
     @if (Model.ConsultationId is int backId)
     {
         <p class="muted small" style="margin-top:20px;margin-bottom:0">
-            <a asp-page="/Vet/Virtual/Safety" asp-route-consultationId="@backId">
+            <a asp-page="/Vet/Virtual/Pet" asp-route-consultationId="@backId">
                 @CatalogLocalizer.Loc("← Volver y elegir orientación virtual", "← Back and choose virtual guidance")
             </a>
         </p>

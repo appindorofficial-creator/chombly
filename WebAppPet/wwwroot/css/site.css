@@ -5450,6 +5450,354 @@ a.vet-modality-emergency:hover {
   }
 }
 
+.vet-pet-hero { margin-bottom: 14px; }
+.vet-pet-kicker {
+  margin: 0 0 4px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--forest);
+  opacity: .75;
+}
+.vet-pet-more {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(15, 61, 47, 0.18);
+  background: #fafcf8;
+}
+.vet-pet-more summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--forest-deep);
+  list-style: none;
+}
+.vet-pet-more summary::-webkit-details-marker { display: none; }
+.vet-pet-safety {
+  margin: 8px 0 16px;
+}
+.vet-pet-safety-flags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 380px) {
+  .vet-pet-safety-flags { grid-template-columns: 1fr; }
+}
+.vet-pet-submit { margin-top: 4px; }
+.vet-pet-submit:disabled,
+.vet-pet-submit[disabled] {
+  opacity: .48;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.vet-matches-hero { margin-bottom: 12px; }
+.vet-matches-kicker {
+  margin: 0 0 4px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--forest);
+  opacity: .75;
+}
+.vet-matches-price {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(15, 61, 47, 0.14);
+  background: #fff;
+}
+.vet-matches-price strong {
+  display: block;
+  color: var(--forest-deep);
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.vet-matches-price-care {
+  border-color: rgba(182, 231, 64, 0.65);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(182, 231, 64, 0.22) 0%, transparent 55%),
+    #fff;
+}
+.vet-matches-langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 14px;
+}
+.vet-matches-langs-label {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--forest-deep);
+  margin-right: 2px;
+}
+.vet-matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vet-match-card {
+  margin: 0;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(15, 61, 47, 0.12);
+  background: linear-gradient(165deg, #f7faf5 0%, #fff 65%);
+}
+.vet-match-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.vet-match-name {
+  color: var(--forest-deep);
+  font-size: 1rem;
+}
+.vet-match-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 800;
+  background: rgba(15, 61, 47, 0.1);
+  color: var(--forest-deep);
+  white-space: nowrap;
+}
+.vet-match-badge-care {
+  background: rgba(182, 231, 64, 0.45);
+  color: var(--forest-deep);
+}
+.vet-match-langs { margin-top: 8px; }
+.vet-match-lang-ok { color: var(--forest); font-weight: 700; }
+
+.vet-schedule-provider {
+  margin: 0 0 16px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(15, 61, 47, 0.12);
+  background: #fff;
+}
+/* Slot chips: keep the native radio for form post, hit the whole chip. */
+.vet-schedule-page [data-schedule-slots] .chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.vet-schedule-page [data-schedule-slots] .chip:active {
+  transform: none;
+}
+.vet-schedule-page [data-schedule-slots] .chip input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.vet-schedule-page [data-schedule-submit] {
+  min-height: 48px;
+}
+.chip.is-disabled {
+  opacity: .4;
+  pointer-events: none;
+}
+.vet-ready-submit:disabled,
+.vet-ready-submit[disabled],
+.vet-pet-submit:disabled,
+.vet-pet-submit[disabled],
+.vet-service-submit:disabled,
+.vet-service-submit[disabled] {
+  opacity: .48;
+  cursor: not-allowed;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* Virtual Summary */
+.vet-summary-hero {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.vet-summary-hero .vet-matches-kicker {
+  text-align: center;
+}
+.vet-summary-check {
+  width: 52px;
+  height: 52px;
+  margin: 8px auto 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--forest-deep);
+  background: var(--lime);
+  box-shadow: 0 8px 20px rgba(182, 231, 64, 0.35);
+  animation: vet-safety-in .45s ease both;
+}
+.vet-summary-lead {
+  margin: 4px auto 0;
+  max-width: 28ch;
+}
+.vet-summary-card {
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(15, 61, 47, 0.12);
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(182, 231, 64, 0.18) 0%, transparent 55%),
+    linear-gradient(165deg, #f7faf5 0%, #fff 70%);
+  animation: vet-safety-in .4s ease both;
+  animation-delay: .05s;
+}
+.vet-summary-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.vet-summary-provider {
+  display: block;
+  color: var(--forest-deep);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.vet-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.vet-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 800;
+  background: rgba(182, 231, 64, 0.4);
+  color: var(--forest-deep);
+}
+.vet-summary-pill-muted {
+  background: rgba(15, 61, 47, 0.08);
+  font-weight: 700;
+}
+.vet-summary-service {
+  margin: 0 0 4px;
+  color: var(--forest-deep);
+}
+.vet-summary-video {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(15, 61, 47, 0.18);
+  background: rgba(255, 255, 255, 0.7);
+}
+.vet-summary-video-ico {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(182, 231, 64, 0.3);
+  font-size: 1rem;
+}
+.vet-summary-notes {
+  margin-bottom: 14px;
+}
+.vet-summary-notes-input {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(15, 61, 47, 0.16);
+  background: #fff;
+  font: inherit;
+  color: var(--forest-deep);
+  resize: vertical;
+  min-height: 96px;
+}
+.vet-summary-notes-input:focus {
+  outline: none;
+  border-color: rgba(15, 61, 47, 0.4);
+  box-shadow: 0 0 0 3px rgba(182, 231, 64, 0.35);
+}
+.vet-summary-notes-saved {
+  margin: 0 0 8px;
+  color: var(--forest);
+}
+.vet-history-note {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(182, 231, 64, 0.18);
+  color: var(--forest-deep);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.vet-summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vet-pay-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 0 0 10px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(15, 61, 47, 0.14);
+  background: #fff;
+  cursor: pointer;
+}
+.vet-pay-option input {
+  margin-top: 4px;
+}
+.vet-pay-option-body { flex: 1; min-width: 0; }
+.vet-pay-option-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.vet-pay-option.is-selected,
+.vet-pay-option:has(input:checked) {
+  border-color: rgba(15, 61, 47, 0.4);
+  background: linear-gradient(165deg, #f0f9e4 0%, #fff 70%);
+  box-shadow: 0 0 0 2px rgba(182, 231, 64, 0.3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .vet-summary-check,
+  .vet-summary-card {
+    animation: none;
+  }
+}
+
 .care-upsell {
   position: relative;
   border: 1.5px solid rgba(182, 231, 64, 0.65);

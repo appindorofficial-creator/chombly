@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
-using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -27,69 +26,44 @@ public class SummaryModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    [BindProperty]
-    public string? ClinicalNotes { get; set; }
-
     public Consultation? Consultation { get; set; }
     public ServiceCatalogItem? CatalogItem { get; set; }
-    public string? Message { get; set; }
     public string BackHref { get; private set; } = "/Appointments";
+    public string? PetHistoryHref { get; private set; }
+    public bool UsingCare { get; private set; }
+    public bool IsIntl { get; private set; }
+    public bool HasProviderNotes { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
         if (_auth.CurrentUserId is null)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Summary/{Id}" });
 
-        Consultation = await _db.Consultations
-            .Include(c => c.Pet)
-            .Include(c => c.Provider)
-            .FirstOrDefaultAsync(c => c.Id == Id && c.ClientId == _auth.CurrentUserId);
-
-        if (Consultation is null) return RedirectToPage("/Vet/Index");
-
-        BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
-            ? ReturnUrl!
-            : Url.Page("/Appointments/Index") ?? "/Appointments";
-
-        CatalogItem = await _catalog.GetAsync(Consultation.ServiceCatalogCode ?? "");
-        ClinicalNotes = Consultation.ClinicalNotes;
+        if (!await LoadAsync()) return RedirectToPage("/Vet/Index");
         return Page();
     }
 
-    public async Task<IActionResult> OnPostSaveAsync()
+    private async Task<bool> LoadAsync()
     {
-        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
-
         Consultation = await _db.Consultations
+            .AsNoTracking()
             .Include(c => c.Pet)
             .Include(c => c.Provider)
             .FirstOrDefaultAsync(c => c.Id == Id && c.ClientId == _auth.CurrentUserId);
 
-        if (Consultation is null) return RedirectToPage("/Vet/Index");
+        if (Consultation is null) return false;
 
         BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
             ? ReturnUrl!
             : Url.Page("/Appointments/Index") ?? "/Appointments";
 
-        Consultation.ClinicalNotes = ClinicalNotes?.Trim();
-        Consultation.UpdatedAt = DateTime.UtcNow;
-        if (Consultation.Status == ConsultationStatus.Scheduled)
-            Consultation.Status = ConsultationStatus.FollowUpOpen;
+        if (Consultation.PetId is int petId)
+            PetHistoryHref = Url.Page("/Pets/History", new { id = petId, returnUrl = Url.Page("/Vet/Virtual/Summary", new { id = Id }) });
 
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = _auth.CurrentUserId.Value,
-            Title = CatalogLocalizer.Loc("Seguimiento veterinario", "Vet follow-up"),
-            Message = CatalogLocalizer.Loc(
-                $"Recordatorio guardado para {Consultation.Pet?.Name}.",
-                $"Reminder saved for {Consultation.Pet?.Name}."),
-            Type = "vet-followup",
-            CreatedAt = DateTime.UtcNow
-        });
-
-        await _db.SaveChangesAsync();
         CatalogItem = await _catalog.GetAsync(Consultation.ServiceCatalogCode ?? "");
-        Message = CatalogLocalizer.Loc("Guardado en historial.", "Saved to history.");
-        return Page();
+        UsingCare = Consultation.UsesCareBenefit || Consultation.PriceCharged <= 0m;
+        IsIntl = string.Equals(Consultation.ServiceCatalogCode, ServiceCatalogCodes.VetIntl30, StringComparison.OrdinalIgnoreCase);
+        HasProviderNotes = !string.IsNullOrWhiteSpace(Consultation.ClinicalNotes);
+        return true;
     }
 }

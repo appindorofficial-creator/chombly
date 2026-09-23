@@ -44,11 +44,19 @@ public class CheckoutModel : PageModel
     [BindProperty] public bool AcceptMedia { get; set; }
     [BindProperty] public int? PaymentMethodId { get; set; }
 
+    /// <summary>care | pay</summary>
+    [BindProperty]
+    public string PayMode { get; set; } = "pay";
+
     public Consultation? Consultation { get; set; }
     public ServiceCatalogItem? CatalogItem { get; set; }
     public GroomerProfile? Provider { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
+    public PaymentMethod? DefaultPayment { get; set; }
+    public bool HasCareAvailable { get; set; }
+    public int CareRemaining { get; set; }
     public bool UsingCareBenefit { get; set; }
+    public decimal CatalogPrice { get; set; }
     public decimal ChargeAmount { get; set; }
     public string? ErrorMessage { get; set; }
 
@@ -58,6 +66,11 @@ public class CheckoutModel : PageModel
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Checkout?consultationId={ConsultationId}" });
 
         if (!await LoadAsync()) return RedirectToPage("/Vet/Index");
+
+        // Default: Care if available, otherwise pay.
+        PayMode = HasCareAvailable ? "care" : "pay";
+        UsingCareBenefit = PayMode == "care";
+        ChargeAmount = UsingCareBenefit ? 0 : CatalogPrice;
 
         await _audit.LogAsync("checkout_started", _auth.CurrentUserId, "Consultation", ConsultationId);
         return Page();
@@ -69,32 +82,37 @@ public class CheckoutModel : PageModel
         if (!await LoadAsync()) return RedirectToPage("/Vet/Index");
 
         if (!AcceptTerms || !AcceptScope)
-        {
-            ErrorMessage = CatalogLocalizer.Loc(
-                "Debes aceptar los términos y el alcance del servicio antes de pagar.",
-                "You must accept the terms and service scope before paying.");
             return Page();
-        }
 
         if (Consultation!.ProviderId is null || Consultation.PetId is null || Consultation.ScheduledAt is null || CatalogItem is null)
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Falta profesional, mascota u horario.", "Missing provider, pet, or schedule.");
             return Page();
+
+        var wantCare = string.Equals(PayMode, "care", StringComparison.OrdinalIgnoreCase);
+        UsingCareBenefit = wantCare && HasCareAvailable;
+        ChargeAmount = UsingCareBenefit ? 0 : CatalogPrice;
+
+        if (wantCare && !HasCareAvailable)
+        {
+            UsingCareBenefit = false;
+            ChargeAmount = CatalogPrice;
+            PayMode = "pay";
         }
 
-        UsingCareBenefit = Consultation.UsesCareBenefit;
-        if (UsingCareBenefit)
+        PaymentMethod? selectedPm = null;
+        if (!UsingCareBenefit)
         {
-            if (!await _care.HasQuickConsultAvailableAsync(_auth.CurrentUserId.Value))
+            selectedPm = PaymentMethodId is int payId
+                ? Payments.FirstOrDefault(p => p.Id == payId)
+                : DefaultPayment;
+            if (selectedPm is null)
             {
                 ErrorMessage = CatalogLocalizer.Loc(
-                    "Ya usaste la consulta rápida de este ciclo. Puedes pagar $30 o esperar al próximo ciclo.",
-                    "You already used this cycle's quick consult. Pay $30 or wait for the next cycle.");
-                UsingCareBenefit = false;
-                ChargeAmount = CatalogItem.Price;
+                    "Agrega un método de pago para continuar.",
+                    "Add a payment method to continue.");
                 return Page();
             }
-            ChargeAmount = 0;
+
+            PaymentMethodId = selectedPm.Id;
         }
 
         var service = await _db.Services.FirstOrDefaultAsync(s => s.GroomerId == Consultation.ProviderId);
@@ -115,12 +133,11 @@ public class CheckoutModel : PageModel
             await _db.SaveChangesAsync();
         }
 
-        var payNote = UsingCareBenefit ? " | Chombly Care benefit" : "";
-        if (!UsingCareBenefit && PaymentMethodId is int pmid)
-        {
-            var pm = Payments.FirstOrDefault(p => p.Id == pmid);
-            if (pm != null) payNote = $" | Card {pm.Brand} •••• {pm.Last4}";
-        }
+        var payNote = UsingCareBenefit
+            ? " | Chombly Care benefit"
+            : selectedPm != null
+                ? $" | Card {selectedPm.Brand} •••• {selectedPm.Last4}"
+                : "";
 
         var appt = new Appointment
         {
@@ -192,16 +209,25 @@ public class CheckoutModel : PageModel
         CatalogItem = await _catalog.GetAsync(Consultation.ServiceCatalogCode ?? "");
         if (CatalogItem is null) return false;
 
-        UsingCareBenefit = Consultation.UsesCareBenefit;
-        ChargeAmount = UsingCareBenefit ? 0 : CatalogItem.Price;
-
         if (Consultation.ProviderId is int pid)
             Provider = await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g => g.Id == pid);
+
+        CatalogPrice = Provider?.StartingPrice > 0 ? Provider.StartingPrice : CatalogItem.Price;
+
+        if (_auth.CurrentUserId is int uid)
+        {
+            var sub = await _care.GetActiveAsync(uid);
+            CareRemaining = sub != null ? _care.RemainingQuickConsults(sub) : 0;
+            HasCareAvailable = CareRemaining > 0;
+        }
 
         Payments = await _db.PaymentMethods.AsNoTracking()
             .Where(p => p.UserId == _auth.CurrentUserId)
             .OrderByDescending(p => p.IsDefault)
             .ToListAsync();
+        DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
+        if (PaymentMethodId is null && DefaultPayment != null)
+            PaymentMethodId = DefaultPayment.Id;
 
         return true;
     }

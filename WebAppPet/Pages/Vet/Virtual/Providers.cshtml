@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Veterinario local", "Local veterinarian");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Service", new { consultationId = Model.ConsultationId });
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/Virtual/Pet", new { consultationId = Model.ConsultationId, next = "local" });
     var price = Model.CatalogItem?.Price ?? 70m;
 }
 <div class="onboard onboard-app">
@@ -16,19 +16,28 @@
         <div class="alert alert-danger">@Model.ErrorMessage</div>
     }
 
-    <form method="post" class="stack" style="gap:14px">
+    <form method="post" class="stack" style="gap:14px" data-vet-local-providers>
         <input type="hidden" asp-for="ConsultationId" />
 
         <section>
             <h2 class="section-title">@CatalogLocalizer.Loc("¿Cuándo?", "When?")</h2>
             <div class="filter-bar filter-bar-wrap">
-                <label class="chip @(Model.When == "hoy" ? "active" : "")"><input type="radio" name="When" value="hoy" checked="@(Model.When == "hoy")" /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
-                <label class="chip @(Model.When == "mañana" ? "active" : "")"><input type="radio" name="When" value="mañana" checked="@(Model.When == "mañana")" /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
+                <label class="chip">
+                    <input type="radio" name="When" value="hoy" data-local-when @(string.Equals(Model.When, "hoy", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                    @CatalogLocalizer.Loc("Hoy", "Today")
+                </label>
+                <label class="chip">
+                    <input type="radio" name="When" value="mañana" data-local-when @(string.Equals(Model.When, "mañana", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                    @CatalogLocalizer.Loc("Mañana", "Tomorrow")
+                </label>
             </div>
-            <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
+            <div class="filter-bar filter-bar-wrap" style="margin-top:8px" data-local-slots>
                 @foreach (var t in Model.TimeSlots)
                 {
-                    <label class="chip @(Model.Slot == t ? "active" : "")"><input type="radio" name="Slot" value="@t" checked="@(Model.Slot == t)" /> @t</label>
+                    <label class="chip">
+                        <input type="radio" name="Slot" value="@t" data-local-slot @(string.Equals(Model.Slot, t, StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                        @t
+                    </label>
                 }
             </div>
         </section>
@@ -45,9 +54,9 @@
                     @foreach (var p in Model.Providers)
                     {
                         var lic = p.Licenses.FirstOrDefault(l => l.IsUsState);
-                        <label class="radio-card @(Model.ProviderId == p.Id ? "is-selected" : "")">
-                            <input type="radio" name="ProviderId" value="@p.Id" checked="@(Model.ProviderId == p.Id)" />
-                            <span>
+                        <label class="radio-card">
+                            <input type="radio" name="ProviderId" value="@p.Id" data-local-provider @(Model.ProviderId == p.Id ? "checked" : null) />
+                            <span class="inner">
                                 <strong>@p.BusinessName</strong>
                                 <span class="muted small" style="display:block">★ @p.Rating.ToString("0.0") · @p.City</span>
                                 <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Licencia", "License") @lic?.Jurisdiction @lic?.LicenseNumber</span>
@@ -58,10 +67,51 @@
             }
         </section>
 
-        <button type="submit" class="btn btn-primary btn-block" disabled="@(Model.Providers.Count == 0)">
-            @CatalogLocalizer.Loc("Reservar consulta", "Reserve consultation")
+        <button type="submit"
+                class="btn btn-primary btn-block vet-ready-submit"
+                data-local-submit
+                disabled
+                aria-disabled="true"
+                data-label-go="@CatalogLocalizer.Loc("Reservar consulta", "Reserve consultation")"
+                data-label-pick="@CatalogLocalizer.Loc("Elige horario y veterinario", "Choose time and veterinarian")">
+            @CatalogLocalizer.Loc("Elige horario y veterinario", "Choose time and veterinarian")
         </button>
     </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+<script>
+(function () {
+  var form = document.querySelector('[data-vet-local-providers]');
+  if (!form) return;
+  var btn = form.querySelector('[data-local-submit]');
+  if (!btn) return;
+  var labelGo = btn.getAttribute('data-label-go') || btn.textContent;
+  var labelPick = btn.getAttribute('data-label-pick') || labelGo;
+
+  function sync() {
+    var when = form.querySelector('[data-local-when]:checked');
+    var slot = form.querySelector('[data-local-slot]:checked');
+    var provider = form.querySelector('[data-local-provider]:checked');
+    var ready = !!when && !!slot && !!provider;
+    btn.disabled = !ready;
+    btn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    btn.textContent = ready ? labelGo : labelPick;
+
+    form.querySelectorAll('.chip').forEach(function (c) {
+      var input = c.querySelector('input[type=radio]');
+      c.classList.toggle('active', !!(input && input.checked));
+    });
+  }
+
+  form.addEventListener('change', sync);
+  form.addEventListener('submit', function (e) {
+    sync();
+    if (btn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  sync();
+})();
+</script>

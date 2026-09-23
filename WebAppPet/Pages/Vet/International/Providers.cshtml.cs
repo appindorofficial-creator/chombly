@@ -111,16 +111,19 @@ public class ProvidersModel : PageModel
             return Page();
         }
 
-        var day = AppTimeZones.TodayLocalDate();
-        if (string.Equals(When, "mañana", StringComparison.OrdinalIgnoreCase))
-            day = day.AddDays(1);
-
         var provider = Providers.First(p => p.Id == ProviderId);
         Consultation.ProviderId = ProviderId;
         Consultation.ContextCountry = provider.LicenseCountry;
+        var market = AppTimeZones.MarketFromCountry(Consultation.ContextCountry);
+        using var _tz = AppTimeZones.UseMarket(market);
+
+        var day = AppTimeZones.TodayLocalDate(market);
+        if (string.Equals(When, "mañana", StringComparison.OrdinalIgnoreCase))
+            day = day.AddDays(1);
+
         Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
         Consultation.UsesCareBenefit = UsingCareBenefit;
-        Consultation.ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+        Consultation.ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(day, tod, market);
         Consultation.Status = ConsultationStatus.ProviderSelected;
         await _flow.TouchAsync(Consultation);
 

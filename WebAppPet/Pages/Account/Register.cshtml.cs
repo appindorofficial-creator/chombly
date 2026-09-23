@@ -127,6 +127,7 @@ public class RegisterModel : PageModel
             PasswordHash = PasswordHasher.Hash(Password),
             Role = UserRole.Client
         };
+        MarketCountry.ApplyFromLocation(user);
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();

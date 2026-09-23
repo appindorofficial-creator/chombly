@@ -147,6 +147,13 @@
   form.addEventListener('change', function (e) {
     if (e.target && e.target.hasAttribute('data-service-option')) sync();
   });
+  form.addEventListener('submit', function (e) {
+    sync();
+    if (btn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
   sync();
 })();
 </script>

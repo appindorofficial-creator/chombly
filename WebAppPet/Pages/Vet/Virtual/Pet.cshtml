@@ -1,166 +1,274 @@
 @page
 @model WebAppPet.Pages.Vet.Virtual.PetModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location");
+    ViewData["Title"] = CatalogLocalizer.Loc("Tu consulta", "Your consult");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
+    var isLocal = string.Equals(Model.Next, "local", StringComparison.OrdinalIgnoreCase);
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Mascota y ubicación", "Pet & location")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("Confirmamos dónde está la mascota en cada consulta", "We confirm where the pet is for every consult")</p>
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
+    <div class="home-body hotel-flow vet-pet-page">
+        <header class="vet-pet-hero">
+            <p class="vet-pet-kicker">@(isLocal
+                ? CatalogLocalizer.Loc("Consulta local", "Local consult")
+                : CatalogLocalizer.Loc("Virtual", "Virtual"))</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Tu consulta", "Your consult")</h1>
+            <p class="muted small">@CatalogLocalizer.Loc("Mascota, ubicación y una revisión rápida de seguridad.", "Pet, location, and a quick safety check.")</p>
+        </header>
 
-    @if (Model.Pets.Count == 0)
-    {
-        <div class="card card-pad" style="text-align:center">
-            <p class="muted" style="margin:0 0 14px">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
-            <a class="btn btn-primary btn-block" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
-        </div>
-    }
-    else
-    {
-        <form method="post" enctype="multipart/form-data">
-            <input type="hidden" asp-for="ConsultationId" />
-            <input type="hidden" asp-for="Next" />
+        @if (Model.ShowPathChoice)
+        {
+            <section class="vet-safety-choice" role="region" aria-labelledby="vet-pet-choice-title">
+                <h2 id="vet-pet-choice-title" class="section-title">@CatalogLocalizer.Loc("Detectamos signos de alerta", "We detected warning signs")</h2>
+                <p class="muted small">
+                    @CatalogLocalizer.Loc(
+                        "Si hay peligro, busca urgencia. Si aún quieres orientación (no sustituye emergencia), puedes seguir.",
+                        "If there is danger, seek emergency care. You can still continue for guidance (it does not replace an emergency).")
+                </p>
+                <div class="vet-safety-choice-actions">
+                    <form method="post" asp-page-handler="GoEmergency">
+                        <input type="hidden" asp-for="ConsultationId" />
+                        <input type="hidden" asp-for="Next" />
+                        <button type="submit" class="btn btn-primary btn-block">
+                            @CatalogLocalizer.Loc("Ver opciones de emergencia", "See emergency options")
+                        </button>
+                    </form>
+                    <form method="post" asp-page-handler="ContinueVirtual">
+                        <input type="hidden" asp-for="ConsultationId" />
+                        <input type="hidden" asp-for="Next" />
+                        <button type="submit" class="btn btn-outline btn-block">
+                            @CatalogLocalizer.Loc("Continuar con la consulta", "Continue with the consult")
+                        </button>
+                    </form>
+                </div>
+                <p class="muted small" style="margin-top:12px;margin-bottom:0">
+                    <a asp-page="/Vet/Virtual/Pet" asp-route-consultationId="@Model.ConsultationId" asp-route-next="@Model.Next" asp-route-edit="true">
+                        @CatalogLocalizer.Loc("← Editar respuestas", "← Edit answers")
+                    </a>
+                </p>
+            </section>
+        }
+        else if (Model.Pets.Count == 0)
+        {
+            <div class="card card-pad" style="text-align:center">
+                <p class="muted" style="margin:0 0 14px">@CatalogLocalizer.Loc("Agrega una mascota para continuar.", "Add a pet to continue.")</p>
+                <a class="btn btn-primary btn-block" asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}&next={Model.Next}")">@CatalogLocalizer.Loc("Agregar mascota", "Add pet")</a>
+            </div>
+        }
+        else
+        {
+            <form method="post" enctype="multipart/form-data" data-vet-pet-form>
+                <input type="hidden" asp-for="ConsultationId" />
+                <input type="hidden" asp-for="Next" />
 
-            <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Selecciona tu mascota", "Select your pet")</h2>
-            @foreach (var p in Model.Pets)
-            {
-                <label class="radio-card">
-                    <input type="radio" name="PetId" value="@p.Id" required @(Model.PetId == p.Id ? "checked" : null) />
-                    <div class="inner">
-                        <div class="pet-select" style="border:none;padding:0;flex:1">
-                            <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
-                            <div>
-                                <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
-                                <div class="muted small">@PetSpecies.DisplayLabel(p.Species) · @p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "yrs")</div>
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger" style="margin:0 0 14px">@Model.ErrorMessage</div>
+                }
+
+                <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Mascota", "Pet")</h2>
+                @foreach (var p in Model.Pets)
+                {
+                    <label class="radio-card">
+                        <input type="radio" name="PetId" value="@p.Id" @(Model.PetId == p.Id ? "checked" : null) />
+                        <div class="inner">
+                            <div class="pet-select" style="border:none;padding:0;flex:1">
+                                <partial name="_PetAvatar" model="(p.PhotoUrl, p.Species, p.Name, (string?)null)" />
+                                <div>
+                                    <strong>@PetSpecies.Emoji(p.Species) @p.Name</strong>
+                                    <div class="muted small">@PetSpecies.DisplayLabel(p.Species) · @p.Breed · @p.AgeYears @CatalogLocalizer.Loc("años", "yrs")</div>
+                                </div>
                             </div>
                         </div>
+                    </label>
+                }
+                <p class="muted small" style="margin:-4px 0 16px">
+                    <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}&next={Model.Next}")">
+                        + @CatalogLocalizer.Loc("Agregar otra mascota", "Add another pet")
+                    </a>
+                </p>
+
+                <div class="form-group" data-vet-pet-location>
+                    <input type="hidden" name="PetCountry" value="@Model.HomeCountryCode" />
+                    <p class="muted small" style="margin:0 0 8px">
+                        @CatalogLocalizer.Loc("Ubicación de tu cuenta", "Account location"):
+                        <strong>@Model.HomeCountryLabel</strong>@(string.IsNullOrWhiteSpace(Model.UserCity) ? "" : $" · {Model.UserCity}")
+                        <a class="link-btn" href="/Account/EditProfile" style="margin-left:6px">@CatalogLocalizer.Loc("Cambiar en perfil", "Change in profile")</a>
+                    </p>
+                    @if (Model.HomeCountryCode == "US")
+                    {
+                        <div class="vet-pet-us-state" data-us-state-wrap>
+                            <label asp-for="PetUsState">@CatalogLocalizer.Loc("Estado", "State")</label>
+                            <select class="form-control" asp-for="PetUsState">
+                                @foreach (var s in PetModel.UsStates)
+                                {
+                                    <option value="@s.Code">@CatalogLocalizer.Loc(s.NameEs, s.NameEn)</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Symptoms">@CatalogLocalizer.Loc("Motivo (opcional)", "Reason (optional)")</label>
+                    <textarea class="form-control" asp-for="Symptoms" rows="2" placeholder="@CatalogLocalizer.Loc("Breve descripción…", "Brief description…")"></textarea>
+                </div>
+
+                <div class="form-group pet-photo-field">
+                    <label>@CatalogLocalizer.Loc("Fotos o video (opcional)", "Photos or video (optional)")</label>
+                    <p class="field-hint">@CatalogLocalizer.Loc("Hasta 2 archivos", "Up to 2 files")</p>
+                    <div class="vet-media-picks">
+                        <label class="pet-photo-pick btn btn-outline">
+                            <span class="vet-media-pick-label" data-empty="@CatalogLocalizer.Loc("Archivo 1", "File 1")">@CatalogLocalizer.Loc("Archivo 1", "File 1")</span>
+                            <input type="file" asp-for="Media1" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                        </label>
+                        <label class="pet-photo-pick btn btn-outline">
+                            <span class="vet-media-pick-label" data-empty="@CatalogLocalizer.Loc("Archivo 2", "File 2")">@CatalogLocalizer.Loc("Archivo 2", "File 2")</span>
+                            <input type="file" asp-for="Media2" accept="image/*,video/mp4,video/webm,video/quicktime" />
+                        </label>
                     </div>
-                </label>
-            }
-            <p class="muted small" style="margin:-4px 0 16px">
-                <a asp-page="/Pets/Create" asp-route-returnUrl="@($"/Vet/Virtual/Pet?consultationId={Model.ConsultationId}")">
-                    + @CatalogLocalizer.Loc("Agregar otra mascota", "Add another pet")
-                </a>
-            </p>
-
-            <div class="form-group" data-vet-pet-location>
-                <label>@CatalogLocalizer.Loc("País donde está la mascota", "Country where the pet is")</label>
-                <div class="vet-pet-countries" role="radiogroup" aria-label="@CatalogLocalizer.Loc("País de la mascota", "Pet country")">
-                    <label class="radio-card">
-                        <input type="radio" name="PetCountry" value="CO" required @(Model.PetCountry == "CO" ? "checked" : null) />
-                        <div class="inner">
-                            <strong>@CatalogLocalizer.Loc("Colombia", "Colombia")</strong>
-                            <div class="muted small">@CatalogLocalizer.Loc("Ciudad / departamento de tu perfil", "City / department from your profile")</div>
-                        </div>
-                    </label>
-                    <label class="radio-card">
-                        <input type="radio" name="PetCountry" value="US" required @(Model.PetCountry == "US" ? "checked" : null) />
-                        <div class="inner">
-                            <strong>@CatalogLocalizer.Loc("Estados Unidos", "United States")</strong>
-                            <div class="muted small">@CatalogLocalizer.Loc("Incluye estado para VCPR local", "Includes state for local VCPR")</div>
-                        </div>
-                    </label>
                 </div>
 
-                <div class="vet-pet-us-state" data-us-state-wrap @(Model.PetCountry == "US" ? null : "hidden")>
-                    <label asp-for="PetUsState">@CatalogLocalizer.Loc("Estado (EE.UU.)", "U.S. state")</label>
-                    <select class="form-control" asp-for="PetUsState">
-                        @foreach (var s in PetModel.UsStates)
-                        {
-                            <option value="@s.Code">@CatalogLocalizer.Loc(s.NameEs, s.NameEn)</option>
-                        }
-                    </select>
-                </div>
+                <section class="vet-pet-safety" data-vet-safety>
+                    <h2 class="section-title">@CatalogLocalizer.Loc("¿Hay urgencia ahora?", "Any emergency now?")</h2>
+                    <p class="muted small">@CatalogLocalizer.Loc("Marca signos graves o “Ninguna urgencia”.", "Check serious signs or “No emergency”.")</p>
+                    <div class="vet-safety-flags vet-pet-safety-flags" role="group">
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="BreathingTrouble" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">😮‍💨</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Respira mal", "Breathing trouble")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="Seizures" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">⚡</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Convulsiones", "Seizures")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="Unconscious" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">💫</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Colapso", "Collapsed")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="SevereBleeding" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">🩸</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Sangrado fuerte", "Severe bleeding")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="ToxinIngestion" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">☠️</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Tóxico / veneno", "Toxin / poison")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="ExtremePain" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">😣</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Dolor extremo", "Extreme pain")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag">
+                            <input type="checkbox" asp-for="CannotUrinate" data-safety-flag />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">🚫</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("No orina", "Cannot urinate")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                        <label class="vet-safety-flag vet-safety-flag-none">
+                            <input type="checkbox" asp-for="NoRedFlags" data-safety-none />
+                            <span class="vet-safety-flag-ico" aria-hidden="true">✓</span>
+                            <span class="vet-safety-flag-text">@CatalogLocalizer.Loc("Ninguna urgencia", "No emergency")</span>
+                            <span class="vet-safety-flag-tick" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                </section>
 
-                <p class="field-hint" style="margin:8px 0 0" data-co-hint @(Model.PetCountry == "CO" ? null : "hidden")>
-                    @if (!string.IsNullOrEmpty(Model.UserCity))
-                    {
-                        @CatalogLocalizer.Loc($"Ubicación según tu perfil: {Model.UserCity}. Puedes cambiar el país si viajas.", $"Location from your profile: {Model.UserCity}. Change country if you are traveling.")
-                    }
-                    else
-                    {
-                        @CatalogLocalizer.Loc("Confirmamos Colombia. Actualiza tu ciudad en el perfil si hace falta.", "We confirm Colombia. Update your city in the profile if needed.")
-                    }
-                </p>
-                <p class="field-hint" style="margin:8px 0 0" data-us-hint @(Model.PetCountry == "US" ? null : "hidden")>
-                    @if (Model.StateFromLocation && !string.IsNullOrEmpty(Model.UserCity))
-                    {
-                        @CatalogLocalizer.Loc($"Según tu ubicación ({Model.UserCity}). Puedes corregirlo.", $"Based on your location ({Model.UserCity}). You can correct it.")
-                    }
-                    else if (Model.StateFromLocation)
-                    {
-                        @CatalogLocalizer.Loc("Según tu ubicación guardada. Puedes corregirlo.", "Based on your saved location. You can correct it.")
-                    }
-                    else
-                    {
-                        @CatalogLocalizer.Loc("El estado importa para telemedicina clínica local en EE.UU. No es el país del veterinario internacional.", "State matters for local U.S. clinical telemedicine. This is not the international vet's country.")
-                    }
-                </p>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Symptoms">@CatalogLocalizer.Loc("Síntomas o motivo", "Symptoms or reason")</label>
-                <textarea class="form-control" asp-for="Symptoms" rows="3" placeholder="@CatalogLocalizer.Loc("Describe brevemente…", "Briefly describe…")"></textarea>
-            </div>
-
-            <div class="form-group pet-photo-field">
-                <label>@CatalogLocalizer.Loc("Fotos o video corto (opcional)", "Photos or short video (optional)")</label>
-                <p class="field-hint">@CatalogLocalizer.Loc("Hasta 2 archivos · imagen o video corto", "Up to 2 files · image or short video")</p>
-                <div class="vet-media-picks">
-                    <label class="pet-photo-pick btn btn-outline">
-                        <span class="vet-media-pick-label" data-empty="@CatalogLocalizer.Loc("Foto / video 1", "Photo / video 1")">@CatalogLocalizer.Loc("Foto / video 1", "Photo / video 1")</span>
-                        <input type="file" asp-for="Media1" accept="image/*,video/mp4,video/webm,video/quicktime" />
-                    </label>
-                    <label class="pet-photo-pick btn btn-outline">
-                        <span class="vet-media-pick-label" data-empty="@CatalogLocalizer.Loc("Foto / video 2", "Photo / video 2")">@CatalogLocalizer.Loc("Foto / video 2", "Photo / video 2")</span>
-                        <input type="file" asp-for="Media2" accept="image/*,video/mp4,video/webm,video/quicktime" />
-                    </label>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block">@L["Common_Continue"]</button>
-        </form>
-    }
+                <button type="submit"
+                        class="btn btn-primary btn-block vet-pet-submit"
+                        data-pet-submit
+                        disabled
+                        aria-disabled="true"
+                        data-label-go="@CatalogLocalizer.Loc("Continuar", "Continue")"
+                        data-label-pick="@CatalogLocalizer.Loc("Confirma mascota y seguridad", "Confirm pet and safety")">
+                    @CatalogLocalizer.Loc("Confirma mascota y seguridad", "Confirm pet and safety")
+                </button>
+            </form>
+        }
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
 
-@section Scripts {
+@if (!Model.ShowPathChoice && Model.Pets.Count > 0)
+{
 <script>
 (function () {
+  var form = document.querySelector('[data-vet-pet-form]');
+  if (!form) return;
+
   document.querySelectorAll('.vet-media-picks .pet-photo-pick').forEach(function (pick) {
     var input = pick.querySelector('input[type=file]');
     var label = pick.querySelector('.vet-media-pick-label');
     if (!input || !label) return;
     var empty = label.getAttribute('data-empty') || label.textContent;
     input.addEventListener('change', function () {
-      var name = input.files && input.files[0] ? input.files[0].name : empty;
-      label.textContent = name;
+      label.textContent = input.files && input.files[0] ? input.files[0].name : empty;
       pick.classList.toggle('is-filled', !!(input.files && input.files[0]));
     });
   });
 
-  var loc = document.querySelector('[data-vet-pet-location]');
-  if (!loc) return;
-  var wrap = loc.querySelector('[data-us-state-wrap]');
-  var coHint = loc.querySelector('[data-co-hint]');
-  var usHints = loc.querySelectorAll('[data-us-hint]');
-  function syncCountry() {
-    var us = loc.querySelector('input[name="PetCountry"][value="US"]');
-    var isUs = !!(us && us.checked);
-    if (wrap) wrap.hidden = !isUs;
-    if (coHint) coHint.hidden = isUs;
-    usHints.forEach(function (h) { h.hidden = !isUs; });
+  var safety = form.querySelector('[data-vet-safety]');
+  var btn = form.querySelector('[data-pet-submit]');
+  if (!safety || !btn) return;
+  var none = safety.querySelector('[data-safety-none]');
+  var flags = safety.querySelectorAll('[data-safety-flag]');
+  var labelGo = btn.getAttribute('data-label-go') || btn.textContent;
+  var labelPick = btn.getAttribute('data-label-pick') || labelGo;
+  var syncing = false;
+
+  function anyFlag() {
+    return Array.prototype.some.call(flags, function (c) { return c.checked; });
   }
-  loc.addEventListener('change', syncCountry);
-  syncCountry();
+  function petReady() {
+    var pet = !!form.querySelector('input[name="PetId"]:checked');
+    if (!pet) return false;
+    var country = form.querySelector('input[name="PetCountry"]');
+    var code = country ? String(country.value || '').toUpperCase() : '';
+    if (code === 'US') {
+      var st = form.querySelector('[name="PetUsState"]');
+      if (!st || !String(st.value || '').trim()) return false;
+    }
+    return !!code;
+  }
+  function sync(from) {
+    if (syncing) return;
+    syncing = true;
+    try {
+      if (from === 'none' && none && none.checked) flags.forEach(function (c) { c.checked = false; });
+      else if (from === 'flag' && anyFlag() && none) none.checked = false;
+      var ready = petReady() && (anyFlag() || !!(none && none.checked));
+      btn.disabled = !ready;
+      btn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+      btn.textContent = ready ? labelGo : labelPick;
+    } finally { syncing = false; }
+  }
+
+  form.addEventListener('change', function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.hasAttribute('data-safety-none')) sync('none');
+    else if (t.hasAttribute('data-safety-flag')) sync('flag');
+    else sync();
+  });
+  form.addEventListener('submit', function (e) {
+    sync();
+    if (btn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  sync();
 })();
 </script>
 }

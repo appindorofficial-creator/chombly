@@ -69,10 +69,32 @@
             }
             else if (a.Status == AppointmentStatus.Confirmed)
             {
-                <form method="post" asp-page-handler="Complete">
+                <form method="post" asp-page-handler="Complete" class="vet-provider-note-form">
                     <input type="hidden" name="id" value="@a.Id" />
                     <input type="hidden" name="tab" value="@Model.Tab" />
-                    <button class="btn btn-primary btn-block btn-sm" type="submit">@CatalogLocalizer.Loc("Marcar como completada", "Mark as completed")</button>
+                    <label class="muted small" style="display:block;margin-bottom:6px">
+                        @CatalogLocalizer.Loc("Nota clínica (historial de la mascota)", "Clinical note (pet history)")
+                    </label>
+                    <textarea name="clinicalNotes" class="vet-summary-notes-input" rows="3"
+                              placeholder="@CatalogLocalizer.Loc("Hallazgos, orientación, seguimiento…", "Findings, guidance, follow-up…")"></textarea>
+                    <button class="btn btn-primary btn-block btn-sm" type="submit">
+                        @CatalogLocalizer.Loc("Completar y guardar nota", "Complete and save note")
+                    </button>
+                </form>
+            }
+            else if (a.Status == AppointmentStatus.Completed)
+            {
+                <form method="post" asp-page-handler="SaveNote" class="vet-provider-note-form" style="margin-top:8px">
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <input type="hidden" name="tab" value="@Model.Tab" />
+                    <label class="muted small" style="display:block;margin-bottom:6px">
+                        @CatalogLocalizer.Loc("Actualizar nota clínica", "Update clinical note")
+                    </label>
+                    <textarea name="clinicalNotes" class="vet-summary-notes-input" rows="2"
+                              placeholder="@CatalogLocalizer.Loc("Añadir o corregir nota para el historial…", "Add or correct note for history…")"></textarea>
+                    <button class="btn btn-outline btn-block btn-sm" type="submit">
+                        @CatalogLocalizer.Loc("Guardar en historial", "Save to history")
+                    </button>
                 </form>
             }
         </div>

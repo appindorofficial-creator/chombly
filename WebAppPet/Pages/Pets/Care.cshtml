@@ -72,6 +72,13 @@
                         @VetDisplay.StatusLabel(c.Status) · @AppTimeZones.FormatShort(VetDisplay.SortAt(c))
                         @if (c.UsesCareBenefit) { <text>· Care</text> }
                     </span>
+                    @if (!string.IsNullOrWhiteSpace(c.ClinicalNotes))
+                    {
+                        <span class="vet-history-note" style="display:block;margin-top:6px">
+                            <span class="muted small">@CatalogLocalizer.Loc("Nota del veterinario", "Vet note"):</span>
+                            @c.ClinicalNotes
+                        </span>
+                    }
                 </a>
             }
         }

@@ -1,82 +1,155 @@
 @page
 @model WebAppPet.Pages.Vet.International.ConsentModel
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Aceptación", "Consent");
+    ViewData["Title"] = CatalogLocalizer.Loc("Agenda", "Schedule");
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/PurchaseOption", new { consultationId = Model.ConsultationId });
-    var price = Model.UsingCare ? 0m : (Model.CatalogItem?.Price ?? 30m);
+    ViewData["OnboardBackHref"] = Url.Page("/Vet/International/Matches", new { consultationId = Model.ConsultationId });
+    var price = Model.ConsultPrice;
+    var canSchedule = Model.DayOpen && Model.TimeSlots.Count > 0;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body hotel-flow">
-        <h1 class="app-page-heading">@CatalogLocalizer.Loc("Antes del pago", "Before payment")</h1>
-        <p class="muted small">@CatalogLocalizer.Loc("Casillas vacías · sin tarjeta todavía", "Empty checkboxes · no card yet")</p>
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
-    }
+    <div class="home-body hotel-flow vet-schedule-page">
+        <header class="vet-matches-hero">
+            <p class="vet-matches-kicker">@CatalogLocalizer.Loc("Virtual", "Virtual")</p>
+            <h1 class="app-page-heading">@CatalogLocalizer.Loc("Agenda", "Schedule")</h1>
+            <p class="muted small">@CatalogLocalizer.Loc("Elige día y hora, luego ve al pago.", "Pick day and time, then go to payment.")</p>
+        </header>
 
-    <div class="card card-pad" style="margin-bottom:14px">
-        <strong>@(Model.Provider?.BusinessName)</strong>
-        <p class="muted small">
-            @CatalogLocalizer.Loc("Licencia", "License") @(Model.Provider?.LicenseCountry)
-            · @CatalogLocalizer.Loc("Mascota en", "Pet in") @Model.Consultation?.PetUsState
-        </p>
-        <p>
-            @if (Model.UsingCare)
-            {
-                <span class="price-tag">@CatalogLocalizer.Loc("Incluida en Care · $0", "Included in Care · $0")</span>
-            }
-            else
-            {
-                <span class="price-tag">$@price.ToString("0.##")</span>
-                <span class="muted small">@CatalogLocalizer.Loc("pago único", "one-time")</span>
-            }
-        </p>
-        <p class="muted small">@ServiceCatalogService.DisplayScope(Model.CatalogItem!)</p>
-    </div>
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" style="margin:0 0 14px">@Model.ErrorMessage</div>
+        }
 
-    <form method="post" class="stack" style="gap:12px">
-        <input type="hidden" asp-for="ConsultationId" />
-        <input type="hidden" asp-for="CareBenefit" />
-
-        <section>
-            <h2 class="section-title">@CatalogLocalizer.Loc("Horario", "Schedule")</h2>
-            <div class="filter-bar filter-bar-wrap">
-                <label class="chip"><input type="radio" name="When" value="hoy" @(Model.When == "hoy" ? "checked" : null) /> @CatalogLocalizer.Loc("Hoy", "Today")</label>
-                <label class="chip"><input type="radio" name="When" value="mañana" @(Model.When == "mañana" ? "checked" : null) /> @CatalogLocalizer.Loc("Mañana", "Tomorrow")</label>
-            </div>
-            <div class="filter-bar filter-bar-wrap" style="margin-top:8px">
-                @foreach (var t in Model.TimeSlots)
+        <div class="vet-schedule-provider">
+            <strong>@(Model.Provider?.BusinessName)</strong>
+            <p class="muted small mb-0">
+                @CatalogLocalizer.Loc("Licencia", "License") @(Model.Provider?.LicenseCountry)
+                @if (!string.IsNullOrEmpty(Model.Provider?.SpokenLanguages))
                 {
-                    <label class="chip"><input type="radio" name="Slot" value="@t" @(Model.Slot == t ? "checked" : null) /> @t</label>
+                    <text> · @Model.Provider.SpokenLanguages</text>
                 }
+            </p>
+            <p style="margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                @if (Model.UsingCare)
+                {
+                    <span class="vet-match-badge vet-match-badge-care">@CatalogLocalizer.Loc("Care · $0", "Care · $0")</span>
+                    <span class="muted small">$@price.ToString("0.##") · 30 min</span>
+                }
+                else
+                {
+                    <span class="vet-match-badge">$@price.ToString("0.##") · 30 min</span>
+                }
+            </p>
+        </div>
+
+        <section style="margin-bottom:14px">
+            <h2 class="section-title">@CatalogLocalizer.Loc("Día", "Day")</h2>
+            <div class="filter-bar filter-bar-wrap">
+                <a class="chip @(Model.When == "hoy" ? "active" : "")"
+                   asp-page="/Vet/International/Consent"
+                   asp-route-consultationId="@Model.ConsultationId"
+                   asp-route-when="hoy">@CatalogLocalizer.Loc("Hoy", "Today")</a>
+                <a class="chip @(Model.When == "mañana" ? "active" : "")"
+                   asp-page="/Vet/International/Consent"
+                   asp-route-consultationId="@Model.ConsultationId"
+                   asp-route-when="mañana">@CatalogLocalizer.Loc("Mañana", "Tomorrow")</a>
             </div>
         </section>
 
-        <section class="vet-consent">
-            <h2 class="section-title">@CatalogLocalizer.Loc("Consentimientos", "Consents")</h2>
-            <label class="check-row">
-                <input type="checkbox" asp-for="AcceptScope" />
-                <span>@CatalogLocalizer.Loc("Orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.", "International guidance: no U.S. Rx, not emergency, does not replace local vet.")</span>
-            </label>
-            <label class="check-row">
-                <input type="checkbox" asp-for="AcceptMedia" />
-                <span>@CatalogLocalizer.Loc("Uso de fotos/video para esta consulta (opcional).", "Use of photos/video for this consult (optional).")</span>
-            </label>
-        </section>
+        <form method="post" class="vet-schedule-form" data-vet-schedule>
+            <input type="hidden" asp-for="ConsultationId" />
+            <input type="hidden" name="When" value="@(Model.When ?? "hoy")" />
 
-        <button type="submit" class="btn btn-primary btn-block">
-            @if (Model.UsingCare)
-            {
-                @CatalogLocalizer.Loc("Aceptar y continuar al pago", "Accept and continue to payment")
-            }
-            else
-            {
-                @CatalogLocalizer.Loc($"Aceptar y continuar · Pagar ${price:0.##}", $"Accept and continue · Pay ${price:0.##}")
-            }
-        </button>
-    </form>
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Horario disponible", "Available times")</h2>
+                @if (!canSchedule)
+                {
+                    <p class="muted small">@CatalogLocalizer.Loc("Sin horarios este día. Prueba mañana.", "No times this day. Try tomorrow.")</p>
+                }
+                else
+                {
+                    <div class="filter-bar filter-bar-wrap" data-schedule-slots>
+                        @foreach (var t in Model.TimeSlots)
+                        {
+                            var past = Model.PastSlots.Contains(t);
+                            <label class="chip @(string.Equals(Model.Slot, t, StringComparison.OrdinalIgnoreCase) ? "active" : "") @(past ? "is-disabled" : "")">
+                                <input type="radio" name="Slot" value="@t" data-schedule-slot disabled="@past" @(string.Equals(Model.Slot, t, StringComparison.OrdinalIgnoreCase) && !past ? "checked" : null) />
+                                @t
+                            </label>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="vet-consent" style="margin-top:16px">
+                <label class="check-row">
+                    <input type="checkbox" asp-for="AcceptScope" data-schedule-consent />
+                    <span>@CatalogLocalizer.Loc("Entiendo que es orientación virtual: no receta EE.UU., no emergencia, no sustituye veterinario local.", "I understand this is virtual guidance: no U.S. Rx, not an emergency, does not replace a local vet.")</span>
+                </label>
+            </section>
+
+            <button type="submit"
+                    class="btn btn-primary btn-block"
+                    style="margin-top:14px"
+                    data-schedule-submit
+                    disabled
+                    aria-disabled="true"
+                    data-label-go="@CatalogLocalizer.Loc("Continuar al pago", "Continue to payment")"
+                    data-label-pick="@CatalogLocalizer.Loc("Elige horario y acepta para continuar", "Pick a time and accept to continue")">
+                @CatalogLocalizer.Loc("Elige horario y acepta para continuar", "Pick a time and accept to continue")
+            </button>
+        </form>
     </div>
     <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
+<script>
+(function () {
+  var form = document.querySelector('[data-vet-schedule]');
+  if (!form) return;
+  var btn = form.querySelector('[data-schedule-submit]');
+  var consent = form.querySelector('[data-schedule-consent]');
+  var slots = form.querySelector('[data-schedule-slots]');
+  if (!btn) return;
+  var labelGo = btn.getAttribute('data-label-go') || btn.textContent;
+  var labelPick = btn.getAttribute('data-label-pick') || labelGo;
+
+  function sync() {
+    var slot = form.querySelector('[data-schedule-slot]:checked:not([disabled])');
+    var ready = !!slot && !!(consent && consent.checked);
+    btn.disabled = !ready;
+    btn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    btn.textContent = ready ? labelGo : labelPick;
+    form.querySelectorAll('[data-schedule-slots] .chip').forEach(function (c) {
+      var input = c.querySelector('[data-schedule-slot]');
+      c.classList.toggle('active', !!(input && input.checked && !input.disabled));
+    });
+  }
+
+  if (slots) {
+    slots.addEventListener('click', function (e) {
+      var chip = e.target.closest('.chip');
+      if (!chip || chip.classList.contains('is-disabled')) return;
+      var input = chip.querySelector('[data-schedule-slot]');
+      if (!input || input.disabled) return;
+      if (!input.checked) {
+        input.checked = true;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        sync();
+      }
+    });
+  }
+
+  form.addEventListener('change', sync);
+  form.addEventListener('submit', function (e) {
+    sync();
+    if (btn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  sync();
+})();
+</script>

@@ -30,10 +30,10 @@ public class ProvidersModel : PageModel
     public int ProviderId { get; set; }
 
     [BindProperty]
-    public string Slot { get; set; } = "10:30 AM";
+    public string Slot { get; set; } = "";
 
     [BindProperty]
-    public string When { get; set; } = "hoy";
+    public string When { get; set; } = "";
 
     public Consultation? Consultation { get; set; }
     public ServiceCatalogItem? CatalogItem { get; set; }
@@ -72,25 +72,22 @@ public class ProvidersModel : PageModel
         await LoadProvidersAsync();
 
         if (ProviderId <= 0 || !Providers.Any(p => p.Id == ProviderId))
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Selecciona un veterinario local.", "Select a local veterinarian.");
             return Page();
-        }
 
         if (!AppTimeZones.TryParseSlotToTimeSpan(Slot, out var tod))
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Elige un horario.", "Choose a time slot.");
             return Page();
-        }
 
-        var day = AppTimeZones.TodayLocalDate();
+        var market = AppTimeZones.MarketFromCountry(Consultation.ContextCountry);
+        using var _tz = AppTimeZones.UseMarket(market);
+
+        var day = AppTimeZones.TodayLocalDate(market);
         if (string.Equals(When, "mañana", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(When, "tomorrow", StringComparison.OrdinalIgnoreCase))
             day = day.AddDays(1);
 
         Consultation.ProviderId = ProviderId;
         Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetLocal30;
-        Consultation.ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+        Consultation.ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(day, tod, market);
         Consultation.Status = ConsultationStatus.ProviderSelected;
         await _flow.TouchAsync(Consultation);
 

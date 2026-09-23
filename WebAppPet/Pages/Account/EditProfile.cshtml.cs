@@ -142,6 +142,11 @@ public class EditProfileModel : PageModel
             user.Latitude = lat;
             user.Longitude = lng;
             user.LocationUpdatedAt = DateTime.UtcNow;
+            MarketCountry.ApplyFromLocation(user);
+        }
+        else if (string.IsNullOrWhiteSpace(user.CountryCode))
+        {
+            MarketCountry.ApplyFromLocation(user);
         }
 
         await _db.SaveChangesAsync();

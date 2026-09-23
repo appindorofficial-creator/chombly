@@ -277,14 +277,15 @@ public static class BookingTime
         "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
     };
 
-    public static HashSet<string> MarkPastSlots(IEnumerable<string> slots, DateTime day)
+    public static HashSet<string> MarkPastSlots(IEnumerable<string> slots, DateTime day, BusinessMarket? market = null)
     {
+        var zone = market ?? AppTimeZones.CurrentMarket;
         var past = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var nowUtc = DateTime.UtcNow;
         foreach (var label in slots)
         {
             if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var tod)) continue;
-            var utc = AppTimeZones.LocalDateAndTimeToUtc(day.Date, tod);
+            var utc = AppTimeZones.LocalDateAndTimeToUtc(day.Date, tod, zone);
             if (utc <= nowUtc)
                 past.Add(label);
         }
