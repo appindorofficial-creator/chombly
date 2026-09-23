@@ -51,6 +51,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public List<int> ExtraIds { get; set; } = new();
 
+    /// <summary>Pets that need medication admin when that extra is selected (multi-pet stays).</summary>
+    [BindProperty(SupportsGet = true)]
+    public List<int> MedsPetIds { get; set; } = new();
+
     [BindProperty(SupportsGet = true)]
     public string? Notes { get; set; }
 
@@ -80,6 +84,11 @@ public class IndexModel : PageModel
 
     /// <summary>Hotel cards can be chosen only after at least one pet is selected.</summary>
     public bool CanSelectHotel => SelectedPets.Count > 0;
+
+    public bool MedsExtraSelected { get; private set; }
+    public int? MedsExtraId { get; private set; }
+    public bool NeedsMedsPetPick => MedsExtraSelected && SelectedPets.Count > 1;
+
     public PaymentMethod? DefaultPayment { get; set; }
     public List<PaymentMethod> Payments { get; set; } = new();
     public int Nights { get; set; } = 1;
@@ -162,8 +171,18 @@ public class IndexModel : PageModel
 
         var nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
         var selectedExtras = Extras.Where(e => ExtraIds.Contains(e.Id)).ToList();
+        NormalizeMedsPetSelection();
+        if (MedsExtraSelected && SelectedPets.Count > 1 && MedsPetIds.Count == 0)
+        {
+            ErrorMessage = CatalogLocalizer.Loc(
+                "Indica para qué mascota(s) es la administración de medicamentos.",
+                "Choose which pet(s) need medication administration.");
+            Pay = true;
+            return Page();
+        }
+
         var subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * nights)
-            + selectedExtras.Sum(e => e.Price);
+            + SumSelectedExtras(selectedExtras);
         var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
         {
@@ -181,9 +200,15 @@ public class IndexModel : PageModel
         if (deposit < 15) deposit = Math.Min(15, total);
 
         var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+        var medsPets = SelectedPets.Where(p => MedsPetIds.Contains(p.Id)).ToList();
+        var medsPetNames = string.Join(", ", medsPets.Select(p => p.Name));
         var noteParts = new List<string>();
         if (SelectedPets.Count > 1)
             noteParts.Add(CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"));
+        if (MedsExtraSelected && medsPets.Count > 0)
+            noteParts.Add(CatalogLocalizer.Loc(
+                $"Medicamentos: {medsPetNames}",
+                $"Medication: {medsPetNames}"));
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
         if (PaymentMethodId.HasValue)
         {
@@ -211,11 +236,15 @@ public class IndexModel : PageModel
 
         foreach (var ex in selectedExtras)
         {
+            var qty = HotelCoreExtras.MatchesMeds(ex.Name) ? Math.Max(1, MedsPetIds.Count) : 1;
+            var label = ex.Name;
+            if (HotelCoreExtras.MatchesMeds(ex.Name) && medsPets.Count > 0)
+                label = $"{ex.Name} ({medsPetNames})";
             appt.Extras.Add(new AppointmentExtra
             {
                 ServiceExtraId = ex.Id,
-                Name = ex.Name,
-                Price = ex.Price
+                Name = label,
+                Price = ex.Price * qty
             });
         }
 
@@ -251,6 +280,7 @@ public class IndexModel : PageModel
         When ??= "hoy";
         Filters ??= new List<string>();
         ExtraIds ??= new List<int>();
+        MedsPetIds ??= new List<int>();
 
         Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "hotel" && c.IsActive);
 
@@ -291,12 +321,19 @@ public class IndexModel : PageModel
             .Include(g => g.Category)
             .Include(g => g.Amenities)
             .Include(g => g.Services)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.Category != null && g.Category.Slug == "hotel");
+            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved);
 
         var hotels = await hotelsQuery
             .OrderByDescending(g => g.IsFeatured)
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
+
+        if (Category is not null)
+            hotels = hotels.Where(h => h.OffersCategory(Category.Id)).ToList();
+        else
+            hotels = hotels.Where(h => h.Category != null && h.Category.Slug == "hotel").ToList();
+
+        hotels = BusinessMarketResolver.FilterHomeMarket(hotels, AppTimeZones.CurrentCountryCode).ToList();
 
         // Results must accept every selected pet species.
         if (SelectedPets.Count > 0)
@@ -381,10 +418,11 @@ public class IndexModel : PageModel
                 // Drop selections that this hotel does not offer.
                 var offeredIds = Extras.Select(e => e.Id).ToHashSet();
                 ExtraIds = ExtraIds.Where(id => offeredIds.Contains(id)).ToList();
+                NormalizeMedsPetSelection();
 
                 if (SelectedService != null && SelectedPets.Count > 0)
                 {
-                    var extrasTotal = Extras.Where(e => ExtraIds.Contains(e.Id)).Sum(e => e.Price);
+                    var extrasTotal = SumSelectedExtras(Extras);
                     Estimate = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * Nights) + extrasTotal;
                     await ApplyPromoAsync();
                 }
@@ -399,6 +437,9 @@ public class IndexModel : PageModel
         {
             Extras = new List<ServiceExtra>();
             ExtraIds = new List<int>();
+            MedsPetIds = new List<int>();
+            MedsExtraSelected = false;
+            MedsExtraId = null;
         }
 
         // Catalog from visible hotels; bath + meds are always offered (price set by each hotel).
@@ -500,6 +541,45 @@ public class IndexModel : PageModel
         PetCount = SelectedPets.Count;
         PetId = SelectedPets.FirstOrDefault()?.Id ?? 0;
         SelectedPet = SelectedPets.FirstOrDefault();
+    }
+
+    private void NormalizeMedsPetSelection()
+    {
+        MedsPetIds ??= new List<int>();
+        var meds = Extras.FirstOrDefault(e => HotelCoreExtras.MatchesMeds(e.Name));
+        MedsExtraId = meds?.Id;
+        MedsExtraSelected = meds != null && ExtraIds.Contains(meds.Id);
+
+        if (!MedsExtraSelected)
+        {
+            MedsPetIds = new List<int>();
+            return;
+        }
+
+        var allowed = SelectedPets.Select(p => p.Id).ToHashSet();
+        MedsPetIds = MedsPetIds.Where(allowed.Contains).Distinct().ToList();
+
+        // Single pet stay: medication always applies to that pet.
+        if (SelectedPets.Count == 1)
+            MedsPetIds = new List<int> { SelectedPets[0].Id };
+    }
+
+    private decimal SumSelectedExtras(IEnumerable<ServiceExtra> extras)
+    {
+        decimal total = 0;
+        foreach (var e in extras.Where(x => ExtraIds.Contains(x.Id)))
+        {
+            if (HotelCoreExtras.MatchesMeds(e.Name))
+            {
+                var qty = MedsPetIds.Count > 0 ? MedsPetIds.Count : (SelectedPets.Count == 1 ? 1 : 0);
+                total += e.Price * qty;
+            }
+            else
+            {
+                total += e.Price;
+            }
+        }
+        return total;
     }
 
     private void ResolveDates(out DateTime cin, out DateTime cout)

@@ -71,22 +71,29 @@ public class IndexModel : PageModel
             .OrderBy(c => c.SortOrder)
             .ToListAsync();
 
-        Featured = await _db.Groomers
-            .Include(g => g.Category)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.IsFeatured)
-            .OrderByDescending(g => g.Rating)
+        var homeCountry = AppTimeZones.CurrentCountryCode;
+        Featured = BusinessMarketResolver.FilterHomeMarket(
+                await _db.Groomers
+                    .Include(g => g.Category)
+                    .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.IsFeatured)
+                    .OrderByDescending(g => g.Rating)
+                    .ToListAsync(),
+                homeCountry)
             .Take(6)
-            .ToListAsync();
+            .ToList();
 
         if (Featured.Count == 0)
         {
-            Featured = await _db.Groomers
-                .Include(g => g.Category)
-                .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved)
-                .OrderByDescending(g => g.Rating)
-                .ThenBy(g => g.BusinessName)
+            Featured = BusinessMarketResolver.FilterHomeMarket(
+                    await _db.Groomers
+                        .Include(g => g.Category)
+                        .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved)
+                        .OrderByDescending(g => g.Rating)
+                        .ThenBy(g => g.BusinessName)
+                        .ToListAsync(),
+                    homeCountry)
                 .Take(6)
-                .ToListAsync();
+                .ToList();
         }
 
         if (_auth.CurrentUserId is int uid)
@@ -98,13 +105,17 @@ public class IndexModel : PageModel
                 .ToHashSet();
         }
 
-        PopularServices = await _db.Services
+        var homeServices = await _db.Services
+            .Include(s => s.Groomer)
             .Where(s => s.Groomer.IsActive && s.Groomer.PublishStatus == BusinessPublishStatus.Approved)
+            .ToListAsync();
+        PopularServices = homeServices
+            .Where(s => BusinessMarketResolver.MatchesHomeMarket(s.Groomer, homeCountry))
             .GroupBy(s => s.Name)
             .OrderByDescending(g => g.Count())
             .Select(g => g.Key)
             .Take(8)
-            .ToListAsync();
+            .ToList();
 
         if (PopularServices.Count == 0)
         {

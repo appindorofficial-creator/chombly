@@ -352,6 +352,8 @@ public class IndexModel : PageModel
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
 
+        trainers = BusinessMarketResolver.FilterHomeMarket(trainers, AppTimeZones.CurrentCountryCode).ToList();
+
         if (SelectedPets.Count > 0)
             trainers = trainers.Where(t => SelectedPets.All(p => t.AcceptsSpecies(p.Species))).ToList();
         else

@@ -91,6 +91,7 @@ public class IndexModel : PageModel
             .AsQueryable();
 
         var list = await query.ToListAsync();
+        list = BusinessMarketResolver.FilterHomeMarket(list, AppTimeZones.CurrentCountryCode).ToList();
 
         if (ActiveCategory != null)
             list = list.Where(g => g.OffersCategory(ActiveCategory.Id)).ToList();

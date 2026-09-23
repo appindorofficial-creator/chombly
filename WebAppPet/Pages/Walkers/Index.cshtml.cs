@@ -320,6 +320,8 @@ public class IndexModel : PageModel
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
 
+        walkers = BusinessMarketResolver.FilterHomeMarket(walkers, AppTimeZones.CurrentCountryCode).ToList();
+
         walkers = walkers.Where(w => w.AcceptsSpecies(PetSpecies.Dog)).ToList();
 
         if (SelectedPets.Count > 0)

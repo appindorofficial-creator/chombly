@@ -16,7 +16,7 @@ public static class HotelCoreExtras
 
     public const string MedsName = "Administración de medicamentos";
     public const string MedsDescription = "Si tu mascota necesita medicación durante la estadía";
-    public const decimal MedsDefaultPrice = 15m;
+    public const decimal MedsDefaultPrice = 5m;
 
     public static bool MatchesBath(string? name) =>
         string.Equals(name?.Trim(), BathName, StringComparison.OrdinalIgnoreCase);

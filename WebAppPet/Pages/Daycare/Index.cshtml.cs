@@ -315,6 +315,8 @@ public class IndexModel : PageModel
             .ThenByDescending(g => g.Rating)
             .ToListAsync();
 
+        daycares = BusinessMarketResolver.FilterHomeMarket(daycares, AppTimeZones.CurrentCountryCode).ToList();
+
         if (SelectedPets.Count > 0)
             daycares = daycares.Where(d => SelectedPets.All(p => d.AcceptsSpecies(p.Species))).ToList();
         else

@@ -258,11 +258,14 @@ public class ProvidersModel : PageModel
     private async Task<bool> LoadCatalogAsync()
     {
         CatalogItem = await _catalog.GetAsync(ServiceCatalogCodes.BehaviorSession);
-        Providers = await _db.Groomers.AsNoTracking()
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.BehaviorSpecialist)
-            .OrderByDescending(g => g.Rating)
+        Providers = BusinessMarketResolver.FilterHomeMarket(
+                await _db.Groomers.AsNoTracking()
+                    .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.BehaviorSpecialist)
+                    .OrderByDescending(g => g.Rating)
+                    .ToListAsync(),
+                AppTimeZones.CurrentCountryCode)
             .Take(30)
-            .ToListAsync();
+            .ToList();
 
         Payments = await _db.PaymentMethods.AsNoTracking()
             .Where(p => p.UserId == _auth.CurrentUserId)

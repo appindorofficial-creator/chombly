@@ -108,4 +108,21 @@ public static class BusinessMarketResolver
 
     public static string DefaultInternationalIso(BusinessMarket market) =>
         market == BusinessMarket.UnitedStates ? "MX" : "CO";
+
+    /// <summary>
+    /// Local marketplace browse: only businesses in the client's home launch market (CO↔CO, US↔US).
+    /// Unknown / other countries are excluded from category listings (they surface in virtual intl match).
+    /// </summary>
+    public static bool MatchesHomeMarket(GroomerProfile? profile, string? homeCountryIso)
+    {
+        var home = MarketCountry.ToMarket(homeCountryIso);
+        var biz = Resolve(profile);
+        if (biz == BusinessMarket.Unknown) return false;
+        return biz == home;
+    }
+
+    public static IEnumerable<GroomerProfile> FilterHomeMarket(
+        IEnumerable<GroomerProfile> profiles,
+        string? homeCountryIso)
+        => profiles.Where(g => MatchesHomeMarket(g, homeCountryIso));
 }

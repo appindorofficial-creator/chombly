@@ -220,36 +220,73 @@
             <div class="extras-grid">
                 @foreach (var e in Model.ExtraOptions)
                 {
+                    var isMeds = HotelCoreExtras.MatchesMeds(e.Name);
                     var on = e.Available && e.ExtraId is int eid && Model.ExtraIds.Contains(eid);
-                    <label class="extra-chip @(on ? "active" : "") @(!e.Available ? "is-disabled" : "")"
-                           title="@(e.Available
-                               ? CatalogLocalizer.Text(e.Description ?? e.Name)
-                               : CatalogLocalizer.Loc("Este hotel no ofrece este extra", "This hotel doesn’t offer this extra"))">
-                        @if (e.Available && e.ExtraId is int extraId)
-                        {
-                            <input type="checkbox" name="ExtraIds" value="@extraId" @(on ? "checked" : null) />
-                        }
-                        else
-                        {
-                            <input type="checkbox" disabled tabindex="-1" />
-                        }
-                        <span class="extra-chip-copy">
-                            <strong>@CatalogLocalizer.Text(e.Name)</strong>
-                            @if (!string.IsNullOrWhiteSpace(e.Description))
+                    var medsQty = isMeds && on
+                        ? (Model.MedsPetIds.Count > 0 ? Model.MedsPetIds.Count : (Model.SelectedPets.Count == 1 ? 1 : 0))
+                        : 0;
+                    var displayPrice = isMeds && medsQty > 1 ? e.Price * medsQty : e.Price;
+                    <div class="extra-block @(isMeds && on && Model.NeedsMedsPetPick ? "has-meds-pets" : null)">
+                        <label class="extra-chip @(on ? "active" : "") @(!e.Available ? "is-disabled" : "")"
+                               title="@(e.Available
+                                   ? CatalogLocalizer.Text(e.Description ?? e.Name)
+                                   : CatalogLocalizer.Loc("Este hotel no ofrece este extra", "This hotel doesn’t offer this extra"))">
+                            @if (e.Available && e.ExtraId is int extraId)
                             {
-                                <small class="muted">@CatalogLocalizer.Text(e.Description)</small>
+                                <input type="checkbox" name="ExtraIds" value="@extraId" @(on ? "checked" : null) />
                             }
-                            else if (HotelCoreExtras.MatchesBath(e.Name))
+                            else
                             {
-                                <small class="muted">@CatalogLocalizer.Loc("Baño extra durante la estadía", "Extra bath during the stay")</small>
+                                <input type="checkbox" disabled tabindex="-1" />
                             }
-                        </span>
-                        <span class="muted small">+$@e.Price.ToString("0.##")</span>
-                        @if (!e.Available)
+                            <span class="extra-chip-copy">
+                                <strong>@CatalogLocalizer.Text(e.Name)</strong>
+                                @if (!string.IsNullOrWhiteSpace(e.Description))
+                                {
+                                    <small class="muted">@CatalogLocalizer.Text(e.Description)</small>
+                                }
+                                else if (HotelCoreExtras.MatchesBath(e.Name))
+                                {
+                                    <small class="muted">@CatalogLocalizer.Loc("Baño extra durante la estadía", "Extra bath during the stay")</small>
+                                }
+                                @if (isMeds && e.Available)
+                                {
+                                    <small class="muted">@CatalogLocalizer.Loc("Precio por mascota", "Priced per pet")</small>
+                                }
+                            </span>
+                            <span class="muted small">
+                                +$@displayPrice.ToString("0.##")
+                                @if (isMeds && medsQty > 1)
+                                {
+                                    <text> · @medsQty</text>
+                                }
+                            </span>
+                            @if (!e.Available)
+                            {
+                                <span class="extra-chip-na">@CatalogLocalizer.Loc("No disponible", "Unavailable")</span>
+                            }
+                        </label>
+                        @if (isMeds && on && Model.NeedsMedsPetPick)
                         {
-                            <span class="extra-chip-na">@CatalogLocalizer.Loc("No disponible", "Unavailable")</span>
+                            <div class="extra-meds-pets" role="group" aria-label="@CatalogLocalizer.Loc("Mascotas con medicamentos", "Pets needing medication")">
+                                <p class="muted small mb-0">@CatalogLocalizer.Loc("¿Para qué mascota(s)?", "Which pet(s)?")</p>
+                                <div class="filter-bar filter-bar-wrap" style="margin-top:6px">
+                                    @foreach (var p in Model.SelectedPets)
+                                    {
+                                        var petOn = Model.MedsPetIds.Contains(p.Id);
+                                        <label class="chip @(petOn ? "active" : "")">
+                                            <input type="checkbox" name="MedsPetIds" value="@p.Id" @(petOn ? "checked" : null) />
+                                            @PetSpecies.Emoji(p.Species) @p.Name
+                                        </label>
+                                    }
+                                </div>
+                            </div>
                         }
-                    </label>
+                        else if (isMeds && on && Model.SelectedPets.Count == 1)
+                        {
+                            <input type="hidden" name="MedsPetIds" value="@Model.SelectedPets[0].Id" />
+                        }
+                    </div>
                 }
             </div>
         }
@@ -280,7 +317,38 @@
         multi.Add(new BookingSummaryMultiHidden { Name = "Filters", Values = Model.Filters });
     if (Model.ExtraIds.Count > 0)
         multi.Add(new BookingSummaryMultiHidden { Name = "ExtraIds", Values = Model.ExtraIds.Select(id => id.ToString()) });
+    if (Model.MedsPetIds.Count > 0)
+        multi.Add(new BookingSummaryMultiHidden { Name = "MedsPetIds", Values = Model.MedsPetIds.Select(id => id.ToString()) });
     var petSummary = string.Join(", ", Model.SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
+    var medsSummary = Model.NeedsMedsPetPick || Model.MedsExtraSelected
+        ? string.Join(", ", Model.SelectedPets.Where(p => Model.MedsPetIds.Contains(p.Id)).Select(p => p.Name))
+        : null;
+    var summaryLines = new List<BookingSummaryLine>
+    {
+        new() { LabelEs = "Fechas", LabelEn = "Dates", Value = $"{Model.CheckIn} → {Model.CheckOut}" },
+        new() { LabelEs = "Noches", LabelEn = "Nights", Value = Model.Nights.ToString() },
+        new()
+        {
+            LabelEs = Model.SelectedPets.Count == 1 ? "Mascota" : "Mascotas",
+            LabelEn = Model.SelectedPets.Count == 1 ? "Pet" : "Pets",
+            Value = string.IsNullOrEmpty(petSummary) ? "—" : petSummary
+        },
+        new()
+        {
+            LabelEs = "Extras",
+            LabelEn = "Extras",
+            Value = $"{Model.ExtraIds.Count} {CatalogLocalizer.Loc("seleccionados", "selected")}"
+        }
+    };
+    if (!string.IsNullOrEmpty(medsSummary))
+    {
+        summaryLines.Add(new BookingSummaryLine
+        {
+            LabelEs = "Medicamentos",
+            LabelEn = "Medication",
+            Value = medsSummary
+        });
+    }
     <partial name="_BookingSummarySheet" model="@(new BookingSummarySheetModel
     {
         BodyId = "hotel-summary-body",
@@ -295,23 +363,7 @@
         ImageUrl = Model.SelectedHotel.ImageUrl,
         FallbackImage = "/images/pet-other.svg",
         Subtitle = Model.SelectedHotel.City ?? "",
-        Lines =
-        [
-            new BookingSummaryLine { LabelEs = "Fechas", LabelEn = "Dates", Value = $"{Model.CheckIn} → {Model.CheckOut}" },
-            new BookingSummaryLine { LabelEs = "Noches", LabelEn = "Nights", Value = Model.Nights.ToString() },
-            new BookingSummaryLine
-            {
-                LabelEs = Model.SelectedPets.Count == 1 ? "Mascota" : "Mascotas",
-                LabelEn = Model.SelectedPets.Count == 1 ? "Pet" : "Pets",
-                Value = string.IsNullOrEmpty(petSummary) ? "—" : petSummary
-            },
-            new BookingSummaryLine
-            {
-                LabelEs = "Extras",
-                LabelEn = "Extras",
-                Value = $"{Model.ExtraIds.Count} {CatalogLocalizer.Loc("seleccionados", "selected")}"
-            }
-        ],
+        Lines = summaryLines,
         CustomerNotes = Model.Notes,
         TotalLabelEs = "Total estimado",
         TotalLabelEn = "Estimated total",

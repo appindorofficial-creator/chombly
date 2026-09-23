@@ -71,9 +71,15 @@
             <details class="care-plan-excludes">
                 <summary>@CatalogLocalizer.Loc("Qué no incluye", "What’s not included")</summary>
                 <ul>
-                    <li>@CatalogLocalizer.Loc("Consulta local ($70) ni medicamentos", "Local consult ($70) or medication")</li>
+                    @if (MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
+                    {
+                        <li>@CatalogLocalizer.Loc("Consulta local ($70) ni medicamentos", "Local consult ($70) or medication")</li>
+                    }
                     <li>@CatalogLocalizer.Loc("Costos de la clínica de urgencias (los cobra el negocio)", "Emergency clinic fees (charged by the clinic)")</li>
-                    <li>@CatalogLocalizer.Loc("Recetas de EE.UU.", "U.S. prescriptions")</li>
+                    @if (MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
+                    {
+                        <li>@CatalogLocalizer.Loc("Recetas de EE.UU.", "U.S. prescriptions")</li>
+                    }
                     <li>@CatalogLocalizer.Loc("Acumulación de consultas no usadas", "Rollover of unused consults")</li>
                 </ul>
             </details>

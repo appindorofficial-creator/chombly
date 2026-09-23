@@ -36,27 +36,34 @@ public class EmergencyModel : PageModel
             HasCareMembership = sub != null;
         }
 
-        Clinics = await _db.Groomers.AsNoTracking()
-            .Include(g => g.Category)
-            .Where(g => g.IsActive &&
-                        g.PublishStatus == BusinessPublishStatus.Approved &&
-                        g.OffersEmergency24x7 &&
-                        (g.Category == null || g.Category.Slug == "vet"))
-            .OrderByDescending(g => g.Rating)
+        var homeCountry = AppTimeZones.CurrentCountryCode;
+        Clinics = BusinessMarketResolver.FilterHomeMarket(
+                await _db.Groomers.AsNoTracking()
+                    .Include(g => g.Category)
+                    .Where(g => g.IsActive &&
+                                g.PublishStatus == BusinessPublishStatus.Approved &&
+                                g.OffersEmergency24x7 &&
+                                (g.Category == null || g.Category.Slug == "vet"))
+                    .OrderByDescending(g => g.Rating)
+                    .ToListAsync(),
+                homeCountry)
             .Take(20)
-            .ToListAsync();
+            .ToList();
 
         if (Clinics.Count == 0)
         {
-            Clinics = await _db.Groomers.AsNoTracking()
-                .Include(g => g.Category)
-                .Where(g => g.IsActive &&
-                            g.PublishStatus == BusinessPublishStatus.Approved &&
-                            g.Category != null &&
-                            g.Category.Slug == "vet")
-                .OrderByDescending(g => g.Rating)
+            Clinics = BusinessMarketResolver.FilterHomeMarket(
+                    await _db.Groomers.AsNoTracking()
+                        .Include(g => g.Category)
+                        .Where(g => g.IsActive &&
+                                    g.PublishStatus == BusinessPublishStatus.Approved &&
+                                    g.Category != null &&
+                                    g.Category.Slug == "vet")
+                        .OrderByDescending(g => g.Rating)
+                        .ToListAsync(),
+                    homeCountry)
                 .Take(10)
-                .ToListAsync();
+                .ToList();
         }
 
         if (ConsultationId is int cid)

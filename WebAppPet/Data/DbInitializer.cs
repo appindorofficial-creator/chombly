@@ -1407,7 +1407,51 @@ public static class DbInitializer
 
             var user = await EnsureUserAsync(email, ownerName);
             var g = await db.Groomers.FirstOrDefaultAsync(x => x.UserId == user.Id);
-            if (g != null) return;
+            if (g != null)
+            {
+                // Repair demo rows so CO market browse stays complete after Charlotte demos are filtered out.
+                g.BusinessName = businessName;
+                g.Address = address;
+                g.City = "Neiva, Huila";
+                g.Latitude = lat;
+                g.Longitude = lng;
+                g.About = about;
+                g.Phone = phone;
+                g.CategoryId = categoryId;
+                g.ExtraCategoryIds = extraCategoryIds is { Length: > 0 }
+                    ? string.Join(",", extraCategoryIds.Where(id => id != categoryId.Value).Distinct())
+                    : null;
+                g.StartingPrice = startingPrice;
+                g.PriceUnit = priceUnit;
+                g.Rating = rating;
+                g.ReviewCount = reviews;
+                g.IsActive = true;
+                g.PublishStatus = BusinessPublishStatus.Approved;
+                g.IsFeatured = featured;
+                g.VetProviderKind = vetKind;
+                g.BehaviorRole = behaviorRole;
+                g.OffersEmergency24x7 = emergency24;
+                g.AcceptedSpecies = species;
+                g.LicenseCountry = "CO";
+                g.SpokenLanguages = "es";
+                await db.SaveChangesAsync();
+                if (!await db.Services.AnyAsync(s => s.GroomerId == g.Id))
+                {
+                    db.Services.Add(new GroomerService
+                    {
+                        GroomerId = g.Id,
+                        Name = serviceName,
+                        Description = serviceDesc,
+                        DurationMinutes = durationMin,
+                        PriceSmall = servicePrice,
+                        PriceMedium = servicePrice,
+                        PriceLarge = servicePrice,
+                        PriceGiant = Math.Round(servicePrice * 1.15m, 0)
+                    });
+                    await db.SaveChangesAsync();
+                }
+                return;
+            }
 
             g = new GroomerProfile
             {
@@ -1440,7 +1484,7 @@ public static class DbInitializer
                 VetProviderKind = vetKind,
                 BehaviorRole = behaviorRole,
                 SpokenLanguages = "es",
-                LicenseCountry = vetKind == VetProviderKind.InternationalAdvisor ? "CO" : null,
+                LicenseCountry = "CO",
                 OffersEmergency24x7 = emergency24,
                 AcceptedSpecies = species,
                 AcceptsSeniorPets = true,
@@ -1528,6 +1572,21 @@ public static class DbInitializer
             55000m, "/ noche", "Hospedaje 1 noche", "Hotel para perros y gatos", 1440, 55000m,
             imageSlug: "hotel", rating: 4.7, reviews: 63, featured: true,
             species: $"{PetSpecies.Dog},{PetSpecies.Cat}");
+
+        // Demo pricing: bath $20, meds at default (editable by the business).
+        var magUserId = await db.Users.AsNoTracking()
+            .Where(u => u.Email == "neiva.hotel.magdalena@chombly.com")
+            .Select(u => (int?)u.Id)
+            .FirstOrDefaultAsync();
+        if (magUserId is int mid)
+        {
+            var magdalenaHotel = await db.Groomers.FirstOrDefaultAsync(g => g.UserId == mid);
+            if (magdalenaHotel != null)
+                await Services.HotelCoreExtras.SyncAsync(
+                    db, magdalenaHotel.Id,
+                    Services.HotelCoreExtras.BathDefaultPrice,
+                    Services.HotelCoreExtras.MedsDefaultPrice);
+        }
 
         // Daycare
         await EnsureBizAsync(

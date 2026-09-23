@@ -4302,10 +4302,24 @@ a.btn.is-disabled {
 }
 
 .extras-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.extra-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 160px);
+  flex: 1 1 160px;
+}
+.extra-block.has-meds-pets { flex: 1 1 100%; }
+.extra-meds-pets {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  background: #fafafa;
+}
 .extra-chip {
   padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--border);
   background: #fff; font-size: .78rem; font-weight: 600; cursor: pointer;
-  display: flex; flex-direction: column; gap: 2px; min-width: 140px; max-width: 100%;
+  display: flex; flex-direction: column; gap: 2px; width: 100%;
   position: relative;
 }
 .extra-chip input { display: none; }
