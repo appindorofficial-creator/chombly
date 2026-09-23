@@ -23,8 +23,9 @@
         || path.StartsWith("/Business/Explore/", StringComparison.OrdinalIgnoreCase);
     if (bizExplore && path.Equals("/Business/Explore/Exit", StringComparison.OrdinalIgnoreCase))
         bizExplore = false;
-    // Dual-role: Groomer in owner shell sees pet-owner nav.
-    var isBiz = Auth.IsBusinessShell || bizExplore;
+    // Dual-role: Groomer in owner shell sees pet-owner nav. Admin has its own ops shell.
+    var isAdmin = Auth.IsAdmin;
+    var isBiz = !isAdmin && (Auth.IsBusinessShell || bizExplore);
     bool IsActive(string p) => path.Equals(p, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase);
     var onNotifications = IsActive("/Account/Notifications");
@@ -66,7 +67,26 @@
     {
         <nav class="bottom-nav" data-bottom-nav>
             <span class="bottom-nav-indicator" aria-hidden="true"></span>
-            @if (isBiz)
+            @if (isAdmin)
+            {
+                <a asp-page="/Admin/Approvals" class="@(IsActive("/Admin/Approvals") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+                    @CatalogLocalizer.Loc("Negocios", "Business")
+                </a>
+                <a asp-page="/Admin/ProfessionalApprovals" class="@(IsActive("/Admin/ProfessionalApprovals") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm-7 9v-1c0-3 4-5 7-5s7 2 7 5v1H5zm14.5-11.5 1.4-1.4L19.5 6.7l-1.4 1.4 1.4 1.4zM18 2h-2v3h2V2z"/></svg></span>
+                    @CatalogLocalizer.Loc("Pros", "Pros")
+                </a>
+                <a asp-page="/Admin/Payouts" class="@(IsActive("/Admin/Payouts") ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-7-1h2v2H5v-2zm14 0h2v2h-2v-2z"/></svg></span>
+                    Payouts
+                </a>
+                <a asp-page="/Account/Profile" class="@((IsActive("/Account/Profile") || notifFromProfile) ? "active" : "")">
+                    <span class="nav-pill"><svg class="ui-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></span>
+                    @L["Nav_Profile"]
+                </a>
+            }
+            else if (isBiz)
             {
                 var exploreHomeActive = bizExplore && path.Equals("/Business/Explore", StringComparison.OrdinalIgnoreCase);
                 <a href="@homeHref" class="@((!bizExplore && (IsActive("/Groomer/Dashboard") || path == "/")) || exploreHomeActive || notifFromHome ? "active" : "")">

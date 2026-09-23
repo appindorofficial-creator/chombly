@@ -3,31 +3,26 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = "Payouts proveedores";
-    ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Admin/Approvals");
-    var HideNav = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Admin/Payouts";
     string Money(decimal amount, string? country) => AppMoney.Format(amount, country);
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body @(HideNav ? "no-nav" : "")">
+    <div class="home-body">
     <h1 class="app-page-heading">Payouts</h1>
-    <p class="muted small">Pagos simulados a proveedores (sin Stripe Connect real).</p>
-    <p class="muted small" style="margin-bottom:12px">
-        <a asp-page="/Admin/Approvals">Aprobaciones negocio</a> ·
-        <a asp-page="/Admin/ProfessionalApprovals">Onboarding profesional</a>
-    </p>
+    <p class="muted small">@CatalogLocalizer.Loc("Liquidaciones a proveedores (simulado · sin Stripe Connect real).", "Provider settlements (simulated · no live Stripe Connect).")</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-info">@Model.Message</div>
     }
 
-    <h2 class="section-title">Pendientes</h2>
+    <h2 class="section-title">@CatalogLocalizer.Loc("Pendientes", "Pending")</h2>
     @if (!Model.Pending.Any())
     {
-        <div class="empty">No hay payouts pendientes.</div>
+        <div class="empty">@CatalogLocalizer.Loc("No hay payouts pendientes.", "No pending payouts.")</div>
     }
     @foreach (var p in Model.Pending)
     {
@@ -36,32 +31,32 @@
             <strong>@(p.ProviderUser?.FullName ?? $"User #{p.ProviderUserId}")</strong>
             <span class="muted small" style="display:block">
                 @AppTimeZones.FormatDate(p.PeriodStart) – @AppTimeZones.FormatDate(p.PeriodEnd)
-                · @p.ConsultationCount ítems
+                · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
             </span>
             <span class="muted small" style="display:block">
-                Bruto @Money(p.GrossAmountUsd, country)
-                · Comisión @Money(p.CommissionAmountUsd, country)
-                · <strong>Neto @Money(p.NetAmountUsd, country)</strong>
+                @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
+                · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)
+                · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, country)</strong>
                 · @AppMoney.Code(country)
             </span>
             <form method="post" asp-page-handler="MarkPaid" style="margin-top:8px">
                 <input type="hidden" name="id" value="@p.Id" />
-                <button class="btn btn-primary btn-block" type="submit">Marcar pagado (simulado)</button>
+                <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Marcar pagado (simulado)", "Mark paid (simulated)")</button>
             </form>
         </div>
     }
 
-    <h2 class="section-title" style="margin-top:20px">Recientes</h2>
+    <h2 class="section-title" style="margin-top:20px">@CatalogLocalizer.Loc("Recientes", "Recent")</h2>
     @foreach (var p in Model.Recent.Where(x => x.Status != WebAppPet.Models.ProviderPayoutStatus.Pending))
     {
         var country = p.ProviderUser?.CountryCode;
         <div class="card card-pad" style="margin-bottom:8px">
             <strong>@p.Status</strong> · @(p.ProviderUser?.FullName ?? $"#{p.ProviderUserId}")
             <span class="muted small" style="display:block">
-                Bruto @Money(p.GrossAmountUsd, country)
-                · Comisión @Money(p.CommissionAmountUsd, country)
-                · <strong>Neto @Money(p.NetAmountUsd, country)</strong>
-                · @p.ConsultationCount ítems
+                @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
+                · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)
+                · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, country)</strong>
+                · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
             </span>
             <span class="muted small" style="display:block">
                 @if (p.PaidUtc is DateTime paid) { <text>@AppTimeZones.FormatShort(paid)</text> }
@@ -70,5 +65,5 @@
         </div>
     }
     </div>
-    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>

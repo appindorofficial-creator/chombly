@@ -5,7 +5,10 @@
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowLang"] = true;
     ViewData["OnboardShowNotif"] = true;
-    ViewData["OnboardNotifReturn"] = "/Account/Profile";
+    ViewData["OnboardNotifReturn"] = Model.UserEntity?.Role == UserRole.Admin
+        ? "/Admin/Approvals"
+        : "/Account/Profile";
+    var isAdminOnly = Model.UserEntity?.Role == UserRole.Admin;
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -41,6 +44,10 @@
                     <img src="~/images/chombly-profile-avatar.png" asp-append-version="true" alt="" />
                 </div>
                 <h2>@Model.UserEntity.FullName</h2>
+                @if (isAdminOnly)
+                {
+                    <p class="muted small" style="margin:0 0 8px">@CatalogLocalizer.Loc("Panel de operaciones Chombly", "Chombly operations panel")</p>
+                }
                 <ul class="profile-facts">
                     <li class="profile-fact">
                         <span class="profile-fact-ico" aria-hidden="true">✉️</span>
@@ -58,31 +65,43 @@
                             <span class="profile-fact-value">@Model.UserEntity.Phone</span>
                         </li>
                     }
-                    <li class="profile-fact" id="profile-city-line">
-                        <span class="profile-fact-ico" aria-hidden="true">📍</span>
-                        <span class="profile-fact-value">@(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)</span>
-                    </li>
+                    @if (!isAdminOnly)
+                    {
+                        <li class="profile-fact" id="profile-city-line">
+                            <span class="profile-fact-ico" aria-hidden="true">📍</span>
+                            <span class="profile-fact-value">@(string.IsNullOrWhiteSpace(Model.UserEntity.City) ? L["Profile_LocationMissing"].Value : Model.UserEntity.City)</span>
+                        </li>
+                    }
                 </ul>
-                @if (Model.HasGpsLocation)
+                @if (!isAdminOnly)
                 {
-                    <p class="profile-loc-status is-ok" id="profile-gps-status">
-                        <span aria-hidden="true">✅</span>
-                        <span>@L["Profile_LocationGpsOk"]</span>
-                    </p>
+                    if (Model.HasGpsLocation)
+                    {
+                        <p class="profile-loc-status is-ok" id="profile-gps-status">
+                            <span aria-hidden="true">✅</span>
+                            <span>@L["Profile_LocationGpsOk"]</span>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="profile-loc-status is-warn" id="profile-gps-status">
+                            <span aria-hidden="true">⚠️</span>
+                            <span>@L["Profile_LocationGpsMissing"]</span>
+                        </p>
+                    }
+                    <div class="profile-actions">
+                        <button type="button" class="btn profile-action-btn" id="btn-profile-loc">
+                            📍 @(Model.HasGpsLocation ? L["Profile_UpdateLocation"] : L["Search_UseMyLocation"])
+                        </button>
+                        <a class="btn profile-action-btn" asp-page="/Account/EditProfile">✏️ @L["Profile_Edit"]</a>
+                    </div>
                 }
                 else
                 {
-                    <p class="profile-loc-status is-warn" id="profile-gps-status">
-                        <span aria-hidden="true">⚠️</span>
-                        <span>@L["Profile_LocationGpsMissing"]</span>
-                    </p>
+                    <div class="profile-actions">
+                        <a class="btn profile-action-btn" asp-page="/Account/EditProfile">✏️ @L["Profile_Edit"]</a>
+                    </div>
                 }
-                <div class="profile-actions">
-                    <button type="button" class="btn profile-action-btn" id="btn-profile-loc">
-                        📍 @(Model.HasGpsLocation ? L["Profile_UpdateLocation"] : L["Search_UseMyLocation"])
-                    </button>
-                    <a class="btn profile-action-btn" asp-page="/Account/EditProfile">✏️ @L["Profile_Edit"]</a>
-                </div>
             </div>
 
             @if (Model.CanSwitchShell)
@@ -110,10 +129,11 @@
             <div class="menu-list menu-chombly">
                 @{
                     // Dual-role: filter menu by shell. Clients always see owner activity.
-                    var showBusinessMenu = Model.CanSwitchShell && Model.IsBusinessShell;
-                    var showOwnerActivity = !Model.CanSwitchShell || !Model.IsBusinessShell;
+                    // Pure admin accounts skip owner/business shells — only Admin links.
+                    var showBusinessMenu = !isAdminOnly && Model.CanSwitchShell && Model.IsBusinessShell;
+                    var showOwnerActivity = !isAdminOnly && (!Model.CanSwitchShell || !Model.IsBusinessShell);
                 }
-                @if (Model.UserEntity.Role == UserRole.Admin)
+                @if (isAdminOnly)
                 {
                     <p class="menu-section-label">Admin</p>
                     <a asp-page="/Admin/Approvals"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✅</span> @L["Profile_AdminApprovals"]</span><span class="chev" aria-hidden="true">›</span></a>
@@ -155,11 +175,11 @@
                 {
                     <a asp-page="/Account/RegisterBusiness"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🏪</span> @L["Profile_BecomeBusiness"]</span><span class="chev" aria-hidden="true">›</span></a>
                 }
-                @if (showOwnerActivity || !Model.CanSwitchShell)
+                @if (!isAdminOnly && (showOwnerActivity || !Model.CanSwitchShell))
                 {
                     <a asp-page="/Account/PaymentMethods"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💳</span> @L["Profile_Payments"]</span><span class="chev" aria-hidden="true">›</span></a>
                 }
-                <a asp-page="/Account/Notifications" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🔔</span> @L["Profile_Notifications"]</span><span class="chev" aria-hidden="true">›</span></a>
+                <a asp-page="/Account/Notifications" asp-route-returnUrl="@(isAdminOnly ? "/Admin/Approvals" : "/Account/Profile")"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🔔</span> @L["Profile_Notifications"]</span><span class="chev" aria-hidden="true">›</span></a>
             </div>
 
             <div class="menu-list menu-chombly menu-chombly-logout">

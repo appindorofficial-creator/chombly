@@ -3,20 +3,15 @@
 @using WebAppPet.Services
 @{
     ViewData["Title"] = "Aprobaciones profesionales";
-    ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
-    ViewData["OnboardBackHref"] = Url.Page("/Admin/Approvals");
-    var HideNav = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Admin/ProfessionalApprovals";
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
-    <div class="home-body @(HideNav ? "no-nav" : "")">
-    <h1 class="app-page-heading">Onboarding profesional</h1>
-    <p class="muted small">Solicitudes Local / Internacional / Conducta.</p>
-    <p class="muted small" style="margin-bottom:12px">
-        <a asp-page="/Admin/Approvals">Negocios</a> ·
-        <a asp-page="/Admin/Payouts">Payouts</a>
-    </p>
+    <div class="home-body">
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
+    <p class="muted small">@CatalogLocalizer.Loc("Solicitudes Local / Internacional / Conducta.", "Local / International / Behavior applications.")</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
@@ -29,7 +24,7 @@
 
     @if (!Model.Pending.Any())
     {
-        <div class="empty">No hay solicitudes pendientes.</div>
+        <div class="empty">@CatalogLocalizer.Loc("No hay solicitudes pendientes.", "No pending requests.")</div>
     }
 
     @foreach (var a in Model.Pending)
@@ -61,16 +56,16 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <form method="post" asp-page-handler="Approve" style="flex:1;min-width:120px">
                     <input type="hidden" name="id" value="@a.Id" />
-                    <button class="btn btn-primary btn-block" type="submit">Aprobar</button>
+                    <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Aprobar", "Approve")</button>
                 </form>
                 <form method="post" asp-page-handler="Reject" style="flex:1;min-width:160px">
                     <input type="hidden" name="id" value="@a.Id" />
-                    <input class="form-control" name="RejectNotes" placeholder="Notas de rechazo" style="margin-bottom:6px" />
-                    <button class="btn btn-outline btn-block" type="submit">Rechazar</button>
+                    <input class="form-control" name="RejectNotes" placeholder="@CatalogLocalizer.Loc("Notas de rechazo", "Rejection notes")" style="margin-bottom:6px" />
+                    <button class="btn btn-outline btn-block" type="submit">@CatalogLocalizer.Loc("Rechazar", "Reject")</button>
                 </form>
             </div>
         </div>
     }
     </div>
-    @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
 </div>
