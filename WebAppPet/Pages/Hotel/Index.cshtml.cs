@@ -361,9 +361,17 @@ public class IndexModel : PageModel
             GroomerId = null;
 
         var todayMap = await _availability.TodayMapAsync(hotels.Select(h => h.Id));
-        // Para "hoy" filtrar disponibles hoy
+        // Calendar-day availability for check-in "hoy", not "open right now".
         if (string.Equals(When, "hoy", StringComparison.OrdinalIgnoreCase))
-            hotels = hotels.Where(h => todayMap.GetValueOrDefault(h.Id, true)).ToList();
+        {
+            var openToday = new List<GroomerProfile>();
+            foreach (var h in hotels)
+            {
+                if (await _availability.IsAvailableOnAsync(h.Id, cin.Date))
+                    openToday.Add(h);
+            }
+            hotels = openToday;
+        }
 
         Results = hotels.Select(h =>
         {

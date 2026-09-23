@@ -324,8 +324,17 @@ public class IndexModel : PageModel
 
         var todayMap = await _availability.TodayMapAsync(daycares.Select(d => d.Id));
 
-        if (HasDate && day.Date == DateTime.Today)
-            daycares = daycares.Where(d => todayMap.GetValueOrDefault(d.Id, true)).ToList();
+        // Calendar-day availability (open that weekday), not "open right now".
+        if (HasDate && day.Date == AppTimeZones.TodayLocalDate())
+        {
+            var openToday = new List<GroomerProfile>();
+            foreach (var d in daycares)
+            {
+                if (await _availability.IsAvailableOnAsync(d.Id, day.Date))
+                    openToday.Add(d);
+            }
+            daycares = openToday;
+        }
 
         if (Prefs.Contains("grandes"))
             daycares = daycares.Where(d =>
@@ -478,7 +487,7 @@ public class IndexModel : PageModel
     {
         if (BookingDate.TryParseSelected(Date, out day))
             return;
-        day = DateTime.Today;
+        day = AppTimeZones.TodayLocalDate();
     }
 
     private void ResolveWindow(DateTime day, out DateTime start, out DateTime end)

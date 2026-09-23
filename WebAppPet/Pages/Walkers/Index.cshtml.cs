@@ -331,8 +331,17 @@ public class IndexModel : PageModel
 
         var todayMap = await _availability.TodayMapAsync(walkers.Select(w => w.Id));
 
+        // Calendar-day availability (open that weekday), not "open right now".
         if (HasDate && day.Date == AppTimeZones.TodayLocalDate())
-            walkers = walkers.Where(w => todayMap.GetValueOrDefault(w.Id, true)).ToList();
+        {
+            var openToday = new List<GroomerProfile>();
+            foreach (var w in walkers)
+            {
+                if (await _availability.IsAvailableOnAsync(w.Id, day.Date))
+                    openToday.Add(w);
+            }
+            walkers = openToday;
+        }
 
         if (Prefs.Contains("individual"))
             walkers = walkers.Where(w => AmenityMatch(w, "individual", "privado", "1 a 1", "uno")).ToList();
