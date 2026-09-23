@@ -21,9 +21,18 @@
             }
         </p>
     <div class="alert alert-warn" role="status">
-        @CatalogLocalizer.Loc(
-            "No emite recetas de EE.UU. Ni sustituye emergencia ni consulta clínica local.",
-            "Does not issue U.S. prescriptions. Does not replace emergencies or local clinical care.")
+        @if (MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
+        {
+            @CatalogLocalizer.Loc(
+                "No emite recetas de EE.UU. Ni sustituye emergencia ni consulta clínica local.",
+                "Does not issue U.S. prescriptions. Does not replace emergencies or local clinical care.")
+        }
+        else
+        {
+            @CatalogLocalizer.Loc(
+                "No sustituye una emergencia ni la consulta presencial con tu veterinario local.",
+                "Does not replace an emergency or an in-person visit with your local veterinarian.")
+        }
     </div>
     @if (Model.UsingCareBenefit)
     {

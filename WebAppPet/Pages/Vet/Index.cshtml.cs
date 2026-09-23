@@ -29,12 +29,24 @@ public class IndexModel : PageModel
     public string? ReturnUrl { get; set; }
 
     public string BackHref { get; private set; } = "/";
+    public string HomeCountryCode { get; private set; } = MarketCountry.DefaultIso;
+    public bool ShowUsLocalConsult => MarketCountry.IsUnitedStates(HomeCountryCode);
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
         BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
             ? ReturnUrl!
             : Url.Page("/Index") ?? "/";
+
+        if (_auth.CurrentUserId is int userId)
+        {
+            var user = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+                .FirstOrDefaultAsync();
+            HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+        }
+
         return Page();
     }
 
@@ -43,7 +55,24 @@ public class IndexModel : PageModel
 
     public Task<IActionResult> OnPostStartGuidanceAsync() => StartPathAsync("intl", ServiceCatalogCodes.VetIntl30);
 
-    public Task<IActionResult> OnPostStartLocalAsync() => StartPathAsync("local", ServiceCatalogCodes.VetLocal30);
+    public async Task<IActionResult> OnPostStartLocalAsync()
+    {
+        await EnsureHomeCountryAsync();
+        // US-state VCPR teleconsult — not offered for Colombia home market.
+        if (!ShowUsLocalConsult)
+            return await StartPathAsync("intl", ServiceCatalogCodes.VetIntl30);
+        return await StartPathAsync("local", ServiceCatalogCodes.VetLocal30);
+    }
+
+    private async Task EnsureHomeCountryAsync()
+    {
+        if (_auth.CurrentUserId is not int userId) return;
+        var user = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+            .FirstOrDefaultAsync();
+        HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+    }
 
     private async Task<IActionResult> StartPathAsync(string next, string catalogCode)
     {

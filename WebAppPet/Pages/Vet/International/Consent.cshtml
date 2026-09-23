@@ -85,7 +85,10 @@
             <section class="vet-consent" style="margin-top:16px">
                 <label class="check-row">
                     <input type="checkbox" asp-for="AcceptScope" data-schedule-consent />
-                    <span>@CatalogLocalizer.Loc("Entiendo que es orientación virtual: no receta EE.UU., no emergencia, no sustituye veterinario local.", "I understand this is virtual guidance: no U.S. Rx, not an emergency, does not replace a local vet.")</span>
+                    @{
+                        var scope = MarketCountry.VirtualScopeConsent(Model.HomeCountryCode, international: true);
+                    }
+                    <span>@CatalogLocalizer.Loc(scope.Es, scope.En)</span>
                 </label>
             </section>
 

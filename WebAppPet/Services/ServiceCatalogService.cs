@@ -24,6 +24,17 @@ public class ServiceCatalogService
     public static string DisplayName(ServiceCatalogItem item)
         => CatalogLocalizer.IsEnglish() ? item.NameEn : item.NameEs;
 
-    public static string DisplayScope(ServiceCatalogItem item)
-        => CatalogLocalizer.IsEnglish() ? item.ScopeEn : item.ScopeEs;
+    public static string DisplayScope(ServiceCatalogItem item, string? homeCountryIso = null)
+    {
+        var home = homeCountryIso ?? AppTimeZones.CurrentCountryCode;
+        if (string.Equals(item.Code, ServiceCatalogCodes.VetIntl30, StringComparison.OrdinalIgnoreCase)
+            && !MarketCountry.IsUnitedStates(home))
+        {
+            return CatalogLocalizer.Loc(
+                "Orientación general con veterinario licenciado. No sustituye consulta presencial ni emergencia.",
+                "General guidance with a licensed veterinarian. Does not replace an in-person visit or emergency care.");
+        }
+
+        return CatalogLocalizer.IsEnglish() ? item.ScopeEn : item.ScopeEs;
+    }
 }

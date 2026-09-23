@@ -11,9 +11,13 @@
         <h1 class="app-page-heading">@L["Vet_Title"]</h1>
         <p class="muted small">@CatalogLocalizer.Loc("Elige una opción", "Pick one option")</p>
         <p class="muted" style="margin-bottom:16px">
-            @CatalogLocalizer.Loc(
-                "Orientación online, consulta local o clínica. Emergencia: gratis con Care (sin reserva en la app).",
-                "Online guidance, local consult, or clinic. Emergency: free with Care (no in-app booking).")
+            @(Model.ShowUsLocalConsult
+                ? CatalogLocalizer.Loc(
+                    "Orientación online, consulta local o clínica. Emergencia: gratis con Care (sin reserva en la app).",
+                    "Online guidance, local consult, or clinic. Emergency: free with Care (no in-app booking).")
+                : CatalogLocalizer.Loc(
+                    "Orientación online o clínica presencial. Emergencia: gratis con Care (sin reserva en la app).",
+                    "Online guidance or in-clinic visit. Emergency: free with Care (no in-app booking)."))
         </p>
 
         <div class="vet-modality-grid">
@@ -25,10 +29,16 @@
                 <button type="submit" class="vet-modality-btn">
                     <span class="vet-modality-icon" aria-hidden="true">🌍</span>
                     <strong>@CatalogLocalizer.Loc("Virtual", "Virtual")</strong>
-                    <span class="muted small">@CatalogLocalizer.Loc("Veterinario online · sin receta de EE.UU.", "Online vet · no U.S. prescription")</span>
+                    <span class="muted small">
+                        @(Model.ShowUsLocalConsult
+                            ? CatalogLocalizer.Loc("Veterinario online · sin receta de EE.UU.", "Online vet · no U.S. prescription")
+                            : CatalogLocalizer.Loc("Veterinario online · orientación a distancia", "Online vet · remote guidance"))
+                    </span>
                 </button>
             </form>
 
+            @if (Model.ShowUsLocalConsult)
+            {
             <form method="post" asp-page-handler="StartLocal" class="vet-modality-card">
                 @if (Model.PetId is int pid2)
                 {
@@ -40,6 +50,7 @@
                     <span class="muted small">@CatalogLocalizer.Loc("Teleconsulta en tu estado (puede requerir VCPR)", "Teleconsult in your state (may need VCPR)")</span>
                 </button>
             </form>
+            }
 
             <a class="vet-modality-card vet-modality-btn" asp-page="/Groomers/Index" asp-route-category="vet">
                 <span class="vet-modality-icon" aria-hidden="true">🏥</span>

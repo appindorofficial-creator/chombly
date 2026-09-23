@@ -14,9 +14,13 @@
             <p class="vet-service-kicker">@CatalogLocalizer.Loc("Paso de servicio", "Service step")</p>
             <h1 class="app-page-heading">@CatalogLocalizer.Loc("Servicio y precio", "Service & price")</h1>
             <p class="muted small vet-service-lead">
-                @CatalogLocalizer.Loc(
-                    "Elige el alcance: orientación, conducta o consulta local (esta última puede requerir VCPR).",
-                    "Pick the scope: guidance, behavior, or local consult (local may need a VCPR).")
+                @(Model.ShowUsLocal
+                    ? CatalogLocalizer.Loc(
+                        "Elige el alcance: orientación, conducta o consulta local (esta última puede requerir VCPR).",
+                        "Pick the scope: guidance, behavior, or local consult (local may need a VCPR).")
+                    : CatalogLocalizer.Loc(
+                        "Elige el alcance: orientación virtual o sesión de conducta.",
+                        "Pick the scope: virtual guidance or a behavior session."))
             </p>
         </header>
 
@@ -98,9 +102,13 @@
                                     {
                                         <span class="vet-service-badge vet-service-badge-ok">@CatalogLocalizer.Loc("VCPR activa", "Active VCPR")</span>
                                     }
-                                    @if (isIntl)
+                                    @if (isIntl && MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
                                     {
                                         <span class="vet-service-badge">@CatalogLocalizer.Loc("Sin receta EE.UU.", "No U.S. Rx")</span>
+                                    }
+                                    else if (isIntl)
+                                    {
+                                        <span class="vet-service-badge">@CatalogLocalizer.Loc("Orientación", "Guidance")</span>
                                     }
                                 </span>
                             </span>

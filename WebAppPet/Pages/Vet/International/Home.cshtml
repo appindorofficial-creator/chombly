@@ -90,7 +90,10 @@
                 </ul>
                 <ul class="intl-home-excludes-list">
                     <li>@CatalogLocalizer.Loc("No es una emergencia ni atención en clínica", "Not an emergency or in-clinic visit")</li>
-                    <li>@CatalogLocalizer.Loc("No emite recetas de EE.UU.", "Does not issue U.S. prescriptions")</li>
+                    @if (MarketCountry.IsUnitedStates(AppTimeZones.CurrentCountryCode))
+                    {
+                        <li>@CatalogLocalizer.Loc("No emite recetas de EE.UU.", "Does not issue U.S. prescriptions")</li>
+                    }
                     <li>@CatalogLocalizer.Loc("Es orientación remota, no un diagnóstico presencial", "Remote guidance, not an in-person diagnosis")</li>
                 </ul>
             </details>

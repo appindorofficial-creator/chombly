@@ -227,6 +227,11 @@ public class PetModel : PageModel
     {
         var next = NormalizeNext(Next, c.ServiceCatalogCode);
 
+        // Local US teleconsult (VCPR) only when home market is United States.
+        if (string.Equals(next, "local", StringComparison.OrdinalIgnoreCase)
+            && !MarketCountry.AllowsUsLocalTeleconsult(HomeCountryCode))
+            next = "intl";
+
         if (string.Equals(next, "local", StringComparison.OrdinalIgnoreCase))
         {
             c.ServiceCatalogCode = ServiceCatalogCodes.VetLocal30;

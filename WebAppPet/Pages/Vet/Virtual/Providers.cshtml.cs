@@ -52,6 +52,15 @@ public class ProvidersModel : PageModel
 
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/Index");
+
+        if (!await HomeAllowsUsLocalAsync())
+        {
+            Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
+            Consultation.MatchMode = IntlMatchMode.Best;
+            await _flow.TouchAsync(Consultation);
+            return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+        }
+
         if (!Consultation.HasActiveVcpr)
             return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
 
@@ -65,6 +74,10 @@ public class ProvidersModel : PageModel
     {
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/Index");
+
+        if (!await HomeAllowsUsLocalAsync())
+            return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+
         if (!Consultation.HasActiveVcpr)
             return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
 
@@ -115,5 +128,16 @@ public class ProvidersModel : PageModel
                 .Take(30)
                 .ToListAsync();
         }
+    }
+
+    private async Task<bool> HomeAllowsUsLocalAsync()
+    {
+        if (_auth.CurrentUserId is not int userId) return false;
+        var user = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+            .FirstOrDefaultAsync();
+        var home = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+        return MarketCountry.AllowsUsLocalTeleconsult(home);
     }
 }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -8,17 +10,20 @@ namespace WebAppPet.Pages.Vet.Virtual;
 
 public class ServiceModel : PageModel
 {
+    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ConsultationFlowService _flow;
     private readonly ServiceCatalogService _catalog;
     private readonly ChomblyCareService _care;
 
     public ServiceModel(
+        AppDbContext db,
         AuthService auth,
         ConsultationFlowService flow,
         ServiceCatalogService catalog,
         ChomblyCareService care)
     {
+        _db = db;
         _auth = auth;
         _flow = flow;
         _catalog = catalog;
@@ -36,6 +41,8 @@ public class ServiceModel : PageModel
     public bool HasCare { get; set; }
     public int CareRemaining { get; set; }
     public string? ErrorMessage { get; set; }
+    public string HomeCountryCode { get; set; } = MarketCountry.DefaultIso;
+    public bool ShowUsLocal => MarketCountry.AllowsUsLocalTeleconsult(HomeCountryCode);
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -45,7 +52,7 @@ public class ServiceModel : PageModel
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/Index");
 
-        Items = await _catalog.ListActiveAsync();
+        await LoadHomeAndItemsAsync();
         var sub = await _care.GetActiveAsync(_auth.CurrentUserId.Value);
         HasCare = sub != null;
         CareRemaining = sub != null ? _care.RemainingQuickConsults(sub) : 0;
@@ -57,7 +64,7 @@ public class ServiceModel : PageModel
         Consultation = await _flow.GetOwnedAsync(ConsultationId);
         if (Consultation is null) return RedirectToPage("/Vet/Index");
 
-        Items = await _catalog.ListActiveAsync();
+        await LoadHomeAndItemsAsync();
         var sub = _auth.CurrentUserId is int uid ? await _care.GetActiveAsync(uid) : null;
         HasCare = sub != null;
         CareRemaining = sub != null ? _care.RemainingQuickConsults(sub) : 0;
@@ -72,8 +79,13 @@ public class ServiceModel : PageModel
             return Page();
         }
 
-        if (item.Code == ServiceCatalogCodes.VetLocal30 && !Consultation.HasActiveVcpr)
-            return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
+        if (item.Code == ServiceCatalogCodes.VetLocal30)
+        {
+            if (!ShowUsLocal)
+                return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+            if (!Consultation.HasActiveVcpr)
+                return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
+        }
 
         Consultation.ServiceCatalogCode = item.Code;
         Consultation.UsesCareBenefit = false;
@@ -100,5 +112,22 @@ public class ServiceModel : PageModel
         Consultation.Status = ConsultationStatus.EligibilityVerified;
         await _flow.TouchAsync(Consultation);
         return RedirectToPage("/Vet/International/Home", new { consultationId = ConsultationId });
+    }
+
+    private async Task LoadHomeAndItemsAsync()
+    {
+        if (_auth.CurrentUserId is int userId)
+        {
+            var user = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+                .FirstOrDefaultAsync();
+            HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+        }
+
+        var all = await _catalog.ListActiveAsync();
+        Items = ShowUsLocal
+            ? all
+            : all.Where(i => i.Code != ServiceCatalogCodes.VetLocal30).ToList();
     }
 }

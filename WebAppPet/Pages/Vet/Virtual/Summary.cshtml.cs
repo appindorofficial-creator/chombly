@@ -33,6 +33,7 @@ public class SummaryModel : PageModel
     public bool UsingCare { get; private set; }
     public bool IsIntl { get; private set; }
     public bool HasProviderNotes { get; private set; }
+    public string HomeCountryCode { get; private set; } = MarketCountry.DefaultIso;
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -64,6 +65,13 @@ public class SummaryModel : PageModel
         UsingCare = Consultation.UsesCareBenefit || Consultation.PriceCharged <= 0m;
         IsIntl = string.Equals(Consultation.ServiceCatalogCode, ServiceCatalogCodes.VetIntl30, StringComparison.OrdinalIgnoreCase);
         HasProviderNotes = !string.IsNullOrWhiteSpace(Consultation.ClinicalNotes);
+
+        var user = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == _auth.CurrentUserId)
+            .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+            .FirstOrDefaultAsync();
+        HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+
         return true;
     }
 }

@@ -122,9 +122,8 @@
                     <span>
                         @if (isIntl)
                         {
-                            @CatalogLocalizer.Loc(
-                                "Entiendo que es orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.",
-                                "I understand this is international guidance: no U.S. Rx, not an emergency, does not replace a local vet.")
+                            var scope = MarketCountry.VirtualScopeConsent(Model.HomeCountryCode, international: true);
+                            @CatalogLocalizer.Loc(scope.Es, scope.En)
                         }
                         else
                         {

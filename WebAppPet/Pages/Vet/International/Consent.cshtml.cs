@@ -58,6 +58,9 @@ public class ConsentModel : PageModel
     public List<string> TimeSlots { get; set; } = new();
     public HashSet<string> PastSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool DayOpen { get; set; } = true;
+    /// <summary>Home market of the signed-in client (CO/US) — drives US-only disclaimer copy.</summary>
+    public string HomeCountryCode { get; set; } = MarketCountry.DefaultIso;
+    public bool HomeIsUnitedStates => MarketCountry.IsUnitedStates(HomeCountryCode);
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -131,6 +134,16 @@ public class ConsentModel : PageModel
             Consultation.UsesCareBenefit = true;
             await _flow.TouchAsync(Consultation);
         }
+
+        if (_auth.CurrentUserId is int userId)
+        {
+            var user = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+                .FirstOrDefaultAsync();
+            HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
+        }
+
         return CatalogItem != null && Provider != null;
     }
 

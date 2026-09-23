@@ -59,6 +59,7 @@ public class CheckoutModel : PageModel
     public decimal CatalogPrice { get; set; }
     public decimal ChargeAmount { get; set; }
     public string? ErrorMessage { get; set; }
+    public string HomeCountryCode { get; set; } = MarketCountry.DefaultIso;
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -219,6 +220,12 @@ public class CheckoutModel : PageModel
             var sub = await _care.GetActiveAsync(uid);
             CareRemaining = sub != null ? _care.RemainingQuickConsults(sub) : 0;
             HasCareAvailable = CareRemaining > 0;
+
+            var user = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == uid)
+                .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
+                .FirstOrDefaultAsync();
+            HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
         }
 
         Payments = await _db.PaymentMethods.AsNoTracking()

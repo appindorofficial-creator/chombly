@@ -33,6 +33,34 @@ public static class MarketCountry
     public static string FromMarket(BusinessMarket market) =>
         market == BusinessMarket.UnitedStates ? "US" : "CO";
 
+    public static bool IsUnitedStates(string? iso) => Normalize(iso) == "US";
+
+    /// <summary>US-state licensed teleconsult (VCPR) is only for United States home market.</summary>
+    public static bool AllowsUsLocalTeleconsult(string? homeCountryIso) => IsUnitedStates(homeCountryIso);
+
+    /// <summary>Consent copy for virtual/international orientation (US Rx line only when home is US).</summary>
+    public static (string Es, string En) VirtualScopeConsent(string? homeCountryIso, bool international)
+    {
+        if (IsUnitedStates(homeCountryIso))
+        {
+            return international
+                ? (
+                    "Entiendo que es orientación internacional: no receta EE.UU., no emergencia, no sustituye veterinario local.",
+                    "I understand this is international guidance: no U.S. Rx, not an emergency, does not replace a local vet.")
+                : (
+                    "Entiendo que es orientación virtual: no receta EE.UU., no emergencia, no sustituye veterinario local.",
+                    "I understand this is virtual guidance: no U.S. Rx, not an emergency, does not replace a local vet.");
+        }
+
+        return international
+            ? (
+                "Entiendo que es orientación virtual internacional: no es una emergencia y no sustituye la consulta con tu veterinario local.",
+                "I understand this is international virtual guidance: it is not an emergency and does not replace a visit with your local vet.")
+            : (
+                "Entiendo que es orientación virtual: no es una emergencia y no sustituye la consulta con tu veterinario local.",
+                "I understand this is virtual guidance: it is not an emergency and does not replace a visit with your local vet.");
+    }
+
     /// <summary>Derives ISO from location when the user has not stored a country yet.</summary>
     public static string ResolveFromLocation(string? city, double? lat, double? lng)
     {
