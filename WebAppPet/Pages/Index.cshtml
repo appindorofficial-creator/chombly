@@ -200,14 +200,6 @@
             <p>@L["Home_BizCtaSub"]</p>
             <div class="home-biz-cta-actions">
                 <a class="btn btn-enter btn-block" asp-page="/Account/RegisterBusiness">@L["Login_ImBusiness"]</a>
-                @if (Model.InPresentationTour)
-                {
-                    <a class="onboard-secondary" asp-page="/Business/Explore/Exit" asp-route-returnUrl="/Index">@L["Home_ExitWelcome"]</a>
-                }
-                else
-                {
-                    <a class="onboard-secondary" asp-page="/Welcome" asp-route-returnUrl="/Index">@L["Home_SeeWelcome"]</a>
-                }
             </div>
         </section>
 

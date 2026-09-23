@@ -160,14 +160,6 @@
                     <a asp-page="/Account/PaymentMethods"><span class="menu-left"><span class="menu-ico" aria-hidden="true">💳</span> @L["Profile_Payments"]</span><span class="chev" aria-hidden="true">›</span></a>
                 }
                 <a asp-page="/Account/Notifications" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">🔔</span> @L["Profile_Notifications"]</span><span class="chev" aria-hidden="true">›</span></a>
-                @if (Model.InPresentationTour)
-                {
-                    <a asp-page="/Business/Explore/Exit" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">↩</span> @L["Home_ExitWelcome"]</span><span class="chev" aria-hidden="true">›</span></a>
-                }
-                else
-                {
-                    <a asp-page="/Welcome" asp-route-returnUrl="/Account/Profile"><span class="menu-left"><span class="menu-ico" aria-hidden="true">✨</span> @L["Profile_WelcomeLink"]</span><span class="chev" aria-hidden="true">›</span></a>
-                }
             </div>
 
             <div class="menu-list menu-chombly menu-chombly-logout">
