@@ -1,8 +1,6 @@
 @model WebAppPet.Pages.Shared.BookingSummarySheetModel
 @{
     ViewData["TermsChecked"] = Model.AcceptTerms;
-    if (!string.IsNullOrEmpty(Model.TermsStep))
-        ViewData["TermsStep"] = Model.TermsStep;
     var estimate = Model.Estimate.ToString("0");
     var payReturn = Model.ContinueHref
         ?? $"{Context.Request.Path}{Context.Request.QueryString}";

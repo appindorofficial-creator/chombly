@@ -160,7 +160,6 @@ public sealed class BookingSummarySheetModel
     public string PaymentHeadingEn { get; init; } = "Payment";
     public PaymentMethod? DefaultPayment { get; init; }
     public bool AcceptTerms { get; init; }
-    public string? TermsStep { get; init; }
 
     public required string SubmitLabelEs { get; init; }
     public required string SubmitLabelEn { get; init; }
