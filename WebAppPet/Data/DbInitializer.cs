@@ -31,6 +31,7 @@ public static class DbInitializer
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
         await EnsureNeivaDemoProvidersAsync(db);
+        await BackfillColombiaUsdScaleHotelExtrasAsync(db);
         await EnsureThorPetCoverImageAsync(db);
         await EnsureMissingUploadCoversAsync(db);
         await EnsureCanonicalGroomingServiceNamesAsync(db);
@@ -1632,7 +1633,7 @@ public static class DbInitializer
             imageSlug: "hotel", rating: 4.7, reviews: 63, featured: true,
             species: $"{PetSpecies.Dog},{PetSpecies.Cat}");
 
-        // Demo pricing: bath $20, meds at default (editable by the business).
+        // Demo pricing in COP: baño $20.000, medicamentos $5.000.
         var magUserId = await db.Users.AsNoTracking()
             .Where(u => u.Email == "neiva.hotel.magdalena@chombly.com")
             .Select(u => (int?)u.Id)
@@ -1643,8 +1644,9 @@ public static class DbInitializer
             if (magdalenaHotel != null)
                 await Services.HotelCoreExtras.SyncAsync(
                     db, magdalenaHotel.Id,
-                    Services.HotelCoreExtras.BathDefaultPrice,
-                    Services.HotelCoreExtras.MedsDefaultPrice);
+                    Services.HotelCoreExtras.BathDefaultPriceCop,
+                    Services.HotelCoreExtras.MedsDefaultPriceCop,
+                    "CO");
         }
 
         // Daycare
@@ -1703,6 +1705,60 @@ public static class DbInitializer
             new[] { daycareId, trainersId }.Where(x => x.HasValue).Select(x => x!.Value).ToArray(),
             30000m, "/ servicio", "Baño y cepillado", "Estética y cuidado diario", 45, 30000m,
             imageSlug: "grooming", rating: 4.5, reviews: 33);
+    }
+
+    /// <summary>
+    /// Hotels seeded/edited with US-scale extras (e.g. meds $5, bath $20) while the business is CO.
+    /// Rewrite those rows to local COP defaults once.
+    /// </summary>
+    private static async Task BackfillColombiaUsdScaleHotelExtrasAsync(AppDbContext db)
+    {
+        // USD-era add-ons are tiny vs COP (5–50). Real COP extras are thousands+.
+        const decimal usdScaleCeiling = 100m;
+
+        var coGroomerIds = await db.Groomers.AsNoTracking()
+            .Include(g => g.User)
+            .Where(g =>
+                (g.User != null && g.User.CountryCode == "CO")
+                || g.LicenseCountry == "CO"
+                || (g.City != null && (
+                    g.City.Contains("Neiva")
+                    || g.City.Contains("Colombia")
+                    || g.City.Contains("Bogotá")
+                    || g.City.Contains("Bogota")
+                    || g.City.Contains("Medellín")
+                    || g.City.Contains("Medellin"))))
+            .Select(g => g.Id)
+            .ToListAsync();
+        if (coGroomerIds.Count == 0) return;
+
+        var extras = await db.ServiceExtras
+            .Where(e => coGroomerIds.Contains(e.GroomerId) && e.Price > 0 && e.Price < usdScaleCeiling)
+            .ToListAsync();
+        if (extras.Count == 0) return;
+
+        var changed = false;
+        foreach (var e in extras)
+        {
+            if (Services.HotelCoreExtras.MatchesMeds(e.Name))
+            {
+                e.Price = Services.HotelCoreExtras.MedsDefaultPriceCop;
+                changed = true;
+            }
+            else if (Services.HotelCoreExtras.MatchesBath(e.Name))
+            {
+                e.Price = Services.HotelCoreExtras.BathDefaultPriceCop;
+                changed = true;
+            }
+            else if (Services.HotelPrivateCameraExtra.Matches(e.Name))
+            {
+                e.Price = Services.HotelPrivateCameraExtra.DefaultPriceCop;
+                changed = true;
+            }
+        }
+
+        if (changed)
+            await db.SaveChangesAsync();
     }
 
     /// <summary>

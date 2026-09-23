@@ -78,9 +78,9 @@ public class RegisterBusinessModel : PageModel
 
     /// <summary>Hotel category: offer bookable private-camera extra.</summary>
     [BindProperty] public bool OffersPrivateCamera { get; set; }
-    [BindProperty] public decimal PrivateCameraPrice { get; set; } = HotelPrivateCameraExtra.DefaultPrice;
-    [BindProperty] public decimal ExtraBathPrice { get; set; } = HotelCoreExtras.BathDefaultPrice;
-    [BindProperty] public decimal ExtraMedsPrice { get; set; } = HotelCoreExtras.MedsDefaultPrice;
+    [BindProperty] public decimal PrivateCameraPrice { get; set; }
+    [BindProperty] public decimal ExtraBathPrice { get; set; }
+    [BindProperty] public decimal ExtraMedsPrice { get; set; }
 
     public bool IsHotelSelected =>
         Categories.Any(c => CategoryIds.Contains(c.Id)
@@ -126,6 +126,19 @@ public class RegisterBusinessModel : PageModel
             Step = 5;
         await PrepareAsync();
         await PrefillFromCurrentUserAsync();
+        ApplyMarketExtraDefaultsIfUnset();
+    }
+
+    private void ApplyMarketExtraDefaultsIfUnset()
+    {
+        var iso = DetectedMarket == BusinessMarket.Colombia
+            ? "CO"
+            : DetectedMarket == BusinessMarket.UnitedStates
+                ? "US"
+                : AppTimeZones.CurrentCountryCode;
+        if (ExtraBathPrice <= 0) ExtraBathPrice = HotelCoreExtras.BathDefaultFor(iso);
+        if (ExtraMedsPrice <= 0) ExtraMedsPrice = HotelCoreExtras.MedsDefaultFor(iso);
+        if (PrivateCameraPrice <= 0) PrivateCameraPrice = HotelPrivateCameraExtra.DefaultFor(iso);
     }
 
     public Task<IActionResult> OnPostBackAsync() => GoBackAsync();
@@ -555,6 +568,7 @@ public class RegisterBusinessModel : PageModel
             var name = ServiceNames[i].Trim();
             var price = i < ServicePrices.Count ? ServicePrices[i] : firstPrice;
             if (string.IsNullOrWhiteSpace(name) || price <= 0) continue;
+            var step = HotelCoreExtras.SizeStepFor(user.CountryCode);
             _db.Services.Add(new GroomerService
             {
                 GroomerId = profile.Id,
@@ -562,9 +576,9 @@ public class RegisterBusinessModel : PageModel
                 Description = $"{serviceDescPrefix} {catLabel}",
                 BillingUnit = cat.IsOvernight ? "noche" : "sesion",
                 PriceSmall = price,
-                PriceMedium = price + 10,
-                PriceLarge = price + 20,
-                PriceGiant = price + 30,
+                PriceMedium = price + step,
+                PriceLarge = price + step * 2,
+                PriceGiant = price + step * 3,
                 DurationMinutes = cat.IsOvernight ? 1440 : 60
             });
         }
@@ -573,9 +587,9 @@ public class RegisterBusinessModel : PageModel
 
         if (IsHotelSelected)
         {
-            await HotelCoreExtras.SyncAsync(_db, profile.Id, ExtraBathPrice, ExtraMedsPrice);
+            await HotelCoreExtras.SyncAsync(_db, profile.Id, ExtraBathPrice, ExtraMedsPrice, user.CountryCode);
             if (OffersPrivateCamera)
-                await HotelPrivateCameraExtra.SyncAsync(_db, profile.Id, true, PrivateCameraPrice);
+                await HotelPrivateCameraExtra.SyncAsync(_db, profile.Id, true, PrivateCameraPrice, user.CountryCode);
         }
 
         _db.Notifications.Add(new AppNotification
@@ -722,14 +736,17 @@ public class RegisterBusinessModel : PageModel
             ServicePrices = draft.ServicePrices ?? new();
             AcceptTerms = draft.AcceptTerms;
             OffersPrivateCamera = draft.OffersPrivateCamera;
+            var draftIso = DetectedMarket == BusinessMarket.Colombia ? "CO"
+                : DetectedMarket == BusinessMarket.UnitedStates ? "US"
+                : AppTimeZones.CurrentCountryCode;
             PrivateCameraPrice = draft.PrivateCameraPrice < 0
-                ? HotelPrivateCameraExtra.DefaultPrice
+                ? HotelPrivateCameraExtra.DefaultFor(draftIso)
                 : draft.PrivateCameraPrice;
             ExtraBathPrice = draft.ExtraBathPrice < 0
-                ? HotelCoreExtras.BathDefaultPrice
+                ? HotelCoreExtras.BathDefaultFor(draftIso)
                 : draft.ExtraBathPrice;
             ExtraMedsPrice = draft.ExtraMedsPrice < 0
-                ? HotelCoreExtras.MedsDefaultPrice
+                ? HotelCoreExtras.MedsDefaultFor(draftIso)
                 : draft.ExtraMedsPrice;
         }
         catch

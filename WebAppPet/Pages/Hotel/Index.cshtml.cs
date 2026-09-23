@@ -488,12 +488,12 @@ public class IndexModel : PageModel
             if (HotelCoreExtras.MatchesBath(g.Key))
             {
                 coreDesc = HotelCoreExtras.BathDescription;
-                coreDefault = HotelCoreExtras.BathDefaultPrice;
+                coreDefault = HotelCoreExtras.BathDefaultFor(AppTimeZones.CurrentCountryCode);
             }
             else if (HotelCoreExtras.MatchesMeds(g.Key))
             {
                 coreDesc = HotelCoreExtras.MedsDescription;
-                coreDefault = HotelCoreExtras.MedsDefaultPrice;
+                coreDefault = HotelCoreExtras.MedsDefaultFor(AppTimeZones.CurrentCountryCode);
             }
 
             ExtraOptions.Add(new HotelExtraOptionVm

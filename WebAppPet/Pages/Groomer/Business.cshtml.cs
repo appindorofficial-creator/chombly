@@ -125,8 +125,9 @@ public class BusinessModel : GroomerPageModel
 
         if (IsHotelFromCategories(selected))
         {
-            await HotelCoreExtras.SyncAsync(Db, g.Id, ExtraBathPrice, ExtraMedsPrice);
-            await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, OffersPrivateCamera, PrivateCameraPrice);
+            var iso = g.User?.CountryCode ?? g.LicenseCountry ?? AppTimeZones.CurrentCountryCode;
+            await HotelCoreExtras.SyncAsync(Db, g.Id, ExtraBathPrice, ExtraMedsPrice, iso);
+            await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, OffersPrivateCamera, PrivateCameraPrice, iso);
         }
         else
             await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, enabled: false);
@@ -184,6 +185,7 @@ public class BusinessModel : GroomerPageModel
         if (!string.IsNullOrWhiteSpace(NewServiceName) && NewServicePrice > 0)
         {
             var p = NewServicePrice;
+            var step = HotelCoreExtras.SizeStepFor(Profile!.User?.CountryCode ?? Profile.LicenseCountry);
             Db.Services.Add(new GroomerService
             {
                 GroomerId = Profile!.Id,
@@ -191,9 +193,9 @@ public class BusinessModel : GroomerPageModel
                 Description = NewServiceName.Trim(),
                 BillingUnit = NewServiceUnit,
                 PriceSmall = p,
-                PriceMedium = p + 10,
-                PriceLarge = p + 20,
-                PriceGiant = p + 30,
+                PriceMedium = p + step,
+                PriceLarge = p + step * 2,
+                PriceGiant = p + step * 3,
                 DurationMinutes = NewServiceUnit == "noche" ? 1440 : 60
             });
             await Db.SaveChangesAsync();
@@ -231,10 +233,10 @@ public class BusinessModel : GroomerPageModel
             || string.Equals(g.Category?.Slug, "hotel", StringComparison.OrdinalIgnoreCase);
         if (IsHotelBusiness)
         {
-            var cam = await HotelPrivateCameraExtra.GetAsync(Db, g.Id);
+            var cam = await HotelPrivateCameraExtra.GetAsync(Db, g.Id, g.User?.CountryCode ?? g.LicenseCountry);
             OffersPrivateCamera = cam.Enabled;
             PrivateCameraPrice = cam.Price;
-            var core = await HotelCoreExtras.GetPricesAsync(Db, g.Id);
+            var core = await HotelCoreExtras.GetPricesAsync(Db, g.Id, g.User?.CountryCode ?? g.LicenseCountry);
             ExtraBathPrice = core.BathPrice;
             ExtraMedsPrice = core.MedsPrice;
         }

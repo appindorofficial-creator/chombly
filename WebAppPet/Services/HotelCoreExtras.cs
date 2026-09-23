@@ -6,17 +6,44 @@ namespace WebAppPet.Services;
 
 /// <summary>
 /// Core hotel booking extras every hotel offers (bath + medication).
-/// Prices are set by the business (including $0).
+/// Prices are set by the business (including $0); defaults follow home market (USD / COP).
 /// </summary>
 public static class HotelCoreExtras
 {
     public const string BathName = "Baño adicional";
     public const string BathDescription = "Baño extra durante la estadía";
-    public const decimal BathDefaultPrice = 20m;
-
     public const string MedsName = "Administración de medicamentos";
     public const string MedsDescription = "Si tu mascota necesita medicación durante la estadía";
-    public const decimal MedsDefaultPrice = 5m;
+
+    /// <summary>US default bath add-on (USD).</summary>
+    public const decimal BathDefaultPriceUsd = 20m;
+    /// <summary>US default meds add-on (USD).</summary>
+    public const decimal MedsDefaultPriceUsd = 5m;
+    /// <summary>Colombia default bath add-on (COP).</summary>
+    public const decimal BathDefaultPriceCop = 20_000m;
+    /// <summary>Colombia default meds add-on (COP).</summary>
+    public const decimal MedsDefaultPriceCop = 5_000m;
+
+    /// <summary>Legacy alias — US bath default. Prefer <see cref="BathDefaultFor"/>.</summary>
+    public const decimal BathDefaultPrice = BathDefaultPriceUsd;
+    /// <summary>Legacy alias — US meds default. Prefer <see cref="MedsDefaultFor"/>.</summary>
+    public const decimal MedsDefaultPrice = MedsDefaultPriceUsd;
+
+    public static decimal BathDefaultFor(string? countryIso = null) =>
+        MarketCountry.IsUnitedStates(countryIso ?? AppTimeZones.CurrentCountryCode)
+            ? BathDefaultPriceUsd
+            : BathDefaultPriceCop;
+
+    public static decimal MedsDefaultFor(string? countryIso = null) =>
+        MarketCountry.IsUnitedStates(countryIso ?? AppTimeZones.CurrentCountryCode)
+            ? MedsDefaultPriceUsd
+            : MedsDefaultPriceCop;
+
+    /// <summary>Typical size-tier step when creating a service (USD $10 / COP $5.000).</summary>
+    public static decimal SizeStepFor(string? countryIso = null) =>
+        MarketCountry.IsUnitedStates(countryIso ?? AppTimeZones.CurrentCountryCode)
+            ? 10m
+            : 5_000m;
 
     public static bool MatchesBath(string? name) =>
         string.Equals(name?.Trim(), BathName, StringComparison.OrdinalIgnoreCase);
@@ -32,24 +59,28 @@ public static class HotelCoreExtras
     public static decimal NormalizePrice(decimal? price, decimal fallback) =>
         price is null or < 0 ? fallback : price.Value;
 
-    public static async Task<(decimal BathPrice, decimal MedsPrice)> GetPricesAsync(AppDbContext db, int groomerId)
+    public static async Task<(decimal BathPrice, decimal MedsPrice)> GetPricesAsync(
+        AppDbContext db, int groomerId, string? countryIso = null)
     {
+        var bathDefault = BathDefaultFor(countryIso);
+        var medsDefault = MedsDefaultFor(countryIso);
         var rows = await db.ServiceExtras.AsNoTracking()
             .Where(e => e.GroomerId == groomerId && e.IsActive)
             .ToListAsync();
         var bath = rows.FirstOrDefault(e => MatchesBath(e.Name));
         var meds = rows.FirstOrDefault(e => MatchesMeds(e.Name));
         return (
-            bath != null ? NormalizePrice(bath.Price, BathDefaultPrice) : BathDefaultPrice,
-            meds != null ? NormalizePrice(meds.Price, MedsDefaultPrice) : MedsDefaultPrice
+            bath != null ? NormalizePrice(bath.Price, bathDefault) : bathDefault,
+            meds != null ? NormalizePrice(meds.Price, medsDefault) : medsDefault
         );
     }
 
     /// <summary>Create or update bath + meds extras with the given prices (min $0).</summary>
-    public static async Task SyncAsync(AppDbContext db, int groomerId, decimal? bathPrice, decimal? medsPrice)
+    public static async Task SyncAsync(
+        AppDbContext db, int groomerId, decimal? bathPrice, decimal? medsPrice, string? countryIso = null)
     {
-        var bath = NormalizePrice(bathPrice, BathDefaultPrice);
-        var meds = NormalizePrice(medsPrice, MedsDefaultPrice);
+        var bath = NormalizePrice(bathPrice, BathDefaultFor(countryIso));
+        var meds = NormalizePrice(medsPrice, MedsDefaultFor(countryIso));
         await UpsertAsync(db, groomerId, BathName, BathDescription, bath);
         await UpsertAsync(db, groomerId, MedsName, MedsDescription, meds);
         await db.SaveChangesAsync();
@@ -61,6 +92,12 @@ public static class HotelCoreExtras
         var ids = hotelIds.Distinct().Where(id => id > 0).ToList();
         if (ids.Count == 0) return;
 
+        var hotels = await db.Groomers.AsNoTracking()
+            .Include(g => g.User)
+            .Where(g => ids.Contains(g.Id))
+            .Select(g => new { g.Id, Country = g.User != null ? g.User.CountryCode : g.LicenseCountry })
+            .ToListAsync();
+
         var existing = await db.ServiceExtras
             .AsNoTracking()
             .Where(e => ids.Contains(e.GroomerId))
@@ -68,28 +105,30 @@ public static class HotelCoreExtras
             .ToListAsync();
 
         var toAdd = new List<ServiceExtra>();
-        foreach (var hotelId in ids)
+        foreach (var hotel in hotels)
         {
-            if (!existing.Any(e => e.GroomerId == hotelId && MatchesBath(e.Name)))
+            var bathDefault = BathDefaultFor(hotel.Country);
+            var medsDefault = MedsDefaultFor(hotel.Country);
+            if (!existing.Any(e => e.GroomerId == hotel.Id && MatchesBath(e.Name)))
             {
                 toAdd.Add(new ServiceExtra
                 {
-                    GroomerId = hotelId,
+                    GroomerId = hotel.Id,
                     Name = BathName,
                     Description = BathDescription,
-                    Price = BathDefaultPrice,
+                    Price = bathDefault,
                     IsActive = true
                 });
             }
 
-            if (!existing.Any(e => e.GroomerId == hotelId && MatchesMeds(e.Name)))
+            if (!existing.Any(e => e.GroomerId == hotel.Id && MatchesMeds(e.Name)))
             {
                 toAdd.Add(new ServiceExtra
                 {
-                    GroomerId = hotelId,
+                    GroomerId = hotel.Id,
                     Name = MedsName,
                     Description = MedsDescription,
-                    Price = MedsDefaultPrice,
+                    Price = medsDefault,
                     IsActive = true
                 });
             }
