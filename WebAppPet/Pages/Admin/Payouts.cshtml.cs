@@ -23,6 +23,9 @@ public class PayoutsModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
+        var refreshed = await _payouts.RefreshAllPayoutTotalsAsync();
+        if (refreshed > 0)
+            Message = $"Totales actualizados en {refreshed} payout(s) (incluyen reservas familia).";
         await LoadAsync();
         return Page();
     }
@@ -33,7 +36,7 @@ public class PayoutsModel : PageModel
         var payout = await _payouts.MarkPaidAsync(id, _auth.CurrentUserId);
         Message = payout is null
             ? "Payout not found."
-            : $"Marked paid · {payout.ExternalReference}";
+            : $"Marked paid · neto {AppMoney.Format(payout.NetAmountUsd, payout.ProviderUser?.CountryCode)} · {payout.ExternalReference}";
         await LoadAsync();
         return Page();
     }

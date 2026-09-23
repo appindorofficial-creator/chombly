@@ -652,7 +652,7 @@
   <data name="Payout_Empty" xml:space="preserve"><value>Sin payouts aún.</value></data>
   <data name="Payout_Items" xml:space="preserve"><value>ítems</value></data>
   <data name="Payout_PeriodEndError" xml:space="preserve"><value>La fecha fin debe ser posterior al inicio.</value></data>
-  <data name="Payout_SummaryCreated" xml:space="preserve"><value>Resumen de período creado · neto ${0} ({1} ítems).</value></data>
+  <data name="Payout_SummaryCreated" xml:space="preserve"><value>Resumen de período creado · neto {0} ({1} ítems).</value></data>
   <data name="Payout_Status_Pending" xml:space="preserve"><value>Pendiente</value></data>
   <data name="Payout_Status_Processing" xml:space="preserve"><value>Procesando</value></data>
   <data name="Payout_Status_Paid" xml:space="preserve"><value>Pagado</value></data>

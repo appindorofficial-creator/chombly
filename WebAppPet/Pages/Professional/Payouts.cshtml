@@ -22,6 +22,14 @@
         ProviderPayoutStatus.Held => L["Payout_Status_Held"].Value,
         _ => s.ToString()
     };
+    string ApptStatusLabel(AppointmentStatus s) => s switch
+    {
+        AppointmentStatus.Pending => CatalogLocalizer.Loc("Pendiente", "Pending"),
+        AppointmentStatus.Confirmed => CatalogLocalizer.Loc("Confirmada", "Confirmed"),
+        AppointmentStatus.Completed => CatalogLocalizer.Loc("Completada", "Completed"),
+        AppointmentStatus.Cancelled => CatalogLocalizer.Loc("Cancelada", "Cancelled"),
+        _ => s.ToString()
+    };
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -53,6 +61,42 @@
                     <strong>@ServiceLabel(r.ServiceType)</strong>
                     <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @AppMoney.Code()
                         @if (r.ProviderUserId is null) { <text>· @L["Payout_PlatformDefault"]</text> }
+                    </span>
+                </div>
+            }
+        }
+    </section>
+
+    <section style="margin-bottom:18px">
+        <h2 class="section-title">@CatalogLocalizer.Loc("Pagos de clientes", "Customer payments")</h2>
+        <p class="muted small" style="margin-top:-6px;margin-bottom:10px">
+            @CatalogLocalizer.Loc(
+                "Reservas pagadas desde la app familia (simulado). La comisión se estima con tu regla activa.",
+                "Bookings paid from the family app (simulated). Commission uses your active rule.")
+        </p>
+        @if (Model.RecentPayments.Count == 0)
+        {
+            <p class="muted small">@CatalogLocalizer.Loc("Aún no hay pagos de clientes.", "No customer payments yet.")</p>
+        }
+        else
+        {
+            @foreach (var pay in Model.RecentPayments)
+            {
+                <div class="card card-pad" style="margin-bottom:8px">
+                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                        <div>
+                            <strong>@pay.PetName · @pay.ServiceName</strong>
+                            <span class="muted small" style="display:block">@pay.ClientName · @ApptStatusLabel(pay.Status)</span>
+                            <span class="muted small" style="display:block">
+                @CatalogLocalizer.Loc("Pagado", "Paid") @AppTimeZones.FormatShort(pay.PaidAtUtc)
+                                · @CatalogLocalizer.Loc("Cita", "Visit") @AppTimeZones.FormatShort(pay.ScheduledAtUtc)
+                            </span>
+                        </div>
+                        <strong class="price-tag">@AppMoney.Format(pay.Gross)</strong>
+                    </div>
+                    <span class="muted small" style="display:block;margin-top:6px">
+                        @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.Format(pay.Commission)
+                        · <strong>@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.Format(pay.Net)</strong>
                     </span>
                 </div>
             }

@@ -30,6 +30,7 @@ public class PayoutsModel : PageModel
 
     public List<ProviderCompensationRule> Rules { get; set; } = new();
     public List<ProviderPayout> History { get; set; } = new();
+    public List<ProviderPayoutService.ProviderPaymentRow> RecentPayments { get; set; } = new();
     public string? Message { get; set; }
     public string? Error { get; set; }
 
@@ -80,8 +81,10 @@ public class PayoutsModel : PageModel
     private async Task LoadAsync()
     {
         var uid = _auth.CurrentUserId!.Value;
+        await _payouts.RefreshPayoutTotalsAsync(uid);
         Rules = await _payouts.ListRulesForProviderAsync(uid);
         History = await _payouts.ListForProviderAsync(uid);
+        RecentPayments = await _payouts.ListRecentFamilyPaymentsAsync(uid);
     }
 
     private async Task<bool> EnsureProviderAsync()

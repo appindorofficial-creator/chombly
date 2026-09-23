@@ -130,14 +130,28 @@ public class ProviderPayoutService
         var groomer = await _db.Groomers.AsNoTracking()
             .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
 
-        var serviceType = MapFromVetKind(groomer?.VetProviderKind ?? VetProviderKind.LocalVet);
-        var rule = await GetEffectiveRuleAsync(providerUserId, serviceType, periodEnd, ct);
+        var serviceType = MapFromVetKind(groomer?.VetProviderKind ?? VetProviderKind.None);
+        var rule = await GetEffectiveRuleAsync(providerUserId, serviceType, periodEnd, ct)
+            ?? await GetEffectiveRuleAsync(providerUserId, CompensationServiceType.LocalVet, periodEnd, ct);
 
         decimal gross = 0;
         var count = 0;
 
         if (groomer != null)
         {
+            // Family marketplace bookings (simulated card charge at checkout).
+            var appointmentTotals = await _db.Appointments.AsNoTracking()
+                .Where(a => a.GroomerId == groomer.Id
+                    && a.Status != AppointmentStatus.Cancelled
+                    && a.TotalPrice > 0
+                    && a.CreatedAt >= periodStart
+                    && a.CreatedAt < periodEnd)
+                .Select(a => a.TotalPrice)
+                .ToListAsync(ct);
+
+            gross += appointmentTotals.Sum();
+            count += appointmentTotals.Count;
+
             var consults = await _db.Consultations.AsNoTracking()
                 .Where(c => c.ProviderId == groomer.Id &&
                             c.Status == ConsultationStatus.Completed &&
@@ -149,7 +163,8 @@ public class ProviderPayoutService
             gross += consults.Sum();
             count += consults.Count;
 
-            if (serviceType == CompensationServiceType.Behavior || groomer.VetProviderKind == VetProviderKind.BehaviorSpecialist)
+            if (groomer.VetProviderKind == VetProviderKind.BehaviorSpecialist
+                || serviceType == CompensationServiceType.Behavior)
             {
                 var cases = await _db.BehaviorCases.AsNoTracking()
                     .Where(b => b.ProviderId == groomer.Id &&
@@ -174,6 +189,63 @@ public class ProviderPayoutService
         return (gross, commission, net, count, rule);
     }
 
+    /// <summary>Recent family bookings with simulated payment for the provider dashboard.</summary>
+    public async Task<List<ProviderPaymentRow>> ListRecentFamilyPaymentsAsync(
+        int providerUserId,
+        int take = 30,
+        CancellationToken ct = default)
+    {
+        var groomer = await _db.Groomers.AsNoTracking()
+            .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
+        if (groomer is null) return [];
+
+        var rule = await GetEffectiveRuleAsync(providerUserId, CompensationServiceType.LocalVet, ct: ct);
+        var pct = rule?.CommissionPercent ?? 20m;
+
+        var rows = await _db.Appointments.AsNoTracking()
+            .Include(a => a.Pet)
+            .Include(a => a.Service)
+            .Include(a => a.Client)
+            .Where(a => a.GroomerId == groomer.Id
+                && a.Status != AppointmentStatus.Cancelled
+                && a.TotalPrice > 0)
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(take)
+            .ToListAsync(ct);
+
+        return rows.Select(a =>
+        {
+            var commission = Math.Round(a.TotalPrice * (pct / 100m), 2);
+            return new ProviderPaymentRow(
+                a.Id,
+                a.CreatedAt,
+                a.ScheduledAt,
+                a.Status,
+                a.Pet?.Name ?? "—",
+                a.Service?.Name ?? "—",
+                a.Client?.FullName ?? "—",
+                a.TotalPrice,
+                commission,
+                Math.Round(a.TotalPrice - commission, 2),
+                a.DepositPaid,
+                a.Notes);
+        }).ToList();
+    }
+
+    public sealed record ProviderPaymentRow(
+        int AppointmentId,
+        DateTime PaidAtUtc,
+        DateTime ScheduledAtUtc,
+        AppointmentStatus Status,
+        string PetName,
+        string ServiceName,
+        string ClientName,
+        decimal Gross,
+        decimal Commission,
+        decimal Net,
+        decimal DepositPaid,
+        string? Notes);
+
     public async Task<ProviderPayout> CreatePendingPayoutAsync(
         int providerUserId,
         DateTime periodStart,
@@ -181,13 +253,24 @@ public class ProviderPayoutService
         int? actorUserId = null,
         CancellationToken ct = default)
     {
-        var overlap = await _db.ProviderPayouts.AnyAsync(
-            p => p.ProviderUserId == providerUserId &&
-                 p.Status != ProviderPayoutStatus.Failed &&
-                 p.PeriodStart < periodEnd &&
-                 p.PeriodEnd > periodStart, ct);
-        if (overlap)
+        // Allow a new summary when the only overlap is an empty (0-item) payout.
+        var overlap = await _db.ProviderPayouts
+            .Where(p => p.ProviderUserId == providerUserId &&
+                        p.Status != ProviderPayoutStatus.Failed &&
+                        p.PeriodStart < periodEnd &&
+                        p.PeriodEnd > periodStart)
+            .ToListAsync(ct);
+        if (overlap.Any(p => p.ConsultationCount > 0 || p.GrossAmountUsd > 0))
             throw new InvalidOperationException("A payout already exists for an overlapping period.");
+
+        foreach (var empty in overlap.Where(p => p.ConsultationCount == 0 && p.GrossAmountUsd == 0))
+        {
+            // Drop empty stubs so a corrected summary can be created for the same window.
+            if (empty.Status == ProviderPayoutStatus.Pending)
+                _db.ProviderPayouts.Remove(empty);
+        }
+        if (overlap.Count > 0)
+            await _db.SaveChangesAsync(ct);
 
         var calc = await CalculatePayoutForPeriodAsync(providerUserId, periodStart, periodEnd, ct);
         var payout = new ProviderPayout
@@ -224,9 +307,14 @@ public class ProviderPayoutService
 
     public async Task<ProviderPayout?> MarkPaidAsync(int payoutId, int? actorUserId = null, CancellationToken ct = default)
     {
-        var payout = await _db.ProviderPayouts.FirstOrDefaultAsync(p => p.Id == payoutId, ct);
+        var payout = await _db.ProviderPayouts
+            .Include(p => p.ProviderUser)
+            .FirstOrDefaultAsync(p => p.Id == payoutId, ct);
         if (payout is null) return null;
         if (payout.Status == ProviderPayoutStatus.Paid) return payout;
+
+        // Refresh totals (includes family appointments) before settling.
+        await ApplyCalculatedTotalsAsync(payout, ct);
 
         payout.Status = ProviderPayoutStatus.Paid;
         payout.PaidUtc = DateTime.UtcNow;
@@ -234,9 +322,61 @@ public class ProviderPayoutService
         await _db.SaveChangesAsync(ct);
 
         await _audit.LogAsync("payout_marked_paid", actorUserId, "ProviderPayout", payout.Id,
-            new { payout.ExternalReference, payout.NetAmountUsd }, ct);
+            new { payout.ExternalReference, payout.GrossAmountUsd, payout.CommissionAmountUsd, payout.NetAmountUsd }, ct);
 
         return payout;
+    }
+
+    /// <summary>
+    /// Recompute gross/commission/net/count for existing period summaries
+    /// (e.g. after marketplace appointments were added to the calculator).
+    /// </summary>
+    public async Task<int> RefreshAllPayoutTotalsAsync(CancellationToken ct = default) =>
+        await RefreshPayoutTotalsAsync(providerUserId: null, ct);
+
+    public async Task<int> RefreshPayoutTotalsAsync(int? providerUserId, CancellationToken ct = default)
+    {
+        var q = _db.ProviderPayouts.AsQueryable();
+        if (providerUserId is int uid)
+            q = q.Where(p => p.ProviderUserId == uid);
+
+        var payouts = await q.ToListAsync(ct);
+        var changed = 0;
+        foreach (var p in payouts)
+        {
+            if (await ApplyCalculatedTotalsAsync(p, ct))
+                changed++;
+        }
+
+        if (changed > 0)
+            await _db.SaveChangesAsync(ct);
+        return changed;
+    }
+
+    private async Task<bool> ApplyCalculatedTotalsAsync(ProviderPayout payout, CancellationToken ct)
+    {
+        var calc = await CalculatePayoutForPeriodAsync(
+            payout.ProviderUserId, payout.PeriodStart, payout.PeriodEnd, ct);
+
+        var changed =
+            payout.GrossAmountUsd != calc.Gross
+            || payout.CommissionAmountUsd != calc.Commission
+            || payout.NetAmountUsd != calc.Net
+            || payout.ConsultationCount != calc.Count;
+
+        if (!changed) return false;
+
+        payout.GrossAmountUsd = calc.Gross;
+        payout.CommissionAmountUsd = calc.Commission;
+        payout.NetAmountUsd = calc.Net;
+        payout.ConsultationCount = calc.Count;
+        if (calc.Rule is not null)
+            payout.CompensationRuleId = calc.Rule.Id;
+        if (calc.Count > 0
+            && payout.Notes is not null
+            && payout.Notes.Contains("No completed", StringComparison.OrdinalIgnoreCase))
+            payout.Notes = null;
+        return true;
     }
 
     public Task<List<ProviderPayout>> ListForProviderAsync(int providerUserId, CancellationToken ct = default) =>

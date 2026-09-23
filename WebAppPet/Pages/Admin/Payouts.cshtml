@@ -7,6 +7,7 @@
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Admin/Approvals");
     var HideNav = true;
+    string Money(decimal amount, string? country) => AppMoney.Format(amount, country);
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -30,11 +31,18 @@
     }
     @foreach (var p in Model.Pending)
     {
+        var country = p.ProviderUser?.CountryCode;
         <div class="card card-pad" style="margin-bottom:10px">
             <strong>@(p.ProviderUser?.FullName ?? $"User #{p.ProviderUserId}")</strong>
             <span class="muted small" style="display:block">
                 @AppTimeZones.FormatDate(p.PeriodStart) – @AppTimeZones.FormatDate(p.PeriodEnd)
-                · @p.ConsultationCount ítems · Net @AppMoney.Format(p.NetAmountUsd)
+                · @p.ConsultationCount ítems
+            </span>
+            <span class="muted small" style="display:block">
+                Bruto @Money(p.GrossAmountUsd, country)
+                · Comisión @Money(p.CommissionAmountUsd, country)
+                · <strong>Neto @Money(p.NetAmountUsd, country)</strong>
+                · @AppMoney.Code(country)
             </span>
             <form method="post" asp-page-handler="MarkPaid" style="margin-top:8px">
                 <input type="hidden" name="id" value="@p.Id" />
@@ -46,12 +54,18 @@
     <h2 class="section-title" style="margin-top:20px">Recientes</h2>
     @foreach (var p in Model.Recent.Where(x => x.Status != WebAppPet.Models.ProviderPayoutStatus.Pending))
     {
+        var country = p.ProviderUser?.CountryCode;
         <div class="card card-pad" style="margin-bottom:8px">
             <strong>@p.Status</strong> · @(p.ProviderUser?.FullName ?? $"#{p.ProviderUserId}")
             <span class="muted small" style="display:block">
-                Net @AppMoney.Format(p.NetAmountUsd)
-                @if (p.PaidUtc is DateTime paid) { <text>· @AppTimeZones.FormatShort(paid)</text> }
-                @if (!string.IsNullOrEmpty(p.ExternalReference)) { <text>· @p.ExternalReference</text> }
+                Bruto @Money(p.GrossAmountUsd, country)
+                · Comisión @Money(p.CommissionAmountUsd, country)
+                · <strong>Neto @Money(p.NetAmountUsd, country)</strong>
+                · @p.ConsultationCount ítems
+            </span>
+            <span class="muted small" style="display:block">
+                @if (p.PaidUtc is DateTime paid) { <text>@AppTimeZones.FormatShort(paid)</text> }
+                @if (!string.IsNullOrEmpty(p.ExternalReference)) { <text> · @p.ExternalReference</text> }
             </span>
         </div>
     }
