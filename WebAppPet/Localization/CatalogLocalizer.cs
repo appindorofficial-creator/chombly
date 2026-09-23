@@ -1,4 +1,5 @@
 using System.Globalization;
+using WebAppPet.Models;
 
 namespace WebAppPet.Localization;
 
@@ -548,6 +549,42 @@ public static class CatalogLocalizer
     /// <summary>True when notes still have customer-facing content after dropping pet roster prefixes.</summary>
     public static bool HasCustomerNotes(string? notes) =>
         !string.IsNullOrWhiteSpace(StripPetRosterSegments(notes));
+
+    /// <summary>
+    /// Multi-pet roster stored in Notes ("Mascotas: …" / "Pets: …"), without the prefix.
+    /// Null when the booking is a single pet (or roster missing).
+    /// </summary>
+    public static string? PetRosterText(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+        foreach (var raw in notes.Split(" · ", StringSplitOptions.None))
+        {
+            var p = raw.Trim();
+            if (p.StartsWith("Mascotas:", StringComparison.OrdinalIgnoreCase))
+            {
+                var body = p["Mascotas:".Length..].Trim();
+                return string.IsNullOrWhiteSpace(body) ? null : body;
+            }
+            if (p.StartsWith("Pets:", StringComparison.OrdinalIgnoreCase))
+            {
+                var body = p["Pets:".Length..].Trim();
+                return string.IsNullOrWhiteSpace(body) ? null : body;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Label + value for Confirm/Details pet line (single or multi from Notes roster).</summary>
+    public static (string Label, string Value) PetsLine(Pet primary, string? notes)
+    {
+        var roster = PetRosterText(notes);
+        if (!string.IsNullOrWhiteSpace(roster))
+            return (Loc("Mascotas", "Pets"), roster);
+
+        return (
+            Loc("Mascota", "Pet"),
+            $"{PetSpecies.Emoji(primary.Species)} {primary.Name} ({PetSpecies.Label(primary.Species)})");
+    }
 
     private static string StripPetRosterSegments(string? notes)
     {

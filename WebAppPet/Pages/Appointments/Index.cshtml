@@ -58,7 +58,10 @@
                                  onerror="this.onerror=null;this.src='/images/pet-other.svg';" />
                             <div style="flex:1">
                                 <strong>@a.Groomer.BusinessName</strong>
-                                <div class="muted small">@CatalogLocalizer.Text(a.Service.Name) · @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species))</div>
+                                @{
+                                    var petsLine = CatalogLocalizer.PetsLine(a.Pet, a.Notes);
+                                }
+                                <div class="muted small">@CatalogLocalizer.Text(a.Service.Name) · @petsLine.Value</div>
                                 <div class="muted small">@AppTimeZones.FormatShort(a.ScheduledAt)</div>
                                 <span class="badge @Model.StatusBadge(a.Status)">@Model.StatusLabel(a.Status)</span>
                             </div>

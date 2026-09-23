@@ -2511,6 +2511,26 @@ input.form-control[type="number"] {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
+.pet-card-edit {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pet-card-edit:hover,
+.pet-card-edit:focus-visible {
+  color: inherit;
+  text-decoration: none;
+}
+.pet-card-edit:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+  border-radius: 14px;
+}
 .pet-card .pet-avatar {
   width: 72px;
   height: 72px;

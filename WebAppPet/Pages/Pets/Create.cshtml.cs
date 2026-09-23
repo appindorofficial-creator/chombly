@@ -31,6 +31,11 @@ public class CreateModel : PageModel
         _env = env;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public int? Id { get; set; }
+
+    public bool IsEdit => Id is > 0;
+
     [BindProperty, MaxLength(80)]
     public string Name { get; set; } = string.Empty;
 
@@ -84,11 +89,51 @@ public class CreateModel : PageModel
 
     public List<(PetSize Value, string Label, string Emoji)> SizeOptions { get; private set; } = new();
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
         FillSizeOptions();
+
+        if (IsEdit)
+        {
+            var pet = await _db.Pets.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == userId, cancellationToken);
+            if (pet is null)
+                return RedirectToPage("./Index");
+
+            Name = pet.Name;
+            Species = pet.Species;
+            AgeYears = pet.AgeYears;
+            Size = pet.Size;
+            PhotoUrl = pet.PhotoUrl;
+            IsSenior = pet.IsSenior;
+            IsAnxious = pet.IsAnxious;
+            HasSpecialNeeds = pet.HasSpecialNeeds;
+            Notes = pet.Notes;
+            Temperaments = (pet.Temperament ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+
+            if (pet.Species == PetSpecies.Other)
+            {
+                CustomType = pet.Breed;
+            }
+            else if (!string.IsNullOrWhiteSpace(pet.Breed)
+                     && PetCatalog.BreedsFor(pet.Species).Any(b =>
+                         b.Value.Equals(pet.Breed, StringComparison.OrdinalIgnoreCase)))
+            {
+                Breed = pet.Breed;
+            }
+            else if (!string.IsNullOrWhiteSpace(pet.Breed))
+            {
+                Breed = PetCatalog.OtherBreed;
+                CustomBreed = pet.Breed;
+            }
+
+            return Page();
+        }
+
         Species = PetSpecies.Dog;
         return Page();
     }
@@ -98,6 +143,14 @@ public class CreateModel : PageModel
         FillSizeOptions();
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
+
+        Pet? existing = null;
+        if (IsEdit)
+        {
+            existing = await _db.Pets.FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == userId, cancellationToken);
+            if (existing is null)
+                return RedirectToPage("./Index");
+        }
 
         ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size), nameof(Temperaments), nameof(Breed), nameof(CustomBreed));
 
@@ -157,6 +210,7 @@ public class CreateModel : PageModel
 
         var duplicate = await _db.Pets.AsNoTracking().AnyAsync(p =>
             p.OwnerId == userId
+            && (!IsEdit || p.Id != Id)
             && p.Species == species
             && p.Name.ToLower() == name.ToLower()
             && p.Breed.ToLower() == breed.ToLower(), cancellationToken);
@@ -166,7 +220,7 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        string? photoUrl = null;
+        string? photoUrl = existing?.PhotoUrl;
         if (PhotoFile is { Length: > 0 })
         {
             photoUrl = await PetPhotoStorage.SaveAsync(PhotoFile, userId, _env, cancellationToken);
@@ -175,27 +229,49 @@ public class CreateModel : PageModel
         {
             photoUrl = PhotoUrl.Trim();
         }
+        else if (!IsEdit)
+        {
+            photoUrl = PetSpecies.DefaultPhoto(species);
+        }
 
         var temperament = string.Join(", ", selectedTemps);
 
-        _db.Pets.Add(new Pet
+        if (existing is not null)
         {
-            OwnerId = userId,
-            Name = name,
-            Species = species,
-            Breed = breed,
-            AgeYears = age!.Value,
-            Size = Size,
-            Temperament = temperament,
-            PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species),
-            IsSenior = IsSenior,
-            IsAnxious = IsAnxious,
-            HasSpecialNeeds = HasSpecialNeeds,
-            Notes = Notes
-        });
-        await _db.SaveChangesAsync(cancellationToken);
-        TempData["CelebratePet"] = "1";
-        TempData["CelebratePetName"] = name;
+            existing.Name = name;
+            existing.Species = species;
+            existing.Breed = breed;
+            existing.AgeYears = age!.Value;
+            existing.Size = Size;
+            existing.Temperament = temperament;
+            existing.PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species);
+            existing.IsSenior = IsSenior;
+            existing.IsAnxious = IsAnxious;
+            existing.HasSpecialNeeds = HasSpecialNeeds;
+            existing.Notes = Notes;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            _db.Pets.Add(new Pet
+            {
+                OwnerId = userId,
+                Name = name,
+                Species = species,
+                Breed = breed,
+                AgeYears = age!.Value,
+                Size = Size,
+                Temperament = temperament,
+                PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species),
+                IsSenior = IsSenior,
+                IsAnxious = IsAnxious,
+                HasSpecialNeeds = HasSpecialNeeds,
+                Notes = Notes
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+            TempData["CelebratePet"] = "1";
+            TempData["CelebratePetName"] = name;
+        }
 
         if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
             return LocalRedirect(ReturnUrl);

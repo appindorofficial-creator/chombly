@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Pets.CreateModel
 @{
-    ViewData["Title"] = L["Pets_Add"].Value;
+    ViewData["Title"] = Model.IsEdit ? L["Pets_Edit"].Value : L["Pets_Add"].Value;
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = !string.IsNullOrWhiteSpace(Model.ReturnUrl) && Url.IsLocalUrl(Model.ReturnUrl)
@@ -10,17 +10,23 @@
     ViewData["BodyClass"] = "page-pets-create";
     var HideNav = true;
     var en = CultureCookie.IsEnglish();
+    var hasPhoto = !string.IsNullOrWhiteSpace(Model.PhotoUrl);
 }
 <div class="onboard onboard-app pets-create">
     <partial name="_OnboardTop" />
     <div class="home-body @(HideNav ? "no-nav" : "")">
-    <h1 class="app-page-heading">@L["Pets_Add"]</h1>
+    <h1 class="app-page-heading">@(Model.IsEdit ? L["Pets_Edit"] : L["Pets_Add"])</h1>
     <form method="post" id="pet-create-form" enctype="multipart/form-data"
           data-feedback="save"
           data-feedback-loading="@L["Feedback_Saving"]"
           data-feedback-done="@L["Feedback_Saved"]"
           data-validate-i18n="1"
           data-msg-required="@L["Pets_NameRequired"]">
+        @if (Model.IsEdit)
+        {
+            <input type="hidden" asp-for="Id" />
+        }
+        <input type="hidden" asp-for="ReturnUrl" />
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
         <div class="form-group">
@@ -119,8 +125,11 @@
             <p class="field-hint">@L["Pets_PhotoHint"]</p>
             <div class="pet-photo-card">
                 <div class="pet-photo-upload">
-                    <img id="photo-preview" class="pet-photo-preview" alt="" hidden />
-                    <div class="pet-photo-placeholder" id="photo-placeholder" aria-hidden="true">
+                    <img id="photo-preview" class="pet-photo-preview" alt=""
+                         src="@(hasPhoto ? Model.PhotoUrl : null)"
+                         @(hasPhoto ? null : "hidden") />
+                    <div class="pet-photo-placeholder" id="photo-placeholder" aria-hidden="true"
+                         @(hasPhoto ? "hidden" : null)>
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
                             <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h2l1.2-1.5A1.5 1.5 0 0 1 10.9 3h2.2a1.5 1.5 0 0 1 1.2.5L15.5 5H17.5A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" stroke-width="1.7"/>
                             <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" stroke-width="1.7"/>

@@ -307,6 +307,7 @@
   <!-- Pets -->
   <data name="Pets_Title" xml:space="preserve"><value>Mis mascotas</value></data>
   <data name="Pets_Add" xml:space="preserve"><value>Agregar mascota</value></data>
+  <data name="Pets_Edit" xml:space="preserve"><value>Editar mascota</value></data>
   <data name="Pets_Empty" xml:space="preserve"><value>Aún no tienes mascotas registradas.</value></data>
   <data name="Pets_Species" xml:space="preserve"><value>Especie</value></data>
   <data name="Pets_Breed" xml:space="preserve"><value>Raza</value></data>

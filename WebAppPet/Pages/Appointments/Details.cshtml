@@ -49,7 +49,20 @@ else
             <p><strong>@CatalogLocalizer.Loc("Fecha", "Date"):</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("dddd, d MMMM yyyy")</p>
             <p><strong>@CatalogLocalizer.Loc("Hora", "Time"):</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("h:mm tt")</p>
         }
-        <p><strong>@CatalogLocalizer.Loc("Mascota", "Pet"):</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species) · @a.Pet.Breed)</p>
+        @{
+            var petsLine = CatalogLocalizer.PetsLine(a.Pet, a.Notes);
+            var roster = CatalogLocalizer.PetRosterText(a.Notes);
+        }
+        <p><strong>@petsLine.Label:</strong>
+            @if (roster is null)
+            {
+                <text>@PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species) · @a.Pet.Breed)</text>
+            }
+            else
+            {
+                @roster
+            }
+        </p>
         @if (a.Extras.Any())
         {
             <p><strong>@CatalogLocalizer.Loc("Extras", "Extras"):</strong> @string.Join(", ", a.Extras.Select(e => $"{CatalogLocalizer.Text(e.Name)} (+${e.Price:0})"))</p>

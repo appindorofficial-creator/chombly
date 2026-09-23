@@ -42,7 +42,10 @@
                 {
                     <p><strong>@CatalogLocalizer.Loc("Fecha", "Date"):</strong> @a.ScheduledAt.ToString("dddd, MMM d, yyyy · h:mm tt")</p>
                 }
-                <p><strong>@CatalogLocalizer.Loc("Mascota", "Pet"):</strong> @PetSpecies.Emoji(a.Pet.Species) @a.Pet.Name (@PetSpecies.Label(a.Pet.Species))</p>
+                @{
+                    var petsLine = CatalogLocalizer.PetsLine(a.Pet, a.Notes);
+                }
+                <p><strong>@petsLine.Label:</strong> @petsLine.Value</p>
                 @if (a.Extras.Any())
                 {
                     <p><strong>@CatalogLocalizer.Loc("Extras", "Extras"):</strong> @string.Join(", ", a.Extras.Select(e => CatalogLocalizer.Text(e.Name)))</p>
