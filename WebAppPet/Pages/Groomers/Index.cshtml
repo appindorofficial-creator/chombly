@@ -39,18 +39,9 @@
            asp-page="./Index" asp-route-q="@Model.Q" asp-route-species="@Model.Species" asp-route-customType="@Model.CustomType" asp-route-city="@Model.City">@L["Search_AllCategories"]</a>
         @foreach (var c in Model.Categories)
         {
-            var listPage = c.Slug switch
-            {
-                "hotel" => "/Hotel/Index",
-                "vet" => "/Vet/Index",
-                "daycare" => "/Daycare/Index",
-                "walkers" => "/Walkers/Index",
-                "trainers" => "/Trainers/Index",
-                _ => "./Index"
-            };
             <a class="chip @(Model.Category == c.Slug ? "active" : "")"
-               asp-page="@listPage"
-               asp-route-category="@(c.Slug is "hotel" or "vet" or "daycare" or "walkers" or "trainers" ? null : c.Slug)"
+               asp-page="./Index"
+               asp-route-category="@c.Slug"
                asp-route-q="@Model.Q"
                asp-route-species="@Model.Species"
                asp-route-customType="@Model.CustomType"
