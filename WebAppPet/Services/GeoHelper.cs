@@ -23,6 +23,44 @@ public static class GeoHelper
         ["NEW YORK"] = "NY", ["CALIFORNIA"] = "CA", ["TEXAS"] = "TX",
     };
 
+    /// <summary>
+    /// Repairs lat/lng mangled by es-CO form culture (comma decimal stripped → e.g. 28,861202 → 28861202).
+    /// </summary>
+    public static bool TryRepairCoordinates(ref double lat, ref double lng)
+    {
+        var changed = false;
+        // Typical 6-decimal Places values scaled by 1e6 after comma strip.
+        if (Math.Abs(lat) > 90)
+        {
+            for (var scale = 1e5; scale <= 1e7; scale *= 10)
+            {
+                var candidate = lat / scale;
+                if (Math.Abs(candidate) is > 0 and <= 90)
+                {
+                    lat = candidate;
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        if (Math.Abs(lng) > 180)
+        {
+            for (var scale = 1e5; scale <= 1e7; scale *= 10)
+            {
+                var candidate = lng / scale;
+                if (Math.Abs(candidate) is > 0 and <= 180)
+                {
+                    lng = candidate;
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        return changed;
+    }
+
     /// <summary>Distancia en millas. Null si faltan coordenadas.</summary>
     public static double? MilesBetween(double lat1, double lon1, double lat2, double lon2)
     {

@@ -92,8 +92,11 @@ public class BusinessModel : GroomerPageModel
         g.ExtraCategoryIds = GroomerProfile.JoinExtraCategoryIds(selected, primary);
         g.Address = Address.Trim();
         g.City = City.Trim();
-        g.Latitude = Latitude;
-        g.Longitude = Longitude;
+        var lat = Latitude;
+        var lng = Longitude;
+        GeoHelper.TryRepairCoordinates(ref lat, ref lng);
+        g.Latitude = lat;
+        g.Longitude = lng;
         // Keep user home market + license country aligned with location (same as family).
         var user = await Db.Users.FirstOrDefaultAsync(u => u.Id == g.UserId);
         if (user != null)
@@ -214,6 +217,14 @@ public class BusinessModel : GroomerPageModel
         CategoryIds = g.GetOfferedCategoryIds().ToList();
         Address = g.Address;
         City = g.City;
+        var lat = g.Latitude;
+        var lng = g.Longitude;
+        if (GeoHelper.TryRepairCoordinates(ref lat, ref lng))
+        {
+            g.Latitude = lat;
+            g.Longitude = lng;
+            await Db.SaveChangesAsync();
+        }
         Latitude = g.Latitude;
         Longitude = g.Longitude;
         About = g.About;

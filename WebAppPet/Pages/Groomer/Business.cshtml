@@ -4,6 +4,7 @@
     ViewData["Title"] = L["Groomer_Business"].Value;
     ViewData["GroomerTab"] = "business";
     ViewData["LangCompact"] = true;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
     var catCount = Model.CategoryIds.Count;
     var svcCount = Model.Services.Count;
     var amenityCount = Model.Amenities.Count;
@@ -11,6 +12,8 @@
     var bizName = string.IsNullOrWhiteSpace(Model.BusinessName)
         ? L["BizPanel_YourBusiness"].Value
         : Model.BusinessName;
+    var latVal = Model.Latitude == 0 ? "" : Model.Latitude.ToString("0.######", inv);
+    var lngVal = Model.Longitude == 0 ? "" : Model.Longitude.ToString("0.######", inv);
 }
 <div class="onboard onboard-app biz-page">
     <partial name="_OnboardTop" />
@@ -108,11 +111,13 @@
                 <div class="biz-coord-row">
                     <div class="form-group">
                         <label>@L["BizPanel_Latitude"]</label>
-                        <input class="form-control" asp-for="Latitude" id="Latitude" data-places-fill="lat" step="any" readonly />
+                        <input class="form-control" type="text" inputmode="decimal" name="Latitude" id="Latitude"
+                               value="@latVal" data-places-fill="lat" readonly />
                     </div>
                     <div class="form-group">
                         <label>@L["BizPanel_Longitude"]</label>
-                        <input class="form-control" asp-for="Longitude" id="Longitude" data-places-fill="lng" step="any" readonly />
+                        <input class="form-control" type="text" inputmode="decimal" name="Longitude" id="Longitude"
+                               value="@lngVal" data-places-fill="lng" readonly />
                     </div>
                 </div>
                 <p class="muted small biz-hint">@L["Biz_MapsTip"]</p>
