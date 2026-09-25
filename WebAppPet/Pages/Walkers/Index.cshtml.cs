@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -196,10 +197,7 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var total = promo.IsValid ? promo.FinalTotal : subtotal;
-        var discount = promo.IsValid ? promo.DiscountAmount : 0m;
-        var deposit = Math.Round(total * 0.35m, 2);
-        if (deposit < 10) deposit = Math.Min(10, total);
+        var quote = BookingPricing.Quote(subtotal, promo, BookingPricing.WalkMinimumDeposit);
 
         var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
@@ -228,10 +226,10 @@ public class IndexModel : PageModel
             EndAt = endUtc,
             Nights = 0,
             Status = AppointmentStatus.Pending,
-            TotalPrice = total,
-            DepositPaid = deposit,
-            PromoCode = discount > 0 ? promo.NormalizedCode : null,
-            DiscountAmount = discount,
+            TotalPrice = quote.Total,
+            DepositPaid = quote.Deposit,
+            PromoCode = quote.Discount > 0 ? promo.NormalizedCode : null,
+            DiscountAmount = quote.Discount,
             Notes = string.Join(" · ", noteParts)
         };
 
@@ -374,7 +372,7 @@ public class IndexModel : PageModel
                 ? (SelectedPets.Count > 0
                     ? SelectedPets.Sum(p => PriceForDuration(svc, p))
                     : PriceForDuration(svc, null))
-                : ScalePrice(w.StartingPrice, 60, mins);
+                : BookingPricing.ScaleByMinutes(w.StartingPrice, BookingPricing.DefaultServiceMinutes, mins);
 
             return new WalkerCardVm
             {
@@ -462,20 +460,8 @@ public class IndexModel : PageModel
         return walk ?? list.OrderBy(s => s.PriceSmall).First();
     }
 
-    private decimal PriceForDuration(GroomerService svc, Pet? pet)
-    {
-        var mins = PricingMinutes;
-        var basePrice = pet != null ? svc.PriceFor(pet.Size) : svc.PriceSmall;
-        var baseMinutes = svc.DurationMinutes > 0 ? svc.DurationMinutes : 60;
-        if (svc.DurationMinutes == mins) return basePrice;
-        return ScalePrice(basePrice, baseMinutes, mins);
-    }
-
-    private static decimal ScalePrice(decimal basePrice, int baseMinutes, int minutes)
-    {
-        if (baseMinutes <= 0) baseMinutes = 60;
-        return Math.Round(basePrice * minutes / (decimal)baseMinutes, 0);
-    }
+    private decimal PriceForDuration(GroomerService svc, Pet? pet) =>
+        BookingPricing.WalkPrice(svc, pet?.Size, PricingMinutes);
 
     private void ResolveDate(out DateTime day)
     {

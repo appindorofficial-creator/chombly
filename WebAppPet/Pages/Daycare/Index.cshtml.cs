@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -189,10 +190,7 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var total = promo.IsValid ? promo.FinalTotal : subtotal;
-        var discount = promo.IsValid ? promo.DiscountAmount : 0m;
-        var deposit = Math.Round(total * 0.35m, 2);
-        if (deposit < 15) deposit = Math.Min(15, total);
+        var quote = BookingPricing.Quote(subtotal, promo);
 
         var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
@@ -219,10 +217,10 @@ public class IndexModel : PageModel
             EndAt = AppTimeZones.LocalDateAndTimeToUtc(end.Date, end.TimeOfDay),
             Nights = 0,
             Status = AppointmentStatus.Pending,
-            TotalPrice = total,
-            DepositPaid = deposit,
-            PromoCode = discount > 0 ? promo.NormalizedCode : null,
-            DiscountAmount = discount,
+            TotalPrice = quote.Total,
+            DepositPaid = quote.Deposit,
+            PromoCode = quote.Discount > 0 ? promo.NormalizedCode : null,
+            DiscountAmount = quote.Discount,
             Notes = string.Join(" · ", noteParts)
         };
 
@@ -471,18 +469,8 @@ public class IndexModel : PageModel
         return list.OrderBy(s => s.PriceSmall).First();
     }
 
-    private decimal PriceForSchedule(GroomerService svc, Pet? pet)
-    {
-        var full = pet != null ? svc.PriceFor(pet.Size) : svc.PriceSmall;
-        if (Schedule == "medio")
-        {
-            // Si hay servicio "medio" real, PickService ya lo eligió; si no, ~70% del día completo
-            var looksHalf = svc.Name.Contains("medio", StringComparison.OrdinalIgnoreCase)
-                            || svc.Name.Contains("half", StringComparison.OrdinalIgnoreCase);
-            return looksHalf ? full : Math.Round(full * 0.7m, 0);
-        }
-        return full;
-    }
+    private decimal PriceForSchedule(GroomerService svc, Pet? pet) =>
+        BookingPricing.DaycarePrice(svc, pet?.Size, halfDay: Schedule == "medio");
 
     private void ResolveDate(out DateTime day)
     {

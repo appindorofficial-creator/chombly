@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -478,8 +479,7 @@ public class IndexModel : PageModel
             }
         }
 
-        Deposit = Math.Round(EstimatedTotal * 0.35m, 2);
-        if (Deposit < 15) Deposit = Math.Min(15, EstimatedTotal);
+        Deposit = BookingPricing.Deposit(EstimatedTotal);
     }
 
     private void NormalizeSelectedPets()
