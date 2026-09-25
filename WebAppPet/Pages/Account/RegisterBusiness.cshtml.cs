@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using WebAppPet.Application.Businesses.CreateBusiness;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Data;
-using WebAppPet.Infrastructure.Security;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -18,9 +18,7 @@ public class RegisterBusinessModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly AvailabilityService _availability;
-    private readonly IEmailService _email;
-    private readonly SmtpOptions _smtp;
+    private readonly CreateBusinessHandler _createBusiness;
     private readonly GoogleMapsOptions _maps;
     private readonly IStringLocalizer<SharedResource> _L;
     private readonly IWebHostEnvironment _env;
@@ -28,18 +26,14 @@ public class RegisterBusinessModel : PageModel
     public RegisterBusinessModel(
         AppDbContext db,
         AuthService auth,
-        AvailabilityService availability,
-        IEmailService email,
-        IOptions<SmtpOptions> smtp,
+        CreateBusinessHandler createBusiness,
         IOptions<GoogleMapsOptions> maps,
         IStringLocalizer<SharedResource> L,
         IWebHostEnvironment env)
     {
         _db = db;
         _auth = auth;
-        _availability = availability;
-        _email = email;
-        _smtp = smtp.Value;
+        _createBusiness = createBusiness;
         _maps = maps.Value;
         _L = L;
         _env = env;
@@ -196,7 +190,7 @@ public class RegisterBusinessModel : PageModel
                 CategoryId = Categories[0].Id;
             }
             if (Step == 5)
-                EnsureDefaultServices(force: ServiceNames.Count == 0 || AreDefaultServicePlaceholders());
+                EnsureDefaultServices(force: ServiceNames.Count == 0 || BusinessServiceDefaults.ArePlaceholders(ServiceNames));
             // Guests never land on step 6 while authenticated; if URL forced it, bounce.
             if (Step == 6 && _auth.IsAuthenticated)
                 return await SubmitAsync();
@@ -236,21 +230,6 @@ public class RegisterBusinessModel : PageModel
         }
 
         return null;
-    }
-
-    private bool AreDefaultServicePlaceholders()
-    {
-        // Re-localize canned defaults when the user changed language mid-wizard.
-        var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Noche estándar", "Noche premium", "Standard night", "Premium night",
-            "Consulta general", "Vacunas", "General checkup", "Vaccines",
-            "Día completo", "Medio día", "Full day", "Half day",
-            "Paseo 30 min", "Paseo 60 min", "30-min walk", "60-min walk",
-            "Obediencia básica", "Sesión avanzada", "Basic obedience", "Advanced session",
-            "Baño básico", "Corte de pelo", "Grooming completo", "Basic bath", "Haircut", "Full grooming"
-        };
-        return ServiceNames.Count > 0 && ServiceNames.All(n => known.Contains(n?.Trim() ?? ""));
     }
 
     private async Task PrepareAsync()
@@ -313,323 +292,89 @@ public class RegisterBusinessModel : PageModel
     private bool ValidateCurrentStep()
     {
         ErrorMessage = null;
+        var error = RegistrationError.None;
         switch (Step)
         {
             case 0:
-                if (ProviderKindKey is not ("business" or "independent"))
-                {
-                    ErrorMessage = _L["Biz_ErrChooseType"].Value;
-                    return false;
-                }
+                error = BusinessRegistrationSteps.ValidateType(ProviderKindKey);
                 break;
             case 1:
-                FullName = (FullName ?? "").Trim();
-                BusinessName = (BusinessName ?? "").Trim();
-                Email = (Email ?? "").Trim();
-                City = (City ?? "").Trim();
-                Phone = (Phone ?? "").Trim();
-
-                if (string.IsNullOrWhiteSpace(FullName))
-                {
-                    ErrorMessage = _L["Profile_Edit_NameRequired"].Value;
-                    return false;
-                }
-                if (string.IsNullOrWhiteSpace(BusinessName))
-                {
-                    ErrorMessage = _L["Biz_ErrBusinessNameRequired"].Value;
-                    return false;
-                }
-                if (string.IsNullOrWhiteSpace(Phone))
-                {
-                    ErrorMessage = _L["Phone_Required"].Value;
-                    return false;
-                }
-                if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
-                {
-                    ErrorMessage = _L["Phone_Invalid"].Value;
-                    return false;
-                }
-                Phone = phoneNorm!;
-                if (string.IsNullOrWhiteSpace(Email) || !new EmailAddressAttribute().IsValid(Email))
-                {
-                    ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
-                    return false;
-                }
-                if (string.IsNullOrWhiteSpace(City) || (Latitude == 0 && Longitude == 0))
-                {
-                    ErrorMessage = _L["Register_LocationRequired"].Value;
-                    return false;
-                }
+                (error, var basics) = BusinessRegistrationSteps.ValidateBasics(
+                    new BusinessBasics(FullName, BusinessName, Phone, Email, City, Latitude, Longitude));
+                FullName = basics.FullName;
+                BusinessName = basics.BusinessName;
+                Phone = basics.Phone;
+                Email = basics.Email;
+                City = basics.City;
                 break;
             case 2:
                 SyncPrimaryCategoryId();
-                if (CategoryIds.Count == 0)
-                {
-                    ErrorMessage = _L["Biz_ErrPickService"].Value;
-                    return false;
-                }
-                if (!CategoryIds.All(id => Categories.Any(c => c.Id == id)))
-                {
-                    ErrorMessage = _L["Biz_ErrPickService"].Value;
-                    return false;
-                }
+                error = BusinessRegistrationSteps.ValidateCategories(CategoryIds, Categories);
                 break;
             case 3:
                 EnsureWeek();
-                if (!Week.Any(d => d.IsOpen))
-                {
-                    ErrorMessage = _L["Biz_ErrOpenDay"].Value;
-                    return false;
-                }
+                error = BusinessRegistrationSteps.ValidateSchedule(Week);
                 break;
             case 4:
-                if (string.IsNullOrWhiteSpace(About) || About.Trim().Length < 20)
-                {
-                    ErrorMessage = _L["Biz_ErrDescription"].Value;
-                    return false;
-                }
+                error = BusinessRegistrationSteps.ValidateAbout(About);
                 break;
             case 5:
                 NormalizeServices();
-                if (ServiceNames.Count == 0 || ServicePrices.All(p => p <= 0))
-                {
-                    ErrorMessage = _L["Biz_ErrServicePrice"].Value;
-                    return false;
-                }
-                if (_auth.IsAuthenticated && !AcceptTerms)
-                {
-                    ErrorMessage = _L["Biz_ErrAcceptTerms"].Value;
-                    return false;
-                }
+                error = BusinessRegistrationSteps.ValidatePrices(ServiceNames, ServicePrices, _auth.IsAuthenticated, AcceptTerms);
                 break;
             case 6:
-                if (!_auth.IsAuthenticated)
-                {
-                    if (string.IsNullOrWhiteSpace(Password) || !PasswordPolicy.IsValid(Password))
-                    {
-                        ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
-                        return false;
-                    }
-                    if (Password != ConfirmPassword)
-                    {
-                        ErrorMessage = _L["Biz_ErrPasswordMatch"].Value;
-                        return false;
-                    }
-                }
-                if (!AcceptTerms)
-                {
-                    ErrorMessage = _L["Biz_ErrAcceptTerms"].Value;
-                    return false;
-                }
+                error = BusinessRegistrationSteps.ValidateAccount(_auth.IsAuthenticated, Password, ConfirmPassword, AcceptTerms);
                 break;
         }
-        return true;
+
+        if (error == RegistrationError.None)
+            return true;
+        ErrorMessage = ErrorText(error);
+        return false;
     }
 
     private async Task<IActionResult> SubmitAsync()
     {
         EnsureCoordsFallback();
-        var email = Email.Trim().ToLowerInvariant();
-        AppUser user;
-
-        if (_auth.CurrentUserId is int currentUserId)
-        {
-            var existing = await _db.Users
-                .Include(u => u.GroomerProfile)
-                .FirstOrDefaultAsync(u => u.Id == currentUserId);
-            if (existing == null)
-            {
-                ErrorMessage = _L["Biz_ErrInvalidSession"].Value;
-                Step = 0;
-                return WizardPage();
-            }
-            if (existing.GroomerProfile != null)
-            {
-                ErrorMessage = _L["Biz_ErrAlreadyBusiness"].Value;
-                Step = 0;
-                return WizardPage();
-            }
-            if (await _db.Users.AnyAsync(u => u.Email == email && u.Id != existing.Id))
-            {
-                ErrorMessage = _L["Biz_ErrEmailTaken"].Value;
-                Step = 1;
-                return WizardPage();
-            }
-
-            existing.FullName = FullName.Trim();
-            existing.Email = email;
-            existing.Phone = Phone;
-            existing.City = City.Trim();
-            existing.Latitude = Latitude == 0 ? existing.Latitude : Latitude;
-            existing.Longitude = Longitude == 0 ? existing.Longitude : Longitude;
-            if (Latitude != 0 && Longitude != 0)
-                existing.LocationUpdatedAt = DateTime.UtcNow;
-            MarketCountry.ApplyFromLocation(existing, City, Latitude == 0 ? null : Latitude, Longitude == 0 ? null : Longitude);
-            existing.Role = UserRole.Groomer;
-            user = existing;
-        }
-        else
-        {
-            if (await _db.Users.AnyAsync(u => u.Email == email))
-            {
-                ErrorMessage = _L["Biz_ErrEmailTakenLogin"].Value;
-                Step = 1;
-                return WizardPage();
-            }
-
-            user = new AppUser
-            {
-                FullName = FullName.Trim(),
-                Email = email,
-                PasswordHash = PasswordHasher.Hash(Password),
-                Phone = Phone,
-                City = City.Trim(),
-                Latitude = Latitude == 0 ? null : Latitude,
-                Longitude = Longitude == 0 ? null : Longitude,
-                LocationUpdatedAt = Latitude == 0 && Longitude == 0 ? null : DateTime.UtcNow,
-                Role = UserRole.Groomer
-            };
-            MarketCountry.ApplyFromLocation(user);
-            _db.Users.Add(user);
-        }
-
-        await _db.SaveChangesAsync();
-
         SyncPrimaryCategoryId();
-        var cat = await _db.Categories.FirstOrDefaultAsync(c => c.Id == CategoryId);
-        if (cat == null)
-        {
-            ErrorMessage = _L["Biz_ErrInvalidCategory"].Value;
-            Step = 2;
-            return WizardPage();
-        }
 
-        NormalizeServices();
-        var work = WorkModeKey switch
+        var result = await _createBusiness.HandleAsync(new CreateBusinessCommand
         {
-            "domicilio" => WorkMode.Mobile,
-            "ambas" => WorkMode.Both,
-            _ => WorkMode.Local
-        };
-        var kind = ProviderKindKey == "independent" ? ProviderKind.Independent : ProviderKind.Business;
-        var groomerType = work switch
-        {
-            WorkMode.Mobile => GroomerType.Mobile,
-            WorkMode.Both => GroomerType.InHome,
-            _ => GroomerType.Salon
-        };
-
-        var firstPrice = ServicePrices.FirstOrDefault(p => p > 0);
-        if (firstPrice <= 0) firstPrice = 35;
-        var unit = cat.IsOvernight
-            ? CatalogLocalizer.Loc("/ noche", "/ night")
-            : CatalogLocalizer.Loc("/ sesión", "/ session");
-        var catLabel = cat.DisplayName();
-        var serviceDescPrefix = CatalogLocalizer.Loc("Servicio de", "Service:");
-
-        var profile = new GroomerProfile
-        {
-            UserId = user.Id,
-            CategoryId = cat.Id,
-            ExtraCategoryIds = GroomerProfile.JoinExtraCategoryIds(CategoryIds, cat.Id),
-            BusinessName = BusinessName.Trim(),
-            ProviderKind = kind,
-            WorkMode = work,
-            Type = groomerType,
-            ServiceAreaMiles = ToStoredServiceAreaMiles(ServiceAreaMiles),
-            LicenseCountry = MarketCountry.Normalize(
-                DetectedMarket == BusinessMarket.Unknown
-                    ? user.CountryCode
-                    : MarketCountry.FromMarket(DetectedMarket)),
-            Address = string.IsNullOrWhiteSpace(Address) ? City.Trim() : Address.Trim(),
-            City = City.Trim(),
+            CurrentUserId = _auth.CurrentUserId,
+            ProviderKindKey = ProviderKindKey,
+            FullName = FullName,
+            BusinessName = BusinessName,
+            Phone = Phone,
+            Email = Email,
+            City = City,
+            Address = Address,
             Latitude = Latitude,
             Longitude = Longitude,
-            Phone = Phone,
-            About = About.Trim(),
-            LogoUrl = string.IsNullOrWhiteSpace(LogoUrl) ? null : LogoUrl.Trim(),
-            CoverUrl = string.IsNullOrWhiteSpace(CoverUrl) ? null : CoverUrl.Trim(),
-            ImageUrl = string.IsNullOrWhiteSpace(CoverUrl) ? $"/images/categories/cat-{cat.Slug}-v2.png" : CoverUrl.Trim(),
-            StartingPrice = firstPrice,
-            PriceUnit = unit,
-            AcceptedSpecies = PetSpecies.DefaultAcceptedList,
-            AcceptsSeniorPets = true,
-            AcceptsAnxiousPets = true,
-            IsActive = false,
-            IsVerified = false,
-            VerifiedIdentity = true,
-            PublishStatus = BusinessPublishStatus.PendingReview,
-            Rating = 0,
-            ReviewCount = 0
-        };
-        _db.Groomers.Add(profile);
-        await _db.SaveChangesAsync();
-
-        for (var i = 0; i < ServiceNames.Count; i++)
-        {
-            var name = ServiceNames[i].Trim();
-            var price = i < ServicePrices.Count ? ServicePrices[i] : firstPrice;
-            if (string.IsNullOrWhiteSpace(name) || price <= 0) continue;
-            var step = HotelCoreExtras.SizeStepFor(user.CountryCode);
-            _db.Services.Add(new GroomerService
-            {
-                GroomerId = profile.Id,
-                Name = name,
-                Description = $"{serviceDescPrefix} {catLabel}",
-                BillingUnit = cat.IsOvernight ? "noche" : "sesion",
-                PriceSmall = price,
-                PriceMedium = price + step,
-                PriceLarge = price + step * 2,
-                PriceGiant = price + step * 3,
-                DurationMinutes = cat.IsOvernight ? 1440 : 60
-            });
-        }
-        await _db.SaveChangesAsync();
-        await _availability.SaveWeeklyAndGenerateAsync(profile.Id, Week, days: 60);
-
-        if (IsHotelSelected)
-        {
-            await HotelCoreExtras.SyncAsync(_db, profile.Id, ExtraBathPrice, ExtraMedsPrice, user.CountryCode);
-            if (OffersPrivateCamera)
-                await HotelPrivateCameraExtra.SyncAsync(_db, profile.Id, true, PrivateCameraPrice, user.CountryCode);
-        }
-
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = user.Id,
-            // Stored in Spanish; NotificationLocalizer translates on read.
-            Title = "¡Bienvenido a Chombly!",
-            Message = "Tu perfil fue creado. Completa la verificación para publicar más rápido.",
-            Type = "business"
+            PrimaryCategoryId = CategoryId,
+            CategoryIds = CategoryIds,
+            WorkModeKey = WorkModeKey,
+            Week = Week,
+            ServiceArea = ServiceAreaMiles,
+            About = About,
+            LogoUrl = LogoUrl,
+            CoverUrl = CoverUrl,
+            ServiceNames = ServiceNames,
+            ServicePrices = ServicePrices,
+            Password = Password,
+            HotelExtras = new HotelExtraPrices(ExtraBathPrice, ExtraMedsPrice, OffersPrivateCamera, PrivateCameraPrice)
         });
 
-        var admins = await _db.Users.Where(u => u.Role == UserRole.Admin).Select(u => u.Id).ToListAsync();
-        foreach (var adminId in admins)
+        if (result.User is not { } user)
         {
-            _db.Notifications.Add(new AppNotification
+            ErrorMessage = ErrorText(result.Error);
+            Step = result.Error switch
             {
-                UserId = adminId,
-                Title = "Nuevo negocio pendiente",
-                Message = $"{profile.BusinessName} ({cat.Name}) · {kind}",
-                Type = "business"
-            });
+                RegistrationError.EmailTaken or RegistrationError.EmailTakenLogin => 1,
+                RegistrationError.InvalidCategory => 2,
+                _ => 0
+            };
+            return WizardPage();
         }
-        await _db.SaveChangesAsync();
-
-        await _email.SendAsync(
-            user.Email,
-            CatalogLocalizer.Loc("Chombly: perfil de negocio creado", "Chombly: business profile created"),
-            CatalogLocalizer.Loc(
-                $"<p>Hola {user.FullName},</p><p>¡Bienvenido! Creamos el perfil de <strong>{profile.BusinessName}</strong>.</p><p>— Equipo Chombly</p>",
-                $"<p>Hi {user.FullName},</p><p>Welcome! We created the profile for <strong>{profile.BusinessName}</strong>.</p><p>— Chombly team</p>"));
-
-        var adminTo = string.IsNullOrWhiteSpace(_smtp.AdminNotifyEmail) ? _smtp.From : _smtp.AdminNotifyEmail;
-        await _email.SendAsync(
-            adminTo,
-            CatalogLocalizer.Loc(
-                $"Chombly: nuevo negocio — {profile.BusinessName}",
-                $"Chombly: new business — {profile.BusinessName}"),
-            $"<p><strong>{profile.BusinessName}</strong> ({catLabel}) · {user.Email} · {Phone}</p><p>{City}</p>");
 
         // Re-sign so Role claim becomes Groomer (needed when converting an existing client).
         await _auth.SignInAsync(user);
@@ -639,13 +384,28 @@ public class RegisterBusinessModel : PageModel
         return Page();
     }
 
-    private int ToStoredServiceAreaMiles(int selected)
+    private string ErrorText(RegistrationError error) => _L[error switch
     {
-        if (selected <= 0) return 0;
-        // Form chips are round local units (km in Colombia, mi in US/other).
-        if (!ServiceAreaUsesKm) return selected;
-        return Math.Max(1, (int)Math.Round(selected / 1.609344));
-    }
+        RegistrationError.ChooseType => "Biz_ErrChooseType",
+        RegistrationError.NameRequired => "Profile_Edit_NameRequired",
+        RegistrationError.BusinessNameRequired => "Biz_ErrBusinessNameRequired",
+        RegistrationError.PhoneRequired => "Phone_Required",
+        RegistrationError.PhoneInvalid => "Phone_Invalid",
+        RegistrationError.EmailInvalid => "Profile_Edit_EmailInvalid",
+        RegistrationError.LocationRequired => "Register_LocationRequired",
+        RegistrationError.PickService => "Biz_ErrPickService",
+        RegistrationError.OpenDay => "Biz_ErrOpenDay",
+        RegistrationError.Description => "Biz_ErrDescription",
+        RegistrationError.ServicePrice => "Biz_ErrServicePrice",
+        RegistrationError.AcceptTerms => "Biz_ErrAcceptTerms",
+        RegistrationError.PasswordWeak => "Profile_Edit_PasswordShort",
+        RegistrationError.PasswordMismatch => "Biz_ErrPasswordMatch",
+        RegistrationError.InvalidSession => "Biz_ErrInvalidSession",
+        RegistrationError.AlreadyBusiness => "Biz_ErrAlreadyBusiness",
+        RegistrationError.EmailTaken => "Biz_ErrEmailTaken",
+        RegistrationError.EmailTakenLogin => "Biz_ErrEmailTakenLogin",
+        _ => "Biz_ErrInvalidCategory"
+    }].Value;
 
     private const string DraftSessionKey = "RegisterBusiness.Draft";
 
@@ -828,105 +588,17 @@ public class RegisterBusinessModel : PageModel
     {
         if (!force && ServiceNames.Count > 0)
         {
-            NormalizeDefaultServiceNamesToSpanish();
+            BusinessServiceDefaults.NormalizePlaceholdersToSpanish(ServiceNames);
             return;
         }
         SyncPrimaryCategoryId();
         var selected = Categories.Where(c => CategoryIds.Contains(c.Id)).ToList();
-        if (selected.Count == 0)
-        {
-            var cat = Categories.FirstOrDefault(c => c.Id == CategoryId);
-            if (cat != null) selected.Add(cat);
-        }
+        if (selected.Count == 0 && Categories.FirstOrDefault(c => c.Id == CategoryId) is { } primary)
+            selected.Add(primary);
 
-        var names = new List<string>();
-        var prices = new List<decimal>();
-        // Canonical catalog language is Spanish; CatalogLocalizer.Text renders EN in the UI.
-        foreach (var cat in selected)
-        {
-            var (n, p) = DefaultsForSlug(cat.Slug, en: false);
-            for (var i = 0; i < n.Count; i++)
-            {
-                if (names.Contains(n[i], StringComparer.OrdinalIgnoreCase)) continue;
-                names.Add(n[i]);
-                prices.Add(p[i]);
-            }
-        }
-
-        if (names.Count == 0)
-        {
-            var (n, p) = DefaultsForSlug("grooming", en: false);
-            names = n;
-            prices = p;
-        }
-
-        ServiceNames = names;
-        ServicePrices = prices;
+        (ServiceNames, ServicePrices) = BusinessServiceDefaults.ForCategories(selected);
     }
 
-    /// <summary>Keep canned defaults in Spanish so ES/EN UI can localize via CatalogLocalizer.</summary>
-    private void NormalizeDefaultServiceNamesToSpanish()
-    {
-        if (!AreDefaultServicePlaceholders()) return;
-
-        static string ToSpanish(string? name) => (name ?? "").Trim() switch
-        {
-            "Standard night" => "Noche estándar",
-            "Premium night" => "Noche premium",
-            "General checkup" => "Consulta general",
-            "Vaccines" => "Vacunas",
-            "Full day" => "Día completo",
-            "Half day" => "Medio día",
-            "30-min walk" => "Paseo 30 min",
-            "60-min walk" => "Paseo 60 min",
-            "Basic obedience" => "Obediencia básica",
-            "Advanced session" => "Sesión avanzada",
-            "Basic bath" => "Baño básico",
-            "Haircut" => "Corte de pelo",
-            "Full grooming" => "Grooming completo",
-            var n => n
-        };
-
-        for (var i = 0; i < ServiceNames.Count; i++)
-            ServiceNames[i] = ToSpanish(ServiceNames[i]);
-    }
-
-    private static (List<string> Names, List<decimal> Prices) DefaultsForSlug(string slug, bool en) => slug switch
-    {
-        "hotel" => en
-            ? (new List<string> { "Standard night", "Premium night" }, new List<decimal> { 45, 60 })
-            : (new List<string> { "Noche estándar", "Noche premium" }, new List<decimal> { 45, 60 }),
-        "vet" => en
-            ? (new List<string> { "General checkup", "Vaccines" }, new List<decimal> { 50, 35 })
-            : (new List<string> { "Consulta general", "Vacunas" }, new List<decimal> { 50, 35 }),
-        "daycare" => en
-            ? (new List<string> { "Full day", "Half day" }, new List<decimal> { 35, 25 })
-            : (new List<string> { "Día completo", "Medio día" }, new List<decimal> { 35, 25 }),
-        "walkers" => en
-            ? (new List<string> { "30-min walk", "60-min walk" }, new List<decimal> { 15, 25 })
-            : (new List<string> { "Paseo 30 min", "Paseo 60 min" }, new List<decimal> { 15, 25 }),
-        "trainers" => en
-            ? (new List<string> { "Basic obedience", "Advanced session" }, new List<decimal> { 45, 60 })
-            : (new List<string> { "Obediencia básica", "Sesión avanzada" }, new List<decimal> { 45, 60 }),
-        _ => en
-            ? (new List<string> { "Basic bath", "Haircut", "Full grooming" }, new List<decimal> { 35, 45, 55 })
-            : (new List<string> { "Baño básico", "Corte de pelo", "Grooming completo" }, new List<decimal> { 35, 45, 55 })
-    };
-
-    private void NormalizeServices()
-    {
-        var names = new List<string>();
-        var prices = new List<decimal>();
-        var n = Math.Max(ServiceNames?.Count ?? 0, ServicePrices?.Count ?? 0);
-        for (var i = 0; i < n; i++)
-        {
-            var name = i < ServiceNames!.Count ? ServiceNames[i]?.Trim() ?? "" : "";
-            var price = i < ServicePrices!.Count ? ServicePrices[i] : 0;
-            if (string.IsNullOrWhiteSpace(name)) continue;
-            names.Add(name);
-            prices.Add(price);
-        }
-        ServiceNames = names;
-        ServicePrices = prices;
-    }
+    private void NormalizeServices() =>
+        (ServiceNames, ServicePrices) = BusinessServiceDefaults.Normalize(ServiceNames, ServicePrices);
 }

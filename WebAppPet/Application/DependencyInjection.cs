@@ -11,6 +11,7 @@ using WebAppPet.Application.Businesses.AddAmenity;
 using WebAppPet.Application.Businesses.AddExtra;
 using WebAppPet.Application.Businesses.AddService;
 using WebAppPet.Application.Businesses.ApproveBusiness;
+using WebAppPet.Application.Businesses.CreateBusiness;
 using WebAppPet.Application.Businesses.GetAvailability;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
@@ -48,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<ApproveBusinessHandler>();
         services.AddScoped<RejectBusinessHandler>();
         services.AddScoped<GetPendingBusinessesHandler>();
+        services.AddScoped<CreateBusinessHandler>();
         services.AddScoped<UpdateBusinessHandler>();
         services.AddScoped<AddAmenityHandler>();
         services.AddScoped<AddExtraHandler>();
