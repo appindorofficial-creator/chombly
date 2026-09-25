@@ -2,6 +2,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Localization;
+using WebAppPet.Services;
 
 namespace WebAppPet.Tests.Support;
 
@@ -13,6 +14,17 @@ public sealed class KeyLocalizer : IStringLocalizer<SharedResource>
     public LocalizedString this[string name, params object[] arguments] => new(name, name);
 
     public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => [];
+}
+
+public sealed class FakeEmailService : IEmailService
+{
+    public List<(string To, string Subject, string Body)> Sent { get; } = [];
+
+    public Task<bool> SendAsync(string to, string subject, string htmlBody, CancellationToken ct = default)
+    {
+        Sent.Add((to, subject, htmlBody));
+        return Task.FromResult(true);
+    }
 }
 
 public sealed class FakeHostEnvironment(string environmentName) : IHostEnvironment
