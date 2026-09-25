@@ -75,7 +75,7 @@ public class ScheduleCallModel : GroomerPageModel
 
     private void BuildDays()
     {
-        Days = Enumerable.Range(1, 7).Select(i => DateTime.Today.AddDays(i)).ToList();
+        Days = Enumerable.Range(1, 7).Select(i => AppTimeZones.TodayLocalDate().AddDays(i)).ToList();
         if (string.IsNullOrEmpty(Day)) Day = Days[0].ToString("yyyy-MM-dd");
     }
 }

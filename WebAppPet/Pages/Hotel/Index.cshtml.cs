@@ -574,7 +574,7 @@ public class IndexModel : PageModel
 
     private void ResolveDates(out DateTime cin, out DateTime cout)
     {
-        var today = DateTime.Today;
+        var today = AppTimeZones.TodayLocalDate();
         var when = When ?? "hoy";
         if (string.Equals(when, "hoy", StringComparison.OrdinalIgnoreCase))
         {
