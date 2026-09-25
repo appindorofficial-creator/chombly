@@ -29,6 +29,7 @@ public static class DbInitializer
         }
 
         await BackfillUserCountryCodesAsync(db);
+        await RepairBusinessCoordinatesAsync(db);
         await EnsureCategoriesAsync(db);
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
@@ -43,6 +44,32 @@ public static class DbInitializer
         var availability = new AvailabilityService(db);
         await availability.EnsureDefaultWeeklyHoursAsync();
         await BackfillColombiaWallClockAppointmentsAsync(db);
+    }
+
+    /// <summary>
+    /// Businesses saved while the decimal point was read as a thousands separator (e.g. Neiva as
+    /// 2925704, -75289394) otherwise stay broken until the owner reopens their panel.
+    /// </summary>
+    public static async Task<int> RepairBusinessCoordinatesAsync(AppDbContext db)
+    {
+        var broken = await db.Groomers
+            .Where(g => g.Latitude > 90 || g.Latitude < -90 || g.Longitude > 180 || g.Longitude < -180)
+            .ToListAsync();
+
+        var repaired = 0;
+        foreach (var g in broken)
+        {
+            var lat = g.Latitude;
+            var lng = g.Longitude;
+            if (!GeoHelper.TryRepairCoordinates(ref lat, ref lng)) continue;
+            g.Latitude = lat;
+            g.Longitude = lng;
+            repaired++;
+        }
+
+        if (repaired > 0)
+            await db.SaveChangesAsync();
+        return repaired;
     }
 
     /// <summary>
