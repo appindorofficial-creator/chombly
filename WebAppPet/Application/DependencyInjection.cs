@@ -7,9 +7,13 @@ using WebAppPet.Application.Bookings.GetBookings;
 using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
+using WebAppPet.Application.Businesses.AddAmenity;
+using WebAppPet.Application.Businesses.AddExtra;
+using WebAppPet.Application.Businesses.AddService;
 using WebAppPet.Application.Businesses.ApproveBusiness;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
+using WebAppPet.Application.Businesses.UpdateBusiness;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
@@ -39,6 +43,10 @@ public static class DependencyInjection
         services.AddScoped<ApproveBusinessHandler>();
         services.AddScoped<RejectBusinessHandler>();
         services.AddScoped<GetPendingBusinessesHandler>();
+        services.AddScoped<UpdateBusinessHandler>();
+        services.AddScoped<AddAmenityHandler>();
+        services.AddScoped<AddExtraHandler>();
+        services.AddScoped<AddServiceHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();
