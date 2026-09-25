@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.CancelBooking;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -14,12 +15,14 @@ public class DetailsModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly CanReviewHandler _canReview;
+    private readonly CancelBookingHandler _cancel;
 
-    public DetailsModel(AppDbContext db, AuthService auth, CanReviewHandler canReview)
+    public DetailsModel(AppDbContext db, AuthService auth, CanReviewHandler canReview, CancelBookingHandler cancel)
     {
         _db = db;
         _auth = auth;
         _canReview = canReview;
+        _cancel = cancel;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -55,25 +58,7 @@ public class DetailsModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        var appt = await _db.Appointments
-            .Include(a => a.Groomer)
-            .FirstOrDefaultAsync(a => a.Id == id && a.ClientId == userId);
-
-        if (appt != null && appt.Status is AppointmentStatus.Pending or AppointmentStatus.Confirmed)
-        {
-            appt.Status = AppointmentStatus.Cancelled;
-            _db.Notifications.Add(new AppNotification
-            {
-                UserId = userId,
-                Title = CatalogLocalizer.Loc("Cita cancelada", "Appointment cancelled"),
-                Message = CatalogLocalizer.Loc(
-                    $"Cancelaste tu cita en {appt.Groomer.BusinessName}.",
-                    $"You cancelled your appointment at {appt.Groomer.BusinessName}."),
-                Type = "appointment"
-            });
-            await _db.SaveChangesAsync();
-        }
-
+        await _cancel.HandleAsync(new CancelBookingCommand(userId, id));
         return RedirectToPage("./Index");
     }
 

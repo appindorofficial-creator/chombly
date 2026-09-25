@@ -1,4 +1,8 @@
+using WebAppPet.Application.Bookings.CancelBooking;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.SaveClinicalNote;
+using WebAppPet.Application.Bookings.Shared;
+using WebAppPet.Application.Bookings.UpdateBookingStatus;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
@@ -13,7 +17,11 @@ public static class DependencyInjection
     {
         services.AddScoped<ApplyPromoCodeHandler>();
 
+        services.AddScoped<ClinicalNotes>();
         services.AddScoped<CreateBookingHandler>();
+        services.AddScoped<CancelBookingHandler>();
+        services.AddScoped<UpdateBookingStatusHandler>();
+        services.AddScoped<SaveClinicalNoteHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();
