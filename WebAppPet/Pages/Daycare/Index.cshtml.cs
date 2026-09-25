@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -16,13 +18,20 @@ public class IndexModel : PageModel
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
     private readonly ApplyPromoCodeHandler _promo;
+    private readonly CreateBookingHandler _createBooking;
 
-    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, ApplyPromoCodeHandler promo)
+    public IndexModel(
+        AppDbContext db,
+        AuthService auth,
+        AvailabilityService availability,
+        ApplyPromoCodeHandler promo,
+        CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
         _availability = availability;
         _promo = promo;
+        _createBooking = createBooking;
     }
 
     public static readonly (string Key, string Label, string Hint)[] ScheduleOptions =
@@ -156,16 +165,6 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var rejected = SelectedPets.FirstOrDefault(p => !SelectedDaycare.AcceptsSpecies(p.Species));
-        if (rejected != null)
-        {
-            ErrorMessage = CatalogLocalizer.Loc(
-                $"Esta guardería no atiende {rejected.Species}.",
-                $"This daycare does not accept {rejected.Species}.");
-            Pay = true;
-            return Page();
-        }
-
         ResolveDate(out var day);
         ResolveWindow(day, out var start, out var end);
         if (end <= start)
@@ -178,21 +177,6 @@ public class IndexModel : PageModel
         var selectedExtras = Extras.Where(e => ExtraIds.Contains(e.Id)).ToList();
         var basePrice = SelectedPets.Sum(p => PriceForSchedule(SelectedService, p));
         var subtotal = basePrice + selectedExtras.Sum(e => e.Price);
-        var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(userId, PromoCode, subtotal));
-        if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
-        {
-            PromoError = promo.ErrorMessage;
-            ErrorMessage = promo.ErrorMessage;
-            Estimate = subtotal;
-            PromoSubtotal = subtotal;
-            Pay = true;
-            return Page();
-        }
-
-        var total = promo.IsValid ? promo.FinalTotal : subtotal;
-        var discount = promo.IsValid ? promo.DiscountAmount : 0m;
-        var deposit = Math.Round(total * 0.35m, 2);
-        if (deposit < 15) deposit = Math.Min(15, total);
 
         var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
@@ -209,51 +193,44 @@ public class IndexModel : PageModel
                 noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
-        var appt = new Appointment
+        var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
-            PetId = SelectedPet!.Id,
-            GroomerId = SelectedDaycare.Id,
+            BusinessId = SelectedDaycare.Id,
             ServiceId = SelectedService.Id,
-            ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(start.Date, start.TimeOfDay),
-            EndAt = AppTimeZones.LocalDateAndTimeToUtc(end.Date, end.TimeOfDay),
-            Nights = 0,
-            Status = AppointmentStatus.Pending,
-            TotalPrice = total,
-            DepositPaid = deposit,
-            PromoCode = discount > 0 ? promo.NormalizedCode : null,
-            DiscountAmount = discount,
-            Notes = string.Join(" · ", noteParts)
-        };
+            PetIds = SelectedPets.Select(p => p.Id).ToList(),
+            StartUtc = AppTimeZones.LocalDateAndTimeToUtc(start.Date, start.TimeOfDay),
+            EndUtc = AppTimeZones.LocalDateAndTimeToUtc(end.Date, end.TimeOfDay),
+            Subtotal = subtotal,
+            PromoCode = PromoCode,
+            Extras = selectedExtras.Select(e => new BookingExtraLine(e.Id, e.Name, e.Price)).ToList(),
+            NoteParts = noteParts,
+            ClientNotice = new("Reserva de daycare enviada", $"{SelectedDaycare.BusinessName} · {ScheduleLabel} · pendiente de confirmación."),
+            BusinessNotice = new("Nueva reserva de daycare", $"{petNames} · {day:d} · {ScheduleLabel}.")
+        });
 
-        foreach (var ex in selectedExtras)
+        if (!result.Success)
         {
-            appt.Extras.Add(new AppointmentExtra
+            ErrorMessage = result.Error switch
             {
-                ServiceExtraId = ex.Id,
-                Name = ex.Name,
-                Price = ex.Price
-            });
+                CreateBookingError.SpeciesNotAccepted => CatalogLocalizer.Loc(
+                    $"Esta guardería no atiende {result.RejectedSpecies}.",
+                    $"This daycare does not accept {result.RejectedSpecies}."),
+                CreateBookingError.InvalidPromo => result.PromoError,
+                _ => CatalogLocalizer.Loc("Elige guardería y mascota para continuar.", "Choose a daycare and pet to continue.")
+            };
+            if (result.Error == CreateBookingError.InvalidPromo)
+            {
+                PromoError = result.PromoError;
+                Estimate = subtotal;
+                PromoSubtotal = subtotal;
+                DiscountAmount = 0;
+            }
+            Pay = true;
+            return Page();
         }
 
-        _db.Appointments.Add(appt);
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = userId,
-            Title = "Reserva de daycare enviada",
-            Message = $"{SelectedDaycare.BusinessName} · {ScheduleLabel} · pendiente de confirmación.",
-            Type = "appointment"
-        });
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = SelectedDaycare.UserId,
-            Title = "Nueva reserva de daycare",
-            Message = $"{petNames} · {day:d} · {ScheduleLabel}.",
-            Type = "appointment"
-        });
-        await _db.SaveChangesAsync();
-
-        return RedirectToPage("/Booking/Confirm", new { id = appt.Id });
+        return RedirectToPage("/Booking/Confirm", new { id = result.AppointmentId });
     }
 
     public async Task<IActionResult> OnPostApplyPromoAsync()
@@ -471,18 +448,8 @@ public class IndexModel : PageModel
         return list.OrderBy(s => s.PriceSmall).First();
     }
 
-    private decimal PriceForSchedule(GroomerService svc, Pet? pet)
-    {
-        var full = pet != null ? svc.PriceFor(pet.Size) : svc.PriceSmall;
-        if (Schedule == "medio")
-        {
-            // Si hay servicio "medio" real, PickService ya lo eligió; si no, ~70% del día completo
-            var looksHalf = svc.Name.Contains("medio", StringComparison.OrdinalIgnoreCase)
-                            || svc.Name.Contains("half", StringComparison.OrdinalIgnoreCase);
-            return looksHalf ? full : Math.Round(full * 0.7m, 0);
-        }
-        return full;
-    }
+    private decimal PriceForSchedule(GroomerService svc, Pet? pet) =>
+        BookingPricing.DaycarePrice(svc, pet?.Size, halfDay: Schedule == "medio");
 
     private void ResolveDate(out DateTime day)
     {

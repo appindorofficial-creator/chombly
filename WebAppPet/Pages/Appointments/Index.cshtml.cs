@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Bookings.GetBookings;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -11,14 +10,14 @@ namespace WebAppPet.Pages.Appointments;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly GetClientBookingsHandler _getBookings;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public IndexModel(AuthService auth, GetClientBookingsHandler getBookings, IStringLocalizer<SharedResource> L)
     {
-        _db = db;
         _auth = auth;
+        _getBookings = getBookings;
         _L = L;
     }
 
@@ -36,25 +35,7 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var query = _db.Appointments
-            .Include(a => a.Groomer)!.ThenInclude(g => g.Category)
-            .Include(a => a.Service)
-            .Include(a => a.Pet)
-            .Where(a => a.ClientId == userId);
-
-        if (Tab == "history")
-        {
-            query = query.Where(a => a.Status == AppointmentStatus.Completed || a.Status == AppointmentStatus.Cancelled
-                || a.ScheduledAt < DateTime.Now);
-            Items = await query.OrderByDescending(a => a.ScheduledAt).ToListAsync();
-        }
-        else
-        {
-            query = query.Where(a => a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Confirmed)
-                .Where(a => a.ScheduledAt >= DateTime.Now.Date);
-            Items = await query.OrderBy(a => a.ScheduledAt).ToListAsync();
-        }
-
+        Items = await _getBookings.HandleAsync(new GetClientBookingsQuery(userId, Tab == "history", DateTime.Now));
         return Page();
     }
 

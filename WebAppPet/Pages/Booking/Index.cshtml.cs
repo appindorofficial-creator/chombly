@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -16,6 +18,7 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ApplyPromoCodeHandler _promo;
+    private readonly CreateBookingHandler _createBooking;
     private readonly AvailabilityService _availability;
     private readonly IStringLocalizer<SharedResource> _L;
 
@@ -23,12 +26,14 @@ public class IndexModel : PageModel
         AppDbContext db,
         AuthService auth,
         ApplyPromoCodeHandler promo,
+        CreateBookingHandler createBooking,
         AvailabilityService availability,
         IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
         _promo = promo;
+        _createBooking = createBooking;
         _availability = availability;
         _L = L;
     }
@@ -213,22 +218,6 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        if (!string.IsNullOrWhiteSpace(PromoCode) && !string.IsNullOrEmpty(PromoError))
-        {
-            EvaluateCanShowSummary();
-            Pay = true;
-            return Page();
-        }
-
-        var rejected = SelectedPets.FirstOrDefault(p => !Groomer.AcceptsSpecies(p.Species));
-        if (rejected != null)
-        {
-            ErrorMessage = string.Format(_L["Booking_SpeciesNotAccepted"].Value, rejected.Species);
-            EvaluateCanShowSummary();
-            Pay = true;
-            return Page();
-        }
-
         DateTime scheduled;
         DateTime? endAt = null;
         var nights = 0;
@@ -288,51 +277,37 @@ public class IndexModel : PageModel
             noteParts.Add(CatalogLocalizer.Loc($"Mascotas: {petNames}", $"Pets: {petNames}"));
         if (!string.IsNullOrWhiteSpace(Notes)) noteParts.Add(Notes.Trim());
 
-        var appt = new Appointment
+        var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
-            PetId = SelectedPet!.Id,
-            GroomerId = GroomerId,
+            BusinessId = GroomerId,
             ServiceId = ServiceId,
-            ScheduledAt = scheduled,
-            EndAt = endAt,
+            PetIds = SelectedPets.Select(p => p.Id).ToList(),
+            StartUtc = scheduled,
+            EndUtc = endAt,
             Nights = nights,
-            Status = AppointmentStatus.Pending,
-            TotalPrice = EstimatedTotal,
-            DepositPaid = Deposit,
-            PromoCode = DiscountAmount > 0 ? PromoCode?.Trim().ToUpperInvariant() : null,
-            DiscountAmount = DiscountAmount,
-            Notes = noteParts.Count > 0 ? string.Join(" · ", noteParts) : null
-        };
+            Subtotal = Subtotal,
+            PromoCode = PromoCode,
+            Extras = SelectedExtras.Select(e => new BookingExtraLine(e.Id, e.Name, e.Price)).ToList(),
+            NoteParts = noteParts,
+            ClientNotice = new("Reserva enviada", $"Tu solicitud en {Groomer.BusinessName} está pendiente de confirmación."),
+            BusinessNotice = new("Nueva solicitud de reserva", $"{petNames} · {serviceNames}.")
+        });
 
-        foreach (var ex in SelectedExtras)
+        if (!result.Success)
         {
-            appt.Extras.Add(new AppointmentExtra
-            {
-                ServiceExtraId = ex.Id,
-                Name = ex.Name,
-                Price = ex.Price
-            });
+            if (result.Error == CreateBookingError.InvalidPromo)
+                PromoError = result.PromoError;
+            else
+                ErrorMessage = result.Error == CreateBookingError.SpeciesNotAccepted
+                    ? string.Format(_L["Booking_SpeciesNotAccepted"].Value, result.RejectedSpecies)
+                    : _L["Booking_MissingData"].Value;
+            EvaluateCanShowSummary();
+            Pay = true;
+            return Page();
         }
 
-        _db.Appointments.Add(appt);
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = userId,
-            Title = "Reserva enviada",
-            Message = $"Tu solicitud en {Groomer.BusinessName} está pendiente de confirmación.",
-            Type = "appointment"
-        });
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = Groomer.UserId,
-            Title = "Nueva solicitud de reserva",
-            Message = $"{petNames} · {serviceNames}.",
-            Type = "appointment"
-        });
-        await _db.SaveChangesAsync();
-
-        return RedirectToPage("./Confirm", new { id = appt.Id });
+        return RedirectToPage("./Confirm", new { id = result.AppointmentId });
     }
 
     public async Task<IActionResult> OnPostApplyPromoAsync()
@@ -478,8 +453,7 @@ public class IndexModel : PageModel
             }
         }
 
-        Deposit = Math.Round(EstimatedTotal * 0.35m, 2);
-        if (Deposit < 15) Deposit = Math.Min(15, EstimatedTotal);
+        Deposit = BookingPricing.Deposit(EstimatedTotal);
     }
 
     private void NormalizeSelectedPets()
