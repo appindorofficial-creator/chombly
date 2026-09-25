@@ -21,7 +21,8 @@ public class AnalyticsModel : GroomerPageModel
     {
         if (await LoadGroomerAsync() is IActionResult redirect) return redirect;
 
-        var monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var today = AppTimeZones.TodayLocalDate();
+        var monthStart = AppTimeZones.LocalDateAndTimeToUtc(new DateTime(today.Year, today.Month, 1), TimeSpan.Zero);
 
         var monthAppts = await Db.Appointments
             .Include(a => a.Service)

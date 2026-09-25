@@ -12,7 +12,7 @@
     <div class="home-body">
     <partial name="_GroomerNav" />
 
-    <h2 style="margin:0 0 16px">@CatalogLocalizer.Loc("Analíticas", "Analytics") · @DateTime.Today.ToString("MMMM yyyy")</h2>
+    <h2 style="margin:0 0 16px">@CatalogLocalizer.Loc("Analíticas", "Analytics") · @AppTimeZones.TodayLocalDate().ToString("MMMM yyyy")</h2>
 
     <div class="promo-banner" style="margin-top:0">
         <div style="flex:1">

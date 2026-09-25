@@ -35,7 +35,9 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        Items = await _getBookings.HandleAsync(new GetClientBookingsQuery(userId, Tab == "history", DateTime.Now));
+        var todayStartUtc = AppTimeZones.LocalDateAndTimeToUtc(AppTimeZones.TodayLocalDate(), TimeSpan.Zero);
+        Items = await _getBookings.HandleAsync(
+            new GetClientBookingsQuery(userId, Tab == "history", DateTime.UtcNow, todayStartUtc));
         return Page();
     }
 

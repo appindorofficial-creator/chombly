@@ -24,15 +24,14 @@ public class GetClientBookingsHandler
             return await appointments
                 .Where(a => a.Status == AppointmentStatus.Completed
                             || a.Status == AppointmentStatus.Cancelled
-                            || a.ScheduledAt < query.Now)
+                            || a.ScheduledAt < query.NowUtc)
                 .OrderByDescending(a => a.ScheduledAt)
                 .ToListAsync(ct);
         }
 
-        var today = query.Now.Date;
         return await appointments
             .Where(a => a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Confirmed)
-            .Where(a => a.ScheduledAt >= today)
+            .Where(a => a.ScheduledAt >= query.TodayStartUtc)
             .OrderBy(a => a.ScheduledAt)
             .ToListAsync(ct);
     }

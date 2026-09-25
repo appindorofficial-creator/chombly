@@ -1,6 +1,7 @@
 using WebAppPet.Application.Bookings.GetBookings;
 using WebAppPet.Data;
 using WebAppPet.Models;
+using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Bookings;
@@ -30,9 +31,44 @@ public class GetBookingsHandlersTests : IDisposable
     private Appointment Add(AppointmentStatus status, DateTime at, AppUser? client = null, GroomerProfile? business = null) =>
         TestData.AddAppointment(_db, client ?? _client, business ?? _business, status, at);
 
-    private Task<List<Appointment>> Client(bool history) =>
+    private Task<List<Appointment>> Client(bool history) => Client(history, Now, Now.Date);
+
+    private Task<List<Appointment>> Client(bool history, DateTime nowUtc, DateTime todayStartUtc) =>
         new GetClientBookingsHandler(_database.CreateContext())
-            .HandleAsync(new GetClientBookingsQuery(_client.Id, history, Now));
+            .HandleAsync(new GetClientBookingsQuery(_client.Id, history, nowUtc, todayStartUtc));
+
+    private static DateTime Utc(BusinessMarket market, int day, int hour) =>
+        AppTimeZones.LocalDateAndTimeToUtc(new DateTime(2030, 6, day), TimeSpan.FromHours(hour), market);
+
+    [Fact]
+    public async Task Bogota_evening_keeps_todays_bookings_in_upcoming()
+    {
+        // 8 PM in Bogotá is already the next day in UTC.
+        var nowUtc = Utc(BusinessMarket.Colombia, 15, 20);
+        var todayStartUtc = Utc(BusinessMarket.Colombia, 15, 0);
+        var thisAfternoon = Add(AppointmentStatus.Confirmed, Utc(BusinessMarket.Colombia, 15, 18));
+        var tonight = Add(AppointmentStatus.Pending, Utc(BusinessMarket.Colombia, 15, 21));
+
+        var upcoming = await Client(history: false, nowUtc, todayStartUtc);
+
+        Assert.Equal(new DateTime(2030, 6, 16, 1, 0, 0), nowUtc);
+        Assert.Equal(new[] { thisAfternoon.Id, tonight.Id }, upcoming.Select(a => a.Id));
+    }
+
+    [Fact]
+    public async Task New_York_morning_excludes_last_nights_bookings_from_upcoming()
+    {
+        // 9 PM New York (EDT) yesterday is still "today" in UTC.
+        var nowUtc = Utc(BusinessMarket.UnitedStates, 15, 8);
+        var todayStartUtc = Utc(BusinessMarket.UnitedStates, 15, 0);
+        Add(AppointmentStatus.Confirmed, Utc(BusinessMarket.UnitedStates, 14, 21));
+        var later = Add(AppointmentStatus.Confirmed, Utc(BusinessMarket.UnitedStates, 15, 10));
+
+        var upcoming = await Client(history: false, nowUtc, todayStartUtc);
+
+        Assert.Equal(new DateTime(2030, 6, 15, 4, 0, 0), todayStartUtc);
+        Assert.Equal(later.Id, Assert.Single(upcoming).Id);
+    }
 
     private Task<List<Appointment>> Business(BusinessBookingsTab tab) =>
         new GetBusinessBookingsHandler(_database.CreateContext())
