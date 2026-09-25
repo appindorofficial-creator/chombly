@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
@@ -17,13 +18,20 @@ public class IndexModel : PageModel
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
     private readonly ApplyPromoCodeHandler _promo;
+    private readonly CreateBookingHandler _createBooking;
 
-    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, ApplyPromoCodeHandler promo)
+    public IndexModel(
+        AppDbContext db,
+        AuthService auth,
+        AvailabilityService availability,
+        ApplyPromoCodeHandler promo,
+        CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
         _availability = availability;
         _promo = promo;
+        _createBooking = createBooking;
     }
 
     public static readonly (string Key, string Label)[] TrainingTypes =
@@ -193,16 +201,6 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var rejected = SelectedPets.FirstOrDefault(p => !SelectedTrainer.AcceptsSpecies(p.Species));
-        if (rejected != null)
-        {
-            ErrorMessage = CatalogLocalizer.Loc(
-                $"Este entrenador no atiende {PetSpecies.Label(rejected.Species)}.",
-                $"This trainer does not serve {PetSpecies.Label(rejected.Species)}.");
-            Pay = true;
-            return Page();
-        }
-
         if (Sessions is not (1 or 4 or 8)) Sessions = 1;
 
         if (!TryResolveSchedule(SelectedTrainer.Id, out var start, out var scheduleError))
@@ -213,18 +211,6 @@ public class IndexModel : PageModel
         }
 
         var subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size)) * Sessions;
-        var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(userId, PromoCode, subtotal));
-        if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
-        {
-            PromoError = promo.ErrorMessage;
-            ErrorMessage = promo.ErrorMessage;
-            Estimate = subtotal;
-            PromoSubtotal = subtotal;
-            Pay = true;
-            return Page();
-        }
-
-        var quote = BookingPricing.Quote(subtotal, promo);
 
         var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
@@ -244,41 +230,45 @@ public class IndexModel : PageModel
                 noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
-        var appt = new Appointment
+        var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
-            PetId = SelectedPet!.Id,
-            GroomerId = SelectedTrainer.Id,
+            BusinessId = SelectedTrainer.Id,
             ServiceId = SelectedService.Id,
-            ScheduledAt = start,
-            EndAt = start.AddMinutes(SelectedService.DurationMinutes > 0 ? SelectedService.DurationMinutes : 60),
-            Nights = 0,
-            Status = AppointmentStatus.Pending,
-            TotalPrice = quote.Total,
-            DepositPaid = quote.Deposit,
-            PromoCode = quote.Discount > 0 ? promo.NormalizedCode : null,
-            DiscountAmount = quote.Discount,
-            Notes = string.Join(" · ", noteParts)
-        };
-
-        _db.Appointments.Add(appt);
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = userId,
-            Title = "Reserva de training enviada",
-            Message = $"{SelectedTrainer.BusinessName} · {PackageLabel} · pendiente de confirmación.",
-            Type = "appointment"
+            PetIds = SelectedPets.Select(p => p.Id).ToList(),
+            StartUtc = start,
+            EndUtc = start.AddMinutes(SelectedService.DurationMinutes > 0
+                ? SelectedService.DurationMinutes
+                : BookingPricing.DefaultServiceMinutes),
+            Subtotal = subtotal,
+            PromoCode = PromoCode,
+            NoteParts = noteParts,
+            ClientNotice = new("Reserva de training enviada", $"{SelectedTrainer.BusinessName} · {PackageLabel} · pendiente de confirmación."),
+            BusinessNotice = new("Nueva reserva de training", $"{petNames} · {NeedLabel} · {PackageLabel}.")
         });
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = SelectedTrainer.UserId,
-            Title = "Nueva reserva de training",
-            Message = $"{petNames} · {NeedLabel} · {PackageLabel}.",
-            Type = "appointment"
-        });
-        await _db.SaveChangesAsync();
 
-        return RedirectToPage("/Booking/Confirm", new { id = appt.Id });
+        if (!result.Success)
+        {
+            ErrorMessage = result.Error switch
+            {
+                CreateBookingError.SpeciesNotAccepted => CatalogLocalizer.Loc(
+                    $"Este entrenador no atiende {PetSpecies.Label(result.RejectedSpecies)}.",
+                    $"This trainer does not serve {PetSpecies.Label(result.RejectedSpecies)}."),
+                CreateBookingError.InvalidPromo => result.PromoError,
+                _ => CatalogLocalizer.Loc("Elige entrenador y mascota para continuar.", "Choose a trainer and pet to continue.")
+            };
+            if (result.Error == CreateBookingError.InvalidPromo)
+            {
+                PromoError = result.PromoError;
+                Estimate = subtotal;
+                PromoSubtotal = subtotal;
+                DiscountAmount = 0;
+            }
+            Pay = true;
+            return Page();
+        }
+
+        return RedirectToPage("/Booking/Confirm", new { id = result.AppointmentId });
     }
 
     public async Task<IActionResult> OnPostApplyPromoAsync()

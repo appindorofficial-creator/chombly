@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Application.Bookings.Shared;
+using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -16,13 +16,20 @@ public class IndexModel : PageModel
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
     private readonly ApplyPromoCodeHandler _promo;
+    private readonly CreateBookingHandler _createBooking;
 
-    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, ApplyPromoCodeHandler promo)
+    public IndexModel(
+        AppDbContext db,
+        AuthService auth,
+        AvailabilityService availability,
+        ApplyPromoCodeHandler promo,
+        CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
         _availability = availability;
         _promo = promo;
+        _createBooking = createBooking;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -153,16 +160,6 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var rejected = SelectedPets.FirstOrDefault(p => !SelectedHotel.AcceptsSpecies(p.Species));
-        if (rejected != null)
-        {
-            ErrorMessage = CatalogLocalizer.Loc(
-                $"Este hotel no atiende {rejected.Species}.",
-                $"This hotel does not accept {rejected.Species}.");
-            Pay = true;
-            return Page();
-        }
-
         ResolveDates(out var cin, out var cout);
         if (cout <= cin)
         {
@@ -185,18 +182,6 @@ public class IndexModel : PageModel
 
         var subtotal = SelectedPets.Sum(p => SelectedService.PriceFor(p.Size) * nights)
             + SumSelectedExtras(selectedExtras);
-        var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(userId, PromoCode, subtotal));
-        if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
-        {
-            PromoError = promo.ErrorMessage;
-            ErrorMessage = promo.ErrorMessage;
-            Estimate = subtotal;
-            PromoSubtotal = subtotal;
-            Pay = true;
-            return Page();
-        }
-
-        var quote = BookingPricing.Quote(subtotal, promo);
 
         var petNames = string.Join(", ", SelectedPets.Select(p => $"{PetSpecies.Emoji(p.Species)} {p.Name}"));
         var medsPets = SelectedPets.Where(p => MedsPetIds.Contains(p.Id)).ToList();
@@ -216,55 +201,53 @@ public class IndexModel : PageModel
                 noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
-        var appt = new Appointment
+        var extraLines = selectedExtras.Select(ex =>
+        {
+            var isMeds = HotelCoreExtras.MatchesMeds(ex.Name);
+            var qty = isMeds ? Math.Max(1, MedsPetIds.Count) : 1;
+            var label = isMeds && medsPets.Count > 0 ? $"{ex.Name} ({medsPetNames})" : ex.Name;
+            return new BookingExtraLine(ex.Id, label, ex.Price * qty);
+        }).ToList();
+
+        var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
-            PetId = SelectedPet!.Id,
-            GroomerId = SelectedHotel.Id,
+            BusinessId = SelectedHotel.Id,
             ServiceId = SelectedService.Id,
-            ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(cin.Date, TimeSpan.FromHours(14)),
-            EndAt = AppTimeZones.LocalDateAndTimeToUtc(cout.Date, TimeSpan.FromHours(11)),
+            PetIds = SelectedPets.Select(p => p.Id).ToList(),
+            StartUtc = AppTimeZones.LocalDateAndTimeToUtc(cin.Date, TimeSpan.FromHours(14)),
+            EndUtc = AppTimeZones.LocalDateAndTimeToUtc(cout.Date, TimeSpan.FromHours(11)),
             Nights = nights,
-            Status = AppointmentStatus.Pending,
-            TotalPrice = quote.Total,
-            DepositPaid = quote.Deposit,
-            PromoCode = quote.Discount > 0 ? promo.NormalizedCode : null,
-            DiscountAmount = quote.Discount,
-            Notes = noteParts.Count > 0 ? string.Join(" · ", noteParts) : null
-        };
+            Subtotal = subtotal,
+            PromoCode = PromoCode,
+            Extras = extraLines,
+            NoteParts = noteParts,
+            ClientNotice = new("Reserva de hotel enviada", $"{SelectedHotel.BusinessName} · {nights} noche(s) · pendiente de confirmación."),
+            BusinessNotice = new("Nueva reserva de hotel", $"{petNames} · {nights} noche(s).")
+        });
 
-        foreach (var ex in selectedExtras)
+        if (!result.Success)
         {
-            var qty = HotelCoreExtras.MatchesMeds(ex.Name) ? Math.Max(1, MedsPetIds.Count) : 1;
-            var label = ex.Name;
-            if (HotelCoreExtras.MatchesMeds(ex.Name) && medsPets.Count > 0)
-                label = $"{ex.Name} ({medsPetNames})";
-            appt.Extras.Add(new AppointmentExtra
+            ErrorMessage = result.Error switch
             {
-                ServiceExtraId = ex.Id,
-                Name = label,
-                Price = ex.Price * qty
-            });
+                CreateBookingError.SpeciesNotAccepted => CatalogLocalizer.Loc(
+                    $"Este hotel no atiende {result.RejectedSpecies}.",
+                    $"This hotel does not accept {result.RejectedSpecies}."),
+                CreateBookingError.InvalidPromo => result.PromoError,
+                _ => CatalogLocalizer.Loc("Elige un hotel para continuar.", "Choose a hotel to continue.")
+            };
+            if (result.Error == CreateBookingError.InvalidPromo)
+            {
+                PromoError = result.PromoError;
+                Estimate = subtotal;
+                PromoSubtotal = subtotal;
+                DiscountAmount = 0;
+            }
+            Pay = true;
+            return Page();
         }
 
-        _db.Appointments.Add(appt);
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = userId,
-            Title = "Reserva de hotel enviada",
-            Message = $"{SelectedHotel.BusinessName} · {nights} noche(s) · pendiente de confirmación.",
-            Type = "appointment"
-        });
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = SelectedHotel.UserId,
-            Title = "Nueva reserva de hotel",
-            Message = $"{petNames} · {nights} noche(s).",
-            Type = "appointment"
-        });
-        await _db.SaveChangesAsync();
-
-        return RedirectToPage("/Booking/Confirm", new { id = appt.Id });
+        return RedirectToPage("/Booking/Confirm", new { id = result.AppointmentId });
     }
 
     public async Task<IActionResult> OnPostApplyPromoAsync()

@@ -1,3 +1,4 @@
+using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
@@ -11,6 +12,8 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<ApplyPromoCodeHandler>();
+
+        services.AddScoped<CreateBookingHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();

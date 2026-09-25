@@ -35,6 +35,38 @@ public static class TestData
         return business;
     }
 
+    public static Pet AddPet(AppDbContext db, AppUser owner, string species = PetSpecies.Dog, PetSize size = PetSize.Medium)
+    {
+        var pet = new Pet { OwnerId = owner.Id, Name = $"Pet {Interlocked.Increment(ref _seq)}", Species = species, Size = size };
+        db.Pets.Add(pet);
+        db.SaveChanges();
+        return pet;
+    }
+
+    public static GroomerService AddService(AppDbContext db, GroomerProfile business, decimal price = 40)
+    {
+        var service = new GroomerService
+        {
+            GroomerId = business.Id,
+            Name = "Baño",
+            PriceSmall = price,
+            PriceMedium = price,
+            PriceLarge = price,
+            PriceGiant = price
+        };
+        db.Services.Add(service);
+        db.SaveChanges();
+        return service;
+    }
+
+    public static ServiceExtra AddExtra(AppDbContext db, GroomerProfile business, string name, decimal price)
+    {
+        var extra = new ServiceExtra { GroomerId = business.Id, Name = name, Price = price };
+        db.ServiceExtras.Add(extra);
+        db.SaveChanges();
+        return extra;
+    }
+
     public static Appointment AddAppointment(
         AppDbContext db,
         AppUser client,

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
@@ -17,13 +18,20 @@ public class IndexModel : PageModel
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
     private readonly ApplyPromoCodeHandler _promo;
+    private readonly CreateBookingHandler _createBooking;
 
-    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, ApplyPromoCodeHandler promo)
+    public IndexModel(
+        AppDbContext db,
+        AuthService auth,
+        AvailabilityService availability,
+        ApplyPromoCodeHandler promo,
+        CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
         _availability = availability;
         _promo = promo;
+        _createBooking = createBooking;
     }
 
     public static readonly string[] TimeSlots = BookingTime.DefaultSlots;
@@ -163,18 +171,6 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var rejected = SelectedPets.FirstOrDefault(p =>
-            !string.Equals(p.Species, PetSpecies.Dog, StringComparison.OrdinalIgnoreCase)
-            || !SelectedWalker.AcceptsSpecies(p.Species));
-        if (rejected != null)
-        {
-            ErrorMessage = CatalogLocalizer.Loc(
-                $"Este paseador no atiende {rejected.Species}.",
-                $"This walker does not accept {rejected.Species}.");
-            Pay = true;
-            return Page();
-        }
-
         ResolveDate(out var day);
         if (!BookingTime.TryResolveStartUtc(Slot, day, out var startUtc, out var scheduleError))
         {
@@ -186,18 +182,6 @@ public class IndexModel : PageModel
         var endUtc = startUtc.AddMinutes(Duration);
 
         var subtotal = SelectedPets.Sum(p => PriceForDuration(SelectedService, p));
-        var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(userId, PromoCode, subtotal));
-        if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
-        {
-            PromoError = promo.ErrorMessage;
-            ErrorMessage = promo.ErrorMessage;
-            Estimate = subtotal;
-            PromoSubtotal = subtotal;
-            Pay = true;
-            return Page();
-        }
-
-        var quote = BookingPricing.Quote(subtotal, promo, BookingPricing.WalkMinimumDeposit);
 
         var petNames = BookingPetSelection.NamesSummary(SelectedPets);
         var noteParts = new List<string>
@@ -216,41 +200,45 @@ public class IndexModel : PageModel
                 noteParts.Add($"{CatalogLocalizer.Loc("Pago:", "Payment:")} {pm.Brand} •••• {pm.Last4}");
         }
 
-        var appt = new Appointment
+        var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
-            PetId = SelectedPet!.Id,
-            GroomerId = SelectedWalker.Id,
+            BusinessId = SelectedWalker.Id,
             ServiceId = SelectedService.Id,
-            ScheduledAt = startUtc,
-            EndAt = endUtc,
-            Nights = 0,
-            Status = AppointmentStatus.Pending,
-            TotalPrice = quote.Total,
-            DepositPaid = quote.Deposit,
-            PromoCode = quote.Discount > 0 ? promo.NormalizedCode : null,
-            DiscountAmount = quote.Discount,
-            Notes = string.Join(" · ", noteParts)
-        };
-
-        _db.Appointments.Add(appt);
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = userId,
-            Title = "Paseo solicitado",
-            Message = $"{SelectedWalker.BusinessName} · {Duration} min · pendiente de confirmación.",
-            Type = "appointment"
+            PetIds = SelectedPets.Select(p => p.Id).ToList(),
+            StartUtc = startUtc,
+            EndUtc = endUtc,
+            Subtotal = subtotal,
+            PromoCode = PromoCode,
+            MinimumDeposit = BookingPricing.WalkMinimumDeposit,
+            NoteParts = noteParts,
+            AllowedSpecies = new[] { PetSpecies.Dog },
+            ClientNotice = new("Paseo solicitado", $"{SelectedWalker.BusinessName} · {Duration} min · pendiente de confirmación."),
+            BusinessNotice = new("Nueva solicitud de paseo", $"{petNames} · {AppTimeZones.FormatShort(startUtc)} · {Duration} min.")
         });
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = SelectedWalker.UserId,
-            Title = "Nueva solicitud de paseo",
-            Message = $"{petNames} · {AppTimeZones.FormatShort(startUtc)} · {Duration} min.",
-            Type = "appointment"
-        });
-        await _db.SaveChangesAsync();
 
-        return RedirectToPage("/Booking/Confirm", new { id = appt.Id });
+        if (!result.Success)
+        {
+            ErrorMessage = result.Error switch
+            {
+                CreateBookingError.SpeciesNotAccepted => CatalogLocalizer.Loc(
+                    $"Este paseador no atiende {result.RejectedSpecies}.",
+                    $"This walker does not accept {result.RejectedSpecies}."),
+                CreateBookingError.InvalidPromo => result.PromoError,
+                _ => CatalogLocalizer.Loc("Elige paseador y mascota para continuar.", "Choose a walker and pet to continue.")
+            };
+            if (result.Error == CreateBookingError.InvalidPromo)
+            {
+                PromoError = result.PromoError;
+                Estimate = subtotal;
+                PromoSubtotal = subtotal;
+                DiscountAmount = 0;
+            }
+            Pay = true;
+            return Page();
+        }
+
+        return RedirectToPage("/Booking/Confirm", new { id = result.AppointmentId });
     }
 
     public async Task<IActionResult> OnPostApplyPromoAsync()
