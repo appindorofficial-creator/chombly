@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Infrastructure.Security;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -39,7 +40,7 @@ public static class DbInitializer
         await EnsureDaycareAcceptsCatsAsync(db);
         await EnsureCountryCatalogSeedAsync(db);
         await EnsureCompensationDefaultsAsync(db);
-        var availability = new Services.AvailabilityService(db);
+        var availability = new AvailabilityService(db);
         await availability.EnsureDefaultWeeklyHoursAsync();
         await BackfillColombiaWallClockAppointmentsAsync(db);
     }

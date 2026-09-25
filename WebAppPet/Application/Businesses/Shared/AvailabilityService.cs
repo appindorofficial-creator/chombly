@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Models;
+using WebAppPet.Services;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Businesses.Shared;
 
 public class AvailabilityService
 {
@@ -26,6 +27,31 @@ public class AvailabilityService
 
         // Sin agenda: no asumir abierto
         return false;
+    }
+
+    /// <summary>Same rule as <see cref="IsAvailableOnAsync"/> for many businesses in two queries.</summary>
+    public async Task<HashSet<int>> OpenOnAsync(IEnumerable<int> groomerIds, DateTime day)
+    {
+        var ids = groomerIds.Distinct().ToList();
+        if (ids.Count == 0) return new HashSet<int>();
+
+        var d = day.Date;
+        var dow = (int)d.DayOfWeek;
+        var dayRows = (await _db.DayAvailabilities.AsNoTracking()
+                .Where(a => ids.Contains(a.GroomerId) && a.Day == d)
+                .ToListAsync())
+            .GroupBy(a => a.GroomerId)
+            .ToDictionary(g => g.Key, g => g.First().IsAvailable);
+        var weekRows = (await _db.WeeklyHours.AsNoTracking()
+                .Where(h => ids.Contains(h.GroomerId) && h.DayOfWeek == dow)
+                .ToListAsync())
+            .GroupBy(h => h.GroomerId)
+            .ToDictionary(g => g.Key, g => g.First().IsOpen);
+
+        return ids.Where(id => dayRows.TryGetValue(id, out var available)
+                ? available
+                : weekRows.GetValueOrDefault(id, false))
+            .ToHashSet();
     }
 
     /// <summary>

@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Businesses.GetAvailability;
+using WebAppPet.Application.Businesses.SaveWeeklySchedule;
+using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -11,16 +14,25 @@ namespace WebAppPet.Pages.Groomer;
 public class AvailabilityModel : GroomerPageModel
 {
     private readonly AvailabilityService _availability;
+    private readonly GetAvailabilityHandler _getAvailability;
+    private readonly SaveWeeklyScheduleHandler _saveWeek;
+    private readonly ToggleAvailabilityDayHandler _toggleDay;
     private readonly IStringLocalizer<SharedResource> _L;
 
     public AvailabilityModel(
         AppDbContext db,
         AuthService auth,
         AvailabilityService availability,
+        GetAvailabilityHandler getAvailability,
+        SaveWeeklyScheduleHandler saveWeek,
+        ToggleAvailabilityDayHandler toggleDay,
         IStringLocalizer<SharedResource> L)
         : base(db, auth)
     {
         _availability = availability;
+        _getAvailability = getAvailability;
+        _saveWeek = saveWeek;
+        _toggleDay = toggleDay;
         _L = L;
     }
 
@@ -43,19 +55,13 @@ public class AvailabilityModel : GroomerPageModel
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
         EnsureWeekLabels(WeekEdit);
-        if (!WeekEdit.Any(d => d.IsOpen))
-        {
-            Message = CatalogLocalizer.Loc(
-                "Debes tener al menos un día abierto.",
-                "Open at least one day in your schedule.");
-            await LoadAsync();
-            return Page();
-        }
 
-        await _availability.SaveWeeklyAndGenerateAsync(Profile!.Id, WeekEdit, days: 60);
-        Message = CatalogLocalizer.Loc(
-            "Horario semanal guardado y agenda de 60 días actualizada.",
-            "Weekly hours saved and 60-day agenda updated.");
+        var result = await _saveWeek.HandleAsync(new SaveWeeklyScheduleCommand(Profile!.Id, WeekEdit));
+        Message = result.Success
+            ? CatalogLocalizer.Loc(
+                "Horario semanal guardado y agenda de 60 días actualizada.",
+                "Weekly hours saved and 60-day agenda updated.")
+            : result.Error;
         await LoadAsync();
         return Page();
     }
@@ -63,57 +69,30 @@ public class AvailabilityModel : GroomerPageModel
     public async Task<IActionResult> OnPostToggleAsync(int id)
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        var row = await Db.DayAvailabilities.FirstOrDefaultAsync(a => a.Id == id && a.GroomerId == Profile!.Id);
-        if (row != null)
-        {
-            row.IsAvailable = !row.IsAvailable;
-            row.Note = row.IsAvailable
-                ? CatalogLocalizer.Loc("Abierto (manual)", "Open (manual)")
-                : CatalogLocalizer.Loc("Cerrado (manual)", "Closed (manual)");
-            await Db.SaveChangesAsync();
-        }
+        await _toggleDay.HandleAsync(new ToggleAvailabilityDayCommand(Profile!.Id, id));
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostRegenerateAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        var n = await _availability.GenerateFromWeeklyAsync(Profile!.Id, 60, replaceExisting: true);
-        if (n == 0)
-        {
-            Message = CatalogLocalizer.Loc(
+        var n = await _availability.GenerateFromWeeklyAsync(Profile!.Id, SaveWeeklyScheduleHandler.AgendaDays, replaceExisting: true);
+        Message = n == 0
+            ? CatalogLocalizer.Loc(
                 "Primero guarda un horario semanal.",
-                "Save a weekly schedule first.");
-        }
-        else
-        {
-            Message = CatalogLocalizer.Loc(
+                "Save a weekly schedule first.")
+            : CatalogLocalizer.Loc(
                 $"Agenda regenerada ({n} días) según tu horario semanal.",
                 $"Agenda regenerated ({n} days) from your weekly hours.");
-        }
         await LoadAsync();
         return Page();
     }
 
     private async Task LoadAsync()
     {
-        var hours = await Db.WeeklyHours
-            .Where(h => h.GroomerId == Profile!.Id)
-            .OrderBy(h => h.DayOfWeek)
-            .ToListAsync();
-
-        Week = WeekDayInput.DefaultWeek();
-        if (hours.Count > 0)
-        {
-            foreach (var h in hours)
-            {
-                var row = Week.FirstOrDefault(w => w.DayOfWeek == h.DayOfWeek);
-                if (row == null) continue;
-                row.IsOpen = h.IsOpen;
-                row.OpenTime = h.OpenLabel;
-                row.CloseTime = h.CloseLabel;
-            }
-        }
+        var view = await _getAvailability.HandleAsync(new GetAvailabilityQuery(Profile!.Id));
+        Week = view.Week;
+        Days = view.Days;
         WeekEdit = Week.Select(w => new WeekDayInput
         {
             DayOfWeek = w.DayOfWeek,
@@ -123,12 +102,6 @@ public class AvailabilityModel : GroomerPageModel
             CloseTime = w.CloseTime
         }).ToList();
         EnsureWeekLabels(WeekEdit);
-
-        var start = AppTimeZones.TodayLocalDate();
-        Days = await Db.DayAvailabilities
-            .Where(a => a.GroomerId == Profile!.Id && a.Day >= start && a.Day < start.AddDays(30))
-            .OrderBy(a => a.Day)
-            .ToListAsync();
     }
 
     private void EnsureWeekLabels(List<WeekDayInput> week)

@@ -1,8 +1,13 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Businesses.AddAmenity;
+using WebAppPet.Application.Businesses.AddExtra;
+using WebAppPet.Application.Businesses.AddService;
+using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Businesses.UpdateBusiness;
 using WebAppPet.Data;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -11,11 +16,26 @@ namespace WebAppPet.Pages.Groomer;
 
 public class BusinessModel : GroomerPageModel
 {
+    private readonly UpdateBusinessHandler _updateBusiness;
+    private readonly AddAmenityHandler _addAmenity;
+    private readonly AddExtraHandler _addExtra;
+    private readonly AddServiceHandler _addService;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public BusinessModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public BusinessModel(
+        AppDbContext db,
+        AuthService auth,
+        UpdateBusinessHandler updateBusiness,
+        AddAmenityHandler addAmenity,
+        AddExtraHandler addExtra,
+        AddServiceHandler addService,
+        IStringLocalizer<SharedResource> L)
         : base(db, auth)
     {
+        _updateBusiness = updateBusiness;
+        _addAmenity = addAmenity;
+        _addExtra = addExtra;
+        _addService = addService;
         _L = L;
     }
 
@@ -30,8 +50,8 @@ public class BusinessModel : GroomerPageModel
     [BindProperty] public List<int> CategoryIds { get; set; } = new();
     [BindProperty] public string Address { get; set; } = "";
     [BindProperty] public string City { get; set; } = "";
-    [BindProperty] public double Latitude { get; set; }
-    [BindProperty] public double Longitude { get; set; }
+    [BindProperty, ModelBinder(typeof(InvariantCoordinateBinder))] public double Latitude { get; set; }
+    [BindProperty, ModelBinder(typeof(InvariantCoordinateBinder))] public double Longitude { get; set; }
     [BindProperty] public string About { get; set; } = "";
     [BindProperty] public string? Phone { get; set; }
     [BindProperty] public string? ImageUrl { get; set; }
@@ -69,73 +89,36 @@ public class BusinessModel : GroomerPageModel
     public async Task<IActionResult> OnPostSaveAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        var g = Profile!;
-        Categories = await Db.Categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder).ToListAsync();
 
-        var selected = (CategoryIds ?? new List<int>())
-            .Where(id => id > 0 && Categories.Any(c => c.Id == id))
-            .Distinct()
-            .ToList();
-        if (selected.Count == 0)
+        var error = await _updateBusiness.HandleAsync(new UpdateBusinessCommand
         {
-            Message = _L["BizPanel_ErrCategory"].Value;
-            await FillAsync();
-            return Page();
-        }
+            BusinessId = Profile!.Id,
+            BusinessName = BusinessName,
+            CategoryId = CategoryId,
+            CategoryIds = CategoryIds ?? [],
+            Address = Address,
+            City = City,
+            Latitude = Latitude,
+            Longitude = Longitude,
+            About = About,
+            Phone = Phone,
+            ImageUrl = ImageUrl,
+            PriceUnit = PriceUnit,
+            StartingPrice = StartingPrice,
+            AcceptedSpecies = AcceptedSpecies,
+            AcceptsSeniorPets = AcceptsSeniorPets,
+            AcceptsAnxiousPets = AcceptsAnxiousPets,
+            IsFeatured = IsFeatured,
+            IsActive = IsActive,
+            HotelExtras = new HotelExtraPrices(ExtraBathPrice, ExtraMedsPrice, OffersPrivateCamera, PrivateCameraPrice)
+        });
 
-        var primary = CategoryId is int keep && selected.Contains(keep)
-            ? keep
-            : Categories.Where(c => selected.Contains(c.Id)).OrderBy(c => c.SortOrder).Select(c => c.Id).First();
-
-        g.BusinessName = BusinessName.Trim();
-        g.CategoryId = primary;
-        g.ExtraCategoryIds = GroomerProfile.JoinExtraCategoryIds(selected, primary);
-        g.Address = Address.Trim();
-        g.City = City.Trim();
-        var lat = Latitude;
-        var lng = Longitude;
-        GeoHelper.TryRepairCoordinates(ref lat, ref lng);
-        g.Latitude = lat;
-        g.Longitude = lng;
-        // Keep user home market + license country aligned with location (same as family).
-        var user = await Db.Users.FirstOrDefaultAsync(u => u.Id == g.UserId);
-        if (user != null)
+        Message = error switch
         {
-            MarketCountry.ApplyFromLocation(user, g.City, g.Latitude, g.Longitude);
-            g.LicenseCountry = user.CountryCode;
-        }
-        else
-        {
-            g.LicenseCountry = MarketCountry.ResolveFromLocation(g.City, g.Latitude, g.Longitude);
-        }
-        g.About = About.Trim();
-        if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
-        {
-            Message = _L["Phone_Invalid"].Value;
-            await FillAsync();
-            return Page();
-        }
-        g.Phone = phoneNorm;
-        g.ImageUrl = ImageUrl;
-        g.PriceUnit = PriceUnit;
-        g.StartingPrice = StartingPrice;
-        g.AcceptedSpecies = string.IsNullOrWhiteSpace(AcceptedSpecies) ? PetSpecies.DefaultAcceptedList : AcceptedSpecies;
-        g.AcceptsSeniorPets = AcceptsSeniorPets;
-        g.AcceptsAnxiousPets = AcceptsAnxiousPets;
-        g.IsFeatured = IsFeatured;
-        g.IsActive = IsActive;
-        await Db.SaveChangesAsync();
-
-        if (IsHotelFromCategories(selected))
-        {
-            var iso = g.User?.CountryCode ?? g.LicenseCountry ?? AppTimeZones.CurrentCountryCode;
-            await HotelCoreExtras.SyncAsync(Db, g.Id, ExtraBathPrice, ExtraMedsPrice, iso);
-            await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, OffersPrivateCamera, PrivateCameraPrice, iso);
-        }
-        else
-            await HotelPrivateCameraExtra.SyncAsync(Db, g.Id, enabled: false);
-
-        Message = _L["BizPanel_Updated"].Value;
+            UpdateBusinessError.NoCategory => _L["BizPanel_ErrCategory"].Value,
+            UpdateBusinessError.PhoneInvalid => _L["Phone_Invalid"].Value,
+            _ => _L["BizPanel_Updated"].Value
+        };
         await FillAsync();
         return Page();
     }
@@ -143,66 +126,26 @@ public class BusinessModel : GroomerPageModel
     public async Task<IActionResult> OnPostAddAmenityAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        if (!string.IsNullOrWhiteSpace(NewAmenityLabel))
-        {
-            Db.Amenities.Add(new BusinessAmenity
-            {
-                GroomerId = Profile!.Id,
-                Label = NewAmenityLabel.Trim(),
-                Icon = string.IsNullOrWhiteSpace(NewAmenityIcon) ? "✓" : NewAmenityIcon,
-                SortOrder = await Db.Amenities.CountAsync(a => a.GroomerId == Profile.Id)
-            });
-            await Db.SaveChangesAsync();
-        }
+        await _addAmenity.HandleAsync(new AddAmenityCommand(Profile!.Id, NewAmenityLabel, NewAmenityIcon));
         return RedirectToPage((string?)null, (string?)null, "biz-amenities");
     }
 
     public async Task<IActionResult> OnPostAddExtraAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        if (!string.IsNullOrWhiteSpace(NewExtraName))
-        {
-            var name = NewExtraName.Trim();
-            if (HotelCoreExtras.IsManagedHotelExtra(name))
-            {
-                Message = _L["BizPanel_HotelExtrasHint"].Value;
-                await FillAsync();
-                return RedirectToPage((string?)null, (string?)null, "biz-hotel-extras");
-            }
+        if (!string.IsNullOrWhiteSpace(NewExtraName) && HotelCoreExtras.IsManagedHotelExtra(NewExtraName.Trim()))
+            return RedirectToPage((string?)null, (string?)null, "biz-hotel-extras");
 
-            Db.ServiceExtras.Add(new ServiceExtra
-            {
-                GroomerId = Profile!.Id,
-                Name = name,
-                Price = NewExtraPrice < 0 ? 0 : NewExtraPrice,
-                IsActive = true
-            });
-            await Db.SaveChangesAsync();
-        }
+        await _addExtra.HandleAsync(new AddExtraCommand(Profile!.Id, NewExtraName, NewExtraPrice));
         return RedirectToPage((string?)null, (string?)null, "biz-extras");
     }
 
     public async Task<IActionResult> OnPostAddServiceAsync()
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        if (!string.IsNullOrWhiteSpace(NewServiceName) && NewServicePrice > 0)
-        {
-            var p = NewServicePrice;
-            var step = HotelCoreExtras.SizeStepFor(Profile!.User?.CountryCode ?? Profile.LicenseCountry);
-            Db.Services.Add(new GroomerService
-            {
-                GroomerId = Profile!.Id,
-                Name = NewServiceName.Trim(),
-                Description = NewServiceName.Trim(),
-                BillingUnit = NewServiceUnit,
-                PriceSmall = p,
-                PriceMedium = p + step,
-                PriceLarge = p + step * 2,
-                PriceGiant = p + step * 3,
-                DurationMinutes = NewServiceUnit == "noche" ? 1440 : 60
-            });
-            await Db.SaveChangesAsync();
-        }
+        await _addService.HandleAsync(new AddServiceCommand(
+            Profile!.Id, NewServiceName, NewServiceUnit, NewServicePrice,
+            Profile.User?.CountryCode ?? Profile.LicenseCountry));
         return RedirectToPage((string?)null, (string?)null, "biz-services");
     }
 

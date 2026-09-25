@@ -24,41 +24,57 @@ public static class GeoHelper
     };
 
     /// <summary>
-    /// Repairs lat/lng mangled by es-CO form culture (comma decimal stripped → e.g. 28,861202 → 28861202).
+    /// Scales tried when repairing, most likely first: the Places script writes 6 decimals, so
+    /// "4.711000" read with a culture whose group separator is "." arrives as 4711000.
+    /// </summary>
+    private static readonly double[] RepairScales = { 1e6, 1e5, 1e7 };
+
+    /// <summary>
+    /// Repairs lat/lng whose decimal point was read as a thousands separator (e.g. 28.861202 → 28861202).
+    /// When both are mangled they share one scale, because both come from the same Places result.
     /// </summary>
     public static bool TryRepairCoordinates(ref double lat, ref double lng)
     {
+        var latBad = Math.Abs(lat) > 90;
+        var lngBad = Math.Abs(lng) > 180;
+        if (!latBad && !lngBad) return false;
+
+        if (latBad && lngBad)
+        {
+            foreach (var scale in RepairScales)
+            {
+                if (Math.Abs(lat / scale) <= 90 && Math.Abs(lng / scale) <= 180)
+                {
+                    lat /= scale;
+                    lng /= scale;
+                    return true;
+                }
+            }
+        }
+
         var changed = false;
-        // Typical 6-decimal Places values scaled by 1e6 after comma strip.
-        if (Math.Abs(lat) > 90)
+        if (latBad && TryScaleInto(lat, 90, out var fixedLat))
         {
-            for (var scale = 1e5; scale <= 1e7; scale *= 10)
-            {
-                var candidate = lat / scale;
-                if (Math.Abs(candidate) is > 0 and <= 90)
-                {
-                    lat = candidate;
-                    changed = true;
-                    break;
-                }
-            }
+            lat = fixedLat;
+            changed = true;
         }
-
-        if (Math.Abs(lng) > 180)
+        if (lngBad && TryScaleInto(lng, 180, out var fixedLng))
         {
-            for (var scale = 1e5; scale <= 1e7; scale *= 10)
-            {
-                var candidate = lng / scale;
-                if (Math.Abs(candidate) is > 0 and <= 180)
-                {
-                    lng = candidate;
-                    changed = true;
-                    break;
-                }
-            }
+            lng = fixedLng;
+            changed = true;
         }
-
         return changed;
+    }
+
+    private static bool TryScaleInto(double value, double limit, out double result)
+    {
+        foreach (var scale in RepairScales)
+        {
+            result = value / scale;
+            if (Math.Abs(result) <= limit) return true;
+        }
+        result = value;
+        return false;
     }
 
     /// <summary>Distancia en millas. Null si faltan coordenadas.</summary>

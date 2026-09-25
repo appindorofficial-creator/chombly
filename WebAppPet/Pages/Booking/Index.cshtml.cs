@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
+using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
