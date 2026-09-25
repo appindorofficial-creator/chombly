@@ -82,7 +82,6 @@
                                 <strong>@day.Label</strong>
                                 <span class="agenda-day-status">@(day.IsOpen ? openLabel : closedLabel)</span>
                             </span>
-                            <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
                             <span class="agenda-switch">
                                 <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true"
                                        @(day.IsOpen ? "checked" : null)
@@ -90,6 +89,8 @@
                                        aria-label="@CatalogLocalizer.Loc($"{day.Label} abierto", $"{day.Label} open")" />
                                 <span class="agenda-switch-track" aria-hidden="true"></span>
                             </span>
+                            @* The unchecked fallback must follow the checkbox: model binding keeps the first posted value. *@
+                            <input type="hidden" name="WeekEdit[@i].IsOpen" value="false" />
                         </label>
                         <div class="agenda-day-times">
                             <div class="form-group">
@@ -146,8 +147,8 @@
 @section Scripts {
 <script>
 (function () {
-    var openLabel = @System.Text.Json.JsonSerializer.Serialize(openLabel);
-    var closedLabel = @System.Text.Json.JsonSerializer.Serialize(closedLabel);
+    var openLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(openLabel));
+    var closedLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(closedLabel));
     document.querySelectorAll('[data-agenda-switch]').forEach(function (input) {
         input.addEventListener('change', function () {
             var card = input.closest('.agenda-day-card');
