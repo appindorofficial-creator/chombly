@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -14,9 +15,9 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
-    private readonly PromoCodeService _promo;
+    private readonly ApplyPromoCodeHandler _promo;
 
-    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, PromoCodeService promo)
+    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, ApplyPromoCodeHandler promo)
     {
         _db = db;
         _auth = auth;
@@ -177,7 +178,7 @@ public class IndexModel : PageModel
         var selectedExtras = Extras.Where(e => ExtraIds.Contains(e.Id)).ToList();
         var basePrice = SelectedPets.Sum(p => PriceForSchedule(SelectedService, p));
         var subtotal = basePrice + selectedExtras.Sum(e => e.Price);
-        var promo = await _promo.TryApplyAsync(userId, PromoCode, subtotal);
+        var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(userId, PromoCode, subtotal));
         if (!string.IsNullOrWhiteSpace(PromoCode) && !promo.IsValid)
         {
             PromoError = promo.ErrorMessage;
@@ -426,7 +427,7 @@ public class IndexModel : PageModel
         if (string.IsNullOrWhiteSpace(PromoCode))
             return;
 
-        var promo = await _promo.TryApplyAsync(_auth.CurrentUserId, PromoCode, Estimate);
+        var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(_auth.CurrentUserId, PromoCode, Estimate));
         if (promo.IsValid)
         {
             DiscountAmount = promo.DiscountAmount;

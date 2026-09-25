@@ -3,10 +3,35 @@ name: Deploy WebAppPet to Azure
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore WebAppPet.sln
+
+      - name: Build
+        run: dotnet build WebAppPet.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test WebAppPet.sln -c Release --no-build --verbosity normal
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read

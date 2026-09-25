@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using WebAppPet.Application;
 using WebAppPet.Data;
 using WebAppPet.Services;
 
@@ -33,8 +34,6 @@ builder.Services.AddHttpClient("nominatim", client =>
 builder.Services.AddScoped<PlacesSuggestService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AvailabilityService>();
-builder.Services.AddScoped<ReviewService>();
-builder.Services.AddScoped<PromoCodeService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<VetAuditService>();
 builder.Services.AddScoped<ServiceCatalogService>();
@@ -49,6 +48,7 @@ builder.Services.AddScoped<ProviderPayoutService>();
 builder.Services.AddScoped<ProfessionalOnboardingService>();
 builder.Services.AddScoped<ReminderEngineService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();
+builder.Services.AddApplication();
 
 var supportedCultures = new[] { new CultureInfo("es"), new CultureInfo("en") };
 builder.Services.Configure<RequestLocalizationOptions>(options =>
