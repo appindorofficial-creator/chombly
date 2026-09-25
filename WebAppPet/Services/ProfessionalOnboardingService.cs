@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
 using WebAppPet.Models;
 

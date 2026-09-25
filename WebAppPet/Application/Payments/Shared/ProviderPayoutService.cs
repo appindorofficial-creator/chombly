@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Models;
+using WebAppPet.Services;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Payments.Shared;
 
 public class ProviderPayoutService
 {

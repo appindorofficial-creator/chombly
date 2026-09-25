@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Payments.AddPaymentMethod;
+using WebAppPet.Application.Payments.DeletePaymentMethod;
+using WebAppPet.Application.Payments.GetPaymentMethods;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -11,14 +13,23 @@ namespace WebAppPet.Pages.Account;
 
 public class PaymentMethodsModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly GetPaymentMethodsHandler _getPaymentMethods;
+    private readonly AddPaymentMethodHandler _addPaymentMethod;
+    private readonly DeletePaymentMethodHandler _deletePaymentMethod;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public PaymentMethodsModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public PaymentMethodsModel(
+        AuthService auth,
+        GetPaymentMethodsHandler getPaymentMethods,
+        AddPaymentMethodHandler addPaymentMethod,
+        DeletePaymentMethodHandler deletePaymentMethod,
+        IStringLocalizer<SharedResource> L)
     {
-        _db = db;
         _auth = auth;
+        _getPaymentMethods = getPaymentMethods;
+        _addPaymentMethod = addPaymentMethod;
+        _deletePaymentMethod = deletePaymentMethod;
         _L = L;
     }
 
@@ -65,34 +76,15 @@ public class PaymentMethodsModel : PageModel
 
         BackHref = ResolveBackHref();
 
-        var result = CardValidator.Validate(CardNumber, Expiry, Cvv, HolderName);
-        if (!result.Ok)
+        var result = await _addPaymentMethod.HandleAsync(
+            new AddPaymentMethodCommand(userId, CardNumber, Expiry, Cvv, HolderName, MakeDefault));
+        if (!result.Success)
         {
-            ErrorMessage = MessageFor(result.Reason);
+            ErrorMessage = MessageFor(result.Error);
             await LoadAsync(userId);
             return Page();
         }
 
-        if (MakeDefault)
-        {
-            var current = await _db.PaymentMethods.Where(p => p.UserId == userId && p.IsDefault).ToListAsync();
-            foreach (var c in current) c.IsDefault = false;
-        }
-
-        _db.PaymentMethods.Add(new PaymentMethod
-        {
-            UserId = userId,
-            Brand = result.Brand == CardValidator.CardBrand.Unknown
-                ? _L["Pay_BrandUnknown"].Value
-                : result.BrandName,
-            Last4 = result.Last4,
-            HolderName = result.HolderName,
-            ExpMonth = result.ExpMonth,
-            ExpYear = result.ExpYear,
-            IsDefault = MakeDefault || !await _db.PaymentMethods.AnyAsync(p => p.UserId == userId)
-        });
-
-        await _db.SaveChangesAsync();
         return RedirectAfterMutation();
     }
 
@@ -103,13 +95,7 @@ public class PaymentMethodsModel : PageModel
 
         BackHref = ResolveBackHref();
 
-        var pm = await _db.PaymentMethods.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
-        if (pm != null)
-        {
-            _db.PaymentMethods.Remove(pm);
-            await _db.SaveChangesAsync();
-        }
-
+        await _deletePaymentMethod.HandleAsync(new DeletePaymentMethodCommand(userId, id));
         return RedirectAfterMutation();
     }
 
@@ -210,8 +196,5 @@ public class PaymentMethodsModel : PageModel
     };
 
     private async Task LoadAsync(int userId) =>
-        Items = await _db.PaymentMethods
-            .Where(p => p.UserId == userId)
-            .OrderByDescending(p => p.IsDefault)
-            .ToListAsync();
+        Items = await _getPaymentMethods.HandleAsync(new GetPaymentMethodsQuery(userId));
 }
