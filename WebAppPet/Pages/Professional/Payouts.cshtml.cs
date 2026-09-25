@@ -56,27 +56,24 @@ public class PayoutsModel : PageModel
     public async Task<IActionResult> OnPostGenerateAsync()
     {
         if (!await EnsureProviderAsync()) return RedirectToPage("/Account/Login");
-        try
+        var result = await _generatePayout.HandleAsync(new GeneratePayoutCommand(
+            _auth.CurrentUserId!.Value,
+            PeriodStart.ToUniversalTime(),
+            PeriodEnd.ToUniversalTime()));
+        if (result.Success)
         {
-            var result = await _generatePayout.HandleAsync(new GeneratePayoutCommand(
-                _auth.CurrentUserId!.Value,
-                PeriodStart.ToUniversalTime(),
-                PeriodEnd.ToUniversalTime()));
-            if (result.InvalidPeriod)
-            {
-                Error = _L["Payout_PeriodEndError"].Value;
-            }
-            else
-            {
-                Message = string.Format(
-                    _L["Payout_SummaryCreated"].Value,
-                    AppMoney.Format(result.Payout!.NetAmountUsd),
-                    result.Payout.ConsultationCount);
-            }
+            Message = string.Format(
+                _L["Payout_SummaryCreated"].Value,
+                AppMoney.Format(result.Payout!.NetAmountUsd),
+                result.Payout.ConsultationCount);
         }
-        catch (Exception ex)
+        else
         {
-            Error = ex.Message;
+            Error = result.Error switch
+            {
+                GeneratePayoutError.PeriodOverlap => _L["Payout_PeriodOverlap"].Value,
+                _ => _L["Payout_PeriodEndError"].Value
+            };
         }
 
         await LoadAsync();

@@ -27,8 +27,29 @@ public class PayoutHandlersTests
         var result = await new GeneratePayoutHandler(Service(db))
             .HandleAsync(new GeneratePayoutCommand(business.UserId, PeriodEnd, PeriodStart));
 
-        Assert.True(result.InvalidPeriod);
+        Assert.Equal(GeneratePayoutError.InvalidPeriod, result.Error);
         Assert.Empty(db.ProviderPayouts);
+    }
+
+    [Fact]
+    public async Task Generating_reports_an_overlap_with_a_summary_that_has_items()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        var booking = TestData.AddAppointment(db, TestData.AddUser(db), business,
+            AppointmentStatus.Confirmed, PeriodStart.AddDays(5));
+        booking.CreatedAt = PeriodStart.AddDays(3);
+        db.SaveChanges();
+        var handler = new GeneratePayoutHandler(Service(db));
+        await handler.HandleAsync(new GeneratePayoutCommand(business.UserId, PeriodStart, PeriodEnd));
+
+        var result = await handler.HandleAsync(
+            new GeneratePayoutCommand(business.UserId, PeriodStart.AddDays(2), PeriodEnd.AddDays(2)));
+
+        Assert.Equal(GeneratePayoutError.PeriodOverlap, result.Error);
+        Assert.Null(result.Payout);
+        Assert.Single(db.ProviderPayouts);
     }
 
     [Fact]
@@ -41,7 +62,7 @@ public class PayoutHandlersTests
         var result = await new GeneratePayoutHandler(Service(db))
             .HandleAsync(new GeneratePayoutCommand(business.UserId, PeriodStart, PeriodEnd));
 
-        Assert.False(result.InvalidPeriod);
+        Assert.True(result.Success);
         Assert.Equal(ProviderPayoutStatus.Pending, result.Payout!.Status);
         Assert.Equal(business.UserId, Assert.Single(db.AuditLogs).ActorUserId);
     }

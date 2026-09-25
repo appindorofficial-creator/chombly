@@ -96,7 +96,7 @@ public class ProviderPayoutServiceTests
         Assert.Equal(40m, payout.NetAmountUsd);
         Assert.Equal(1, payout.ConsultationCount);
         Assert.Null(payout.Notes);
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<PayoutPeriodOverlapException>(() =>
             Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart.AddDays(5), PeriodEnd.AddDays(5)));
     }
 

@@ -262,7 +262,7 @@ public class ProviderPayoutService
                         p.PeriodEnd > periodStart)
             .ToListAsync(ct);
         if (overlap.Any(p => p.ConsultationCount > 0 || p.GrossAmountUsd > 0))
-            throw new InvalidOperationException("A payout already exists for an overlapping period.");
+            throw new PayoutPeriodOverlapException();
 
         foreach (var empty in overlap.Where(p => p.ConsultationCount == 0 && p.GrossAmountUsd == 0))
         {
