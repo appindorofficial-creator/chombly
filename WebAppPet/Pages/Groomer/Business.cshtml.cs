@@ -7,6 +7,7 @@ using WebAppPet.Application.Businesses.AddService;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.UpdateBusiness;
 using WebAppPet.Data;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -49,8 +50,8 @@ public class BusinessModel : GroomerPageModel
     [BindProperty] public List<int> CategoryIds { get; set; } = new();
     [BindProperty] public string Address { get; set; } = "";
     [BindProperty] public string City { get; set; } = "";
-    [BindProperty] public double Latitude { get; set; }
-    [BindProperty] public double Longitude { get; set; }
+    [BindProperty, ModelBinder(typeof(InvariantCoordinateBinder))] public double Latitude { get; set; }
+    [BindProperty, ModelBinder(typeof(InvariantCoordinateBinder))] public double Longitude { get; set; }
     [BindProperty] public string About { get; set; } = "";
     [BindProperty] public string? Phone { get; set; }
     [BindProperty] public string? ImageUrl { get; set; }

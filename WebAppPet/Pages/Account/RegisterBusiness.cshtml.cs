@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using WebAppPet.Application.Businesses.CreateBusiness;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Data;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -54,8 +55,8 @@ public class RegisterBusinessModel : PageModel
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string City { get; set; } = string.Empty;
     [BindProperty] public string Address { get; set; } = string.Empty;
-    [BindProperty] public double Latitude { get; set; }
-    [BindProperty] public double Longitude { get; set; }
+    [BindProperty, ModelBinder(typeof(InvariantCoordinateBinder))] public double Latitude { get; set; }
+    [BindProperty, ModelBinder(typeof(InvariantCoordinateBinder))] public double Longitude { get; set; }
     [BindProperty] public int CategoryId { get; set; }
     [BindProperty] public List<int> CategoryIds { get; set; } = new();
     [BindProperty] public string WorkModeKey { get; set; } = "local";
