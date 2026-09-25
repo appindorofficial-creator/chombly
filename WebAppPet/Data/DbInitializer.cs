@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Infrastructure.Security;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -1027,7 +1028,7 @@ public static class DbInitializer
             {
                 FullName = name,
                 Email = email,
-                PasswordHash = Services.PasswordHasher.Hash("123456"),
+                PasswordHash = PasswordHasher.Hash("123456"),
                 City = "Charlotte, NC",
                 CountryCode = "US",
                 Role = UserRole.Groomer,
@@ -1421,7 +1422,7 @@ public static class DbInitializer
             {
                 FullName = name,
                 Email = email,
-                PasswordHash = Services.PasswordHasher.Hash("123456"),
+                PasswordHash = PasswordHasher.Hash("123456"),
                 City = "Neiva, Huila",
                 Latitude = 2.9275,
                 Longitude = -75.2875,
@@ -1951,7 +1952,7 @@ public static class DbInitializer
             {
                 FullName = "Admin Chombly",
                 Email = email,
-                PasswordHash = Services.PasswordHasher.Hash("123456"),
+                PasswordHash = PasswordHasher.Hash("123456"),
                 City = "Charlotte, NC",
                 CountryCode = "US",
                 Role = UserRole.Admin,

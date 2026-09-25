@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Security;
 
 public static class PasswordHasher
 {

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using WebAppPet.Data;
+using WebAppPet.Infrastructure.Security;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;

@@ -2,9 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Accounts.Login;
 using WebAppPet.Localization;
 using WebAppPet.Services;
 
@@ -12,13 +11,13 @@ namespace WebAppPet.Pages.Account;
 
 public class LoginModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly LoginHandler _login;
     private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public LoginModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public LoginModel(LoginHandler login, AuthService auth, IStringLocalizer<SharedResource> L)
     {
-        _db = db;
+        _login = login;
         _auth = auth;
         _L = L;
     }
@@ -60,15 +59,12 @@ public class LoginModel : PageModel
         Culture = CultureCookie.Normalize(Culture);
         CultureCookie.Set(Response, Culture);
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == Email);
-        if (user == null || !PasswordHasher.Verify(Password, user.PasswordHash))
+        var result = await _login.HandleAsync(new LoginCommand(Email, Password, Culture));
+        if (result.User is not { } user)
         {
             ErrorMessage = _L["Login_Error"].Value;
             return Page();
         }
-
-        user.PreferredLanguage = Culture;
-        await _db.SaveChangesAsync();
 
         await _auth.SignInAsync(user);
 

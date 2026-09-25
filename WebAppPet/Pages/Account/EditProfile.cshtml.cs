@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Accounts.Shared;
+using WebAppPet.Application.Accounts.UpdateProfile;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Services;
@@ -14,12 +15,18 @@ namespace WebAppPet.Pages.Account;
 public class EditProfileModel : PageModel
 {
     private readonly AppDbContext _db;
+    private readonly UpdateProfileHandler _updateProfile;
     private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public EditProfileModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public EditProfileModel(
+        AppDbContext db,
+        UpdateProfileHandler updateProfile,
+        AuthService auth,
+        IStringLocalizer<SharedResource> L)
     {
         _db = db;
+        _updateProfile = updateProfile;
         _auth = auth;
         _L = L;
     }
@@ -56,7 +63,7 @@ public class EditProfileModel : PageModel
         if (_auth.CurrentUserId is not int id)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Account/EditProfile" });
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
         if (user == null)
             return RedirectToPage("/Account/Login");
 
@@ -64,8 +71,8 @@ public class EditProfileModel : PageModel
         Email = user.Email;
         Phone = user.Phone;
         City = user.City;
-        Latitude = user.Latitude?.ToString("0.######", CultureInfo.InvariantCulture);
-        Longitude = user.Longitude?.ToString("0.######", CultureInfo.InvariantCulture);
+        Latitude = Coordinates.Format(user.Latitude);
+        Longitude = Coordinates.Format(user.Longitude);
         return Page();
     }
 
@@ -74,136 +81,39 @@ public class EditProfileModel : PageModel
         if (_auth.CurrentUserId is not int id)
             return RedirectToPage("/Account/Login");
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
-        if (user == null)
+        var result = await _updateProfile.HandleAsync(new UpdateProfileCommand(
+            id, FullName, Email, Phone, City, Latitude, Longitude, NewPassword, ConfirmPassword));
+
+        if (result.Error == UpdateProfileError.NotFound)
             return RedirectToPage("/Account/Login");
 
-        FullName = (FullName ?? "").Trim();
-        Email = (Email ?? "").Trim().ToLowerInvariant();
-        Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone.Trim();
-        City = (City ?? "").Trim();
-
-        if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm))
+        if (result.User is not { } user)
         {
-            ErrorMessage = _L["Phone_Invalid"].Value;
-            return Page();
-        }
-        Phone = phoneNorm;
-
-        if (string.IsNullOrWhiteSpace(FullName))
-        {
-            ErrorMessage = _L["Profile_Edit_NameRequired"].Value;
-            return Page();
-        }
-
-        if (string.IsNullOrWhiteSpace(Email) || !new EmailAddressAttribute().IsValid(Email))
-        {
-            ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
-            return Page();
-        }
-
-        var emailTaken = await _db.Users.AnyAsync(u => u.Email == Email && u.Id != id);
-        if (emailTaken)
-        {
-            ErrorMessage = _L["Profile_Edit_EmailTaken"].Value;
-            return Page();
-        }
-
-        if (!TryResolveCityCoordinates(user, out var lat, out var lng, out var cityError))
-        {
-            ErrorMessage = cityError;
-            return Page();
-        }
-
-        var changingPassword = !string.IsNullOrWhiteSpace(NewPassword) || !string.IsNullOrWhiteSpace(ConfirmPassword);
-        if (changingPassword)
-        {
-            if (string.IsNullOrWhiteSpace(NewPassword) || !PasswordPolicy.IsValid(NewPassword))
+            ErrorMessage = result.Error switch
             {
-                ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
-                return Page();
-            }
-
-            if (!string.Equals(NewPassword, ConfirmPassword, StringComparison.Ordinal))
-            {
-                ErrorMessage = _L["Profile_Edit_PasswordMismatch"].Value;
-                return Page();
-            }
-
-            user.PasswordHash = PasswordHasher.Hash(NewPassword);
+                UpdateProfileError.PhoneInvalid => _L["Phone_Invalid"].Value,
+                UpdateProfileError.NameRequired => _L["Profile_Edit_NameRequired"].Value,
+                UpdateProfileError.EmailInvalid => _L["Profile_Edit_EmailInvalid"].Value,
+                UpdateProfileError.EmailTaken => _L["Profile_Edit_EmailTaken"].Value,
+                UpdateProfileError.CityLocationRequired => _L["Profile_Edit_CityMapsRequired"].Value,
+                UpdateProfileError.PasswordWeak => _L["Profile_Edit_PasswordShort"].Value,
+                _ => _L["Profile_Edit_PasswordMismatch"].Value
+            };
+            return Page();
         }
 
-        user.FullName = FullName;
-        user.Email = Email;
-        user.Phone = Phone;
-        user.City = City;
-        if (lat is not null && lng is not null)
-        {
-            user.Latitude = lat;
-            user.Longitude = lng;
-            user.LocationUpdatedAt = DateTime.UtcNow;
-            MarketCountry.ApplyFromLocation(user);
-        }
-        else if (string.IsNullOrWhiteSpace(user.CountryCode))
-        {
-            MarketCountry.ApplyFromLocation(user);
-        }
-
-        await _db.SaveChangesAsync();
         await _auth.SignInAsync(user);
 
         SuccessMessage = _L["Profile_Edit_Saved"].Value;
         AppFlash.Toast(this, "✓ " + _L["Feedback_Saved"].Value);
+        FullName = user.FullName;
+        Email = user.Email;
+        Phone = user.Phone;
+        City = user.City;
         NewPassword = null;
         ConfirmPassword = null;
-        Latitude = lat?.ToString("0.######", CultureInfo.InvariantCulture);
-        Longitude = lng?.ToString("0.######", CultureInfo.InvariantCulture);
+        Latitude = Coordinates.Format(result.Latitude);
+        Longitude = Coordinates.Format(result.Longitude);
         return Page();
-    }
-
-    private bool TryResolveCityCoordinates(Models.AppUser user, out double? lat, out double? lng, out string? error)
-    {
-        lat = null;
-        lng = null;
-        error = null;
-
-        if (string.IsNullOrWhiteSpace(City))
-            return true;
-
-        var parsedLat = TryParseCoord(Latitude, out var postedLat);
-        var parsedLng = TryParseCoord(Longitude, out var postedLng);
-        var hasPostedCoords = parsedLat && parsedLng && IsValidCoordPair(postedLat, postedLng);
-        var cityUnchanged = string.Equals(City, user.City?.Trim(), StringComparison.OrdinalIgnoreCase);
-        var hasStoredCoords = user.Latitude is double slat && user.Longitude is double slng
-                              && IsValidCoordPair(slat, slng);
-
-        if (hasPostedCoords)
-        {
-            lat = postedLat;
-            lng = postedLng;
-            return true;
-        }
-
-        // Ciudad sin cambiar y ya había GPS/coords: conservar.
-        if (cityUnchanged && hasStoredCoords)
-        {
-            lat = user.Latitude;
-            lng = user.Longitude;
-            return true;
-        }
-
-        error = _L["Profile_Edit_CityMapsRequired"].Value;
-        return false;
-    }
-
-    private static bool IsValidCoordPair(double lat, double lng) =>
-        lat is >= -90 and <= 90 && lng is >= -180 and <= 180 && !(lat == 0 && lng == 0);
-
-    private static bool TryParseCoord(string? value, out double result)
-    {
-        result = 0;
-        if (string.IsNullOrWhiteSpace(value)) return false;
-        value = value.Trim().Replace(',', '.');
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }
 }
