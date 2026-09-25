@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Data;
 using WebAppPet.Models;
@@ -126,20 +127,13 @@ public class IndexModel : PageModel
 
         Results = list.Select(g =>
         {
-            string? distance = null;
-            double? sortKm = null;
-            if (userLat != null && userLng != null && (g.Latitude != 0 || g.Longitude != 0))
-            {
-                sortKm = GeoHelper.KmBetween(userLat.Value, userLng.Value, g.Latitude, g.Longitude);
-                distance = GeoHelper.FormatDistanceOrPlace(sortKm, g.City, g.Address);
-            }
-
+            var (miles, distance) = BusinessListing.DistanceFrom(userLat, userLng, g);
             var available = todayMap.GetValueOrDefault(g.Id, false);
             return new BusinessCardVm
             {
                 Business = g,
                 DistanceLabel = distance,
-                SortKm = sortKm,
+                SortKm = miles * 1.609344,
                 AvailableToday = available
             };
         }).ToList();

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
-using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -17,20 +17,20 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly AvailabilityService _availability;
+    private readonly SearchBusinessesHandler _search;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
 
     public IndexModel(
         AppDbContext db,
         AuthService auth,
-        AvailabilityService availability,
+        SearchBusinessesHandler search,
         ApplyPromoCodeHandler promo,
         CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
-        _availability = availability;
+        _search = search;
         _promo = promo;
         _createBooking = createBooking;
     }
@@ -285,61 +285,32 @@ public class IndexModel : PageModel
             SelectedPets = new List<Pet>();
         }
 
-        var daycares = await _db.Groomers
-            .Include(g => g.Category)
-            .Include(g => g.Amenities)
-            .Include(g => g.Services)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.Category != null && g.Category.Slug == "daycare")
-            .OrderByDescending(g => g.IsFeatured)
-            .ThenByDescending(g => g.Rating)
-            .ToListAsync();
-
-        daycares = BusinessMarketResolver.FilterHomeMarket(daycares, AppTimeZones.CurrentCountryCode).ToList();
-
-        if (SelectedPets.Count > 0)
-            daycares = daycares.Where(d => SelectedPets.All(p => d.AcceptsSpecies(p.Species))).ToList();
-        else
-            daycares = new List<GroomerProfile>();
-
-        var todayMap = await _availability.TodayMapAsync(daycares.Select(d => d.Id));
-
         // Calendar-day availability (open that weekday), not "open right now".
-        if (HasDate && day.Date == AppTimeZones.TodayLocalDate())
-        {
-            var openToday = new List<GroomerProfile>();
-            foreach (var d in daycares)
-            {
-                if (await _availability.IsAvailableOnAsync(d.Id, day.Date))
-                    openToday.Add(d);
-            }
-            daycares = openToday;
-        }
+        var matches = await _search.HandleAsync(new SearchBusinessesQuery(
+            "daycare",
+            AppTimeZones.CurrentCountryCode,
+            SelectedPets.Select(p => p.Species).ToList(),
+            OpenOn: HasDate && day.Date == AppTimeZones.TodayLocalDate() ? day.Date : null,
+            UserLatitude: userLat,
+            UserLongitude: userLng));
 
         if (Prefs.Contains("grandes"))
-            daycares = daycares.Where(d =>
-                d.Amenities.Any(a => a.Label.Contains("grande", StringComparison.OrdinalIgnoreCase))
-                || d.AcceptsSpecies(PetSpecies.Dog)).ToList();
+            matches = matches.Where(m =>
+                m.Business.Amenities.Any(a => a.Label.Contains("grande", StringComparison.OrdinalIgnoreCase))
+                || m.Business.AcceptsSpecies(PetSpecies.Dog)).ToList();
 
         if (Prefs.Contains("juego"))
-            daycares = daycares.Where(d => AmenityMatch(d, "juego", "play", "patio", "área")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "juego", "play", "patio", "área")).ToList();
 
         if (Prefs.Contains("siesta"))
-            daycares = daycares.Where(d => AmenityMatch(d, "siesta", "descanso", "nap", "quiet")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "siesta", "descanso", "nap", "quiet")).ToList();
 
         if (Prefs.Contains("camaras"))
-            daycares = daycares.Where(d => AmenityMatch(d, "cámara", "camara", "cam", "vivo")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "cámara", "camara", "cam", "vivo")).ToList();
 
-        Results = daycares.Select(d =>
+        Results = matches.Select(m =>
         {
-            double? miles = null;
-            string? dist = null;
-            if (userLat != null && userLng != null && (d.Latitude != 0 || d.Longitude != 0))
-            {
-                miles = GeoHelper.MilesBetween(userLat.Value, userLng.Value, d.Latitude, d.Longitude);
-                var km = miles is null ? null : miles * 1.609344;
-                dist = GeoHelper.FormatDistanceOrPlace(km, d.City, d.Address);
-            }
-
+            var d = m.Business;
             var svc = PickService(d.Services);
             var price = svc != null
                 ? (SelectedPets.Count > 0
@@ -350,24 +321,19 @@ public class IndexModel : PageModel
             return new DaycareCardVm
             {
                 Daycare = d,
-                DistanceLabel = dist,
-                Miles = miles,
+                DistanceLabel = m.DistanceLabel,
+                Miles = m.Miles,
                 StartingPrice = price,
                 PriceUnitLabel = CatalogLocalizer.Loc(
                     Schedule == "medio" ? "/ medio día" : "/ día completo",
                     Schedule == "medio" ? "/ half day" : "/ full day"),
-                AvailableToday = todayMap.GetValueOrDefault(d.Id, false),
+                AvailableToday = m.OpenNow,
                 Features = d.Amenities.OrderBy(a => a.SortOrder).Select(a => a.Label).Take(3).ToList()
             };
         }).ToList();
 
-        if (userLat != null)
-            Results = Results.OrderBy(r => r.Miles ?? double.MaxValue)
-                .ThenByDescending(r => r.Daycare.Rating).ToList();
-
-        HasMore = !More && Results.Count > 3;
-        if (HasMore)
-            Results = Results.Take(3).ToList();
+        Results = BusinessListing.FirstPage(Results, More, out var hasMore);
+        HasMore = hasMore;
 
         if (GroomerId.HasValue && !HasBookingBasics)
             GroomerId = null;
@@ -416,13 +382,6 @@ public class IndexModel : PageModel
         {
             PromoError = promo.ErrorMessage;
         }
-    }
-
-    private static bool AmenityMatch(GroomerProfile d, params string[] keys)
-    {
-        var blob = string.Join(" ", d.Amenities.Select(a => a.Label))
-                   + " " + (d.About ?? "");
-        return keys.Any(k => blob.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
     private GroomerService? PickService(IEnumerable<GroomerService> services)

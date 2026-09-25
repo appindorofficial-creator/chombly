@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
-using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -17,20 +17,20 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly AvailabilityService _availability;
+    private readonly SearchBusinessesHandler _search;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
 
     public IndexModel(
         AppDbContext db,
         AuthService auth,
-        AvailabilityService availability,
+        SearchBusinessesHandler search,
         ApplyPromoCodeHandler promo,
         CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
-        _availability = availability;
+        _search = search;
         _promo = promo;
         _createBooking = createBooking;
     }
@@ -299,62 +299,32 @@ public class IndexModel : PageModel
             SelectedPets = new List<Pet>();
         }
 
-        var walkers = await _db.Groomers
-            .Include(g => g.Category)
-            .Include(g => g.Amenities)
-            .Include(g => g.Services)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.Category != null && g.Category.Slug == "walkers")
-            .OrderByDescending(g => g.IsFeatured)
-            .ThenByDescending(g => g.Rating)
-            .ToListAsync();
-
-        walkers = BusinessMarketResolver.FilterHomeMarket(walkers, AppTimeZones.CurrentCountryCode).ToList();
-
-        walkers = walkers.Where(w => w.AcceptsSpecies(PetSpecies.Dog)).ToList();
-
-        if (SelectedPets.Count > 0)
-            walkers = walkers.Where(w => SelectedPets.All(p => w.AcceptsSpecies(p.Species))).ToList();
-        else
-            walkers = new List<GroomerProfile>();
-
-        var todayMap = await _availability.TodayMapAsync(walkers.Select(w => w.Id));
-
         // Calendar-day availability (open that weekday), not "open right now".
-        if (HasDate && day.Date == AppTimeZones.TodayLocalDate())
-        {
-            var openToday = new List<GroomerProfile>();
-            foreach (var w in walkers)
-            {
-                if (await _availability.IsAvailableOnAsync(w.Id, day.Date))
-                    openToday.Add(w);
-            }
-            walkers = openToday;
-        }
+        var matches = await _search.HandleAsync(new SearchBusinessesQuery(
+            "walkers",
+            AppTimeZones.CurrentCountryCode,
+            SelectedPets.Select(p => p.Species).ToList(),
+            RequiredSpecies: PetSpecies.Dog,
+            OpenOn: HasDate && day.Date == AppTimeZones.TodayLocalDate() ? day.Date : null,
+            UserLatitude: userLat,
+            UserLongitude: userLng));
 
         if (Prefs.Contains("individual"))
-            walkers = walkers.Where(w => AmenityMatch(w, "individual", "privado", "1 a 1", "uno")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "individual", "privado", "1 a 1", "uno")).ToList();
 
         if (Prefs.Contains("grandes"))
-            walkers = walkers.Where(w =>
-                AmenityMatch(w, "grande") || w.AcceptsSpecies(PetSpecies.Dog)).ToList();
+            matches = matches.Where(m =>
+                BusinessListing.AmenityMatch(m.Business, "grande") || m.Business.AcceptsSpecies(PetSpecies.Dog)).ToList();
 
         if (Prefs.Contains("escaleras"))
-            walkers = walkers.Where(w => AmenityMatch(w, "escalera", "elevator", "ascensor", "sin escaleras")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "escalera", "elevator", "ascensor", "sin escaleras")).ToList();
 
         if (Prefs.Contains("foto"))
-            walkers = walkers.Where(w => AmenityMatch(w, "foto", "photo", "gps", "actualiz")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "foto", "photo", "gps", "actualiz")).ToList();
 
-        Results = walkers.Select(w =>
+        Results = matches.Select(m =>
         {
-            double? miles = null;
-            string? dist = null;
-            if (userLat != null && userLng != null && (w.Latitude != 0 || w.Longitude != 0))
-            {
-                miles = GeoHelper.MilesBetween(userLat.Value, userLng.Value, w.Latitude, w.Longitude);
-                var km = miles is null ? null : miles * 1.609344;
-                dist = GeoHelper.FormatDistanceOrPlace(km, w.City, w.Address);
-            }
-
+            var w = m.Business;
             var svc = PickService(w.Services);
             var mins = PricingMinutes;
             var price = svc != null
@@ -366,20 +336,15 @@ public class IndexModel : PageModel
             return new WalkerCardVm
             {
                 Walker = w,
-                DistanceLabel = dist,
-                Miles = miles,
+                DistanceLabel = m.DistanceLabel,
+                Miles = m.Miles,
                 Price = price,
-                AvailableToday = todayMap.GetValueOrDefault(w.Id, false)
+                AvailableToday = m.OpenNow
             };
         }).ToList();
 
-        if (userLat != null)
-            Results = Results.OrderBy(r => r.Miles ?? double.MaxValue)
-                .ThenByDescending(r => r.Walker.Rating).ToList();
-
-        HasMore = !More && Results.Count > 3;
-        if (HasMore)
-            Results = Results.Take(3).ToList();
+        Results = BusinessListing.FirstPage(Results, More, out var hasMore);
+        HasMore = hasMore;
 
         // Don't keep a walker selection (or confirm sheet) until when/time/duration/pet are set.
         if (GroomerId.HasValue && !HasBookingBasics)
@@ -423,12 +388,6 @@ public class IndexModel : PageModel
         {
             PromoError = promo.ErrorMessage;
         }
-    }
-
-    private static bool AmenityMatch(GroomerProfile w, params string[] keys)
-    {
-        var blob = string.Join(" ", w.Amenities.Select(a => a.Label)) + " " + (w.About ?? "");
-        return keys.Any(k => blob.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>Minutes used for estimates when the user has not picked a duration yet.</summary>

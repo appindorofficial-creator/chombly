@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
-using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
@@ -17,20 +17,20 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly AvailabilityService _availability;
+    private readonly SearchBusinessesHandler _search;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
 
     public IndexModel(
         AppDbContext db,
         AuthService auth,
-        AvailabilityService availability,
+        SearchBusinessesHandler search,
         ApplyPromoCodeHandler promo,
         CreateBookingHandler createBooking)
     {
         _db = db;
         _auth = auth;
-        _availability = availability;
+        _search = search;
         _promo = promo;
         _createBooking = createBooking;
     }
@@ -333,50 +333,31 @@ public class IndexModel : PageModel
             SelectedPets = new List<Pet>();
         }
 
-        var trainers = await _db.Groomers
-            .Include(g => g.Category)
-            .Include(g => g.Amenities)
-            .Include(g => g.Services)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.Category != null && g.Category.Slug == "trainers")
-            .OrderByDescending(g => g.IsFeatured)
-            .ThenByDescending(g => g.Rating)
-            .ToListAsync();
-
-        trainers = BusinessMarketResolver.FilterHomeMarket(trainers, AppTimeZones.CurrentCountryCode).ToList();
-
-        if (SelectedPets.Count > 0)
-            trainers = trainers.Where(t => SelectedPets.All(p => t.AcceptsSpecies(p.Species))).ToList();
-        else
-            trainers = new List<GroomerProfile>();
-
-        var todayMap = await _availability.TodayMapAsync(trainers.Select(t => t.Id));
+        var matches = await _search.HandleAsync(new SearchBusinessesQuery(
+            "trainers",
+            AppTimeZones.CurrentCountryCode,
+            SelectedPets.Select(p => p.Species).ToList(),
+            UserLatitude: userLat,
+            UserLongitude: userLng));
 
         // Filtrar por modalidad (domicilio / centro / virtual)
-        trainers = trainers.Where(t => MatchesPlace(t)).ToList();
+        matches = matches.Where(m => MatchesPlace(m.Business)).ToList();
 
         if (Prefs.Contains("certificado"))
-            trainers = trainers.Where(t => AmenityMatch(t, "certific", "certificado", "certified")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "certific", "certificado", "certified")).ToList();
 
         if (Prefs.Contains("raza"))
-            trainers = trainers.Where(t => AmenityMatch(t, "raza", "breed", "experiencia")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "raza", "breed", "experiencia")).ToList();
 
         if (Prefs.Contains("parque"))
-            trainers = trainers.Where(t => AmenityMatch(t, "parque", "park")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "parque", "park")).ToList();
 
         if (Prefs.Contains("flexible"))
-            trainers = trainers.Where(t => AmenityMatch(t, "flexible", "horario")).ToList();
+            matches = matches.Where(m => BusinessListing.AmenityMatch(m.Business, "flexible", "horario")).ToList();
 
-        Results = trainers.Select(t =>
+        Results = matches.Select(m =>
         {
-            double? miles = null;
-            string? dist = null;
-            if (userLat != null && userLng != null && (t.Latitude != 0 || t.Longitude != 0))
-            {
-                miles = GeoHelper.MilesBetween(userLat.Value, userLng.Value, t.Latitude, t.Longitude);
-                var km = miles is null ? null : miles * 1.609344;
-                dist = GeoHelper.FormatDistanceOrPlace(km, t.City, t.Address);
-            }
-
+            var t = m.Business;
             var svc = PickService(t.Services);
             var unit = svc != null
                 ? (SelectedPets.Count > 0
@@ -387,21 +368,16 @@ public class IndexModel : PageModel
             return new TrainerCardVm
             {
                 Trainer = t,
-                DistanceLabel = dist,
-                Miles = miles,
+                DistanceLabel = m.DistanceLabel,
+                Miles = m.Miles,
                 UnitPrice = unit,
-                AvailableToday = todayMap.GetValueOrDefault(t.Id, false),
-                AvailabilityLabel = todayMap.GetValueOrDefault(t.Id, false) ? "Abierto ahora" : "Cerrado ahora"
+                AvailableToday = m.OpenNow,
+                AvailabilityLabel = m.OpenNow ? "Abierto ahora" : "Cerrado ahora"
             };
         }).ToList();
 
-        if (userLat != null)
-            Results = Results.OrderBy(r => r.Miles ?? double.MaxValue)
-                .ThenByDescending(r => r.Trainer.Rating).ToList();
-
-        HasMore = !More && Results.Count > 3;
-        if (HasMore)
-            Results = Results.Take(3).ToList();
+        Results = BusinessListing.FirstPage(Results, More, out var hasMore);
+        HasMore = hasMore;
 
         if (GroomerId.HasValue && !HasBookingBasics)
             GroomerId = null;
@@ -453,23 +429,17 @@ public class IndexModel : PageModel
     {
         return Place switch
         {
-            "domicilio" => AmenityMatch(t, "domicilio", "home", "casa")
+            "domicilio" => BusinessListing.AmenityMatch(t, "domicilio", "home", "casa")
                            || t.Type == GroomerType.InHome || t.Type == GroomerType.Mobile
                            || t.Amenities.Count == 0,
-            "centro" => AmenityMatch(t, "centro", "lugar", "salon", "salón")
+            "centro" => BusinessListing.AmenityMatch(t, "centro", "lugar", "salon", "salón")
                         || t.Type == GroomerType.Salon
                         || t.Amenities.Count == 0,
-            "virtual" => AmenityMatch(t, "virtual", "online", "zoom", "remoto")
+            "virtual" => BusinessListing.AmenityMatch(t, "virtual", "online", "zoom", "remoto")
                          || (t.About?.Contains("virtual", StringComparison.OrdinalIgnoreCase) ?? false)
                          || t.Amenities.Count == 0,
             _ => true
         };
-    }
-
-    private static bool AmenityMatch(GroomerProfile t, params string[] keys)
-    {
-        var blob = string.Join(" ", t.Amenities.Select(a => a.Label)) + " " + (t.About ?? "");
-        return keys.Any(k => blob.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
     private GroomerService? PickService(IEnumerable<GroomerService> services)

@@ -16,6 +16,7 @@ using WebAppPet.Application.Businesses.GetAvailability;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
 using WebAppPet.Application.Businesses.SaveWeeklySchedule;
+using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
 using WebAppPet.Application.Businesses.UpdateBusiness;
@@ -57,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<GetAvailabilityHandler>();
         services.AddScoped<SaveWeeklyScheduleHandler>();
         services.AddScoped<ToggleAvailabilityDayHandler>();
+        services.AddScoped<SearchBusinessesHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
@@ -320,7 +321,7 @@ public class IndexModel : PageModel
 
         // Results must accept every selected pet species.
         if (SelectedPets.Count > 0)
-            hotels = hotels.Where(h => SelectedPets.All(p => h.AcceptsSpecies(p.Species))).ToList();
+            hotels = hotels.Where(h => BusinessListing.AcceptsAll(h, SelectedPets.Select(p => p.Species))).ToList();
         else
             hotels = new List<GroomerProfile>();
 
@@ -347,24 +348,13 @@ public class IndexModel : PageModel
         // Calendar-day availability for check-in "hoy", not "open right now".
         if (string.Equals(When, "hoy", StringComparison.OrdinalIgnoreCase))
         {
-            var openToday = new List<GroomerProfile>();
-            foreach (var h in hotels)
-            {
-                if (await _availability.IsAvailableOnAsync(h.Id, cin.Date))
-                    openToday.Add(h);
-            }
-            hotels = openToday;
+            var openToday = await _availability.OpenOnAsync(hotels.Select(h => h.Id), cin.Date);
+            hotels = hotels.Where(h => openToday.Contains(h.Id)).ToList();
         }
 
         Results = hotels.Select(h =>
         {
-            string? dist = null;
-            if (userLat != null && userLng != null && (h.Latitude != 0 || h.Longitude != 0))
-            {
-                var km = GeoHelper.KmBetween(userLat.Value, userLng.Value, h.Latitude, h.Longitude);
-                dist = GeoHelper.FormatDistanceOrPlace(km, h.City, h.Address);
-            }
-
+            var (_, dist) = BusinessListing.DistanceFrom(userLat, userLng, h);
             var svc = h.Services.OrderBy(s => s.PriceSmall).FirstOrDefault();
             return new HotelCardVm
             {
@@ -388,8 +378,7 @@ public class IndexModel : PageModel
                 .ToList();
 
         ShowAll = More;
-        if (!More && Results.Count > 3)
-            Results = Results.Take(3).ToList();
+        Results = BusinessListing.FirstPage(Results, More, out _);
 
         if (GroomerId.HasValue)
         {
