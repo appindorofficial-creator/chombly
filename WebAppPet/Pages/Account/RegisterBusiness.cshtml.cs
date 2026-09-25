@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Data;
 using WebAppPet.Infrastructure.Security;
 using WebAppPet.Localization;

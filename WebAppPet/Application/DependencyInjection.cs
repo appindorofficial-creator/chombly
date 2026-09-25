@@ -11,8 +11,12 @@ using WebAppPet.Application.Businesses.AddAmenity;
 using WebAppPet.Application.Businesses.AddExtra;
 using WebAppPet.Application.Businesses.AddService;
 using WebAppPet.Application.Businesses.ApproveBusiness;
+using WebAppPet.Application.Businesses.GetAvailability;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
+using WebAppPet.Application.Businesses.SaveWeeklySchedule;
+using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
 using WebAppPet.Application.Businesses.UpdateBusiness;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
@@ -40,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<GetClientBookingsHandler>();
         services.AddScoped<GetBusinessBookingsHandler>();
 
+        services.AddScoped<AvailabilityService>();
         services.AddScoped<ApproveBusinessHandler>();
         services.AddScoped<RejectBusinessHandler>();
         services.AddScoped<GetPendingBusinessesHandler>();
@@ -47,6 +52,9 @@ public static class DependencyInjection
         services.AddScoped<AddAmenityHandler>();
         services.AddScoped<AddExtraHandler>();
         services.AddScoped<AddServiceHandler>();
+        services.AddScoped<GetAvailabilityHandler>();
+        services.AddScoped<SaveWeeklyScheduleHandler>();
+        services.AddScoped<ToggleAvailabilityDayHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();
