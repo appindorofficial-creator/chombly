@@ -43,7 +43,6 @@ builder.Services.AddScoped<ConsultationFlowService>();
 builder.Services.AddScoped<ChomblyCareService>();
 builder.Services.AddScoped<BehaviorFlowService>();
 builder.Services.AddScoped<CountryCatalogService>();
-builder.Services.AddScoped<ProviderPayoutService>();
 builder.Services.AddScoped<ProfessionalOnboardingService>();
 builder.Services.AddScoped<ReminderEngineService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();

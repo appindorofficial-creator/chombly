@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Payments.GeneratePayout;
+using WebAppPet.Application.Payments.GetProviderPayouts;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -13,18 +16,21 @@ public class PayoutsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ProviderPayoutService _payouts;
+    private readonly GetProviderPayoutsHandler _getPayouts;
+    private readonly GeneratePayoutHandler _generatePayout;
     private readonly IStringLocalizer<SharedResource> _L;
 
     public PayoutsModel(
         AppDbContext db,
         AuthService auth,
-        ProviderPayoutService payouts,
+        GetProviderPayoutsHandler getPayouts,
+        GeneratePayoutHandler generatePayout,
         IStringLocalizer<SharedResource> L)
     {
         _db = db;
         _auth = auth;
-        _payouts = payouts;
+        _getPayouts = getPayouts;
+        _generatePayout = generatePayout;
         _L = L;
     }
 
@@ -50,28 +56,24 @@ public class PayoutsModel : PageModel
     public async Task<IActionResult> OnPostGenerateAsync()
     {
         if (!await EnsureProviderAsync()) return RedirectToPage("/Account/Login");
-        try
+        var result = await _generatePayout.HandleAsync(new GeneratePayoutCommand(
+            _auth.CurrentUserId!.Value,
+            PeriodStart.ToUniversalTime(),
+            PeriodEnd.ToUniversalTime()));
+        if (result.Success)
         {
-            if (PeriodEnd <= PeriodStart)
-            {
-                Error = _L["Payout_PeriodEndError"].Value;
-            }
-            else
-            {
-                var payout = await _payouts.CreatePendingPayoutAsync(
-                    _auth.CurrentUserId!.Value,
-                    PeriodStart.ToUniversalTime(),
-                    PeriodEnd.ToUniversalTime(),
-                    _auth.CurrentUserId);
-                Message = string.Format(
-                    _L["Payout_SummaryCreated"].Value,
-                    AppMoney.Format(payout.NetAmountUsd),
-                    payout.ConsultationCount);
-            }
+            Message = string.Format(
+                _L["Payout_SummaryCreated"].Value,
+                AppMoney.Format(result.Payout!.NetAmountUsd),
+                result.Payout.ConsultationCount);
         }
-        catch (Exception ex)
+        else
         {
-            Error = ex.Message;
+            Error = result.Error switch
+            {
+                GeneratePayoutError.PeriodOverlap => _L["Payout_PeriodOverlap"].Value,
+                _ => _L["Payout_PeriodEndError"].Value
+            };
         }
 
         await LoadAsync();
@@ -80,11 +82,10 @@ public class PayoutsModel : PageModel
 
     private async Task LoadAsync()
     {
-        var uid = _auth.CurrentUserId!.Value;
-        await _payouts.RefreshPayoutTotalsAsync(uid);
-        Rules = await _payouts.ListRulesForProviderAsync(uid);
-        History = await _payouts.ListForProviderAsync(uid);
-        RecentPayments = await _payouts.ListRecentFamilyPaymentsAsync(uid);
+        var view = await _getPayouts.HandleAsync(new GetProviderPayoutsQuery(_auth.CurrentUserId!.Value));
+        Rules = view.Rules;
+        History = view.History;
+        RecentPayments = view.RecentPayments;
     }
 
     private async Task<bool> EnsureProviderAsync()

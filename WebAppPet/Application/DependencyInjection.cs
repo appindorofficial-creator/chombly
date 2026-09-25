@@ -20,6 +20,14 @@ using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
 using WebAppPet.Application.Businesses.UpdateBusiness;
+using WebAppPet.Application.Payments.AddPaymentMethod;
+using WebAppPet.Application.Payments.DeletePaymentMethod;
+using WebAppPet.Application.Payments.GeneratePayout;
+using WebAppPet.Application.Payments.GetAdminPayouts;
+using WebAppPet.Application.Payments.GetPaymentMethods;
+using WebAppPet.Application.Payments.GetProviderPayouts;
+using WebAppPet.Application.Payments.MarkPayoutPaid;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
@@ -59,6 +67,15 @@ public static class DependencyInjection
         services.AddScoped<SaveWeeklyScheduleHandler>();
         services.AddScoped<ToggleAvailabilityDayHandler>();
         services.AddScoped<SearchBusinessesHandler>();
+
+        services.AddScoped<GetPaymentMethodsHandler>();
+        services.AddScoped<AddPaymentMethodHandler>();
+        services.AddScoped<DeletePaymentMethodHandler>();
+        services.AddScoped<ProviderPayoutService>();
+        services.AddScoped<GeneratePayoutHandler>();
+        services.AddScoped<MarkPayoutPaidHandler>();
+        services.AddScoped<GetProviderPayoutsHandler>();
+        services.AddScoped<GetAdminPayoutsHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();

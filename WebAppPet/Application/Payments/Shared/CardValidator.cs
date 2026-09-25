@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Payments.Shared;
 
 /// <summary>
 /// Format validation for simulated card storage (length, expiry, CVV, holder).
