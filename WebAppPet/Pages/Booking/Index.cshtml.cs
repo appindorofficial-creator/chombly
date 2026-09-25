@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -14,14 +15,14 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly PromoCodeService _promo;
+    private readonly ApplyPromoCodeHandler _promo;
     private readonly AvailabilityService _availability;
     private readonly IStringLocalizer<SharedResource> _L;
 
     public IndexModel(
         AppDbContext db,
         AuthService auth,
-        PromoCodeService promo,
+        ApplyPromoCodeHandler promo,
         AvailabilityService availability,
         IStringLocalizer<SharedResource> L)
     {
@@ -459,7 +460,7 @@ public class IndexModel : PageModel
 
         if (applyPromo)
         {
-            var promo = await _promo.TryApplyAsync(_auth.CurrentUserId, PromoCode, Subtotal);
+            var promo = await _promo.HandleAsync(new ApplyPromoCodeCommand(_auth.CurrentUserId, PromoCode, Subtotal));
             if (!string.IsNullOrWhiteSpace(PromoCode))
             {
                 if (promo.IsValid)

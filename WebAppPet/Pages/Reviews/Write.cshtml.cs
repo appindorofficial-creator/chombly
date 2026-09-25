@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Reviews.CanReview;
+using WebAppPet.Application.Reviews.CreateReview;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -14,13 +16,15 @@ public class WriteModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ReviewService _reviews;
+    private readonly CanReviewHandler _canReview;
+    private readonly CreateReviewHandler _createReview;
 
-    public WriteModel(AppDbContext db, AuthService auth, ReviewService reviews)
+    public WriteModel(AppDbContext db, AuthService auth, CanReviewHandler canReview, CreateReviewHandler createReview)
     {
         _db = db;
         _auth = auth;
-        _reviews = reviews;
+        _canReview = canReview;
+        _createReview = createReview;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -70,11 +74,12 @@ public class WriteModel : PageModel
         if (!CanSubmit || Groomer == null)
             return Page();
 
-        var result = await _reviews.SubmitAsync(userId, GroomerId, Rating, Comment, AppointmentId);
-        if (!result.Ok)
+        var result = await _createReview.HandleAsync(
+            new CreateReviewCommand(userId, GroomerId, Rating, Comment, AppointmentId));
+        if (!result.Success)
         {
             ErrorMessage = result.Error;
-            CanSubmit = await _reviews.CanReviewAsync(userId, GroomerId, AppointmentId);
+            CanSubmit = (await _canReview.HandleAsync(new CanReviewQuery(userId, GroomerId, AppointmentId))).CanReview;
             return Page();
         }
 
@@ -100,10 +105,11 @@ public class WriteModel : PageModel
             return;
         }
 
-        CanSubmit = await _reviews.CanReviewAsync(userId, GroomerId, AppointmentId);
+        var eligibility = await _canReview.HandleAsync(new CanReviewQuery(userId, GroomerId, AppointmentId));
+        CanSubmit = eligibility.CanReview;
         if (!CanSubmit)
         {
-            if (await _reviews.HasReviewedAsync(userId, GroomerId))
+            if (eligibility.AlreadyReviewed)
             {
                 ErrorMessage = CatalogLocalizer.Loc(
                     "Ya valoraste este negocio.",

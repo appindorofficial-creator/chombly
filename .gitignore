@@ -7,5 +7,10 @@ obj/
 appsettings.Development.json
 *.local.db
 *.local.db-*
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+TestResults/
 WebAppPet/wwwroot/uploads/pets/*
 !WebAppPet/wwwroot/uploads/pets/.gitignore

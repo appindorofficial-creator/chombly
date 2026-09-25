@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Reviews.CanReview;
+using WebAppPet.Application.Reviews.GetReviews;
+using WebAppPet.Application.Reviews.Shared;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -12,13 +15,22 @@ public class DetailsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ReviewService _reviews;
+    private readonly GetReviewsHandler _getReviews;
+    private readonly CanReviewHandler _canReview;
+    private readonly RatingCalculator _rating;
 
-    public DetailsModel(AppDbContext db, AuthService auth, ReviewService reviews)
+    public DetailsModel(
+        AppDbContext db,
+        AuthService auth,
+        GetReviewsHandler getReviews,
+        CanReviewHandler canReview,
+        RatingCalculator rating)
     {
         _db = db;
         _auth = auth;
-        _reviews = reviews;
+        _getReviews = getReviews;
+        _canReview = canReview;
+        _rating = rating;
     }
 
     public GroomerProfile? Groomer { get; set; }
@@ -48,13 +60,13 @@ public class DetailsModel : PageModel
         Amenities = await _db.Amenities.Where(a => a.GroomerId == id).OrderBy(a => a.SortOrder).ToListAsync();
         Extras = await _db.ServiceExtras.Where(e => e.GroomerId == id && e.IsActive).OrderBy(e => e.Price).ToListAsync();
         Photos = await _db.GroomerPhotos.Where(p => p.GroomerId == id).ToListAsync();
-        Reviews = await _reviews.ListForGroomerAsync(id, 20);
+        Reviews = await _getReviews.HandleAsync(new GetReviewsQuery(id, 20));
 
         // Keep seeded Rating/ReviewCount aligned with real Reviews rows.
         var realCount = await _db.Reviews.AsNoTracking().CountAsync(r => r.GroomerId == id);
         if (Groomer.ReviewCount != realCount)
         {
-            await _reviews.RecalculateAsync(id);
+            await _rating.RecalculateAsync(id);
             await _db.Entry(Groomer).ReloadAsync();
         }
 
@@ -71,7 +83,7 @@ public class DetailsModel : PageModel
         if (_auth.CurrentUserId is int userId)
         {
             IsFavorite = await _db.Favorites.AnyAsync(f => f.UserId == userId && f.GroomerId == id);
-            CanWriteReview = await _reviews.CanReviewAsync(userId, id);
+            CanWriteReview = (await _canReview.HandleAsync(new CanReviewQuery(userId, id))).CanReview;
         }
 
         return Page();
