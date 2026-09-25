@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Bookings.GetBookings;
 using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
 using WebAppPet.Data;
@@ -15,18 +16,21 @@ public class AppointmentsModel : GroomerPageModel
     private readonly IStringLocalizer<SharedResource> _L;
     private readonly UpdateBookingStatusHandler _updateStatus;
     private readonly SaveClinicalNoteHandler _saveNote;
+    private readonly GetBusinessBookingsHandler _getBookings;
 
     public AppointmentsModel(
         AppDbContext db,
         AuthService auth,
         IStringLocalizer<SharedResource> L,
         UpdateBookingStatusHandler updateStatus,
-        SaveClinicalNoteHandler saveNote)
+        SaveClinicalNoteHandler saveNote,
+        GetBusinessBookingsHandler getBookings)
         : base(db, auth)
     {
         _L = L;
         _updateStatus = updateStatus;
         _saveNote = saveNote;
+        _getBookings = getBookings;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -38,28 +42,13 @@ public class AppointmentsModel : GroomerPageModel
     {
         if (await LoadGroomerAsync() is IActionResult redirect) return redirect;
 
-        var query = Db.Appointments
-            .Include(a => a.Pet)
-            .Include(a => a.Service)
-            .Include(a => a.Client)
-            .Where(a => a.GroomerId == Profile!.Id);
-
-        Items = Tab switch
+        var tab = Tab switch
         {
-            "upcoming" => await query
-                .Where(a => a.Status == AppointmentStatus.Confirmed)
-                .OrderBy(a => a.ScheduledAt)
-                .ToListAsync(),
-            "history" => await query
-                .Where(a => a.Status == AppointmentStatus.Completed || a.Status == AppointmentStatus.Cancelled)
-                .OrderByDescending(a => a.ScheduledAt)
-                .ToListAsync(),
-            _ => await query
-                .Where(a => a.Status == AppointmentStatus.Pending)
-                .OrderBy(a => a.ScheduledAt)
-                .ToListAsync()
+            "upcoming" => BusinessBookingsTab.Upcoming,
+            "history" => BusinessBookingsTab.History,
+            _ => BusinessBookingsTab.Requests
         };
-
+        Items = await _getBookings.HandleAsync(new GetBusinessBookingsQuery(Profile!.Id, tab));
         return Page();
     }
 
