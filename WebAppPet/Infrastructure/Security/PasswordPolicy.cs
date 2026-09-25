@@ -1,4 +1,4 @@
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Security;
 
 /// <summary>
 /// Política de contraseñas nuevas: mín. 6, una mayúscula, un carácter especial; no solo dígitos.

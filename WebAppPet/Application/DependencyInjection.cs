@@ -1,3 +1,6 @@
+using WebAppPet.Application.Accounts.Login;
+using WebAppPet.Application.Accounts.Register;
+using WebAppPet.Application.Accounts.UpdateProfile;
 using WebAppPet.Application.Bookings.CancelBooking;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.GetBookings;
@@ -16,6 +19,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<LoginHandler>();
+        services.AddScoped<RegisterHandler>();
+        services.AddScoped<UpdateProfileHandler>();
+
         services.AddScoped<ApplyPromoCodeHandler>();
 
         services.AddScoped<ClinicalNotes>();

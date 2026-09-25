@@ -1,25 +1,23 @@
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Accounts.Register;
+using WebAppPet.Infrastructure.Security;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Account;
 
 public class RegisterModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly RegisterHandler _register;
     private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
 
-    public RegisterModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public RegisterModel(RegisterHandler register, AuthService auth, IStringLocalizer<SharedResource> L)
     {
-        _db = db;
+        _register = register;
         _auth = auth;
         _L = L;
     }
@@ -65,81 +63,24 @@ public class RegisterModel : PageModel
     {
         BackHref = SafeLocalUrl(ReturnUrl) ?? "/Welcome";
 
-        FullName = (FullName ?? "").Trim();
-        Email = (Email ?? "").Trim().ToLowerInvariant();
-        Phone = (Phone ?? "").Trim();
-        City = (City ?? "").Trim();
+        var result = await _register.HandleAsync(new RegisterCommand(
+            FullName, Email, Phone, City, Latitude, Longitude, Password,
+            DefaultCity: _L["Register_LocationOk"].Value));
 
-        if (string.IsNullOrWhiteSpace(FullName))
+        if (result.User is not { } user)
         {
-            ErrorMessage = _L["Profile_Edit_NameRequired"].Value;
+            ErrorMessage = result.Error switch
+            {
+                RegisterError.NameRequired => _L["Profile_Edit_NameRequired"].Value,
+                RegisterError.EmailInvalid => _L["Profile_Edit_EmailInvalid"].Value,
+                RegisterError.PhoneRequired => _L["Phone_Required"].Value,
+                RegisterError.PhoneInvalid => _L["Phone_Invalid"].Value,
+                RegisterError.PasswordWeak => _L["Profile_Edit_PasswordShort"].Value,
+                RegisterError.LocationRequired => _L["Register_LocationRequired"].Value,
+                _ => _L["Profile_Edit_EmailTaken"].Value
+            };
             return Page();
         }
-
-        if (string.IsNullOrWhiteSpace(Email) || !new EmailAddressAttribute().IsValid(Email))
-        {
-            ErrorMessage = _L["Profile_Edit_EmailInvalid"].Value;
-            return Page();
-        }
-
-        if (string.IsNullOrWhiteSpace(Phone))
-        {
-            ErrorMessage = _L["Phone_Required"].Value;
-            return Page();
-        }
-
-        if (!PhoneValidator.TryNormalize(Phone, out var phoneNorm, required: true))
-        {
-            ErrorMessage = _L["Phone_Invalid"].Value;
-            return Page();
-        }
-
-        if (string.IsNullOrWhiteSpace(Password) || !PasswordPolicy.IsValid(Password))
-        {
-            ErrorMessage = _L["Profile_Edit_PasswordShort"].Value;
-            return Page();
-        }
-
-        if (!TryParseCoords(out var lat, out var lng))
-        {
-            ErrorMessage = _L["Register_LocationRequired"].Value;
-            return Page();
-        }
-
-        if (string.IsNullOrWhiteSpace(City))
-            City = _L["Register_LocationOk"].Value;
-
-        if (await _db.Users.AnyAsync(u => u.Email == Email))
-        {
-            ErrorMessage = _L["Profile_Edit_EmailTaken"].Value;
-            return Page();
-        }
-
-        var user = new AppUser
-        {
-            FullName = FullName,
-            Email = Email,
-            Phone = phoneNorm,
-            City = City,
-            Latitude = lat,
-            Longitude = lng,
-            LocationUpdatedAt = DateTime.UtcNow,
-            PasswordHash = PasswordHasher.Hash(Password),
-            Role = UserRole.Client
-        };
-        MarketCountry.ApplyFromLocation(user);
-
-        _db.Users.Add(user);
-        await _db.SaveChangesAsync();
-
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = user.Id,
-            Title = "¡Bienvenido a Chombly!",
-            Message = "Tu cuenta fue creada. Agrega tu perro, gato u otra mascota y reserva tu primera cita.",
-            Type = "promo"
-        });
-        await _db.SaveChangesAsync();
 
         await _auth.SignInAsync(user);
         TempData["CelebrateRegister"] = "1";
@@ -151,26 +92,5 @@ public class RegisterModel : PageModel
         if (string.IsNullOrWhiteSpace(url)) return null;
         if (Url.IsLocalUrl(url)) return url;
         return null;
-    }
-
-    private bool TryParseCoords(out double lat, out double lng)
-    {
-        lat = 0;
-        lng = 0;
-        if (!TryParseCoord(Latitude, out lat) || !TryParseCoord(Longitude, out lng))
-            return false;
-        if (lat is < -90 or > 90 || lng is < -180 or > 180)
-            return false;
-        if (lat == 0 && lng == 0)
-            return false;
-        return true;
-    }
-
-    private static bool TryParseCoord(string? value, out double result)
-    {
-        result = 0;
-        if (string.IsNullOrWhiteSpace(value)) return false;
-        value = value.Trim().Replace(',', '.');
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }
 }
