@@ -1,26 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Localization;
+using WebAppPet.Application.Consultations.GetLocalVets;
+using WebAppPet.Application.Consultations.SelectLocalVet;
 using WebAppPet.Models;
 using WebAppPet.Services;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Vet.Virtual;
 
 public class ProvidersModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ConsultationFlowService _flow;
-    private readonly ServiceCatalogService _catalog;
+    private readonly GetLocalVetsHandler _getLocalVets;
+    private readonly SelectLocalVetHandler _selectLocalVet;
 
-    public ProvidersModel(AppDbContext db, AuthService auth, ConsultationFlowService flow, ServiceCatalogService catalog)
+    public ProvidersModel(AuthService auth, GetLocalVetsHandler getLocalVets, SelectLocalVetHandler selectLocalVet)
     {
-        _db = db;
         _auth = auth;
-        _flow = flow;
-        _catalog = catalog;
+        _getLocalVets = getLocalVets;
+        _selectLocalVet = selectLocalVet;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -47,97 +45,33 @@ public class ProvidersModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Providers?consultationId={ConsultationId}" });
 
-        Consultation = await _flow.GetOwnedAsync(ConsultationId);
-        if (Consultation is null) return RedirectToPage("/Vet/Index");
+        var options = await _getLocalVets.HandleAsync(new GetLocalVetsQuery(userId, ConsultationId));
+        if (options.Redirect is { } step)
+            return this.RedirectToStep(step, ConsultationId);
 
-        if (!await HomeAllowsUsLocalAsync())
-        {
-            Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
-            Consultation.MatchMode = IntlMatchMode.Best;
-            await _flow.TouchAsync(Consultation);
-            return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
-        }
-
-        if (!Consultation.HasActiveVcpr)
-            return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
-
-        Consultation.ServiceCatalogCode ??= ServiceCatalogCodes.VetLocal30;
-        CatalogItem = await _catalog.GetAsync(ServiceCatalogCodes.VetLocal30);
-        await LoadProvidersAsync();
+        Show(options);
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        Consultation = await _flow.GetOwnedAsync(ConsultationId);
-        if (Consultation is null) return RedirectToPage("/Vet/Index");
+        if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Vet/Index");
 
-        if (!await HomeAllowsUsLocalAsync())
-            return RedirectToPage("/Vet/International/Matches", new { consultationId = ConsultationId });
+        var result = await _selectLocalVet.HandleAsync(new SelectLocalVetCommand(userId, ConsultationId, ProviderId, Slot, When));
+        if (result.NextStep is { } step)
+            return this.RedirectToStep(step, ConsultationId);
 
-        if (!Consultation.HasActiveVcpr)
-            return RedirectToPage("/Vet/Virtual/Eligibility", new { consultationId = ConsultationId });
-
-        CatalogItem = await _catalog.GetAsync(ServiceCatalogCodes.VetLocal30);
-        await LoadProvidersAsync();
-
-        if (ProviderId <= 0 || !Providers.Any(p => p.Id == ProviderId))
-            return Page();
-
-        if (!AppTimeZones.TryParseSlotToTimeSpan(Slot, out var tod))
-            return Page();
-
-        var market = AppTimeZones.MarketFromCountry(Consultation.ContextCountry);
-        using var _tz = AppTimeZones.UseMarket(market);
-
-        var day = AppTimeZones.TodayLocalDate(market);
-        if (string.Equals(When, "mañana", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(When, "tomorrow", StringComparison.OrdinalIgnoreCase))
-            day = day.AddDays(1);
-
-        Consultation.ProviderId = ProviderId;
-        Consultation.ServiceCatalogCode = ServiceCatalogCodes.VetLocal30;
-        Consultation.ScheduledAt = AppTimeZones.LocalDateAndTimeToUtc(day, tod, market);
-        Consultation.Status = ConsultationStatus.ProviderSelected;
-        await _flow.TouchAsync(Consultation);
-
-        return RedirectToPage("/Vet/Virtual/Checkout", new { consultationId = ConsultationId });
+        Show(result.Options!);
+        return Page();
     }
 
-    private async Task LoadProvidersAsync()
+    private void Show(LocalVetOptions options)
     {
-        var state = Consultation!.PetUsState;
-        Providers = await _db.Groomers.AsNoTracking()
-            .Include(g => g.Licenses)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved &&
-                        g.VetProviderKind == VetProviderKind.LocalVet &&
-                        g.Licenses.Any(l => l.IsVerified && l.IsUsState && l.Jurisdiction == state))
-            .OrderByDescending(g => g.Rating)
-            .Take(30)
-            .ToListAsync();
-
-        if (Providers.Count == 0)
-        {
-            Providers = await _db.Groomers.AsNoTracking()
-                .Include(g => g.Licenses)
-                .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.LocalVet)
-                .OrderByDescending(g => g.Rating)
-                .Take(30)
-                .ToListAsync();
-        }
-    }
-
-    private async Task<bool> HomeAllowsUsLocalAsync()
-    {
-        if (_auth.CurrentUserId is not int userId) return false;
-        var user = await _db.Users.AsNoTracking()
-            .Where(u => u.Id == userId)
-            .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
-            .FirstOrDefaultAsync();
-        var home = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
-        return MarketCountry.AllowsUsLocalTeleconsult(home);
+        Consultation = options.Consultation;
+        CatalogItem = options.CatalogItem;
+        Providers = options.Providers;
     }
 }
