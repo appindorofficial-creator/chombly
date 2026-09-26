@@ -14,12 +14,14 @@ public class ContinueVirtualHandler
     private readonly AppDbContext _db;
     private readonly VetAuditService _audit;
     private readonly ConsultationRouter _router;
+    private readonly ClientHomeCountry _homeCountry;
 
-    public ContinueVirtualHandler(AppDbContext db, VetAuditService audit, ConsultationRouter router)
+    public ContinueVirtualHandler(AppDbContext db, VetAuditService audit, ConsultationRouter router, ClientHomeCountry homeCountry)
     {
         _db = db;
         _audit = audit;
         _router = router;
+        _homeCountry = homeCountry;
     }
 
     public async Task<ConsultationStep> HandleAsync(ContinueVirtualCommand command, CancellationToken ct = default)
@@ -36,7 +38,7 @@ public class ContinueVirtualHandler
         await _audit.LogAsync("safety_chose_continue_virtual", command.ClientId, "Consultation", consultation.Id,
             new { hasRedFlags = consultation.HasRedFlags, next }, ct);
 
-        // This path has never looked up the client's country, so the local teleconsult falls back to guidance.
-        return await _router.RouteAfterSafetyAsync(consultation, next, MarketCountry.DefaultIso, ct);
+        var homeCountry = await _homeCountry.ResolveAsync(command.ClientId, ct);
+        return await _router.RouteAfterSafetyAsync(consultation, next, homeCountry, ct);
     }
 }

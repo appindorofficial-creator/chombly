@@ -59,6 +59,9 @@ public class BookConsultationHandler
                 return new BookConsultationResult(BookConsultationOutcome.NoPaymentMethod, details, false);
         }
 
+        if (usingCare && !await _care.TryConsumeQuickConsultAsync(command.ClientId, consultation.Id, ct))
+            return new BookConsultationResult(BookConsultationOutcome.CareBenefitFailed, details, true);
+
         var service = await ProviderServiceAsync(consultation.ProviderId.Value, item, ct);
         var payNote = usingCare
             ? " | Chombly Care benefit"
@@ -79,9 +82,6 @@ public class BookConsultationHandler
         };
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync(ct);
-
-        if (usingCare && !await _care.TryConsumeQuickConsultAsync(command.ClientId, consultation.Id, ct))
-            return new BookConsultationResult(BookConsultationOutcome.CareBenefitFailed, details, true);
 
         await _consent.SaveAsync(command.ClientId, consultation.Id, new[]
         {

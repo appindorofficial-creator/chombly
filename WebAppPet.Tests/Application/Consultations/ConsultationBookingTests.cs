@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Consultations.BookConsultation;
 using WebAppPet.Application.Consultations.EscalateToEmergency;
 using WebAppPet.Application.Consultations.GetConsultationCheckout;
+using WebAppPet.Application.Consultations.GetConsultationSummary;
 using WebAppPet.Application.Consultations.SelectLocalVet;
 using WebAppPet.Application.Consultations.Shared;
+using WebAppPet.Data;
 using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;
@@ -201,12 +203,52 @@ public class ConsultationBookingTests : ConsultationTestBase
     }
 
     [Fact]
-    public async Task Visitors_who_are_not_signed_in_can_still_escalate_a_consultation()
+    public async Task Visitors_who_are_not_signed_in_see_clinics_without_escalating_any_consultation()
     {
         var consultation = AddConsultation(AddClient());
 
         await new EscalateToEmergencyHandler(Db, Care, Audit).HandleAsync(new EscalateToEmergencyCommand(null, consultation.Id, "CO"));
 
-        Assert.Equal(ConsultationStatus.EscalatedToEmergency, Reload(consultation.Id).Status);
+        Assert.Equal(ConsultationStatus.Draft, Reload(consultation.Id).Status);
+        Assert.Null((await Db.AuditLogs.SingleAsync()).EntityId);
+    }
+
+    [Fact]
+    public async Task When_the_Care_benefit_cannot_be_used_nothing_is_booked()
+    {
+        var client = AddClient();
+        AddCare(client);
+        var consultation = ReadyForCheckout(client, AddVet(startingPrice: 25));
+        var book = new BookConsultationHandler(Db, Checkout, new ExhaustedCare(Db), new ConsentService(Db), Audit);
+
+        var result = await book.HandleAsync(Command(consultation, care: true));
+
+        Assert.Equal(BookConsultationOutcome.CareBenefitFailed, result.Outcome);
+        Assert.False(await Db.Appointments.AnyAsync());
+        Assert.False(await Db.ConsentRecords.AnyAsync());
+        Assert.Equal(ConsultationStatus.ProviderSelected, Reload(consultation.Id).Status);
+    }
+
+    [Fact]
+    public async Task The_summary_of_an_unbooked_consultation_resumes_the_flow()
+    {
+        var client = AddClient();
+        AddCard(client);
+        var draft = AddConsultation(client);
+        var awaitingPayment = ReadyForCheckout(client, AddVet());
+        var booked = ReadyForCheckout(client, AddVet());
+        await Book.HandleAsync(Command(booked));
+        var handler = new GetConsultationSummaryHandler(Db, HomeCountry, Catalog);
+
+        Assert.Equal(ConsultationStep.Pet, (await handler.HandleAsync(new GetConsultationSummaryQuery(client.Id, draft.Id)))!.ResumeStep);
+        Assert.Equal(ConsultationStep.Checkout, (await handler.HandleAsync(new GetConsultationSummaryQuery(client.Id, awaitingPayment.Id)))!.ResumeStep);
+        Assert.Null((await handler.HandleAsync(new GetConsultationSummaryQuery(client.Id, booked.Id)))!.ResumeStep);
+        Assert.Null(await handler.HandleAsync(new GetConsultationSummaryQuery(AddClient().Id, booked.Id)));
+    }
+
+    private sealed class ExhaustedCare(AppDbContext db) : ChomblyCareService(db)
+    {
+        public override Task<bool> TryConsumeQuickConsultAsync(int userId, int consultationId, CancellationToken ct = default) =>
+            Task.FromResult(false);
     }
 }

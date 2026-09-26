@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Consultations.GetConsultationSummary;
+using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Models;
 using WebAppPet.Services;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Vet.Virtual;
 
@@ -39,6 +41,7 @@ public class SummaryModel : PageModel
 
         var summary = await _getSummary.HandleAsync(new GetConsultationSummaryQuery(userId, Id));
         if (summary is null) return RedirectToPage("/Vet/Index");
+        if (summary.ResumeStep is ConsultationStep step) return this.RedirectToStep(step, Id);
 
         Consultation = summary.Consultation;
         CatalogItem = summary.CatalogItem;
