@@ -39,7 +39,6 @@ builder.Services.AddScoped<ServiceCatalogService>();
 builder.Services.AddScoped<VcprService>();
 builder.Services.AddScoped<SafetyScreeningService>();
 builder.Services.AddScoped<ConsentService>();
-builder.Services.AddScoped<ConsultationFlowService>();
 builder.Services.AddScoped<ChomblyCareService>();
 builder.Services.AddScoped<BehaviorFlowService>();
 builder.Services.AddScoped<CountryCatalogService>();
