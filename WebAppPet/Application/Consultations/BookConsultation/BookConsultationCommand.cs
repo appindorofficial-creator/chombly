@@ -24,8 +24,14 @@ public enum BookConsultationOutcome
     /// <summary>Terms or scope not accepted, or the consultation is missing pet, provider or time.</summary>
     Incomplete,
     NoPaymentMethod,
+    PaymentDeclined,
     CareBenefitFailed,
     Booked
 }
 
-public sealed record BookConsultationResult(BookConsultationOutcome Outcome, CheckoutDetails? Details, bool UsingCare);
+/// <param name="PaymentError">Why the card was declined, when <see cref="BookConsultationOutcome.PaymentDeclined"/>.</param>
+public sealed record BookConsultationResult(
+    BookConsultationOutcome Outcome,
+    CheckoutDetails? Details,
+    bool UsingCare,
+    string? PaymentError = null);

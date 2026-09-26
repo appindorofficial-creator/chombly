@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -17,6 +18,7 @@ public class ProvidersModel : PageModel
     private readonly ServiceCatalogService _catalog;
     private readonly ConsentService _consent;
     private readonly VetAuditService _audit;
+    private readonly PaymentService _payments;
 
     public ProvidersModel(
         AppDbContext db,
@@ -24,7 +26,8 @@ public class ProvidersModel : PageModel
         BehaviorFlowService flow,
         ServiceCatalogService catalog,
         ConsentService consent,
-        VetAuditService audit)
+        VetAuditService audit,
+        PaymentService payments)
     {
         _db = db;
         _auth = auth;
@@ -32,6 +35,7 @@ public class ProvidersModel : PageModel
         _catalog = catalog;
         _consent = consent;
         _audit = audit;
+        _payments = payments;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -154,6 +158,10 @@ public class ProvidersModel : PageModel
             return Page();
         }
 
+        var charges = await ChargeSessionsAsync();
+        if (charges is null)
+            return Page();
+
         Case.ProviderId = ProviderId;
         Case.ScheduledAt = scheduledAt;
 
@@ -184,6 +192,7 @@ public class ProvidersModel : PageModel
             notes += $" · pets: {string.Join(", ", SelectedPets.Select(p => p.Name))}";
 
         Appointment? primaryAppt = null;
+        var appointments = new List<Appointment>();
         foreach (var pet in SelectedPets)
         {
             var appt = new Appointment
@@ -200,9 +209,12 @@ public class ProvidersModel : PageModel
                 CreatedAt = DateTime.UtcNow
             };
             _db.Appointments.Add(appt);
+            appointments.Add(appt);
             primaryAppt ??= appt;
         }
         await _db.SaveChangesAsync();
+        for (var i = 0; i < charges.Count; i++)
+            await _payments.AttachAppointmentAsync(charges[i], appointments[i].Id);
 
         await _consent.SaveAsync(_auth.CurrentUserId.Value, null, new[]
         {
@@ -233,6 +245,49 @@ public class ProvidersModel : PageModel
             });
 
         return RedirectToPage("/Behavior/Summary", new { id = Case.Id });
+    }
+
+    /// <summary>
+    /// One charge per pet session, before anything is booked. Returns null (with <see cref="ErrorMessage"/> set)
+    /// when a charge fails, after refunding the sessions already charged.
+    /// </summary>
+    private async Task<List<PaymentTransaction>?> ChargeSessionsAsync()
+    {
+        var charges = new List<PaymentTransaction>();
+        if (CatalogItem!.Price <= 0) return charges;
+
+        var userId = _auth.CurrentUserId!.Value;
+        var card = await _payments.FindCardAsync(userId, PaymentMethodId);
+        if (card is null)
+        {
+            ErrorMessage = CatalogLocalizer.Loc("Agrega un método de pago para reservar.", "Add a payment method to book.");
+            return null;
+        }
+
+        foreach (var pet in SelectedPets)
+        {
+            var charge = await _payments.ChargeAsync(new ChargeRequest
+            {
+                UserId = userId,
+                Card = card,
+                Amount = CatalogItem.Price,
+                Purpose = PaymentPurpose.BehaviorSession,
+                Description = $"Behavior case #{Case!.Id} · {pet.Name}",
+                ProviderId = ProviderId,
+                BehaviorCaseId = Case.Id
+            });
+            if (charge.Status == PaymentTransactionStatus.Succeeded)
+            {
+                charges.Add(charge);
+                continue;
+            }
+
+            foreach (var done in charges)
+                await _payments.RefundAsync(done, "Another session of the same booking was declined", userId);
+            ErrorMessage = PaymentFailureCodes.Message(charge.FailureCode);
+            return null;
+        }
+        return charges;
     }
 
     private async Task LoadSelectedPetsAsync()

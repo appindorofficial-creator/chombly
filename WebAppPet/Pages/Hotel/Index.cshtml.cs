@@ -214,6 +214,7 @@ public class IndexModel : PageModel
         var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
+            PaymentMethodId = PaymentMethodId,
             BusinessId = SelectedHotel.Id,
             ServiceId = SelectedService.Id,
             PetIds = SelectedPets.Select(p => p.Id).ToList(),
@@ -236,6 +237,7 @@ public class IndexModel : PageModel
                     $"Este hotel no atiende {result.RejectedSpecies}.",
                     $"This hotel does not accept {result.RejectedSpecies}."),
                 CreateBookingError.InvalidPromo => result.PromoError,
+                CreateBookingError.NoPaymentMethod or CreateBookingError.PaymentDeclined => result.PaymentError,
                 _ => CatalogLocalizer.Loc("Elige un hotel para continuar.", "Choose a hotel to continue.")
             };
             if (result.Error == CreateBookingError.InvalidPromo)

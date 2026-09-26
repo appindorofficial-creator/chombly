@@ -57,7 +57,36 @@
                         <span class="price">−@AppMoney.Format(a.DiscountAmount)</span>
                     </p>
                 }
-                <p><strong>@CatalogLocalizer.Loc("Total", "Total"):</strong> <span class="price">@AppMoney.Format(a.TotalPrice)</span></p>
+                <p><strong>@CatalogLocalizer.Loc("Total del servicio", "Service total"):</strong> <span class="price">@AppMoney.Format(a.TotalPrice)</span></p>
+                @if (Model.Payment is { } pay)
+                {
+                    var balance = Math.Max(0m, pay.ServiceTotal - pay.Amount);
+                    <p>
+                        <strong>@CatalogLocalizer.Loc("Anticipo pagado", "Deposit paid"):</strong>
+                        <span class="price">@AppMoney.FormatCurrency(pay.Amount, pay.Currency)</span>
+                        @if (pay.CardLast4 is not null)
+                        {
+                            <span class="muted small">· @pay.CardBrand •••• @pay.CardLast4</span>
+                        }
+                    </p>
+                    @if (balance > 0)
+                    {
+                        <p>
+                            <strong>@CatalogLocalizer.Loc("Saldo a pagar en el negocio", "Balance due at the business"):</strong>
+                            <span class="price">@AppMoney.FormatCurrency(balance, pay.Currency)</span>
+                        </p>
+                    }
+                    <p class="muted small">
+                        @CatalogLocalizer.Loc(
+                            balance > 0
+                                ? $"El saldo lo pagas directamente en {a.Groomer.BusinessName} el día del servicio. Si cancelas o el negocio no acepta, te reembolsamos el anticipo."
+                                : "Si cancelas o el negocio no acepta, te reembolsamos el pago completo.",
+                            balance > 0
+                                ? $"You pay the balance directly at {a.Groomer.BusinessName} on the day of the service. If you cancel or the business declines, your deposit is refunded."
+                                : "If you cancel or the business declines, the full payment is refunded.")
+                        · @CatalogLocalizer.Loc("Ref:", "Ref:") @pay.ExternalReference
+                    </p>
+                }
                 @if (CatalogLocalizer.HasCustomerNotes(a.Notes))
                 {
                     <p><strong>@CatalogLocalizer.Loc("Notas", "Notes"):</strong> @CatalogLocalizer.Notes(a.Notes)</p>

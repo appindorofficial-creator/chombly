@@ -1,5 +1,6 @@
 @page
 @using WebAppPet.Pages.Shared
+@using WebAppPet.Application.Bookings.Shared
 @model WebAppPet.Pages.Walkers.IndexModel
 @{
     var configureHref = BookingCheckoutUrls.ForPage(ViewContext, pay: false);
@@ -226,13 +227,14 @@
         FallbackImage = "/images/categories/cat-walkers-v2.png",
         Subtitle = $"{Model.DateLabel ?? "—"} · {Model.TimeLabel ?? "—"} · {(Model.HasDuration ? $"{Model.Duration} min" : "—")}",
         Estimate = Model.Estimate,
+        MinimumDeposit = BookingPricing.WalkMinimumDeposit,
         CustomerNotes = Model.Notes,
         PaymentHeadingEs = "Método de pago",
         PaymentHeadingEn = "Payment method",
         DefaultPayment = Model.DefaultPayment,
         AcceptTerms = Model.AcceptTerms,
-        SubmitLabelEs = $"Confirmar paseo · {AppMoney.Format(Model.Estimate)}",
-        SubmitLabelEn = $"Confirm walk · {AppMoney.Format(Model.Estimate)}",
+        SubmitLabelEs = $"Pagar anticipo · {AppMoney.Format(BookingPricing.Deposit(Model.Estimate, BookingPricing.WalkMinimumDeposit))}",
+        SubmitLabelEn = $"Pay deposit · {AppMoney.Format(BookingPricing.Deposit(Model.Estimate, BookingPricing.WalkMinimumDeposit))}",
         HiddenFields =
         [
             new BookingSummaryHidden { Name = "When", Value = Model.When },

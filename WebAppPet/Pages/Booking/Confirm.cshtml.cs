@@ -19,6 +19,7 @@ public class ConfirmModel : PageModel
     }
 
     public Appointment? Appointment { get; set; }
+    public PaymentTransaction? Payment { get; set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -35,6 +36,10 @@ public class ConfirmModel : PageModel
         if (Appointment == null)
             return RedirectToPage("/Appointments/Index");
 
+        Payment = await _db.PaymentTransactions.AsNoTracking()
+            .Where(t => t.AppointmentId == id && t.Status != PaymentTransactionStatus.Failed)
+            .OrderByDescending(t => t.CreatedAt)
+            .FirstOrDefaultAsync();
         return Page();
     }
 }

@@ -1,0 +1,189 @@
+@page
+@model WebAppPet.Pages.Admin.PaymentsModel
+@using WebAppPet.Application.Payments.Shared
+@using WebAppPet.Models
+@using WebAppPet.Services
+@{
+    ViewData["Title"] = CatalogLocalizer.Loc("Pagos", "Payments");
+    ViewData["LangCompact"] = true;
+    ViewData["OnboardShowNotif"] = true;
+    ViewData["OnboardNotifReturn"] = "/Admin/Payments";
+    string Money(decimal amount, string currency) => AppMoney.FormatCurrency(amount, currency);
+    string StatusLabel(PaymentTransactionStatus s) => s switch
+    {
+        PaymentTransactionStatus.Succeeded => CatalogLocalizer.Loc("Aprobado", "Succeeded"),
+        PaymentTransactionStatus.Failed => CatalogLocalizer.Loc("Rechazado", "Declined"),
+        PaymentTransactionStatus.Refunded => CatalogLocalizer.Loc("Reembolsado", "Refunded"),
+        _ => s.ToString()
+    };
+    string StatusColor(PaymentTransactionStatus s) => s switch
+    {
+        PaymentTransactionStatus.Succeeded => "#15803d",
+        PaymentTransactionStatus.Failed => "#b91c1c",
+        _ => "#6b7280"
+    };
+    string PurposeLabel(PaymentPurpose p) => p switch
+    {
+        PaymentPurpose.BookingDeposit => CatalogLocalizer.Loc("Anticipo de reserva", "Booking deposit"),
+        PaymentPurpose.VetConsultation => CatalogLocalizer.Loc("Consulta veterinaria", "Vet consultation"),
+        PaymentPurpose.BehaviorSession => CatalogLocalizer.Loc("Sesión de comportamiento", "Behavior session"),
+        PaymentPurpose.CareSubscription => "Chombly Care",
+        _ => p.ToString()
+    };
+    string GatewayLabel(string gateway) => gateway switch
+    {
+        "simulated" => CatalogLocalizer.Loc("Simulada", "Simulated"),
+        "legacy" => CatalogLocalizer.Loc("Histórico", "Legacy"),
+        _ => gateway
+    };
+}
+<div class="onboard onboard-app">
+    <partial name="_OnboardTop" />
+    <div class="home-body">
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Pagos", "Payments")</h1>
+    <p class="muted small">
+        @CatalogLocalizer.Loc(
+            "Todos los cobros con tarjeta de la plataforma. Pasarela simulada: se registran como pagos reales, pero no se mueve dinero. Los registros \"Histórico\" se crearon a partir de reservas anteriores a los cobros.",
+            "Every card charge on the platform. Simulated gateway: recorded like real payments, but no money moves. \"Legacy\" rows were created from bookings made before charging existed.")
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-warn">@Model.Error</div>
+    }
+
+    <form method="get" class="card card-pad" style="margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="form-group" style="margin:0">
+                <label>@CatalogLocalizer.Loc("Estado", "Status")</label>
+                <select class="form-control" name="Status">
+                    <option value="">@CatalogLocalizer.Loc("Todos", "All")</option>
+                    @foreach (var s in Enum.GetValues<PaymentTransactionStatus>())
+                    {
+                        <option value="@s" selected="@(Model.Status == s)">@StatusLabel(s)</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group" style="margin:0">
+                <label>@CatalogLocalizer.Loc("Concepto", "Purpose")</label>
+                <select class="form-control" name="Purpose">
+                    <option value="">@CatalogLocalizer.Loc("Todos", "All")</option>
+                    @foreach (var p in Enum.GetValues<PaymentPurpose>())
+                    {
+                        <option value="@p" selected="@(Model.Purpose == p)">@PurposeLabel(p)</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group" style="margin:0">
+                <label>@CatalogLocalizer.Loc("Desde", "From")</label>
+                <input class="form-control" type="date" name="From" value="@Model.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="form-group" style="margin:0">
+                <label>@CatalogLocalizer.Loc("Hasta", "To")</label>
+                <input class="form-control" type="date" name="To" value="@Model.To?.ToString("yyyy-MM-dd")" />
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-primary" type="submit" style="flex:1">@CatalogLocalizer.Loc("Filtrar", "Filter")</button>
+            <a class="btn btn-outline" href="/Admin/Payments" style="flex:1">@CatalogLocalizer.Loc("Limpiar", "Clear")</a>
+        </div>
+    </form>
+
+    @foreach (var t in Model.View.Totals)
+    {
+        <section class="card card-pad" style="margin-bottom:10px">
+            <h2 class="section-title" style="margin-top:0">@CatalogLocalizer.Loc("Resumen", "Summary") · @t.Currency</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px" class="small">
+                <span class="muted">@CatalogLocalizer.Loc("Cobrado", "Collected")</span><strong>@Money(t.Collected, t.Currency)</strong>
+                <span class="muted">@CatalogLocalizer.Loc("Reembolsado", "Refunded")</span><strong>@Money(t.Refunded, t.Currency)</strong>
+                <span class="muted">@CatalogLocalizer.Loc("Comisión Chombly", "Chombly commission")</span><strong>@Money(t.Commission, t.Currency)</strong>
+                <span class="muted">@CatalogLocalizer.Loc("Ingresos propios (Care)", "Own revenue (Care)")</span><strong>@Money(t.OwnRevenue, t.Currency)</strong>
+                <span class="muted">@CatalogLocalizer.Loc("Rechazados", "Declined")</span><strong>@t.FailedCount</strong>
+            </div>
+        </section>
+    }
+
+    <h2 class="section-title" style="margin-top:18px">
+        @CatalogLocalizer.Loc("Movimientos", "Transactions")
+        <span class="muted small">(@Model.View.MatchingCount)</span>
+    </h2>
+    @if (Model.View.Rows.Count == 0)
+    {
+        <div class="empty">@CatalogLocalizer.Loc("No hay pagos con estos filtros.", "No payments match these filters.")</div>
+    }
+    else if (Model.View.MatchingCount > Model.View.Rows.Count)
+    {
+        <p class="muted small">
+            @CatalogLocalizer.Loc(
+                $"Mostrando los {Model.View.Rows.Count} más recientes. Los totales incluyen todos.",
+                $"Showing the {Model.View.Rows.Count} most recent. Totals include all of them.")
+        </p>
+    }
+    @foreach (var row in Model.View.Rows)
+    {
+        <div class="card card-pad" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                <div>
+                    <strong>#@row.Id · @PurposeLabel(row.Purpose)</strong>
+                    <span class="small" style="display:block;color:@StatusColor(row.Status);font-weight:600">
+                        @StatusLabel(row.Status)
+                        @if (row.Status == PaymentTransactionStatus.Failed && row.FailureCode is not null)
+                        {
+                            <text>· @row.FailureCode</text>
+                        }
+                    </span>
+                    <span class="muted small" style="display:block">
+                        @row.ClientName
+                        @if (row.BusinessName is not null) { <text>→ @row.BusinessName</text> }
+                    </span>
+                    <span class="muted small" style="display:block">
+                        @AppTimeZones.FormatShort(row.CreatedAt)
+                        @if (row.CardLast4 is not null) { <text>· @row.CardBrand •••• @row.CardLast4</text> }
+                        · @GatewayLabel(row.Gateway)
+                    </span>
+                </div>
+                <strong class="price-tag">@Money(row.Amount, row.Currency)</strong>
+            </div>
+            @if (row.ServiceTotal > row.Amount)
+            {
+                <span class="muted small" style="display:block;margin-top:6px">
+                    @CatalogLocalizer.Loc("Total del servicio", "Service total") @Money(row.ServiceTotal, row.Currency)
+                    · @CatalogLocalizer.Loc("Saldo en el negocio", "Balance at business") @Money(row.ServiceTotal - row.Amount, row.Currency)
+                </span>
+            }
+            @if (!string.IsNullOrEmpty(row.Description))
+            {
+                <span class="muted small" style="display:block">@row.Description</span>
+            }
+            <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Ref:", "Ref:") @row.Reference</span>
+            @if (row.Status == PaymentTransactionStatus.Refunded)
+            {
+                <span class="muted small" style="display:block">
+                    @CatalogLocalizer.Loc("Reembolsado", "Refunded")
+                    @if (row.RefundedAt is DateTime r) { <text>@AppTimeZones.FormatShort(r)</text> }
+                    @if (!string.IsNullOrEmpty(row.RefundReason)) { <text>· @row.RefundReason</text> }
+                </span>
+            }
+            @if (row.Status == PaymentTransactionStatus.Succeeded)
+            {
+                <form method="post" asp-page-handler="Refund" style="margin-top:8px;display:flex;gap:8px"
+                      onsubmit="return confirm('@CatalogLocalizer.Loc("¿Reembolsar este pago?", "Refund this payment?")')">
+                    <input type="hidden" name="id" value="@row.Id" />
+                    <input type="hidden" name="Status" value="@Model.Status" />
+                    <input type="hidden" name="Purpose" value="@Model.Purpose" />
+                    <input type="hidden" name="From" value="@Model.From?.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="To" value="@Model.To?.ToString("yyyy-MM-dd")" />
+                    <input class="form-control" name="reason" maxlength="200"
+                           placeholder="@CatalogLocalizer.Loc("Motivo (opcional)", "Reason (optional)")" style="flex:1" />
+                    <button class="btn btn-outline" type="submit">@CatalogLocalizer.Loc("Reembolsar", "Refund")</button>
+                </form>
+            }
+        </div>
+    }
+    </div>
+    <div class="bottom-nav-clearance" aria-hidden="true"></div>
+</div>

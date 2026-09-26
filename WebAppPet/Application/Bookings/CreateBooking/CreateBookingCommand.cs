@@ -24,6 +24,9 @@ public sealed record CreateBookingCommand
     public string? PromoCode { get; init; }
     public decimal MinimumDeposit { get; init; } = BookingPricing.MinimumDeposit;
 
+    /// <summary>Card charged for the deposit; the client's default card when null.</summary>
+    public int? PaymentMethodId { get; init; }
+
     public IReadOnlyList<BookingExtraLine> Extras { get; init; } = [];
     public IReadOnlyList<string> NoteParts { get; init; } = [];
 

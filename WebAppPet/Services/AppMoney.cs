@@ -42,6 +42,10 @@ public static class AppMoney
         return "$" + body;
     }
 
+    /// <summary>Formats an amount stored with its ISO currency code (e.g. a payment transaction).</summary>
+    public static string FormatCurrency(decimal amount, string currencyCode) =>
+        Format(amount, string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase) ? "US" : "CO");
+
     /// <summary>Amount plus ISO code: <c>US$12.50 USD</c> / <c>$45.000 COP</c>.</summary>
     public static string FormatWithCode(decimal amount, string? countryIso = null)
     {

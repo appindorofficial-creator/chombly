@@ -28,6 +28,7 @@ public static class DbInitializer
             await BackfillAcceptedSpeciesAsync(db);
         }
 
+        await PaymentTransactionsSchema.EnsureAsync(db);
         await BackfillUserCountryCodesAsync(db);
         await RepairBusinessCoordinatesAsync(db);
         await RepairServiceDurationsAsync(db);

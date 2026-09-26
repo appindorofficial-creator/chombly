@@ -132,6 +132,32 @@
                 }
                 <input type="hidden" asp-for="ReturnUrl" />
 
+                @{
+                    var cardReturn = Url.Page("/Plans/ChomblyCare", new { consultationId = Model.ConsultationId, returnUrl = Model.ReturnUrl }) ?? "/Plans/ChomblyCare";
+                }
+                @if (Model.Card is { } card)
+                {
+                    <div class="checkout-pay-row" style="margin-bottom:12px">
+                        <div class="checkout-pay-card">
+                            <span class="checkout-pay-ico" aria-hidden="true">💳</span>
+                            <div>
+                                <strong>@card.Brand</strong>
+                                <div class="muted small">•••• @card.Last4</div>
+                            </div>
+                        </div>
+                        <a class="apple-text-link" href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(cardReturn)">
+                            @CatalogLocalizer.Loc("Cambiar", "Change")
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-block" style="margin-bottom:12px"
+                       href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(cardReturn)">
+                        @CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")
+                    </a>
+                }
+
                 <label class="care-plan-check">
                     <input type="checkbox" asp-for="AcceptTerms" data-terms-checkbox />
                     <span>

@@ -15,7 +15,7 @@ namespace WebAppPet.Tests.Application.Consultations;
 public class ConsultationBookingTests : ConsultationTestBase
 {
     private GetConsultationCheckoutHandler Checkout => new(Db, HomeCountry, Catalog, Care, Audit);
-    private BookConsultationHandler Book => new(Db, Checkout, Care, new ConsentService(Db), Audit);
+    private BookConsultationHandler Book => new(Db, Checkout, Care, new ConsentService(Db), Audit, TestData.Payments(Db));
 
     private GroomerProfile AddVet(decimal startingPrice = 0, string? licensedIn = null)
     {
@@ -40,9 +40,9 @@ public class ConsultationBookingTests : ConsultationTestBase
         return consultation;
     }
 
-    private PaymentMethod AddCard(AppUser client, bool isDefault = true)
+    private PaymentMethod AddCard(AppUser client, bool isDefault = true, string last4 = "4242")
     {
-        var card = new PaymentMethod { UserId = client.Id, Brand = "Visa", Last4 = "4242", HolderName = "Ana", ExpMonth = 12, ExpYear = 2035, IsDefault = isDefault };
+        var card = new PaymentMethod { UserId = client.Id, Brand = "Visa", Last4 = last4, HolderName = "Ana", ExpMonth = 12, ExpYear = 2035, IsDefault = isDefault };
         Db.PaymentMethods.Add(card);
         Db.SaveChanges();
         return card;
@@ -74,7 +74,29 @@ public class ConsultationBookingTests : ConsultationTestBase
             [ConsentService.DocTerms, ConsentService.DocPrivacy, ConsentService.DocIntlOrientation],
             await Db.ConsentRecords.OrderBy(r => r.Id).Select(r => r.DocumentKey).ToListAsync());
         Assert.Equal("vet-consultation", (await Db.Notifications.SingleAsync()).Type);
-        Assert.Equal(["payment_completed"], AuditActions());
+        Assert.Equal(["payment_succeeded", "payment_completed"], AuditActions());
+
+        var charge = await Db.PaymentTransactions.AsNoTracking().SingleAsync();
+        Assert.Equal(
+            (PaymentTransactionStatus.Succeeded, PaymentPurpose.VetConsultation, 25m, 25m, vet.Id, consultation.Id, appointment.Id),
+            (charge.Status, charge.Purpose, charge.Amount, charge.ServiceTotal, charge.ProviderId, charge.ConsultationId, charge.AppointmentId));
+    }
+
+    [Fact]
+    public async Task A_declined_card_books_nothing_and_records_the_attempt()
+    {
+        var client = AddClient();
+        AddCard(client, last4: "9995");
+        var consultation = ReadyForCheckout(client, AddVet(startingPrice: 25));
+
+        var result = await Book.HandleAsync(Command(consultation));
+
+        Assert.Equal(BookConsultationOutcome.PaymentDeclined, result.Outcome);
+        Assert.False(string.IsNullOrEmpty(result.PaymentError));
+        Assert.False(await Db.Appointments.AnyAsync());
+        Assert.Equal(ConsultationStatus.ProviderSelected, Reload(consultation.Id).Status);
+        var attempt = await Db.PaymentTransactions.AsNoTracking().SingleAsync();
+        Assert.Equal((PaymentTransactionStatus.Failed, "insufficient_funds"), (attempt.Status, attempt.FailureCode));
     }
 
     [Fact]
@@ -91,6 +113,7 @@ public class ConsultationBookingTests : ConsultationTestBase
         Assert.Equal(0m, (await Db.Appointments.AsNoTracking().SingleAsync()).TotalPrice);
         Assert.Equal(consultation.Id, (await Db.CareBenefitUses.SingleAsync()).ConsultationId);
         Assert.True(Reload(consultation.Id).UsesCareBenefit);
+        Assert.False(await Db.PaymentTransactions.AnyAsync());
     }
 
     [Fact]
@@ -219,7 +242,7 @@ public class ConsultationBookingTests : ConsultationTestBase
         var client = AddClient();
         AddCare(client);
         var consultation = ReadyForCheckout(client, AddVet(startingPrice: 25));
-        var book = new BookConsultationHandler(Db, Checkout, new ExhaustedCare(Db), new ConsentService(Db), Audit);
+        var book = new BookConsultationHandler(Db, Checkout, new ExhaustedCare(Db), new ConsentService(Db), Audit, TestData.Payments(Db));
 
         var result = await book.HandleAsync(Command(consultation, care: true));
 

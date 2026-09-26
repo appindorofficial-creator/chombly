@@ -3,6 +3,7 @@ using WebAppPet.Application.Bookings.CancelBooking;
 using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -56,7 +57,78 @@ public class BookingStatusHandlersTests : IDisposable
     private UpdateBookingStatusHandler UpdateHandler()
     {
         var db = _database.CreateContext();
-        return new UpdateBookingStatusHandler(db, new ClinicalNotes(db));
+        return new UpdateBookingStatusHandler(db, new ClinicalNotes(db), TestData.Payments(db));
+    }
+
+    private CancelBookingHandler CancelHandler()
+    {
+        var db = _database.CreateContext();
+        return new CancelBookingHandler(db, TestData.Payments(db));
+    }
+
+    private async Task<PaymentTransaction> ChargeDepositAsync(Appointment appt)
+    {
+        using var db = _database.CreateContext();
+        var payments = TestData.Payments(db);
+        var charge = await payments.ChargeAsync(new ChargeRequest
+        {
+            UserId = _client.Id,
+            Card = TestData.AddCard(db, _client),
+            Amount = 15m,
+            ServiceTotal = appt.TotalPrice,
+            Purpose = PaymentPurpose.BookingDeposit,
+            Description = "Deposit",
+            ProviderId = _business.Id
+        });
+        await payments.AttachAppointmentAsync(charge, appt.Id);
+        return charge;
+    }
+
+    private PaymentTransaction ReloadCharge(int id)
+    {
+        using var db = _database.CreateContext();
+        return db.PaymentTransactions.AsNoTracking().Single(t => t.Id == id);
+    }
+
+    [Fact]
+    public async Task Client_cancellation_refunds_the_deposit()
+    {
+        var appt = AddAppointment(AppointmentStatus.Confirmed);
+        var charge = await ChargeDepositAsync(appt);
+
+        await CancelHandler().HandleAsync(new CancelBookingCommand(_client.Id, appt.Id));
+
+        var refunded = ReloadCharge(charge.Id);
+        Assert.Equal(PaymentTransactionStatus.Refunded, refunded.Status);
+        Assert.Equal("client_cancelled", refunded.RefundReason);
+        Assert.StartsWith("sim_re_", refunded.RefundReference);
+        Assert.NotNull(refunded.RefundedAt);
+    }
+
+    [Fact]
+    public async Task Business_rejection_refunds_the_deposit()
+    {
+        var appt = AddAppointment(AppointmentStatus.Pending);
+        var charge = await ChargeDepositAsync(appt);
+
+        await UpdateHandler().HandleAsync(new UpdateBookingStatusCommand(_business.Id, appt.Id, BookingStatusAction.Reject));
+
+        var refunded = ReloadCharge(charge.Id);
+        Assert.Equal(PaymentTransactionStatus.Refunded, refunded.Status);
+        Assert.Equal("business_rejected", refunded.RefundReason);
+    }
+
+    [Theory]
+    [InlineData(BookingStatusAction.Accept, AppointmentStatus.Pending)]
+    [InlineData(BookingStatusAction.Complete, AppointmentStatus.Confirmed)]
+    public async Task Accepting_or_completing_keeps_the_charge(BookingStatusAction action, AppointmentStatus from)
+    {
+        var appt = AddAppointment(from);
+        var charge = await ChargeDepositAsync(appt);
+
+        await UpdateHandler().HandleAsync(new UpdateBookingStatusCommand(_business.Id, appt.Id, action));
+
+        Assert.Equal(PaymentTransactionStatus.Succeeded, ReloadCharge(charge.Id).Status);
     }
 
     private SaveClinicalNoteHandler SaveNoteHandler()
@@ -72,7 +144,7 @@ public class BookingStatusHandlersTests : IDisposable
     {
         var appt = AddAppointment(status);
 
-        var result = await new CancelBookingHandler(_database.CreateContext())
+        var result = await CancelHandler()
             .HandleAsync(new CancelBookingCommand(_client.Id, appt.Id));
 
         Assert.True(result.Success);
@@ -89,7 +161,7 @@ public class BookingStatusHandlersTests : IDisposable
     {
         var appt = AddAppointment(status);
 
-        var result = await new CancelBookingHandler(_database.CreateContext())
+        var result = await CancelHandler()
             .HandleAsync(new CancelBookingCommand(_client.Id, appt.Id));
 
         Assert.False(result.Success);
@@ -103,7 +175,7 @@ public class BookingStatusHandlersTests : IDisposable
         var appt = AddAppointment(AppointmentStatus.Pending);
         var stranger = TestData.AddUser(_db);
 
-        var result = await new CancelBookingHandler(_database.CreateContext())
+        var result = await CancelHandler()
             .HandleAsync(new CancelBookingCommand(stranger.Id, appt.Id));
 
         Assert.False(result.Success);

@@ -85,9 +85,12 @@ public class CheckoutModel : PageModel
         if (wantsCare && !HasCareAvailable)
             PayMode = "pay";
 
-        ErrorMessage = result.Outcome == BookConsultationOutcome.NoPaymentMethod
-            ? CatalogLocalizer.Loc("Agrega un método de pago para continuar.", "Add a payment method to continue.")
-            : CatalogLocalizer.Loc("No se pudo aplicar el beneficio Care.", "Could not apply Care benefit.");
+        ErrorMessage = result.Outcome switch
+        {
+            BookConsultationOutcome.NoPaymentMethod => CatalogLocalizer.Loc("Agrega un método de pago para continuar.", "Add a payment method to continue."),
+            BookConsultationOutcome.PaymentDeclined => result.PaymentError,
+            _ => CatalogLocalizer.Loc("No se pudo aplicar el beneficio Care.", "Could not apply Care benefit.")
+        };
         return Page();
     }
 

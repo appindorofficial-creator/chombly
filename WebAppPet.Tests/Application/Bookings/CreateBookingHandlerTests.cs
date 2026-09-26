@@ -24,6 +24,7 @@ public class CreateBookingHandlerTests : IDisposable
         _business = TestData.AddBusiness(_db);
         _service = TestData.AddService(_db, _business);
         _dog = TestData.AddPet(_db, _client);
+        TestData.AddCard(_db, _client);
     }
 
     public void Dispose()
@@ -35,7 +36,10 @@ public class CreateBookingHandlerTests : IDisposable
     private CreateBookingHandler CreateHandler()
     {
         var db = _database.CreateContext();
-        return new CreateBookingHandler(db, new ApplyPromoCodeHandler(db, new KeyLocalizer(), FakeHostEnvironment.Production()));
+        return new CreateBookingHandler(
+            db,
+            new ApplyPromoCodeHandler(db, new KeyLocalizer(), FakeHostEnvironment.Production()),
+            TestData.Payments(db));
     }
 
     private CreateBookingCommand Command(params int[] petIds) => new()
@@ -82,6 +86,64 @@ public class CreateBookingHandlerTests : IDisposable
         Assert.Collection(notices,
             n => { Assert.Equal(_client.Id, n.UserId); Assert.Equal("Reserva enviada", n.Title); Assert.Equal("appointment", n.Type); },
             n => { Assert.Equal(_business.UserId, n.UserId); Assert.Equal("Nueva solicitud", n.Title); Assert.Equal("Thor · Baño", n.Message); });
+    }
+
+    [Fact]
+    public async Task Only_the_deposit_is_charged_and_linked_to_the_appointment()
+    {
+        var result = await CreateHandler().HandleAsync(Command());
+
+        using var db = _database.CreateContext();
+        var charge = Assert.Single(db.PaymentTransactions.AsNoTracking());
+        Assert.Equal(PaymentTransactionStatus.Succeeded, charge.Status);
+        Assert.Equal(PaymentPurpose.BookingDeposit, charge.Purpose);
+        Assert.Equal(22_400m, charge.Amount);
+        Assert.Equal(64_000m, charge.ServiceTotal);
+        Assert.Equal(result.AppointmentId, charge.AppointmentId);
+        Assert.Equal(_business.Id, charge.ProviderId);
+        Assert.Equal(_client.Id, charge.UserId);
+        Assert.Equal("4242", charge.CardLast4);
+        Assert.StartsWith("sim_ch_", charge.ExternalReference);
+    }
+
+    [Fact]
+    public async Task Chosen_card_is_charged_instead_of_the_default()
+    {
+        var other = TestData.AddCard(_db, _client, "1881", isDefault: false);
+
+        await CreateHandler().HandleAsync(Command() with { PaymentMethodId = other.Id });
+
+        Assert.Equal("1881", _db.PaymentTransactions.AsNoTracking().Single().CardLast4);
+    }
+
+    [Fact]
+    public async Task Client_without_card_is_rejected_without_saving()
+    {
+        _db.PaymentMethods.RemoveRange(_db.PaymentMethods);
+        _db.SaveChanges();
+
+        var result = await CreateHandler().HandleAsync(Command());
+
+        Assert.Equal(CreateBookingError.NoPaymentMethod, result.Error);
+        Assert.Empty(_db.Appointments.AsNoTracking());
+        Assert.Empty(_db.PaymentTransactions.AsNoTracking());
+    }
+
+    [Fact]
+    public async Task Declined_card_records_the_failure_and_creates_no_appointment()
+    {
+        var declined = TestData.AddCard(_db, _client, "0002", isDefault: false);
+
+        var result = await CreateHandler().HandleAsync(Command() with { PaymentMethodId = declined.Id });
+
+        Assert.Equal(CreateBookingError.PaymentDeclined, result.Error);
+        Assert.False(string.IsNullOrEmpty(result.PaymentError));
+        Assert.Empty(_db.Appointments.AsNoTracking());
+        Assert.Empty(_db.Notifications.AsNoTracking());
+        var attempt = Assert.Single(_db.PaymentTransactions.AsNoTracking());
+        Assert.Equal(PaymentTransactionStatus.Failed, attempt.Status);
+        Assert.Equal("card_declined", attempt.FailureCode);
+        Assert.Null(attempt.AppointmentId);
     }
 
     [Fact]

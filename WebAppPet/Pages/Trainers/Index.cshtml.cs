@@ -234,6 +234,7 @@ public class IndexModel : PageModel
         var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
+            PaymentMethodId = PaymentMethodId,
             BusinessId = SelectedTrainer.Id,
             ServiceId = SelectedService.Id,
             PetIds = SelectedPets.Select(p => p.Id).ToList(),
@@ -256,6 +257,7 @@ public class IndexModel : PageModel
                     $"Este entrenador no atiende {PetSpecies.Label(result.RejectedSpecies)}.",
                     $"This trainer does not serve {PetSpecies.Label(result.RejectedSpecies)}."),
                 CreateBookingError.InvalidPromo => result.PromoError,
+                CreateBookingError.NoPaymentMethod or CreateBookingError.PaymentDeclined => result.PaymentError,
                 _ => CatalogLocalizer.Loc("Elige entrenador y mascota para continuar.", "Choose a trainer and pet to continue.")
             };
             if (result.Error == CreateBookingError.InvalidPromo)
