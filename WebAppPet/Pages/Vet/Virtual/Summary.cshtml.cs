@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.Consultations.GetConsultationSummary;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,15 +8,13 @@ namespace WebAppPet.Pages.Vet.Virtual;
 
 public class SummaryModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ServiceCatalogService _catalog;
+    private readonly GetConsultationSummaryHandler _getSummary;
 
-    public SummaryModel(AppDbContext db, AuthService auth, ServiceCatalogService catalog)
+    public SummaryModel(AuthService auth, GetConsultationSummaryHandler getSummary)
     {
-        _db = db;
         _auth = auth;
-        _catalog = catalog;
+        _getSummary = getSummary;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -37,22 +34,15 @@ public class SummaryModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Summary/{Id}" });
 
-        if (!await LoadAsync()) return RedirectToPage("/Vet/Index");
-        return Page();
-    }
+        var summary = await _getSummary.HandleAsync(new GetConsultationSummaryQuery(userId, Id));
+        if (summary is null) return RedirectToPage("/Vet/Index");
 
-    private async Task<bool> LoadAsync()
-    {
-        Consultation = await _db.Consultations
-            .AsNoTracking()
-            .Include(c => c.Pet)
-            .Include(c => c.Provider)
-            .FirstOrDefaultAsync(c => c.Id == Id && c.ClientId == _auth.CurrentUserId);
-
-        if (Consultation is null) return false;
+        Consultation = summary.Consultation;
+        CatalogItem = summary.CatalogItem;
+        HomeCountryCode = summary.HomeCountryCode;
 
         BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
             ? ReturnUrl!
@@ -61,17 +51,9 @@ public class SummaryModel : PageModel
         if (Consultation.PetId is int petId)
             PetHistoryHref = Url.Page("/Pets/History", new { id = petId, returnUrl = Url.Page("/Vet/Virtual/Summary", new { id = Id }) });
 
-        CatalogItem = await _catalog.GetAsync(Consultation.ServiceCatalogCode ?? "");
         UsingCare = Consultation.UsesCareBenefit || Consultation.PriceCharged <= 0m;
         IsIntl = string.Equals(Consultation.ServiceCatalogCode, ServiceCatalogCodes.VetIntl30, StringComparison.OrdinalIgnoreCase);
         HasProviderNotes = !string.IsNullOrWhiteSpace(Consultation.ClinicalNotes);
-
-        var user = await _db.Users.AsNoTracking()
-            .Where(u => u.Id == _auth.CurrentUserId)
-            .Select(u => new { u.CountryCode, u.City, u.Latitude, u.Longitude })
-            .FirstOrDefaultAsync();
-        HomeCountryCode = MarketCountry.ResolveForUser(user?.CountryCode, user?.City, user?.Latitude, user?.Longitude);
-
-        return true;
+        return Page();
     }
 }

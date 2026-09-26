@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using WebAppPet.Models;
+using WebAppPet.Application.Consultations.GetConsultationSummary;
+using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Vet.Virtual;
@@ -11,12 +12,12 @@ namespace WebAppPet.Pages.Vet.Virtual;
 public class SafetyModel : PageModel
 {
     private readonly AuthService _auth;
-    private readonly ConsultationFlowService _flow;
+    private readonly GetConsultationSummaryHandler _getSummary;
 
-    public SafetyModel(AuthService auth, ConsultationFlowService flow)
+    public SafetyModel(AuthService auth, GetConsultationSummaryHandler getSummary)
     {
         _auth = auth;
-        _flow = flow;
+        _getSummary = getSummary;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -27,22 +28,13 @@ public class SafetyModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Vet/Virtual/Pet?consultationId={ConsultationId}" });
 
-        var c = await _flow.GetOwnedAsync(ConsultationId);
-        if (c is null) return RedirectToPage("/Vet/Index");
+        var summary = await _getSummary.HandleAsync(new GetConsultationSummaryQuery(userId, ConsultationId));
+        if (summary is null) return RedirectToPage("/Vet/Index");
 
-        var next = string.Equals(c.ServiceCatalogCode, ServiceCatalogCodes.VetLocal30, StringComparison.OrdinalIgnoreCase)
-            ? "local"
-            : "intl";
-
-        // Force the form (clear soft-choice) when Edit=true by resetting status lightly.
-        if (Edit && c.HasRedFlags && c.Status == ConsultationStatus.SafetyScreened)
-        {
-            // Pet shows form when not Escalated; clear Escalated only.
-        }
-
+        var next = ConsultationPath.Normalize(null, summary.Consultation.ServiceCatalogCode);
         return RedirectToPage("/Vet/Virtual/Pet", new { consultationId = ConsultationId, next });
     }
 
