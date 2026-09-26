@@ -30,6 +30,7 @@ public static class DbInitializer
 
         await BackfillUserCountryCodesAsync(db);
         await RepairBusinessCoordinatesAsync(db);
+        await RepairServiceDurationsAsync(db);
         await EnsureCategoriesAsync(db);
         await EnsureAdminAsync(db);
         await EnsureVetEcosystemSeedAsync(db);
@@ -64,6 +65,31 @@ public static class DbInitializer
             if (!GeoHelper.TryRepairCoordinates(ref lat, ref lng)) continue;
             g.Latitude = lat;
             g.Longitude = lng;
+            repaired++;
+        }
+
+        if (repaired > 0)
+            await db.SaveChangesAsync();
+        return repaired;
+    }
+
+    /// <summary>
+    /// Session services used to be saved with 60 minutes whatever their name said, so a 60-minute
+    /// walk picked (and charged) "Paseo 30 min".
+    /// </summary>
+    public static async Task<int> RepairServiceDurationsAsync(AppDbContext db)
+    {
+        var candidates = await db.Services
+            .Where(s => s.DurationMinutes == ServiceDurations.DefaultMinutes && s.Name.Contains("min"))
+            .ToListAsync();
+
+        var repaired = 0;
+        foreach (var service in candidates)
+        {
+            if (service.BillingUnit == "noche") continue;
+            var minutes = ServiceDurations.FromName(service.Name);
+            if (minutes == service.DurationMinutes) continue;
+            service.DurationMinutes = minutes;
             repaired++;
         }
 

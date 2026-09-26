@@ -642,6 +642,11 @@
   <data name="Payout_Status_Paid" xml:space="preserve"><value>Paid</value></data>
   <data name="Payout_Status_Failed" xml:space="preserve"><value>Failed</value></data>
   <data name="Payout_Status_Held" xml:space="preserve"><value>Held</value></data>
+  <data name="AdminPayout_Title" xml:space="preserve"><value>Provider payouts</value></data>
+  <data name="AdminPayout_TotalsRefreshed" xml:space="preserve"><value>Totals updated on {0} payout(s) (family bookings included).</value></data>
+  <data name="AdminPayout_NotFound" xml:space="preserve"><value>Payout not found.</value></data>
+  <data name="AdminPayout_MarkedPaid" xml:space="preserve"><value>Marked paid · net {0} · {1}</value></data>
+  <data name="AdminPayout_UnknownProvider" xml:space="preserve"><value>User #{0}</value></data>
 
   <data name="Pets_HistoryTitle" xml:space="preserve"><value>History</value></data>
   <data name="Pets_HistoryOf" xml:space="preserve"><value>History for {0}</value></data>

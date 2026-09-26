@@ -184,7 +184,7 @@ public class CreateBusinessHandler
                 PriceMedium = price + step,
                 PriceLarge = price + step * 2,
                 PriceGiant = price + step * 3,
-                DurationMinutes = category.IsOvernight ? 1440 : 60
+                DurationMinutes = category.IsOvernight ? ServiceDurations.NightMinutes : ServiceDurations.FromName(names[i])
             });
         }
     }

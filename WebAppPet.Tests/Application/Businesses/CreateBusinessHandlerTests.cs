@@ -108,7 +108,7 @@ public class CreateBusinessHandlerTests : IDisposable
         Assert.Equal("/images/categories/cat-walkers-v2.png", business.ImageUrl);
 
         Assert.Equal(["Paseo 30 min", "Paseo 60 min"], business.Services.OrderBy(s => s.Id).Select(s => s.Name));
-        Assert.All(business.Services, s => Assert.Equal(60, s.DurationMinutes));
+        Assert.Equal([30, 60], business.Services.OrderBy(s => s.Id).Select(s => s.DurationMinutes));
     }
 
     [Fact]

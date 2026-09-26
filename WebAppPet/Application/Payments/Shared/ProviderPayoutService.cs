@@ -329,15 +329,16 @@ public class ProviderPayoutService
     }
 
     /// <summary>
-    /// Recompute gross/commission/net/count for existing period summaries
+    /// Recompute gross/commission/net/count for unpaid period summaries
     /// (e.g. after marketplace appointments were added to the calculator).
+    /// Paid summaries keep the amounts they were settled with.
     /// </summary>
     public async Task<int> RefreshAllPayoutTotalsAsync(CancellationToken ct = default) =>
         await RefreshPayoutTotalsAsync(providerUserId: null, ct);
 
     public async Task<int> RefreshPayoutTotalsAsync(int? providerUserId, CancellationToken ct = default)
     {
-        var q = _db.ProviderPayouts.AsQueryable();
+        var q = _db.ProviderPayouts.Where(p => p.Status != ProviderPayoutStatus.Paid);
         if (providerUserId is int uid)
             q = q.Where(p => p.ProviderUserId == uid);
 
