@@ -41,6 +41,13 @@ public class ConsultationRouter
             return ConsultationStep.LocalProviders;
         }
 
+        await UseGuidanceAsync(consultation, ct);
+        return ConsultationStep.IntlMatches;
+    }
+
+    /// <summary>Switches the consultation to international guidance ranked for the pet's breed, and saves it.</summary>
+    public async Task UseGuidanceAsync(Consultation consultation, CancellationToken ct = default)
+    {
         consultation.ServiceCatalogCode = ServiceCatalogCodes.VetIntl30;
         consultation.MatchMode = IntlMatchMode.Best;
         if (string.IsNullOrWhiteSpace(consultation.PreferredBreed) && consultation.PetId is int petIdForBreed)
@@ -54,6 +61,5 @@ public class ConsultationRouter
         }
 
         await _db.TouchAsync(consultation, ct);
-        return ConsultationStep.IntlMatches;
     }
 }

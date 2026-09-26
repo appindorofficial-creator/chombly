@@ -10,5 +10,6 @@ public enum ConsultationStep
     Checkout,
     IntlHome,
     IntlMatches,
+    IntlSchedule,
     ChomblyCare
 }

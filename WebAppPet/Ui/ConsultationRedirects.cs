@@ -16,6 +16,7 @@ public static class ConsultationRedirects
         ConsultationStep.Checkout => page.RedirectToPage("/Vet/Virtual/Checkout", new { consultationId }),
         ConsultationStep.IntlHome => page.RedirectToPage("/Vet/International/Home", new { consultationId }),
         ConsultationStep.IntlMatches => page.RedirectToPage("/Vet/International/Matches", new { consultationId }),
+        ConsultationStep.IntlSchedule => page.RedirectToPage("/Vet/International/Consent", new { consultationId }),
         ConsultationStep.ChomblyCare => page.RedirectToPage("/Plans/ChomblyCare", new { consultationId }),
         _ => throw new ArgumentOutOfRangeException(nameof(step), step, null)
     };
