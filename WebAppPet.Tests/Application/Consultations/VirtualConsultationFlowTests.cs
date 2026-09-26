@@ -151,21 +151,37 @@ public class VirtualConsultationFlowTests : ConsultationTestBase
         Assert.Equal((ServiceCatalogCodes.VetLocal30, hasVcpr, status), (saved.ServiceCatalogCode, saved.HasActiveVcpr, saved.Status));
     }
 
+    private ContinueVirtualHandler ContinueVirtual => new(Db, Audit, Router, HomeCountry);
+
     [Fact]
-    public async Task Continuing_virtual_after_an_emergency_resumes_on_guidance()
+    public async Task Continuing_virtual_after_an_emergency_keeps_a_US_client_on_the_local_teleconsult()
     {
         var client = AddClient("US");
         var pet = AddPet(client);
         AddVcpr(pet, "NC");
         var consultation = AddConsultation(client, pet, ConsultationStatus.EscalatedToEmergency, ServiceCatalogCodes.VetLocal30, "US", "NC");
 
-        var step = await new ContinueVirtualHandler(Db, Audit, Router)
-            .HandleAsync(new ContinueVirtualCommand(client.Id, consultation.Id, "local"));
+        var step = await ContinueVirtual.HandleAsync(new ContinueVirtualCommand(client.Id, consultation.Id, "local"));
+
+        Assert.Equal(ConsultationStep.LocalProviders, step);
+        var saved = Reload(consultation.Id);
+        Assert.Equal((ConsultationStatus.EligibilityVerified, VetModality.Virtual, ServiceCatalogCodes.VetLocal30),
+            (saved.Status, saved.Modality, saved.ServiceCatalogCode));
+        Assert.Equal(["safety_chose_continue_virtual"], AuditActions());
+    }
+
+    [Fact]
+    public async Task Continuing_virtual_after_an_emergency_sends_other_clients_to_guidance()
+    {
+        var client = AddClient("CO");
+        var pet = AddPet(client);
+        var consultation = AddConsultation(client, pet, ConsultationStatus.EscalatedToEmergency, ServiceCatalogCodes.VetLocal30);
+
+        var step = await ContinueVirtual.HandleAsync(new ContinueVirtualCommand(client.Id, consultation.Id, "local"));
 
         Assert.Equal(ConsultationStep.IntlMatches, step);
         var saved = Reload(consultation.Id);
-        Assert.Equal((ConsultationStatus.SafetyScreened, VetModality.Virtual), (saved.Status, saved.Modality));
-        Assert.Equal(["safety_chose_continue_virtual"], AuditActions());
+        Assert.Equal((ConsultationStatus.SafetyScreened, ServiceCatalogCodes.VetIntl30), (saved.Status, saved.ServiceCatalogCode));
     }
 
     [Fact]
@@ -174,8 +190,7 @@ public class VirtualConsultationFlowTests : ConsultationTestBase
         var client = AddClient();
         var consultation = AddConsultation(client);
 
-        var step = await new ContinueVirtualHandler(Db, Audit, Router)
-            .HandleAsync(new ContinueVirtualCommand(client.Id, consultation.Id, null));
+        var step = await ContinueVirtual.HandleAsync(new ContinueVirtualCommand(client.Id, consultation.Id, null));
 
         Assert.Equal(ConsultationStep.Pet, step);
     }

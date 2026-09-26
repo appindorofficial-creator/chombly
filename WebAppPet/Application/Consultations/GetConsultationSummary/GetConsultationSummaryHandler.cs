@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Data;
+using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Consultations.GetConsultationSummary;
 
-/// <summary>A booked consultation as the client sees it. Null when it is not theirs.</summary>
+/// <summary>
+/// A consultation as the client sees it, with the step to resume when it is not booked yet.
+/// Null when it is not theirs.
+/// </summary>
 public class GetConsultationSummaryHandler
 {
     private readonly AppDbContext _db;
@@ -32,6 +36,20 @@ public class GetConsultationSummaryHandler
         return new ConsultationSummary(
             consultation,
             await _catalog.GetAsync(consultation.ServiceCatalogCode ?? "", ct),
-            await _homeCountry.ResolveAsync(query.ClientId, ct));
+            await _homeCountry.ResolveAsync(query.ClientId, ct),
+            ResumeStep(consultation));
+    }
+
+    private static ConsultationStep? ResumeStep(Consultation consultation)
+    {
+        var booked = consultation.AppointmentId is not null
+            || consultation.Status is ConsultationStatus.Scheduled or ConsultationStatus.InProgress
+                or ConsultationStatus.Completed or ConsultationStatus.FollowUpOpen or ConsultationStatus.Closed;
+        if (booked)
+            return null;
+
+        return consultation is { ProviderId: not null, PetId: not null, ScheduledAt: not null }
+            ? ConsultationStep.Checkout
+            : ConsultationStep.Pet;
     }
 }

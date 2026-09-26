@@ -80,7 +80,7 @@ public class ChomblyCareService
         await _db.SaveChangesAsync(ct);
     }
 
-    public async Task<bool> TryConsumeQuickConsultAsync(int userId, int consultationId, CancellationToken ct = default)
+    public virtual async Task<bool> TryConsumeQuickConsultAsync(int userId, int consultationId, CancellationToken ct = default)
     {
         var sub = await GetActiveAsync(userId, ct);
         if (sub is null || RemainingQuickConsults(sub) <= 0) return false;
