@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.Pets.GetPetHistory;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,13 +8,13 @@ namespace WebAppPet.Pages.Pets;
 
 public class HistoryModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly GetPetHistoryHandler _getHistory;
 
-    public HistoryModel(AppDbContext db, AuthService auth)
+    public HistoryModel(AuthService auth, GetPetHistoryHandler getHistory)
     {
-        _db = db;
         _auth = auth;
+        _getHistory = getHistory;
     }
 
     public Pet? Pet { get; set; }
@@ -31,28 +30,17 @@ public class HistoryModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        Pet = await _db.Pets.FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
-        if (Pet == null)
+        var history = await _getHistory.HandleAsync(new GetPetHistoryQuery(userId, id));
+        if (history is null)
             return RedirectToPage("./Index");
 
         BackHref = !string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl)
             ? ReturnUrl!
             : Url.Page("./Index") ?? "/Pets";
 
-        Items = await _db.Appointments
-            .Include(a => a.Groomer)
-            .Include(a => a.Service)
-            .Where(a => a.PetId == id && a.Status == AppointmentStatus.Completed)
-            .OrderByDescending(a => a.ScheduledAt)
-            .ToListAsync();
-
-        Consults = await _db.Consultations
-            .AsNoTracking()
-            .Include(c => c.Provider)
-            .Where(c => c.ClientId == userId && c.PetId == id)
-            .OrderByDescending(c => c.ScheduledAt ?? c.UpdatedAt)
-            .ToListAsync();
-
+        Pet = history.Pet;
+        Items = history.Appointments;
+        Consults = history.Consultations;
         return Page();
     }
 }

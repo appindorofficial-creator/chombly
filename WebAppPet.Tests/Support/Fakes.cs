@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
@@ -36,4 +37,14 @@ public sealed class FakeHostEnvironment(string environmentName) : IHostEnvironme
 
     public static FakeHostEnvironment Production() => new(Environments.Production);
     public static FakeHostEnvironment Development() => new(Environments.Development);
+}
+
+public sealed class FakeWebHostEnvironment : IWebHostEnvironment
+{
+    public string EnvironmentName { get; set; } = Environments.Development;
+    public string ApplicationName { get; set; } = "WebAppPet.Tests";
+    public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    public string WebRootPath { get; set; } = Path.Combine(Path.GetTempPath(), "chombly-tests-wwwroot");
+    public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
 }

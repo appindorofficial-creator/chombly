@@ -28,6 +28,11 @@ using WebAppPet.Application.Payments.GetPaymentMethods;
 using WebAppPet.Application.Payments.GetProviderPayouts;
 using WebAppPet.Application.Payments.MarkPayoutPaid;
 using WebAppPet.Application.Payments.Shared;
+using WebAppPet.Application.Pets.DeletePet;
+using WebAppPet.Application.Pets.GetPet;
+using WebAppPet.Application.Pets.GetPetHistory;
+using WebAppPet.Application.Pets.GetPets;
+using WebAppPet.Application.Pets.SavePet;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
@@ -76,6 +81,12 @@ public static class DependencyInjection
         services.AddScoped<MarkPayoutPaidHandler>();
         services.AddScoped<GetProviderPayoutsHandler>();
         services.AddScoped<GetAdminPayoutsHandler>();
+
+        services.AddScoped<GetPetsHandler>();
+        services.AddScoped<GetPetHandler>();
+        services.AddScoped<GetPetHistoryHandler>();
+        services.AddScoped<SavePetHandler>();
+        services.AddScoped<DeletePetHandler>();
 
         services.AddScoped<RatingCalculator>();
         services.AddScoped<CanReviewHandler>();

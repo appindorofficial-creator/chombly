@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Pets.DeletePet;
+using WebAppPet.Application.Pets.GetPets;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -12,17 +12,17 @@ namespace WebAppPet.Pages.Pets;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly GetPetsHandler _getPets;
+    private readonly DeletePetHandler _deletePet;
     private readonly IStringLocalizer<SharedResource> _L;
-    private readonly IWebHostEnvironment _env;
 
-    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L, IWebHostEnvironment env)
+    public IndexModel(AuthService auth, GetPetsHandler getPets, DeletePetHandler deletePet, IStringLocalizer<SharedResource> L)
     {
-        _db = db;
         _auth = auth;
+        _getPets = getPets;
+        _deletePet = deletePet;
         _L = L;
-        _env = env;
     }
 
     public bool IsGuest { get; set; }
@@ -36,20 +36,7 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
-
-        // Fotos en /uploads perdidas tras deploys antiguos → volver al placeholder de especie.
-        var healed = false;
-        foreach (var pet in Pets)
-        {
-            if (!PetPhotoStorage.IsMissingLocalUpload(pet.PhotoUrl, _env))
-                continue;
-            pet.PhotoUrl = PetSpecies.DefaultPhoto(pet.Species);
-            healed = true;
-        }
-        if (healed)
-            await _db.SaveChangesAsync();
-
+        Pets = await _getPets.HandleAsync(new GetPetsQuery(userId));
         return Page();
     }
 
@@ -58,25 +45,8 @@ public class IndexModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Pets" });
 
-        var pet = await _db.Pets.FirstOrDefaultAsync(p => p.Id == id && p.OwnerId == userId);
-        if (pet != null)
-        {
-            var hasAppts = await _db.Appointments.AnyAsync(a => a.PetId == id);
-            if (!hasAppts)
-            {
-                // Clear optional FKs first (SQL Server uses NO ACTION — cannot SET NULL on delete).
-                await _db.Consultations.Where(c => c.PetId == id)
-                    .ExecuteUpdateAsync(s => s.SetProperty(c => c.PetId, (int?)null));
-                await _db.BehaviorCases.Where(b => b.PetId == id)
-                    .ExecuteUpdateAsync(s => s.SetProperty(b => b.PetId, (int?)null));
-                await _db.ReminderSchedules.Where(r => r.PetId == id)
-                    .ExecuteDeleteAsync();
-
-                _db.Pets.Remove(pet);
-                await _db.SaveChangesAsync();
-                AppFlash.Toast(this, "✓ " + _L["Feedback_PetDeleted"].Value);
-            }
-        }
+        if (await _deletePet.HandleAsync(new DeletePetCommand(userId, id)) == DeletePetResult.Deleted)
+            AppFlash.Toast(this, "✓ " + _L["Feedback_PetDeleted"].Value);
 
         return RedirectToPage();
     }

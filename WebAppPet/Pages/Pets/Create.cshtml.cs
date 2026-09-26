@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Pets.GetPet;
+using WebAppPet.Application.Pets.SavePet;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -14,19 +14,22 @@ namespace WebAppPet.Pages.Pets;
 [RequestSizeLimit(10 * 1024 * 1024)]
 public class CreateModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly GetPetHandler _getPet;
+    private readonly SavePetHandler _savePet;
     private readonly IStringLocalizer<SharedResource> _L;
     private readonly IWebHostEnvironment _env;
 
     public CreateModel(
-        AppDbContext db,
         AuthService auth,
+        GetPetHandler getPet,
+        SavePetHandler savePet,
         IStringLocalizer<SharedResource> L,
         IWebHostEnvironment env)
     {
-        _db = db;
         _auth = auth;
+        _getPet = getPet;
+        _savePet = savePet;
         _L = L;
         _env = env;
     }
@@ -97,8 +100,7 @@ public class CreateModel : PageModel
 
         if (IsEdit)
         {
-            var pet = await _db.Pets.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == userId, cancellationToken);
+            var pet = await _getPet.HandleAsync(new GetPetQuery(userId, Id!.Value), cancellationToken);
             if (pet is null)
                 return RedirectToPage("./Index");
 
@@ -144,133 +146,31 @@ public class CreateModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        Pet? existing = null;
-        if (IsEdit)
-        {
-            existing = await _db.Pets.FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == userId, cancellationToken);
-            if (existing is null)
-                return RedirectToPage("./Index");
-        }
-
         ClearFieldErrors(nameof(Name), nameof(Species), nameof(CustomType), nameof(AgeYears), nameof(PhotoFile), nameof(Size), nameof(Temperaments), nameof(Breed), nameof(CustomBreed));
-
-        if (string.IsNullOrWhiteSpace(Name))
-            ModelState.AddModelError(nameof(Name), _L["Pets_NameRequired"].Value);
-
-        if (string.IsNullOrWhiteSpace(Species))
-            ModelState.AddModelError(nameof(Species), _L["Pets_SpeciesRequired"].Value);
-        else if (!PetSpecies.IsKnown(Species))
-            ModelState.AddModelError(nameof(Species), _L["Pets_SpeciesInvalid"].Value);
-        else if (Species == PetSpecies.Other && string.IsNullOrWhiteSpace(CustomType))
-            ModelState.AddModelError(nameof(CustomType), _L["Pets_OtherTypeRequired"].Value);
-
-        var age = AgeYears;
-        if (age is null)
-            ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRequired"].Value);
-        else if (age < 0 || age > 40)
-            ModelState.AddModelError(nameof(AgeYears), _L["Pets_AgeRange"].Value);
-
-        var selectedTemps = (Temperaments ?? new List<string>())
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t.Trim())
-            .Where(t => PetCatalog.Temperaments.Any(o => o.Value.Equals(t, StringComparison.OrdinalIgnoreCase)))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(t => PetCatalog.Temperaments.First(o => o.Value.Equals(t, StringComparison.OrdinalIgnoreCase)).Value)
-            .ToList();
-        if (selectedTemps.Count == 0)
-            ModelState.AddModelError(nameof(Temperaments), _L["Pets_TemperamentRequired"].Value);
-
-        var photoError = PetPhotoStorage.Validate(PhotoFile);
-        if (photoError is not null)
-            ModelState.AddModelError(nameof(PhotoFile), _L[photoError].Value);
-
         if (!ModelState.IsValid) return Page();
 
-        var species = Species.Trim();
-        var name = Name.Trim();
-        var breedDefault = _L["Pets_BreedDefault"].Value;
-        string breed;
-        if (species == PetSpecies.Other)
-        {
-            breed = CustomType!.Trim();
-        }
-        else if (string.Equals(Breed, PetCatalog.OtherBreed, StringComparison.OrdinalIgnoreCase))
-        {
-            breed = string.IsNullOrWhiteSpace(CustomBreed) ? breedDefault : CustomBreed.Trim();
-        }
-        else if (!string.IsNullOrWhiteSpace(Breed)
-                 && PetCatalog.BreedsFor(species).Any(b => b.Value.Equals(Breed, StringComparison.OrdinalIgnoreCase)))
-        {
-            breed = Breed.Trim();
-        }
-        else
-        {
-            breed = string.IsNullOrWhiteSpace(Breed) ? breedDefault : Breed.Trim();
-        }
+        var photo = PhotoFile is { Length: > 0 } file
+            ? new PetPhotoUpload(PetPhotoStorage.Validate(file), ct => PetPhotoStorage.SaveAsync(file, userId, _env, ct))
+            : null;
 
-        var duplicate = await _db.Pets.AsNoTracking().AnyAsync(p =>
-            p.OwnerId == userId
-            && (!IsEdit || p.Id != Id)
-            && p.Species == species
-            && p.Name.ToLower() == name.ToLower()
-            && p.Breed.ToLower() == breed.ToLower(), cancellationToken);
-        if (duplicate)
+        var result = await _savePet.HandleAsync(new SavePetCommand(
+            userId, IsEdit ? Id : null, Name, Species, CustomType, Breed, CustomBreed, AgeYears, Size,
+            Temperaments, PhotoUrl, photo, IsSenior, IsAnxious, HasSpecialNeeds, Notes), cancellationToken);
+
+        if (result.Status == SavePetStatus.NotFound)
+            return RedirectToPage("./Index");
+
+        if (!result.Success)
         {
-            ModelState.AddModelError(nameof(Name), _L["Pets_Duplicate"].Value);
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(FieldName(error.Field), _L[error.MessageKey].Value);
             return Page();
         }
 
-        string? photoUrl = existing?.PhotoUrl;
-        if (PhotoFile is { Length: > 0 })
+        if (result.Status == SavePetStatus.Created)
         {
-            photoUrl = await PetPhotoStorage.SaveAsync(PhotoFile, userId, _env, cancellationToken);
-        }
-        else if (!string.IsNullOrWhiteSpace(PhotoUrl))
-        {
-            photoUrl = PhotoUrl.Trim();
-        }
-        else if (!IsEdit)
-        {
-            photoUrl = PetSpecies.DefaultPhoto(species);
-        }
-
-        var temperament = string.Join(", ", selectedTemps);
-
-        if (existing is not null)
-        {
-            existing.Name = name;
-            existing.Species = species;
-            existing.Breed = breed;
-            existing.AgeYears = age!.Value;
-            existing.Size = Size;
-            existing.Temperament = temperament;
-            existing.PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species);
-            existing.IsSenior = IsSenior;
-            existing.IsAnxious = IsAnxious;
-            existing.HasSpecialNeeds = HasSpecialNeeds;
-            existing.Notes = Notes;
-            await _db.SaveChangesAsync(cancellationToken);
-        }
-        else
-        {
-            _db.Pets.Add(new Pet
-            {
-                OwnerId = userId,
-                Name = name,
-                Species = species,
-                Breed = breed,
-                AgeYears = age!.Value,
-                Size = Size,
-                Temperament = temperament,
-                PhotoUrl = photoUrl ?? PetSpecies.DefaultPhoto(species),
-                IsSenior = IsSenior,
-                IsAnxious = IsAnxious,
-                HasSpecialNeeds = HasSpecialNeeds,
-                Notes = Notes
-            });
-            await _db.SaveChangesAsync(cancellationToken);
             TempData["CelebratePet"] = "1";
-            TempData["CelebratePetName"] = name;
+            TempData["CelebratePetName"] = result.Pet!.Name;
         }
 
         if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
@@ -278,6 +178,16 @@ public class CreateModel : PageModel
 
         return RedirectToPage("./Index");
     }
+
+    private static string FieldName(PetField field) => field switch
+    {
+        PetField.Name => nameof(Name),
+        PetField.Species => nameof(Species),
+        PetField.CustomType => nameof(CustomType),
+        PetField.AgeYears => nameof(AgeYears),
+        PetField.Temperaments => nameof(Temperaments),
+        _ => nameof(PhotoFile)
+    };
 
     private void ClearFieldErrors(params string[] keys)
     {
