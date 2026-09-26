@@ -138,6 +138,28 @@ public class ProviderPayoutServiceTests
     }
 
     [Fact]
+    public async Task Refreshing_totals_leaves_paid_summaries_as_they_were_settled()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        var paid = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
+        await Service(db).MarkPaidAsync(paid.Id);
+        var pending = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodEnd, PeriodEnd.AddDays(30));
+        AddPaidBooking(db, business, 50, PeriodStart.AddDays(3));
+        AddPaidBooking(db, business, 80, PeriodEnd.AddDays(3));
+
+        Assert.Equal(1, await Service(db).RefreshPayoutTotalsAsync(business.UserId));
+        Assert.Equal(0, await Service(db).RefreshAllPayoutTotalsAsync());
+
+        using var check = database.CreateContext();
+        var settled = check.ProviderPayouts.Single(p => p.Id == paid.Id);
+        Assert.Equal(0m, settled.GrossAmountUsd);
+        Assert.Equal(0, settled.ConsultationCount);
+        Assert.Equal(80m, check.ProviderPayouts.Single(p => p.Id == pending.Id).GrossAmountUsd);
+    }
+
+    [Fact]
     public async Task Provider_rule_on_onboarding_copies_the_default_in_the_local_currency()
     {
         using var database = new TestDatabase();

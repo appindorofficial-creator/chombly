@@ -1,3 +1,4 @@
+using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Data;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -32,7 +33,7 @@ public class AddServiceHandler
             PriceMedium = price + step,
             PriceLarge = price + step * 2,
             PriceGiant = price + step * 3,
-            DurationMinutes = command.BillingUnit == NightUnit ? 1440 : 60
+            DurationMinutes = command.BillingUnit == NightUnit ? ServiceDurations.NightMinutes : ServiceDurations.FromName(name)
         });
         await _db.SaveChangesAsync(ct);
         return true;

@@ -40,7 +40,7 @@
                 }
                 else
                 {
-                    <p><strong>@CatalogLocalizer.Loc("Fecha", "Date"):</strong> @a.ScheduledAt.ToString("dddd, MMM d, yyyy · h:mm tt")</p>
+                    <p><strong>@CatalogLocalizer.Loc("Fecha", "Date"):</strong> @AppTimeZones.ToAppLocal(a.ScheduledAt).ToString("dddd, MMM d, yyyy · h:mm tt")</p>
                 }
                 @{
                     var petsLine = CatalogLocalizer.PetsLine(a.Pet, a.Notes);

@@ -2,11 +2,22 @@
 @model WebAppPet.Pages.Admin.PayoutsModel
 @using WebAppPet.Services
 @{
-    ViewData["Title"] = "Payouts proveedores";
+    ViewData["Title"] = L["AdminPayout_Title"].Value;
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Admin/Payouts";
     string Money(decimal amount, string? country) => AppMoney.Format(amount, country);
+    string ProviderName(WebAppPet.Models.ProviderPayout p) =>
+        p.ProviderUser?.FullName ?? string.Format(L["AdminPayout_UnknownProvider"].Value, p.ProviderUserId);
+    string StatusLabel(WebAppPet.Models.ProviderPayoutStatus s) => s switch
+    {
+        WebAppPet.Models.ProviderPayoutStatus.Pending => L["Payout_Status_Pending"].Value,
+        WebAppPet.Models.ProviderPayoutStatus.Processing => L["Payout_Status_Processing"].Value,
+        WebAppPet.Models.ProviderPayoutStatus.Paid => L["Payout_Status_Paid"].Value,
+        WebAppPet.Models.ProviderPayoutStatus.Failed => L["Payout_Status_Failed"].Value,
+        WebAppPet.Models.ProviderPayoutStatus.Held => L["Payout_Status_Held"].Value,
+        _ => s.ToString()
+    };
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
@@ -28,7 +39,7 @@
     {
         var country = p.ProviderUser?.CountryCode;
         <div class="card card-pad" style="margin-bottom:10px">
-            <strong>@(p.ProviderUser?.FullName ?? $"User #{p.ProviderUserId}")</strong>
+            <strong>@ProviderName(p)</strong>
             <span class="muted small" style="display:block">
                 @AppTimeZones.FormatDate(p.PeriodStart) – @AppTimeZones.FormatDate(p.PeriodEnd)
                 · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
@@ -51,7 +62,7 @@
     {
         var country = p.ProviderUser?.CountryCode;
         <div class="card card-pad" style="margin-bottom:8px">
-            <strong>@p.Status</strong> · @(p.ProviderUser?.FullName ?? $"#{p.ProviderUserId}")
+            <strong>@StatusLabel(p.Status)</strong> · @ProviderName(p)
             <span class="muted small" style="display:block">
                 @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
                 · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)

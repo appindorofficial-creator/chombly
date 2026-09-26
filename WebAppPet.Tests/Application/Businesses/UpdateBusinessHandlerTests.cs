@@ -213,4 +213,21 @@ public class UpdateBusinessHandlerTests : IDisposable
         Assert.Equal(50000 + step * 3, service.PriceGiant);
         Assert.Equal(1440, service.DurationMinutes);
     }
+
+    [Fact]
+    public async Task Session_services_take_their_duration_from_the_name()
+    {
+        var handler = new AddServiceHandler(_database.CreateContext());
+
+        Assert.True(await handler.HandleAsync(new AddServiceCommand(_business.Id, "Paseo 45 min", "sesion", 20000, "CO")));
+        Assert.True(await handler.HandleAsync(new AddServiceCommand(_business.Id, "Paseo largo", "sesion", 30000, "CO")));
+
+        using var db = _database.CreateContext();
+        var durations = db.Services.AsNoTracking()
+            .Where(s => s.GroomerId == _business.Id)
+            .OrderBy(s => s.Id)
+            .Select(s => s.DurationMinutes)
+            .ToList();
+        Assert.Equal([45, 60], durations);
+    }
 }
