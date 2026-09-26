@@ -1,3 +1,4 @@
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -153,6 +154,12 @@ public sealed class BookingSummarySheetModel
     public string TotalLabelEs { get; init; } = "Total";
     public string TotalLabelEn { get; init; } = "Total";
     public decimal Estimate { get; init; }
+
+    /// <summary>Must match the minimum the booking handler charges for this flow.</summary>
+    public decimal MinimumDeposit { get; init; } = BookingPricing.MinimumDeposit;
+    public decimal Deposit => BookingPricing.Deposit(Estimate, MinimumDeposit);
+    public decimal BalanceAtBusiness => Math.Max(0m, Estimate - Deposit);
+
     public string? NoteEs { get; init; }
     public string? NoteEn { get; init; }
 

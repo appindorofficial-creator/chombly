@@ -44,10 +44,12 @@ using WebAppPet.Application.Businesses.UpdateBusiness;
 using WebAppPet.Application.Payments.AddPaymentMethod;
 using WebAppPet.Application.Payments.DeletePaymentMethod;
 using WebAppPet.Application.Payments.GeneratePayout;
+using WebAppPet.Application.Payments.GetAdminPayments;
 using WebAppPet.Application.Payments.GetAdminPayouts;
 using WebAppPet.Application.Payments.GetPaymentMethods;
 using WebAppPet.Application.Payments.GetProviderPayouts;
 using WebAppPet.Application.Payments.MarkPayoutPaid;
+using WebAppPet.Application.Payments.RefundPayment;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Pets.DeletePet;
 using WebAppPet.Application.Pets.GetPet;
@@ -59,6 +61,7 @@ using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
 using WebAppPet.Application.Reviews.GetReviews;
 using WebAppPet.Application.Reviews.Shared;
+using WebAppPet.Infrastructure.Payments;
 
 namespace WebAppPet.Application;
 
@@ -117,6 +120,8 @@ public static class DependencyInjection
         services.AddScoped<ToggleAvailabilityDayHandler>();
         services.AddScoped<SearchBusinessesHandler>();
 
+        services.AddScoped<IPaymentGateway, SimulatedPaymentGateway>();
+        services.AddScoped<PaymentService>();
         services.AddScoped<GetPaymentMethodsHandler>();
         services.AddScoped<AddPaymentMethodHandler>();
         services.AddScoped<DeletePaymentMethodHandler>();
@@ -125,6 +130,8 @@ public static class DependencyInjection
         services.AddScoped<MarkPayoutPaidHandler>();
         services.AddScoped<GetProviderPayoutsHandler>();
         services.AddScoped<GetAdminPayoutsHandler>();
+        services.AddScoped<GetAdminPaymentsHandler>();
+        services.AddScoped<RefundPaymentHandler>();
 
         services.AddScoped<GetPetsHandler>();
         services.AddScoped<GetPetHandler>();

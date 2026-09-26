@@ -37,10 +37,7 @@ public class PayoutHandlersTests
         using var database = new TestDatabase();
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
-        var booking = TestData.AddAppointment(db, TestData.AddUser(db), business,
-            AppointmentStatus.Confirmed, PeriodStart.AddDays(5));
-        booking.CreatedAt = PeriodStart.AddDays(3);
-        db.SaveChanges();
+        TestData.AddCharge(db, business, 40, PeriodStart.AddDays(3));
         var handler = new GeneratePayoutHandler(Service(db));
         await handler.HandleAsync(new GeneratePayoutCommand(business.UserId, PeriodStart, PeriodEnd));
 
@@ -74,9 +71,7 @@ public class PayoutHandlersTests
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
         var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
-        var appt = TestData.AddAppointment(db, TestData.AddUser(db), business, AppointmentStatus.Confirmed, PeriodStart.AddDays(4));
-        appt.CreatedAt = PeriodStart.AddDays(2);
-        db.SaveChanges();
+        TestData.AddCharge(db, business, 40, PeriodStart.AddDays(2));
         var handler = new GetAdminPayoutsHandler(Service(db));
 
         var plain = await handler.HandleAsync(new GetAdminPayoutsQuery(RefreshTotals: false));
@@ -113,7 +108,7 @@ public class PayoutHandlersTests
         var business = TestData.AddBusiness(db);
         await Service(db).SeedDefaultRulesAsync();
         await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
-        TestData.AddAppointment(db, TestData.AddUser(db), business, AppointmentStatus.Confirmed, PeriodStart.AddDays(4));
+        TestData.AddCharge(db, business, 14, PeriodStart.AddDays(4), serviceTotal: 40);
 
         var view = await new GetProviderPayoutsHandler(Service(db))
             .HandleAsync(new GetProviderPayoutsQuery(business.UserId));

@@ -7,7 +7,9 @@ public enum CreateBookingError
     None,
     MissingData,
     SpeciesNotAccepted,
-    InvalidPromo
+    InvalidPromo,
+    NoPaymentMethod,
+    PaymentDeclined
 }
 
 public sealed record CreateBookingResult
@@ -16,6 +18,10 @@ public sealed record CreateBookingResult
     public CreateBookingError Error { get; init; }
     public string? RejectedSpecies { get; init; }
     public string? PromoError { get; init; }
+
+    /// <summary>Message to show when the deposit could not be charged.</summary>
+    public string? PaymentError { get; init; }
+
     public BookingQuote? Quote { get; init; }
 
     public bool Success => Error == CreateBookingError.None;

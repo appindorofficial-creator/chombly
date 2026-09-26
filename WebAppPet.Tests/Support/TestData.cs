@@ -1,5 +1,8 @@
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
+using WebAppPet.Infrastructure.Payments;
 using WebAppPet.Models;
+using WebAppPet.Services;
 
 namespace WebAppPet.Tests.Support;
 
@@ -94,6 +97,57 @@ public static class TestData
         db.SaveChanges();
         return appt;
     }
+
+    /// <summary>Card ending "0002" is declined by the simulated gateway; any other valid ending is approved.</summary>
+    public static PaymentMethod AddCard(AppDbContext db, AppUser owner, string last4 = "4242", bool isDefault = true)
+    {
+        var card = new PaymentMethod
+        {
+            UserId = owner.Id,
+            Brand = "Visa",
+            Last4 = last4,
+            HolderName = owner.FullName,
+            ExpMonth = 12,
+            ExpYear = 2099,
+            IsDefault = isDefault
+        };
+        db.PaymentMethods.Add(card);
+        db.SaveChanges();
+        return card;
+    }
+
+    public static PaymentTransaction AddCharge(
+        AppDbContext db,
+        GroomerProfile? business,
+        decimal amount,
+        DateTime createdAt,
+        decimal? serviceTotal = null,
+        PaymentTransactionStatus status = PaymentTransactionStatus.Succeeded,
+        Appointment? appointment = null,
+        PaymentPurpose purpose = PaymentPurpose.BookingDeposit,
+        string currency = "COP")
+    {
+        var charge = new PaymentTransaction
+        {
+            UserId = appointment?.ClientId ?? AddUser(db).Id,
+            ProviderId = business?.Id,
+            AppointmentId = appointment?.Id,
+            Purpose = purpose,
+            Status = status,
+            Amount = amount,
+            ServiceTotal = serviceTotal ?? amount,
+            Currency = currency,
+            Gateway = SimulatedPaymentGateway.GatewayName,
+            ExternalReference = $"sim_ch_test{Interlocked.Increment(ref _seq)}",
+            CreatedAt = createdAt
+        };
+        db.PaymentTransactions.Add(charge);
+        db.SaveChanges();
+        return charge;
+    }
+
+    public static PaymentService Payments(AppDbContext db) =>
+        new(db, new SimulatedPaymentGateway(), new VetAuditService(db));
 
     public static Review AddReview(AppDbContext db, AppUser client, GroomerProfile business, int rating, DateTime? createdAt = null)
     {

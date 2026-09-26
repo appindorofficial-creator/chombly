@@ -1,5 +1,6 @@
 @page
 @using WebAppPet.Pages.Shared
+@using WebAppPet.Application.Bookings.Shared
 @model WebAppPet.Pages.Trainers.IndexModel
 @{
     var configureHref = BookingCheckoutUrls.ForPage(ViewContext, pay: false);
@@ -262,8 +263,8 @@
         PaymentHeadingEn = "Payment method",
         DefaultPayment = Model.DefaultPayment,
         AcceptTerms = Model.AcceptTerms,
-        SubmitLabelEs = $"Confirmar reserva · {AppMoney.Format(Model.Estimate)}",
-        SubmitLabelEn = $"Confirm booking · {AppMoney.Format(Model.Estimate)}",
+        SubmitLabelEs = $"Pagar anticipo · {AppMoney.Format(BookingPricing.Deposit(Model.Estimate))}",
+        SubmitLabelEn = $"Pay deposit · {AppMoney.Format(BookingPricing.Deposit(Model.Estimate))}",
         HiddenFields =
         [
             new BookingSummaryHidden { Name = "Need", Value = Model.Need },

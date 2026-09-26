@@ -197,6 +197,7 @@ public class IndexModel : PageModel
         var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
+            PaymentMethodId = PaymentMethodId,
             BusinessId = SelectedDaycare.Id,
             ServiceId = SelectedService.Id,
             PetIds = SelectedPets.Select(p => p.Id).ToList(),
@@ -218,6 +219,7 @@ public class IndexModel : PageModel
                     $"Esta guardería no atiende {result.RejectedSpecies}.",
                     $"This daycare does not accept {result.RejectedSpecies}."),
                 CreateBookingError.InvalidPromo => result.PromoError,
+                CreateBookingError.NoPaymentMethod or CreateBookingError.PaymentDeclined => result.PaymentError,
                 _ => CatalogLocalizer.Loc("Elige guardería y mascota para continuar.", "Choose a daycare and pet to continue.")
             };
             if (result.Error == CreateBookingError.InvalidPromo)

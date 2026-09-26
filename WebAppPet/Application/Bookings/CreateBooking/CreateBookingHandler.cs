@@ -1,20 +1,28 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.Shared;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Data;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 
 namespace WebAppPet.Application.Bookings.CreateBooking;
 
+/// <summary>
+/// Creates a pending booking after charging its deposit to the client's card;
+/// the rest of the price is paid directly at the business.
+/// </summary>
 public class CreateBookingHandler
 {
     private readonly AppDbContext _db;
     private readonly ApplyPromoCodeHandler _promo;
+    private readonly PaymentService _payments;
 
-    public CreateBookingHandler(AppDbContext db, ApplyPromoCodeHandler promo)
+    public CreateBookingHandler(AppDbContext db, ApplyPromoCodeHandler promo, PaymentService payments)
     {
         _db = db;
         _promo = promo;
+        _payments = payments;
     }
 
     public async Task<CreateBookingResult> HandleAsync(CreateBookingCommand command, CancellationToken ct = default)
@@ -47,6 +55,35 @@ public class CreateBookingHandler
             return CreateBookingResult.Fail(CreateBookingError.InvalidPromo) with { PromoError = promo.ErrorMessage };
 
         var quote = BookingPricing.Quote(command.Subtotal, promo, command.MinimumDeposit);
+
+        PaymentTransaction? deposit = null;
+        if (quote.Deposit > 0)
+        {
+            var card = await _payments.FindCardAsync(command.ClientId, command.PaymentMethodId, ct);
+            if (card is null)
+                return CreateBookingResult.Fail(CreateBookingError.NoPaymentMethod) with
+                {
+                    PaymentError = CatalogLocalizer.Loc(
+                        "Agrega un método de pago para pagar el anticipo.",
+                        "Add a payment method to pay the deposit.")
+                };
+
+            deposit = await _payments.ChargeAsync(new ChargeRequest
+            {
+                UserId = command.ClientId,
+                Card = card,
+                Amount = quote.Deposit,
+                ServiceTotal = quote.Total,
+                Purpose = PaymentPurpose.BookingDeposit,
+                Description = $"Deposit · {business.BusinessName}",
+                ProviderId = business.Id
+            }, ct);
+            if (deposit.Status != PaymentTransactionStatus.Succeeded)
+                return CreateBookingResult.Fail(CreateBookingError.PaymentDeclined) with
+                {
+                    PaymentError = PaymentFailureCodes.Message(deposit.FailureCode)
+                };
+        }
 
         var appt = new Appointment
         {
@@ -91,6 +128,8 @@ public class CreateBookingHandler
             Type = "appointment"
         });
         await _db.SaveChangesAsync(ct);
+        if (deposit is not null)
+            await _payments.AttachAppointmentAsync(deposit, appt.Id, ct);
 
         return CreateBookingResult.Created(appt.Id, quote);
     }

@@ -22,13 +22,13 @@
         ProviderPayoutStatus.Held => L["Payout_Status_Held"].Value,
         _ => s.ToString()
     };
-    string ApptStatusLabel(AppointmentStatus s) => s switch
+    string PurposeLabel(PaymentPurpose p) => p switch
     {
-        AppointmentStatus.Pending => CatalogLocalizer.Loc("Pendiente", "Pending"),
-        AppointmentStatus.Confirmed => CatalogLocalizer.Loc("Confirmada", "Confirmed"),
-        AppointmentStatus.Completed => CatalogLocalizer.Loc("Completada", "Completed"),
-        AppointmentStatus.Cancelled => CatalogLocalizer.Loc("Cancelada", "Cancelled"),
-        _ => s.ToString()
+        PaymentPurpose.BookingDeposit => CatalogLocalizer.Loc("Anticipo de reserva", "Booking deposit"),
+        PaymentPurpose.VetConsultation => CatalogLocalizer.Loc("Consulta veterinaria", "Vet consultation"),
+        PaymentPurpose.BehaviorSession => CatalogLocalizer.Loc("Sesión de comportamiento", "Behavior session"),
+        PaymentPurpose.CareSubscription => "Chombly Care",
+        _ => p.ToString()
     };
 }
 <div class="onboard onboard-app">
@@ -71,8 +71,8 @@
         <h2 class="section-title">@CatalogLocalizer.Loc("Pagos de clientes", "Customer payments")</h2>
         <p class="muted small" style="margin-top:-6px;margin-bottom:10px">
             @CatalogLocalizer.Loc(
-                "Reservas pagadas desde la app familia (simulado). La comisión se estima con tu regla activa.",
-                "Bookings paid from the family app (simulated). Commission uses your active rule.")
+                "Lo que tus clientes pagaron con tarjeta en Chombly. En las reservas solo se cobra el anticipo; el saldo lo cobras tú en el negocio. La comisión se calcula sobre el total del servicio y se descuenta de lo cobrado en línea.",
+                "What your customers paid by card on Chombly. Bookings only charge the deposit; you collect the balance at your business. Commission is on the full service price and is deducted from the online amount.")
         </p>
         @if (Model.RecentPayments.Count == 0)
         {
@@ -82,22 +82,44 @@
         {
             @foreach (var pay in Model.RecentPayments)
             {
-                <div class="card card-pad" style="margin-bottom:8px">
+                var refunded = pay.Status == PaymentTransactionStatus.Refunded;
+                <div class="card card-pad" style="margin-bottom:8px@(refunded ? ";opacity:.7" : "")">
                     <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
                         <div>
                             <strong>@pay.PetName · @pay.ServiceName</strong>
-                            <span class="muted small" style="display:block">@pay.ClientName · @ApptStatusLabel(pay.Status)</span>
+                            <span class="muted small" style="display:block">@pay.ClientName · @PurposeLabel(pay.Purpose)</span>
                             <span class="muted small" style="display:block">
-                @CatalogLocalizer.Loc("Pagado", "Paid") @AppTimeZones.FormatShort(pay.PaidAtUtc)
-                                · @CatalogLocalizer.Loc("Cita", "Visit") @AppTimeZones.FormatShort(pay.ScheduledAtUtc)
+                                @CatalogLocalizer.Loc("Pagado", "Paid") @AppTimeZones.FormatShort(pay.PaidAtUtc)
+                                @if (pay.ScheduledAtUtc is DateTime visit)
+                                {
+                                    <text>· @CatalogLocalizer.Loc("Cita", "Visit") @AppTimeZones.FormatShort(visit)</text>
+                                }
                             </span>
+                            @if (refunded)
+                            {
+                                <span class="muted small" style="display:block">
+                                    <strong>@CatalogLocalizer.Loc("Reembolsado", "Refunded")</strong>
+                                    @if (pay.RefundedAtUtc is DateTime r) { <text>@AppTimeZones.FormatShort(r)</text> }
+                                </span>
+                            }
                         </div>
-                        <strong class="price-tag">@AppMoney.Format(pay.Gross)</strong>
+                        <strong class="price-tag">@AppMoney.FormatCurrency(pay.ChargedOnline, pay.Currency)</strong>
                     </div>
                     <span class="muted small" style="display:block;margin-top:6px">
-                        @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.Format(pay.Commission)
-                        · <strong>@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.Format(pay.Net)</strong>
+                        @CatalogLocalizer.Loc("Total del servicio", "Service total") @AppMoney.FormatCurrency(pay.ServiceTotal, pay.Currency)
+                        @if (pay.BalanceAtBusiness > 0)
+                        {
+                            <text>· @CatalogLocalizer.Loc("Saldo a cobrar en el negocio", "Balance to collect in person") @AppMoney.FormatCurrency(pay.BalanceAtBusiness, pay.Currency)</text>
+                        }
                     </span>
+                    @if (!refunded)
+                    {
+                        <span class="muted small" style="display:block">
+                            @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.FormatCurrency(pay.Commission, pay.Currency)
+                            · <strong>@CatalogLocalizer.Loc("Neto a liquidar", "Net payout") @AppMoney.FormatCurrency(pay.Net, pay.Currency)</strong>
+                        </span>
+                    }
+                    <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Ref:", "Ref:") @pay.Reference</span>
                 </div>
             }
         }

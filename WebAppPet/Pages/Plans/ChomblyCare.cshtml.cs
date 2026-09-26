@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -13,19 +14,22 @@ public class ChomblyCareModel : PageModel
     private readonly ChomblyCareService _care;
     private readonly VetAuditService _audit;
     private readonly ConsentService _consent;
+    private readonly PaymentService _payments;
 
     public ChomblyCareModel(
         AuthService auth,
         ServiceCatalogService catalog,
         ChomblyCareService care,
         VetAuditService audit,
-        ConsentService consent)
+        ConsentService consent,
+        PaymentService payments)
     {
         _auth = auth;
         _catalog = catalog;
         _care = care;
         _audit = audit;
         _consent = consent;
+        _payments = payments;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -42,6 +46,7 @@ public class ChomblyCareModel : PageModel
 
     public ServiceCatalogItem? CatalogItem { get; set; }
     public CareSubscription? Subscription { get; set; }
+    public PaymentMethod? Card { get; set; }
     public int RemainingConsults { get; set; }
     public string? ErrorMessage { get; set; }
     public string? SuccessMessage { get; set; }
@@ -56,6 +61,8 @@ public class ChomblyCareModel : PageModel
             Subscription = await _care.GetActiveAsync(uid);
             if (Subscription != null)
                 RemainingConsults = _care.RemainingQuickConsults(Subscription);
+            else
+                Card = await _payments.FindCardAsync(uid, null);
         }
         return Page();
     }
@@ -75,10 +82,43 @@ public class ChomblyCareModel : PageModel
                 "Debes aceptar los términos y la renovación automática para activar Chombly Care.",
                 "You must accept the terms and auto-renewal to activate Chombly Care.");
             Subscription = await _care.GetActiveAsync(_auth.CurrentUserId.Value);
+            if (Subscription is null)
+                Card = await _payments.FindCardAsync(_auth.CurrentUserId.Value, null);
             return Page();
         }
 
-        var sub = await _care.ActivateAsync(_auth.CurrentUserId.Value, price);
+        var userId = _auth.CurrentUserId.Value;
+        var alreadyActive = await _care.GetActiveAsync(userId);
+        PaymentTransaction? charge = null;
+        if (alreadyActive is null)
+        {
+            Card = await _payments.FindCardAsync(userId, null);
+            if (Card is null)
+            {
+                ErrorMessage = CatalogLocalizer.Loc(
+                    "Agrega un método de pago para activar Chombly Care.",
+                    "Add a payment method to activate Chombly Care.");
+                return Page();
+            }
+
+            charge = await _payments.ChargeAsync(new ChargeRequest
+            {
+                UserId = userId,
+                Card = Card,
+                Amount = price,
+                Purpose = PaymentPurpose.CareSubscription,
+                Description = "Chombly Care · first month"
+            });
+            if (charge.Status != PaymentTransactionStatus.Succeeded)
+            {
+                ErrorMessage = PaymentFailureCodes.Message(charge.FailureCode);
+                return Page();
+            }
+        }
+
+        var sub = await _care.ActivateAsync(userId, price);
+        if (charge is not null)
+            await _payments.AttachCareSubscriptionAsync(charge, sub.Id);
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var ua = Request.Headers.UserAgent.ToString();
         await _consent.SaveAsync(_auth.CurrentUserId.Value, ConsultationId, new[]

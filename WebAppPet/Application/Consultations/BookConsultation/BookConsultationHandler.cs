@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Consultations.GetConsultationCheckout;
 using WebAppPet.Application.Consultations.Shared;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -9,8 +10,8 @@ using WebAppPet.Services;
 namespace WebAppPet.Application.Consultations.BookConsultation;
 
 /// <summary>
-/// Books the consultation as a pending appointment with its provider, paid by card (simulated)
-/// or with a Care quick consult. Saves the consents, notifies the client and logs the payment.
+/// Books the consultation as a pending appointment with its provider, charged to the card through
+/// the payment gateway or covered by a Care quick consult. Saves the consents, notifies the client and logs the payment.
 /// </summary>
 public class BookConsultationHandler
 {
@@ -19,19 +20,22 @@ public class BookConsultationHandler
     private readonly ChomblyCareService _care;
     private readonly ConsentService _consent;
     private readonly VetAuditService _audit;
+    private readonly PaymentService _payments;
 
     public BookConsultationHandler(
         AppDbContext db,
         GetConsultationCheckoutHandler checkout,
         ChomblyCareService care,
         ConsentService consent,
-        VetAuditService audit)
+        VetAuditService audit,
+        PaymentService payments)
     {
         _db = db;
         _checkout = checkout;
         _care = care;
         _consent = consent;
         _audit = audit;
+        _payments = payments;
     }
 
     public async Task<BookConsultationResult> HandleAsync(BookConsultationCommand command, CancellationToken ct = default)
@@ -62,6 +66,24 @@ public class BookConsultationHandler
         if (usingCare && !await _care.TryConsumeQuickConsultAsync(command.ClientId, consultation.Id, ct))
             return new BookConsultationResult(BookConsultationOutcome.CareBenefitFailed, details, true);
 
+        PaymentTransaction? payment = null;
+        if (!usingCare && charge > 0)
+        {
+            payment = await _payments.ChargeAsync(new ChargeRequest
+            {
+                UserId = command.ClientId,
+                Card = card!,
+                Amount = charge,
+                Purpose = PaymentPurpose.VetConsultation,
+                Description = $"Vet consultation #{consultation.Id} ({item.Code})",
+                ProviderId = consultation.ProviderId,
+                ConsultationId = consultation.Id
+            }, ct);
+            if (payment.Status != PaymentTransactionStatus.Succeeded)
+                return new BookConsultationResult(BookConsultationOutcome.PaymentDeclined, details, false,
+                    PaymentFailureCodes.Message(payment.FailureCode));
+        }
+
         var service = await ProviderServiceAsync(consultation.ProviderId.Value, item, ct);
         var payNote = usingCare
             ? " | Chombly Care benefit"
@@ -82,6 +104,8 @@ public class BookConsultationHandler
         };
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync(ct);
+        if (payment is not null)
+            await _payments.AttachAppointmentAsync(payment, appointment.Id, ct);
 
         await _consent.SaveAsync(command.ClientId, consultation.Id, new[]
         {

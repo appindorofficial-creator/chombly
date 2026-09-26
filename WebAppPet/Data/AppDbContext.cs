@@ -42,6 +42,7 @@ public class AppDbContext : DbContext
     public DbSet<ProfessionalOnboardingApplication> ProfessionalOnboardingApplications => Set<ProfessionalOnboardingApplication>();
     public DbSet<ReminderSchedule> ReminderSchedules => Set<ReminderSchedule>();
     public DbSet<ReminderDelivery> ReminderDeliveries => Set<ReminderDelivery>();
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -392,5 +393,11 @@ public class AppDbContext : DbContext
             .WithMany(r => r.Deliveries)
             .HasForeignKey(d => d.ReminderScheduleId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PaymentTransaction>().Property(t => t.Amount).HasPrecision(12, 2);
+        modelBuilder.Entity<PaymentTransaction>().Property(t => t.ServiceTotal).HasPrecision(12, 2);
+        modelBuilder.Entity<PaymentTransaction>().HasIndex(t => new { t.ProviderId, t.Status, t.CreatedAt });
+        modelBuilder.Entity<PaymentTransaction>().HasIndex(t => t.AppointmentId);
+        modelBuilder.Entity<PaymentTransaction>().HasIndex(t => t.UserId);
     }
 }

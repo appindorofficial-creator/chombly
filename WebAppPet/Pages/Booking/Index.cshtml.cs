@@ -281,6 +281,7 @@ public class IndexModel : PageModel
         var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
+            PaymentMethodId = PaymentMethodId,
             BusinessId = GroomerId,
             ServiceId = ServiceId,
             PetIds = SelectedPets.Select(p => p.Id).ToList(),
@@ -300,9 +301,12 @@ public class IndexModel : PageModel
             if (result.Error == CreateBookingError.InvalidPromo)
                 PromoError = result.PromoError;
             else
-                ErrorMessage = result.Error == CreateBookingError.SpeciesNotAccepted
-                    ? string.Format(_L["Booking_SpeciesNotAccepted"].Value, result.RejectedSpecies)
-                    : _L["Booking_MissingData"].Value;
+                ErrorMessage = result.Error switch
+                {
+                    CreateBookingError.SpeciesNotAccepted => string.Format(_L["Booking_SpeciesNotAccepted"].Value, result.RejectedSpecies),
+                    CreateBookingError.NoPaymentMethod or CreateBookingError.PaymentDeclined => result.PaymentError,
+                    _ => _L["Booking_MissingData"].Value
+                };
             EvaluateCanShowSummary();
             Pay = true;
             return Page();

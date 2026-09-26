@@ -149,21 +149,29 @@
                 <partial name="_BookingGateNote" model="gate" />
             }
 
-            @if (Model.Payments.Count > 0)
-            {
-                <section>
-                    <h2 class="section-title">@CatalogLocalizer.Loc("Pago", "Payment")</h2>
+            <section>
+                <h2 class="section-title">@CatalogLocalizer.Loc("Pago", "Payment")</h2>
+                @if (Model.Payments.Count > 0)
+                {
+                    var selectedCard = Model.PaymentMethodId ?? Model.Payments[0].Id;
                     @foreach (var p in Model.Payments)
                     {
                         <label class="radio-card">
-                            <input type="radio" name="PaymentMethodId" value="@p.Id" @(Model.PaymentMethodId == p.Id ? "checked" : null) />
+                            <input type="radio" name="PaymentMethodId" value="@p.Id" @(selectedCard == p.Id ? "checked" : null) />
                             <div class="inner">
                                 <span>@p.Brand ·••• @p.Last4</span>
                             </div>
                         </label>
                     }
-                </section>
-            }
+                }
+                else
+                {
+                    var payReturn = Url.Page("/Behavior/Providers", new { caseId = Model.CaseId }) ?? "/Behavior/Providers";
+                    <a class="btn btn-outline btn-block" href="/Account/PaymentMethods?returnUrl=@Uri.EscapeDataString(payReturn)">
+                        @CatalogLocalizer.Loc("Agregar método de pago", "Add payment method")
+                    </a>
+                }
+            </section>
 
             <label class="check-row">
                 <input type="checkbox" asp-for="AcceptTerms" data-terms-checkbox />

@@ -125,72 +125,37 @@ public class ProviderPayoutService
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Settles what was actually collected online: successful charges earned by the business in the
+    /// period (refunded ones drop out). Commission is taken on the full service price, so the business
+    /// receives the online amount minus commission and collects the remaining balance in person.
+    /// </summary>
     public async Task<(decimal Gross, decimal Commission, decimal Net, int Count, ProviderCompensationRule? Rule)>
         CalculatePayoutForPeriodAsync(int providerUserId, DateTime periodStart, DateTime periodEnd, CancellationToken ct = default)
     {
         var groomer = await _db.Groomers.AsNoTracking()
             .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
+        var rule = await GetRuleForBusinessAsync(providerUserId, groomer, periodEnd, ct);
 
-        var serviceType = MapFromVetKind(groomer?.VetProviderKind ?? VetProviderKind.None);
-        var rule = await GetEffectiveRuleAsync(providerUserId, serviceType, periodEnd, ct)
-            ?? await GetEffectiveRuleAsync(providerUserId, CompensationServiceType.LocalVet, periodEnd, ct);
-
-        decimal gross = 0;
-        var count = 0;
-
-        if (groomer != null)
-        {
-            // Family marketplace bookings (simulated card charge at checkout).
-            var appointmentTotals = await _db.Appointments.AsNoTracking()
-                .Where(a => a.GroomerId == groomer.Id
-                    && a.Status != AppointmentStatus.Cancelled
-                    && a.TotalPrice > 0
-                    && a.CreatedAt >= periodStart
-                    && a.CreatedAt < periodEnd)
-                .Select(a => a.TotalPrice)
+        var charges = groomer is null
+            ? []
+            : await _db.PaymentTransactions.AsNoTracking()
+                .Where(t => t.ProviderId == groomer.Id
+                    && t.Status == PaymentTransactionStatus.Succeeded
+                    && t.CreatedAt >= periodStart
+                    && t.CreatedAt < periodEnd)
+                .Select(t => new { t.Amount, t.ServiceTotal })
                 .ToListAsync(ct);
 
-            gross += appointmentTotals.Sum();
-            count += appointmentTotals.Count;
-
-            var consults = await _db.Consultations.AsNoTracking()
-                .Where(c => c.ProviderId == groomer.Id &&
-                            c.Status == ConsultationStatus.Completed &&
-                            c.UpdatedAt >= periodStart &&
-                            c.UpdatedAt < periodEnd)
-                .Select(c => c.PriceCharged)
-                .ToListAsync(ct);
-
-            gross += consults.Sum();
-            count += consults.Count;
-
-            if (groomer.VetProviderKind == VetProviderKind.BehaviorSpecialist
-                || serviceType == CompensationServiceType.Behavior)
-            {
-                var cases = await _db.BehaviorCases.AsNoTracking()
-                    .Where(b => b.ProviderId == groomer.Id &&
-                                b.PriceCharged > 0 &&
-                                (b.Status == BehaviorCaseStatus.Closed ||
-                                 b.Status == BehaviorCaseStatus.PlanActive ||
-                                 b.Status == BehaviorCaseStatus.Scheduled) &&
-                                b.UpdatedAt >= periodStart &&
-                                b.UpdatedAt < periodEnd)
-                    .Select(b => b.PriceCharged)
-                    .ToListAsync(ct);
-
-                gross += cases.Sum();
-                count += cases.Count;
-            }
-        }
-
-        var pct = rule?.CommissionPercent ?? 20m;
-        var flat = rule?.FlatFeeUsd ?? 0m;
-        var commission = Math.Round(gross * (pct / 100m) + flat, 2);
+        var gross = charges.Sum(c => c.Amount);
+        var commission = charges.Count == 0
+            ? 0m
+            : Math.Round(charges.Sum(c => c.ServiceTotal) * (CommissionPercent(rule) / 100m) + (rule?.FlatFeeUsd ?? 0m), 2);
         var net = Math.Round(gross - commission, 2);
-        return (gross, commission, net, count, rule);
+        return (gross, commission, net, charges.Count, rule);
     }
 
-    /// <summary>Recent family bookings with simulated payment for the provider dashboard.</summary>
+    /// <summary>Recent card charges earned by the business, refunded ones included, for the provider dashboard.</summary>
     public async Task<List<ProviderPaymentRow>> ListRecentFamilyPaymentsAsync(
         int providerUserId,
         int take = 30,
@@ -200,52 +165,80 @@ public class ProviderPayoutService
             .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
         if (groomer is null) return [];
 
-        var rule = await GetEffectiveRuleAsync(providerUserId, CompensationServiceType.LocalVet, ct: ct);
-        var pct = rule?.CommissionPercent ?? 20m;
+        var pct = CommissionPercent(await GetRuleForBusinessAsync(providerUserId, groomer, null, ct));
 
-        var rows = await _db.Appointments.AsNoTracking()
-            .Include(a => a.Pet)
-            .Include(a => a.Service)
-            .Include(a => a.Client)
-            .Where(a => a.GroomerId == groomer.Id
-                && a.Status != AppointmentStatus.Cancelled
-                && a.TotalPrice > 0)
-            .OrderByDescending(a => a.CreatedAt)
+        var charges = await _db.PaymentTransactions.AsNoTracking()
+            .Where(t => t.ProviderId == groomer.Id && t.Status != PaymentTransactionStatus.Failed)
+            .OrderByDescending(t => t.CreatedAt)
             .Take(take)
             .ToListAsync(ct);
 
-        return rows.Select(a =>
+        var appointmentIds = charges.Where(t => t.AppointmentId.HasValue).Select(t => t.AppointmentId!.Value).ToList();
+        var appointments = await _db.Appointments.AsNoTracking()
+            .Include(a => a.Pet)
+            .Include(a => a.Service)
+            .Where(a => appointmentIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, ct);
+        var clientIds = charges.Select(t => t.UserId).Distinct().ToList();
+        var clients = await _db.Users.AsNoTracking()
+            .Where(u => clientIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
+
+        return charges.Select(t =>
         {
-            var commission = Math.Round(a.TotalPrice * (pct / 100m), 2);
+            var appt = t.AppointmentId is int id ? appointments.GetValueOrDefault(id) : null;
+            var refunded = t.Status == PaymentTransactionStatus.Refunded;
+            var commission = refunded ? 0m : Math.Round(t.ServiceTotal * (pct / 100m), 2);
             return new ProviderPaymentRow(
-                a.Id,
-                a.CreatedAt,
-                a.ScheduledAt,
-                a.Status,
-                a.Pet?.Name ?? "—",
-                a.Service?.Name ?? "—",
-                a.Client?.FullName ?? "—",
-                a.TotalPrice,
+                t.Id,
+                t.ExternalReference,
+                t.Status,
+                t.Purpose,
+                t.CreatedAt,
+                t.RefundedAt,
+                appt?.ScheduledAt,
+                appt?.Pet?.Name ?? "—",
+                appt?.Service?.Name ?? t.Description ?? "—",
+                clients.GetValueOrDefault(t.UserId) ?? "—",
+                t.Currency,
+                t.Amount,
+                t.ServiceTotal,
+                Math.Max(0m, t.ServiceTotal - t.Amount),
                 commission,
-                Math.Round(a.TotalPrice - commission, 2),
-                a.DepositPaid,
-                a.Notes);
+                refunded ? 0m : Math.Round(t.Amount - commission, 2));
         }).ToList();
     }
 
     public sealed record ProviderPaymentRow(
-        int AppointmentId,
+        int TransactionId,
+        string Reference,
+        PaymentTransactionStatus Status,
+        PaymentPurpose Purpose,
         DateTime PaidAtUtc,
-        DateTime ScheduledAtUtc,
-        AppointmentStatus Status,
+        DateTime? RefundedAtUtc,
+        DateTime? ScheduledAtUtc,
         string PetName,
         string ServiceName,
         string ClientName,
-        decimal Gross,
+        string Currency,
+        decimal ChargedOnline,
+        decimal ServiceTotal,
+        decimal BalanceAtBusiness,
         decimal Commission,
-        decimal Net,
-        decimal DepositPaid,
-        string? Notes);
+        decimal Net);
+
+    private async Task<ProviderCompensationRule?> GetRuleForBusinessAsync(
+        int providerUserId, GroomerProfile? groomer, DateTime? asOfUtc, CancellationToken ct)
+    {
+        var serviceType = MapFromVetKind(groomer?.VetProviderKind ?? VetProviderKind.None);
+        return await GetEffectiveRuleAsync(providerUserId, serviceType, asOfUtc, ct)
+            ?? await GetEffectiveRuleAsync(providerUserId, CompensationServiceType.LocalVet, asOfUtc, ct);
+    }
+
+    public async Task<decimal> CommissionPercentAsync(GroomerProfile business, CancellationToken ct = default) =>
+        CommissionPercent(await GetRuleForBusinessAsync(business.UserId, business, null, ct));
+
+    private static decimal CommissionPercent(ProviderCompensationRule? rule) => rule?.CommissionPercent ?? 20m;
 
     public async Task<ProviderPayout> CreatePendingPayoutAsync(
         int providerUserId,

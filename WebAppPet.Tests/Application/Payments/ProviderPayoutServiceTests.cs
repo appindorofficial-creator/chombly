@@ -13,33 +13,25 @@ public class ProviderPayoutServiceTests
 
     private static ProviderPayoutService Service(AppDbContext db) => new(db, new VetAuditService(db));
 
-    private static Appointment AddPaidBooking(AppDbContext db, GroomerProfile business, decimal total, DateTime createdAt,
-        AppointmentStatus status = AppointmentStatus.Confirmed)
-    {
-        var appt = TestData.AddAppointment(db, TestData.AddUser(db), business, status, createdAt.AddDays(2));
-        appt.TotalPrice = total;
-        appt.CreatedAt = createdAt;
-        db.SaveChanges();
-        return appt;
-    }
-
     [Fact]
-    public async Task Charges_the_platform_default_commission_on_bookings_created_in_the_period()
+    public async Task Settles_deposits_collected_in_the_period_with_commission_on_the_service_total()
     {
         using var database = new TestDatabase();
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
         await Service(db).SeedDefaultRulesAsync();
-        AddPaidBooking(db, business, 40, PeriodStart.AddDays(3));
-        AddPaidBooking(db, business, 60, PeriodStart.AddDays(10));
-        AddPaidBooking(db, business, 500, PeriodStart.AddDays(5), AppointmentStatus.Cancelled);
-        AddPaidBooking(db, business, 700, PeriodEnd.AddDays(1));
+        TestData.AddCharge(db, business, 15, PeriodStart.AddDays(3), serviceTotal: 40);
+        TestData.AddCharge(db, business, 21, PeriodStart.AddDays(10), serviceTotal: 60);
+        TestData.AddCharge(db, business, 175, PeriodStart.AddDays(5), serviceTotal: 500, status: PaymentTransactionStatus.Refunded);
+        TestData.AddCharge(db, business, 175, PeriodStart.AddDays(6), serviceTotal: 500, status: PaymentTransactionStatus.Failed);
+        TestData.AddCharge(db, business, 245, PeriodEnd.AddDays(1), serviceTotal: 700);
+        TestData.AddCharge(db, TestData.AddBusiness(db), 99, PeriodStart.AddDays(3));
 
         var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
 
-        Assert.Equal(100m, calc.Gross);
+        Assert.Equal(36m, calc.Gross);
         Assert.Equal(20m, calc.Commission);
-        Assert.Equal(80m, calc.Net);
+        Assert.Equal(16m, calc.Net);
         Assert.Equal(2, calc.Count);
         Assert.Equal(20m, calc.Rule!.CommissionPercent);
     }
@@ -60,12 +52,12 @@ public class ProviderPayoutServiceTests
             EffectiveFrom = PeriodStart.AddDays(-1)
         });
         db.SaveChanges();
-        AddPaidBooking(db, business, 100, PeriodStart.AddDays(3));
+        TestData.AddCharge(db, business, 35, PeriodStart.AddDays(3), serviceTotal: 100);
 
         var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
 
         Assert.Equal(15m, calc.Commission);
-        Assert.Equal(85m, calc.Net);
+        Assert.Equal(20m, calc.Net);
     }
 
     [Fact]
@@ -74,7 +66,7 @@ public class ProviderPayoutServiceTests
         using var database = new TestDatabase();
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
-        AddPaidBooking(db, business, 50, PeriodStart.AddDays(3));
+        TestData.AddCharge(db, business, 50, PeriodStart.AddDays(3));
 
         var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
 
@@ -83,12 +75,34 @@ public class ProviderPayoutServiceTests
     }
 
     [Fact]
+    public async Task A_period_without_charges_owes_nothing_even_with_a_flat_fee()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        db.ProviderCompensationRules.Add(new ProviderCompensationRule
+        {
+            ProviderUserId = business.UserId,
+            ServiceType = CompensationServiceType.LocalVet,
+            CommissionPercent = 10,
+            FlatFeeUsd = 5,
+            IsActive = true,
+            EffectiveFrom = PeriodStart.AddDays(-1)
+        });
+        db.SaveChanges();
+
+        var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
+
+        Assert.Equal((0m, 0m, 0m, 0), (calc.Gross, calc.Commission, calc.Net, calc.Count));
+    }
+
+    [Fact]
     public async Task Creates_a_pending_summary_and_rejects_an_overlapping_one_with_items()
     {
         using var database = new TestDatabase();
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
-        AddPaidBooking(db, business, 50, PeriodStart.AddDays(3));
+        TestData.AddCharge(db, business, 50, PeriodStart.AddDays(3));
 
         var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
 
@@ -121,7 +135,7 @@ public class ProviderPayoutServiceTests
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
         var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
-        AddPaidBooking(db, business, 50, PeriodStart.AddDays(3));
+        TestData.AddCharge(db, business, 50, PeriodStart.AddDays(3));
 
         var paid = await Service(db).MarkPaidAsync(payout.Id);
 
@@ -138,6 +152,23 @@ public class ProviderPayoutServiceTests
     }
 
     [Fact]
+    public async Task A_refund_before_settlement_drops_the_charge_from_the_pending_summary()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        var charge = TestData.AddCharge(db, business, 50, PeriodStart.AddDays(3));
+        var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
+
+        await TestData.Payments(db).RefundAsync(charge, "client_cancelled", null);
+        await Service(db).RefreshPayoutTotalsAsync(business.UserId);
+
+        using var check = database.CreateContext();
+        var refreshed = check.ProviderPayouts.Single(p => p.Id == payout.Id);
+        Assert.Equal((0m, 0), (refreshed.GrossAmountUsd, refreshed.ConsultationCount));
+    }
+
+    [Fact]
     public async Task Refreshing_totals_leaves_paid_summaries_as_they_were_settled()
     {
         using var database = new TestDatabase();
@@ -146,8 +177,8 @@ public class ProviderPayoutServiceTests
         var paid = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
         await Service(db).MarkPaidAsync(paid.Id);
         var pending = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodEnd, PeriodEnd.AddDays(30));
-        AddPaidBooking(db, business, 50, PeriodStart.AddDays(3));
-        AddPaidBooking(db, business, 80, PeriodEnd.AddDays(3));
+        TestData.AddCharge(db, business, 50, PeriodStart.AddDays(3));
+        TestData.AddCharge(db, business, 80, PeriodEnd.AddDays(3));
 
         Assert.Equal(1, await Service(db).RefreshPayoutTotalsAsync(business.UserId));
         Assert.Equal(0, await Service(db).RefreshAllPayoutTotalsAsync());
@@ -178,20 +209,29 @@ public class ProviderPayoutServiceTests
     }
 
     [Fact]
-    public async Task Recent_family_payments_show_commission_and_net_per_booking()
+    public async Task Recent_customer_payments_show_deposit_balance_commission_and_net()
     {
         using var database = new TestDatabase();
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
         await Service(db).SeedDefaultRulesAsync();
-        AddPaidBooking(db, business, 45.55m, PeriodStart.AddDays(3));
-        AddPaidBooking(db, business, 99, PeriodStart.AddDays(4), AppointmentStatus.Cancelled);
+        var appt = TestData.AddAppointment(db, TestData.AddUser(db), business, AppointmentStatus.Confirmed, PeriodStart.AddDays(5));
+        TestData.AddCharge(db, business, 15.94m, PeriodStart.AddDays(3), serviceTotal: 45.55m, appointment: appt);
+        TestData.AddCharge(db, business, 20, PeriodStart.AddDays(4), status: PaymentTransactionStatus.Refunded);
+        TestData.AddCharge(db, business, 30, PeriodStart.AddDays(5), status: PaymentTransactionStatus.Failed);
 
-        var row = Assert.Single(await Service(db).ListRecentFamilyPaymentsAsync(business.UserId));
+        var rows = await Service(db).ListRecentFamilyPaymentsAsync(business.UserId);
 
-        Assert.Equal(45.55m, row.Gross);
-        Assert.Equal(9.11m, row.Commission);
-        Assert.Equal(36.44m, row.Net);
-        Assert.Equal("Thor", row.PetName);
+        Assert.Equal(2, rows.Count);
+        var refunded = rows[0];
+        Assert.Equal((PaymentTransactionStatus.Refunded, 0m, 0m), (refunded.Status, refunded.Commission, refunded.Net));
+        var deposit = rows[1];
+        Assert.Equal(15.94m, deposit.ChargedOnline);
+        Assert.Equal(45.55m, deposit.ServiceTotal);
+        Assert.Equal(29.61m, deposit.BalanceAtBusiness);
+        Assert.Equal(9.11m, deposit.Commission);
+        Assert.Equal(6.83m, deposit.Net);
+        Assert.Equal("Thor", deposit.PetName);
+        Assert.Equal(appt.ScheduledAt, deposit.ScheduledAtUtc);
     }
 }

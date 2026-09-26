@@ -204,6 +204,7 @@ public class IndexModel : PageModel
         var result = await _createBooking.HandleAsync(new CreateBookingCommand
         {
             ClientId = userId,
+            PaymentMethodId = PaymentMethodId,
             BusinessId = SelectedWalker.Id,
             ServiceId = SelectedService.Id,
             PetIds = SelectedPets.Select(p => p.Id).ToList(),
@@ -226,6 +227,7 @@ public class IndexModel : PageModel
                     $"Este paseador no atiende {result.RejectedSpecies}.",
                     $"This walker does not accept {result.RejectedSpecies}."),
                 CreateBookingError.InvalidPromo => result.PromoError,
+                CreateBookingError.NoPaymentMethod or CreateBookingError.PaymentDeclined => result.PaymentError,
                 _ => CatalogLocalizer.Loc("Elige paseador y mascota para continuar.", "Choose a walker and pet to continue.")
             };
             if (result.Error == CreateBookingError.InvalidPromo)

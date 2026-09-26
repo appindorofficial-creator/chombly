@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Common;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -13,11 +14,13 @@ public class UpdateBookingStatusHandler
 {
     private readonly AppDbContext _db;
     private readonly ClinicalNotes _clinicalNotes;
+    private readonly PaymentService _payments;
 
-    public UpdateBookingStatusHandler(AppDbContext db, ClinicalNotes clinicalNotes)
+    public UpdateBookingStatusHandler(AppDbContext db, ClinicalNotes clinicalNotes, PaymentService payments)
     {
         _db = db;
         _clinicalNotes = clinicalNotes;
+        _payments = payments;
     }
 
     public async Task<Result> HandleAsync(UpdateBookingStatusCommand command, CancellationToken ct = default)
@@ -38,11 +41,21 @@ public class UpdateBookingStatusHandler
         else if (to == AppointmentStatus.Completed)
             await _clinicalNotes.MarkConsultationCompletedAsync(appt, ct);
 
+        var refunded = 0;
+        if (to == AppointmentStatus.Cancelled)
+        {
+            await _db.SaveChangesAsync(ct);
+            refunded = await _payments.RefundAppointmentAsync(appt.Id, "business_rejected", appt.Groomer.UserId, ct);
+        }
+
+        var refundNote = refunded > 0
+            ? CatalogLocalizer.Loc(" Te reembolsamos el anticipo.", " Your deposit was refunded.")
+            : "";
         _db.Notifications.Add(new AppNotification
         {
             UserId = appt.ClientId,
             Title = title,
-            Message = $"{appt.Groomer.BusinessName} {messageSuffix} ({AppTimeZones.FormatShort(appt.ScheduledAt)}).",
+            Message = $"{appt.Groomer.BusinessName} {messageSuffix} ({AppTimeZones.FormatShort(appt.ScheduledAt)}).{refundNote}",
             Type = "appointment"
         });
         await _db.SaveChangesAsync(ct);

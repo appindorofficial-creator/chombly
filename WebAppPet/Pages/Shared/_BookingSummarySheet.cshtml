@@ -1,4 +1,5 @@
 @model WebAppPet.Pages.Shared.BookingSummarySheetModel
+@using WebAppPet.Application.Bookings.Shared
 @{
     ViewData["TermsChecked"] = Model.AcceptTerms;
     var payReturn = Model.ContinueHref
@@ -14,9 +15,11 @@
     <aside class="checkout-sticky @(Model.ExtraClass)" data-checkout-sticky data-hotel-summary>
         <div class="checkout-sticky-inner">
             <div class="checkout-sticky-meta">
-                <span class="checkout-sticky-label">@CatalogLocalizer.Loc("Total", "Total")</span>
-                <strong class="checkout-sticky-price">@AppMoney.Format(Model.Estimate)</strong>
-                <small class="checkout-sticky-biz">@Model.BusinessName</small>
+                <span class="checkout-sticky-label">@CatalogLocalizer.Loc("Anticipo hoy", "Deposit today")</span>
+                <strong class="checkout-sticky-price">@AppMoney.Format(Model.Deposit)</strong>
+                <small class="checkout-sticky-biz">
+                    @CatalogLocalizer.Loc("Total", "Total") @AppMoney.Format(Model.Estimate) · @Model.BusinessName
+                </small>
             </div>
             <a class="btn btn-primary checkout-sticky-cta"
                href="@(Model.ContinueHref ?? "#")">
@@ -122,6 +125,31 @@ else
                     <span>@CatalogLocalizer.Loc(Model.TotalLabelEs, Model.TotalLabelEn)</span>
                     <strong>@AppMoney.Format(Model.Estimate)</strong>
                 </div>
+                <div class="checkout-total-row" data-deposit-row>
+                    <span>@CatalogLocalizer.Loc("Anticipo a pagar hoy", "Deposit due today")</span>
+                    <strong>@AppMoney.Format(Model.Deposit)</strong>
+                </div>
+                @if (Model.BalanceAtBusiness > 0)
+                {
+                    <div class="checkout-total-row" data-balance-row>
+                        <span>@CatalogLocalizer.Loc("Saldo a pagar en el negocio", "Balance due at the business")</span>
+                        <strong>@AppMoney.Format(Model.BalanceAtBusiness)</strong>
+                    </div>
+                }
+                <p class="summary-note">
+                    @if (Model.BalanceAtBusiness > 0)
+                    {
+                        @CatalogLocalizer.Loc(
+                            $"Hoy solo se cobra a tu tarjeta el anticipo del {BookingPricing.DepositRate * 100:0}% para apartar tu cupo. El saldo lo pagas directamente en {Model.BusinessName} el día del servicio. Si cancelas o el negocio no acepta la reserva, te reembolsamos el anticipo completo.",
+                            $"Only the {BookingPricing.DepositRate * 100:0}% deposit is charged to your card today to hold your spot. You pay the balance directly at {Model.BusinessName} on the day of the service. If you cancel or the business declines, the full deposit is refunded.")
+                    }
+                    else
+                    {
+                        @CatalogLocalizer.Loc(
+                            "Por el valor del servicio, hoy se cobra el total a tu tarjeta. Si cancelas o el negocio no acepta la reserva, te lo reembolsamos completo.",
+                            "Because of the service price, the full amount is charged to your card today. If you cancel or the business declines, it is fully refunded.")
+                    }
+                </p>
                 @if (!string.IsNullOrEmpty(Model.NoteEs) && !string.IsNullOrEmpty(Model.NoteEn))
                 {
                     <p class="summary-note">@CatalogLocalizer.Loc(Model.NoteEs, Model.NoteEn)</p>
