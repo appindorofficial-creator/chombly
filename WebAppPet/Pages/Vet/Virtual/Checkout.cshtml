@@ -139,6 +139,13 @@
                 </label>
             </section>
 
+            <div class="vet-checkout-total">
+                <span>@CatalogLocalizer.Loc("Total a pagar", "Total due")</span>
+                <strong data-checkout-total
+                        data-total-care="@AppMoney.Format(0)"
+                        data-total-pay="@AppMoney.Format(price)">@AppMoney.Format(payMode == "care" && Model.HasCareAvailable ? 0 : price)</strong>
+            </div>
+
             <button type="submit"
                     class="btn btn-primary btn-block vet-ready-submit"
                     style="margin-top:14px"
@@ -165,6 +172,7 @@
   var terms = form.querySelector('[data-checkout-terms]');
   var scope = form.querySelector('[data-checkout-scope]');
   var cardSec = form.querySelector('[data-pay-card-section]');
+  var total = form.querySelector('[data-checkout-total]');
   if (!btn) return;
   var labelCare = btn.getAttribute('data-label-care') || 'Care';
   var labelPay = btn.getAttribute('data-label-pay') || 'Pay';
@@ -189,6 +197,7 @@
     else if (needCard) btn.textContent = labelNeedPay;
     else btn.textContent = mode === 'care' ? labelCare : labelPay;
     if (cardSec) cardSec.hidden = mode !== 'pay';
+    if (total) total.textContent = total.getAttribute(mode === 'care' ? 'data-total-care' : 'data-total-pay');
     form.querySelectorAll('.vet-pay-option').forEach(function (lab) {
       var input = lab.querySelector('[data-pay-mode]');
       lab.classList.toggle('is-selected', !!(input && input.checked));
