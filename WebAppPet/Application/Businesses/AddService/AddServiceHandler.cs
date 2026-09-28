@@ -1,6 +1,6 @@
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Businesses.AddService;

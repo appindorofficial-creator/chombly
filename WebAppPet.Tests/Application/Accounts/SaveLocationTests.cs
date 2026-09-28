@@ -1,6 +1,6 @@
 using WebAppPet.Application.Accounts.SaveLocation;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Accounts;

@@ -1,7 +1,7 @@
 using WebAppPet.Application.Behavior.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 
 namespace WebAppPet.Application.Behavior.SaveBehaviorFollowUp;
 

@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Application.Consultations.StartConsultation;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Vet;
 

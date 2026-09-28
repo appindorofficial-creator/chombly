@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Infrastructure.Persistence;
 

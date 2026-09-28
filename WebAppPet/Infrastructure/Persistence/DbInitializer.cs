@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Security;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Infrastructure.Persistence;
 
@@ -210,7 +210,7 @@ public static class DbInitializer
         var changed = false;
         foreach (var u in users)
         {
-            var inferred = Services.MarketCountry.ResolveFromLocation(u.City, u.Latitude, u.Longitude);
+            var inferred = MarketCountry.ResolveFromLocation(u.City, u.Latitude, u.Longitude);
             if (string.IsNullOrWhiteSpace(u.CountryCode))
             {
                 u.CountryCode = inferred;

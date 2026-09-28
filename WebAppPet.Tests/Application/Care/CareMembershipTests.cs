@@ -3,8 +3,9 @@ using WebAppPet.Application.Care.CancelCare;
 using WebAppPet.Application.Care.GetCarePlan;
 using WebAppPet.Application.Care.GetPetCare;
 using WebAppPet.Application.Care.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 

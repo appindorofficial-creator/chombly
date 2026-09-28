@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;
 using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Storage;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 
 namespace WebAppPet.Pages.Professional.Onboarding;
 

@@ -1,5 +1,5 @@
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 
 namespace WebAppPet.Services;
 

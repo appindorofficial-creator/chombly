@@ -1,7 +1,7 @@
 using WebAppPet.Application.Payments.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Payments;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Tests.Support;

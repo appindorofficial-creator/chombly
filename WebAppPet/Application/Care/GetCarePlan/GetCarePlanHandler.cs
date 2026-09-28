@@ -1,6 +1,6 @@
 using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Care.GetCarePlan;

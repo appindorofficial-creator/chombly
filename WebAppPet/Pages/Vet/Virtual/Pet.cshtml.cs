@@ -6,10 +6,11 @@ using WebAppPet.Application.Consultations.ContinueVirtual;
 using WebAppPet.Application.Consultations.PrepareScreening;
 using WebAppPet.Application.Consultations.ScreenConsultation;
 using WebAppPet.Application.Consultations.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Storage;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Ui;
 
@@ -68,7 +69,7 @@ public class PetModel : PageModel
     [BindProperty] public bool NoRedFlags { get; set; }
 
     public Consultation? Consultation { get; set; }
-    public List<Models.Pet> Pets { get; set; } = new();
+    public List<Domain.Pet> Pets { get; set; } = new();
     public string? ErrorMessage { get; set; }
     public bool StateFromLocation { get; set; }
     public string? UserCity { get; set; }

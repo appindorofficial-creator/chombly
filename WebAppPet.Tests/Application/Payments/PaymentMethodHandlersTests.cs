@@ -13,7 +13,7 @@ public class PaymentMethodHandlersTests
         new AddPaymentMethodHandler(db, new KeyLocalizer())
             .HandleAsync(new AddPaymentMethodCommand(userId, card, "12/35", card.StartsWith("37") ? "1234" : "123", "Ana López", makeDefault));
 
-    private static Task<List<WebAppPet.Models.PaymentMethod>> List(AppDbContext db, int userId) =>
+    private static Task<List<WebAppPet.Domain.PaymentMethod>> List(AppDbContext db, int userId) =>
         new GetPaymentMethodsHandler(db).HandleAsync(new GetPaymentMethodsQuery(userId));
 
     [Fact]

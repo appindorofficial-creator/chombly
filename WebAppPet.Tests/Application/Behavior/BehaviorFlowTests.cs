@@ -5,8 +5,9 @@ using WebAppPet.Application.Behavior.SaveBehaviorFollowUp;
 using WebAppPet.Application.Behavior.Shared;
 using WebAppPet.Application.Behavior.StartBehaviorCase;
 using WebAppPet.Application.Behavior.SubmitBehaviorIntake;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 

@@ -1,5 +1,5 @@
 using System.Globalization;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Localization;
 

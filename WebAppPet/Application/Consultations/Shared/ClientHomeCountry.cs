@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Services;
 
 namespace WebAppPet.Application.Consultations.Shared;
 

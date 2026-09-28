@@ -1,5 +1,5 @@
 using WebAppPet.Application.Promotions.ApplyPromoCode;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Promotions;

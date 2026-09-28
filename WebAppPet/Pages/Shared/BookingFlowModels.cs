@@ -1,7 +1,7 @@
 using WebAppPet.Application.Bookings.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace WebAppPet.Pages.Shared;

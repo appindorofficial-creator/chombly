@@ -72,10 +72,10 @@ public class LoginModel : PageModel
         if (dest != null)
             return LocalRedirect(dest);
 
-        if (user.Role == Models.UserRole.Admin)
+        if (user.Role == Domain.UserRole.Admin)
             return RedirectToPage("/Admin/Approvals");
 
-        if (user.Role == Models.UserRole.Groomer && _auth.IsBusinessShell)
+        if (user.Role == Domain.UserRole.Groomer && _auth.IsBusinessShell)
             return RedirectToPage("/Groomer/Dashboard");
 
         return RedirectToPage("/Index");

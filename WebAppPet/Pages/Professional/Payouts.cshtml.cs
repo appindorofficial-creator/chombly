@@ -5,11 +5,11 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Payments.GeneratePayout;
 using WebAppPet.Application.Payments.GetProviderPayouts;
 using WebAppPet.Application.Payments.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Professional;
 

@@ -1,7 +1,8 @@
 using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Consultations.GetConsultationServices;

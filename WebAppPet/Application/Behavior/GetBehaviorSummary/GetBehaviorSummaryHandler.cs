@@ -1,6 +1,6 @@
 using WebAppPet.Application.Behavior.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 
 namespace WebAppPet.Application.Behavior.GetBehaviorSummary;
 

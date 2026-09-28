@@ -1,5 +1,5 @@
 using WebAppPet.Application.Businesses.Shared;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Businesses.CreateBusiness;
 

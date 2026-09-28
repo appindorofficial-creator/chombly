@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Reminders.CreateReminder;
 using WebAppPet.Application.Reminders.DeactivateReminder;
 using WebAppPet.Application.Reminders.GetPetReminders;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 
 namespace WebAppPet.Pages.Pets;
 

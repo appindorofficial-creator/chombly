@@ -1,6 +1,6 @@
 using WebAppPet.Application.Payments.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 

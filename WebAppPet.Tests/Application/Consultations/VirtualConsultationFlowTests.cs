@@ -6,7 +6,7 @@ using WebAppPet.Application.Consultations.PrepareScreening;
 using WebAppPet.Application.Consultations.ScreenConsultation;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Application.Consultations.StartConsultation;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 using WebAppPet.Services;
 
 namespace WebAppPet.Tests.Application.Consultations;

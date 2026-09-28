@@ -3,10 +3,10 @@ using WebAppPet.Application.Businesses.GetAvailability;
 using WebAppPet.Application.Businesses.SaveWeeklySchedule;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Businesses;

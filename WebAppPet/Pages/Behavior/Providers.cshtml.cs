@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Behavior.BookBehaviorSession;
 using WebAppPet.Application.Behavior.GetBehaviorProviders;
 using WebAppPet.Application.Behavior.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 using WebAppPet.Pages.Shared;
 
 namespace WebAppPet.Pages.Behavior;

@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 
 namespace WebAppPet.Services;
 

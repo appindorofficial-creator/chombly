@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Consultations.CheckEligibility;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Models;
 using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Vet.Virtual;

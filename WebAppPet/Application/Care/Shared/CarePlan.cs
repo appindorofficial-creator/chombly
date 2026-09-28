@@ -1,4 +1,4 @@
-using WebAppPet.Models;
+using WebAppPet.Domain;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Care.Shared;

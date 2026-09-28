@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WebAppPet.Application;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.BackgroundJobs;
 using WebAppPet.Infrastructure.Email;
 using WebAppPet.Infrastructure.Identity;

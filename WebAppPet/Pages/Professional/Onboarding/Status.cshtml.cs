@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingStatus;
 using WebAppPet.Application.ProfessionalOnboarding.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Models;
 
 namespace WebAppPet.Pages.Professional.Onboarding;
 

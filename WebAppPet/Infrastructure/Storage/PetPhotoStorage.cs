@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Infrastructure.Storage;
 

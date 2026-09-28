@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.ProfessionalOnboarding.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;

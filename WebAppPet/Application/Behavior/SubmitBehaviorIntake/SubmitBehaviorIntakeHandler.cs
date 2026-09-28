@@ -1,7 +1,7 @@
 using WebAppPet.Application.Behavior.GetBehaviorIntake;
 using WebAppPet.Application.Behavior.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Behavior.SubmitBehaviorIntake;

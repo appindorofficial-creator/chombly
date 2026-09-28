@@ -1,6 +1,6 @@
 using WebAppPet.Application.Reminders.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 
 namespace WebAppPet.Application.Reminders.GetPetReminders;
 

@@ -7,7 +7,8 @@ using WebAppPet.Application.Consultations.GetIntlSchedule;
 using WebAppPet.Application.Consultations.ScheduleIntlConsultation;
 using WebAppPet.Application.Consultations.SelectIntlVet;
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Models;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 

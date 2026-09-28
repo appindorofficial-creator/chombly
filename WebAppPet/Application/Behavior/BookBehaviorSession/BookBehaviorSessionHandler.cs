@@ -2,9 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Behavior.GetBehaviorProviders;
 using WebAppPet.Application.Behavior.Shared;
 using WebAppPet.Application.Payments.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 using WebAppPet.Pages.Shared;
 using WebAppPet.Services;
 

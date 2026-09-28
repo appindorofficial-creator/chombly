@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Security;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Application.Businesses.CreateBusiness;
 

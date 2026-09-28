@@ -1,8 +1,8 @@
 using WebAppPet.Application.Favorites.GetFavoriteIds;
 using WebAppPet.Application.Favorites.GetFavorites;
 using WebAppPet.Application.Favorites.ToggleFavorite;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Favorites;

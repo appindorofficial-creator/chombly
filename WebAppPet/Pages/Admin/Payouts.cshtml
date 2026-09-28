@@ -7,15 +7,15 @@
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Admin/Payouts";
     string Money(decimal amount, string? country) => AppMoney.Format(amount, country);
-    string ProviderName(WebAppPet.Models.ProviderPayout p) =>
+    string ProviderName(WebAppPet.Domain.ProviderPayout p) =>
         p.ProviderUser?.FullName ?? string.Format(L["AdminPayout_UnknownProvider"].Value, p.ProviderUserId);
-    string StatusLabel(WebAppPet.Models.ProviderPayoutStatus s) => s switch
+    string StatusLabel(WebAppPet.Domain.ProviderPayoutStatus s) => s switch
     {
-        WebAppPet.Models.ProviderPayoutStatus.Pending => L["Payout_Status_Pending"].Value,
-        WebAppPet.Models.ProviderPayoutStatus.Processing => L["Payout_Status_Processing"].Value,
-        WebAppPet.Models.ProviderPayoutStatus.Paid => L["Payout_Status_Paid"].Value,
-        WebAppPet.Models.ProviderPayoutStatus.Failed => L["Payout_Status_Failed"].Value,
-        WebAppPet.Models.ProviderPayoutStatus.Held => L["Payout_Status_Held"].Value,
+        WebAppPet.Domain.ProviderPayoutStatus.Pending => L["Payout_Status_Pending"].Value,
+        WebAppPet.Domain.ProviderPayoutStatus.Processing => L["Payout_Status_Processing"].Value,
+        WebAppPet.Domain.ProviderPayoutStatus.Paid => L["Payout_Status_Paid"].Value,
+        WebAppPet.Domain.ProviderPayoutStatus.Failed => L["Payout_Status_Failed"].Value,
+        WebAppPet.Domain.ProviderPayoutStatus.Held => L["Payout_Status_Held"].Value,
         _ => s.ToString()
     };
 }
@@ -58,7 +58,7 @@
     }
 
     <h2 class="section-title" style="margin-top:20px">@CatalogLocalizer.Loc("Recientes", "Recent")</h2>
-    @foreach (var p in Model.Recent.Where(x => x.Status != WebAppPet.Models.ProviderPayoutStatus.Pending))
+    @foreach (var p in Model.Recent.Where(x => x.Status != WebAppPet.Domain.ProviderPayoutStatus.Pending))
     {
         var country = p.ProviderUser?.CountryCode;
         <div class="card card-pad" style="margin-bottom:8px">

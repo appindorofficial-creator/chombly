@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Web;
-using WebAppPet.Models;
 
 namespace WebAppPet.Infrastructure.Identity;
 
@@ -24,10 +24,10 @@ public class AuthService
     public bool IsAuthenticated => _http.HttpContext?.User.Identity?.IsAuthenticated == true;
 
     public bool IsGroomer =>
-        _http.HttpContext?.User.FindFirstValue(ClaimTypes.Role) == nameof(Models.UserRole.Groomer);
+        _http.HttpContext?.User.FindFirstValue(ClaimTypes.Role) == nameof(Domain.UserRole.Groomer);
 
     public bool IsAdmin =>
-        _http.HttpContext?.User.FindFirstValue(ClaimTypes.Role) == nameof(Models.UserRole.Admin);
+        _http.HttpContext?.User.FindFirstValue(ClaimTypes.Role) == nameof(Domain.UserRole.Admin);
 
     /// <summary>
     /// Business bottom-nav / home. Groomers default to business when no shell cookie is set.

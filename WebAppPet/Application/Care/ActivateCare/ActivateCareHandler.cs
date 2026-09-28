@@ -1,7 +1,7 @@
 using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Payments.Shared;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Models;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Care.ActivateCare;

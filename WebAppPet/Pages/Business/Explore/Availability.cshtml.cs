@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Business.Explore;

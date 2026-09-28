@@ -1,5 +1,5 @@
 using WebAppPet.Application.Behavior.Shared;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Behavior.GetBehaviorProviders;
 
