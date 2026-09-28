@@ -43,10 +43,10 @@ public class GetIntlScheduleHandler
         if (consultation?.ProviderId is not int providerId)
             return null;
 
-        var provider = await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g => g.Id == providerId, ct);
+        var provider = await _db.Groomers.AsNoTracking().Include(g => g.User).FirstOrDefaultAsync(g => g.Id == providerId, ct);
         var item = await _catalog.GetAsync(ServiceCatalogCodes.VetIntl30, ct);
-        var catalogPrice = item?.Price ?? 30m;
-        var price = provider?.StartingPrice > 0 ? provider.StartingPrice : catalogPrice;
+        var catalogPrice = MarketPrices.ForCatalog(ServiceCatalogCodes.VetIntl30, item?.Price ?? 30m);
+        var price = MarketPrices.ForProvider(provider, provider?.User.CountryCode, catalogPrice);
 
         var usingCare = consultation.UsesCareBenefit;
         if (!usingCare && await _care.HasQuickConsultAvailableAsync(query.ClientId, ct))

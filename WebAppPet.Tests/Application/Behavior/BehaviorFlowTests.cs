@@ -226,7 +226,7 @@ public class BehaviorFlowTests : IDisposable
     }
 
     [Fact]
-    public async Task Booking_charges_every_dog_and_creates_one_pending_session_each()
+    public async Task Booking_charges_every_dog_the_colombian_price_and_creates_one_pending_session_each()
     {
         var client = TestData.AddUser(_db);
         var first = TestData.AddPet(_db, client);
@@ -243,8 +243,8 @@ public class BehaviorFlowTests : IDisposable
         Assert.All(appointments, a =>
         {
             Assert.Equal(AppointmentStatus.Pending, a.Status);
-            Assert.Equal(SessionPrice, a.TotalPrice);
-            Assert.Equal(SessionPrice, a.DepositPaid);
+            Assert.Equal(MarketPrices.ColombiaBehaviorSession, a.TotalPrice);
+            Assert.Equal(MarketPrices.ColombiaBehaviorSession, a.DepositPaid);
         });
 
         var charges = _db.PaymentTransactions.Where(t => t.BehaviorCaseId == behaviorCase.Id).OrderBy(t => t.Id).ToList();
@@ -253,7 +253,7 @@ public class BehaviorFlowTests : IDisposable
         {
             Assert.Equal(PaymentTransactionStatus.Succeeded, t.Status);
             Assert.Equal(PaymentPurpose.BehaviorSession, t.Purpose);
-            Assert.Equal(SessionPrice, t.Amount);
+            Assert.Equal(MarketPrices.ColombiaBehaviorSession, t.Amount);
             Assert.Equal(specialist.Id, t.ProviderId);
         });
         Assert.Equal(appointments.Select(a => (int?)a.Id), charges.Select(t => t.AppointmentId));
@@ -262,7 +262,7 @@ public class BehaviorFlowTests : IDisposable
         Assert.Equal(BehaviorCaseStatus.Scheduled, saved.Status);
         Assert.Equal(specialist.Id, saved.ProviderId);
         Assert.Equal(appointments[0].Id, saved.AppointmentId);
-        Assert.Equal(SessionPrice * 2, saved.PriceCharged);
+        Assert.Equal(MarketPrices.ColombiaBehaviorSession * 2, saved.PriceCharged);
         Assert.Contains(_db.AuditLogs, a => a.Action == "behavior_booked" && a.EntityId == behaviorCase.Id);
     }
 

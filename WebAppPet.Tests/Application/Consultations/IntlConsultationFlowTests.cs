@@ -125,7 +125,7 @@ public class IntlConsultationFlowTests : ConsultationTestBase
 
         Assert.Null(result.Redirect);
         Assert.Equal([bilingual.Id, spanishOnly.Id], result.Matches.Select(m => m.Provider.Id));
-        Assert.Equal((45m, 30m), (result.Matches[0].Price, result.Matches[1].Price));
+        Assert.Equal((45m, MarketPrices.ColombiaIntlConsult), (result.Matches[0].Price, result.Matches[1].Price));
         Assert.Contains("Colombia", result.Matches[0].Why);
         Assert.Equal("ES, EN", result.Matches[0].LanguagesDisplay);
         Assert.Equal([("es", 2, true), ("en", 2, false)], result.LanguageChips.Select(c => (c.Code, c.Count, c.Active)));

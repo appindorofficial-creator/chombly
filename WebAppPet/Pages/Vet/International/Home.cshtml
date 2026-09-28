@@ -1,12 +1,13 @@
 @page
 @model WebAppPet.Pages.Vet.International.HomeModel
+@using WebAppPet.Application.Care.Shared
 @{
     ViewData["Title"] = CatalogLocalizer.Loc("Veterinario como en casa", "Your vet, like at home");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
     var hasPet = !string.IsNullOrWhiteSpace(Model.PetName) || !string.IsNullOrWhiteSpace(Model.PetBreed);
-    var intlPrice = AppMoney.Format(30m);
-    var carePrice = AppMoney.Format(14.99m);
+    var intlPrice = AppMoney.Format(MarketPrices.ForCatalog(ServiceCatalogCodes.VetIntl30, 30m));
+    var carePrice = AppMoney.Format(CarePlan.MonthlyPrice(CarePlan.FallbackMonthlyPrice));
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />

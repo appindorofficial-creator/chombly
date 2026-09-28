@@ -7,10 +7,13 @@ public static class CarePlan
 {
     public const decimal FallbackMonthlyPrice = 14.99m;
 
+    public static decimal MonthlyPrice(decimal usdPrice, string? countryIso = null) =>
+        MarketPrices.ForCatalog(ServiceCatalogCodes.ChomblyCare, usdPrice, countryIso);
+
     public static async Task<(ServiceCatalogItem? Item, decimal Price)> CatalogPriceAsync(
         this ServiceCatalogService catalog, CancellationToken ct = default)
     {
         var item = await catalog.GetAsync(ServiceCatalogCodes.ChomblyCare, ct);
-        return (item, item?.Price ?? FallbackMonthlyPrice);
+        return (item, MonthlyPrice(item?.Price ?? FallbackMonthlyPrice));
     }
 }

@@ -44,7 +44,7 @@ public class GetConsultationCheckoutHandler
             return null;
 
         var provider = consultation.ProviderId is int providerId
-            ? await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g => g.Id == providerId, ct)
+            ? await _db.Groomers.AsNoTracking().Include(g => g.User).FirstOrDefaultAsync(g => g.Id == providerId, ct)
             : null;
 
         var sub = await _care.GetActiveAsync(query.ClientId, ct);
@@ -57,7 +57,7 @@ public class GetConsultationCheckoutHandler
             consultation,
             item,
             provider,
-            provider?.StartingPrice > 0 ? provider.StartingPrice : item.Price,
+            MarketPrices.ForProvider(provider, provider?.User.CountryCode, MarketPrices.ForCatalog(item)),
             sub != null ? _care.RemainingQuickConsults(sub) : 0,
             await _homeCountry.ResolveAsync(query.ClientId, ct),
             payments,

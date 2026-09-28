@@ -49,7 +49,8 @@ public class GetIntlMatchesHandler
             await _db.TouchAsync(consultation, ct);
         }
 
-        var consultPrice = (await _catalog.GetAsync(ServiceCatalogCodes.VetIntl30, ct))?.Price ?? 30m;
+        var consultPrice = MarketPrices.ForCatalog(
+            ServiceCatalogCodes.VetIntl30, (await _catalog.GetAsync(ServiceCatalogCodes.VetIntl30, ct))?.Price ?? 30m);
 
         var subscription = await _care.GetActiveAsync(query.ClientId, ct);
         var careRemaining = subscription != null ? _care.RemainingQuickConsults(subscription) : 0;
@@ -66,6 +67,7 @@ public class GetIntlMatchesHandler
 
         var providers = await _db.Groomers.AsNoTracking()
             .Include(g => g.Licenses)
+            .Include(g => g.User)
             .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved && g.VetProviderKind == VetProviderKind.InternationalAdvisor)
             .ToListAsync(ct);
 
@@ -143,11 +145,12 @@ public class GetIntlMatchesHandler
         await _audit.LogAsync("match_viewed", query.ClientId, "Consultation", query.ConsultationId,
             new { count = matches.Count, lang = activeLang, care = hasCare }, ct);
 
-        return new IntlMatches(null, matches, chips, consultPrice, hasCare, careRemaining, activeLang);
+        var fromPrice = matches.Count > 0 ? matches.Min(m => m.Price) : consultPrice;
+        return new IntlMatches(null, matches, chips, fromPrice, hasCare, careRemaining, activeLang);
     }
 
     private static decimal ProviderPrice(GroomerProfile p, decimal catalogFallback)
-        => p.StartingPrice > 0 ? p.StartingPrice : catalogFallback;
+        => MarketPrices.ForProvider(p, p.User.CountryCode, catalogFallback);
 
     private static string LanguagesDisplay(List<string> langs)
         => langs.Count > 0 ? string.Join(", ", langs.Select(l => l.ToUpperInvariant())) : "—";

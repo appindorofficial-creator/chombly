@@ -2,8 +2,7 @@
 @model WebAppPet.Pages.Plans.ChomblyCareModel
 @{
     ViewData["Title"] = "Chombly Care";
-    var price = Model.CatalogItem?.Price ?? 14.99m;
-    var priceFmt = AppMoney.Format(price);
+    var priceFmt = AppMoney.Format(Model.MonthlyPrice);
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Model.BackHref;
     var careReturn = Url.Page("/Plans/ChomblyCare", new { consultationId = Model.ConsultationId, returnUrl = Model.ReturnUrl })

@@ -1,4 +1,5 @@
 using WebAppPet.Application.Behavior.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Behavior.GetBehaviorProviders;
@@ -31,6 +32,9 @@ public sealed record BehaviorProviderOptions(
     [
         "9:00 AM", "10:00 AM", "10:30 AM", "1:00 PM", "2:00 PM", "3:00 PM", "5:00 PM"
     ];
+
+    /// <summary>Price per dog in the family's market.</summary>
+    public decimal UnitPrice => CatalogItem is null ? 0 : MarketPrices.ForCatalog(CatalogItem);
 
     public static BehaviorProviderOptions RedirectTo(BehaviorStep step) =>
         new(step, null, [], null, [], [], [], 0, null, null, null, [], []);
