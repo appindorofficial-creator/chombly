@@ -31,7 +31,11 @@ public class PayoutsModel : PageModel
 
     public List<ProviderPayout> Pending { get; set; } = new();
     public List<ProviderPayout> Recent { get; set; } = new();
+    public IReadOnlyDictionary<int, string> Currencies { get; set; } = new Dictionary<int, string>();
     public string? Message { get; set; }
+
+    public string CurrencyOf(ProviderPayout payout) =>
+        Currencies.GetValueOrDefault(payout.ProviderUserId) ?? AppMoney.Code(payout.ProviderUser?.CountryCode);
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -46,13 +50,13 @@ public class PayoutsModel : PageModel
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
         var payout = await _markPaid.HandleAsync(new MarkPayoutPaidCommand(id, _auth.CurrentUserId));
+        await LoadAsync(refreshTotals: false);
         Message = payout is null
             ? _L["AdminPayout_NotFound"].Value
             : string.Format(
                 _L["AdminPayout_MarkedPaid"].Value,
-                AppMoney.Format(payout.NetAmountUsd, payout.ProviderUser?.CountryCode),
+                AppMoney.FormatCurrency(payout.NetAmountUsd, CurrencyOf(payout)),
                 payout.ExternalReference);
-        await LoadAsync(refreshTotals: false);
         return Page();
     }
 
@@ -61,6 +65,7 @@ public class PayoutsModel : PageModel
         var view = await _getPayouts.HandleAsync(new GetAdminPayoutsQuery(refreshTotals));
         Pending = view.Pending;
         Recent = view.Recent;
+        Currencies = view.Currencies;
         return view.Refreshed;
     }
 }

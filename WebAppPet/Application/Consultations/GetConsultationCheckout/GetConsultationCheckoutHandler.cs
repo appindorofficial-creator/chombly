@@ -3,6 +3,7 @@ using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Consultations.GetConsultationCheckout;
@@ -57,7 +58,7 @@ public class GetConsultationCheckoutHandler
             consultation,
             item,
             provider,
-            MarketPrices.ForProvider(provider, provider?.User.CountryCode, MarketPrices.ForCatalog(item)),
+            MarketPrices.ForProvider(provider, BusinessMarketResolver.CountryFor(provider, provider?.User.CountryCode), MarketPrices.ForCatalog(item)),
             sub != null ? _care.RemainingQuickConsults(sub) : 0,
             await _homeCountry.ResolveAsync(query.ClientId, ct),
             payments,

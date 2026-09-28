@@ -46,7 +46,7 @@ public class GetIntlScheduleHandler
         var provider = await _db.Groomers.AsNoTracking().Include(g => g.User).FirstOrDefaultAsync(g => g.Id == providerId, ct);
         var item = await _catalog.GetAsync(ServiceCatalogCodes.VetIntl30, ct);
         var catalogPrice = MarketPrices.ForCatalog(ServiceCatalogCodes.VetIntl30, item?.Price ?? 30m);
-        var price = MarketPrices.ForProvider(provider, provider?.User.CountryCode, catalogPrice);
+        var price = MarketPrices.ForProvider(provider, BusinessMarketResolver.CountryFor(provider, provider?.User.CountryCode), catalogPrice);
 
         var usingCare = consultation.UsesCareBenefit;
         if (!usingCare && await _care.HasQuickConsultAvailableAsync(query.ClientId, ct))

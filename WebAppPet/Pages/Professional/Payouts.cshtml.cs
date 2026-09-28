@@ -38,6 +38,7 @@ public class PayoutsModel : PageModel
     public List<ProviderCompensationRule> Rules { get; set; } = new();
     public List<ProviderPayout> History { get; set; } = new();
     public List<ProviderPayoutService.ProviderPaymentRow> RecentPayments { get; set; } = new();
+    public string Currency { get; set; } = "USD";
     public string? Message { get; set; }
     public string? Error { get; set; }
 
@@ -61,11 +62,12 @@ public class PayoutsModel : PageModel
             _auth.CurrentUserId!.Value,
             PeriodStart.ToUniversalTime(),
             PeriodEnd.ToUniversalTime()));
+        await LoadAsync();
         if (result.Success)
         {
             Message = string.Format(
                 _L["Payout_SummaryCreated"].Value,
-                AppMoney.Format(result.Payout!.NetAmountUsd),
+                AppMoney.FormatCurrency(result.Payout!.NetAmountUsd, Currency),
                 result.Payout.ConsultationCount);
         }
         else
@@ -77,7 +79,6 @@ public class PayoutsModel : PageModel
             };
         }
 
-        await LoadAsync();
         return Page();
     }
 
@@ -87,6 +88,7 @@ public class PayoutsModel : PageModel
         Rules = view.Rules;
         History = view.History;
         RecentPayments = view.RecentPayments;
+        Currency = view.Currency;
     }
 
     private async Task<bool> EnsureProviderAsync()

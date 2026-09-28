@@ -269,6 +269,23 @@ public class ProviderPayoutServiceTests
     }
 
     [Fact]
+    public async Task A_business_is_settled_in_the_currency_of_where_it_operates_not_its_owners_account()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        db.Groomers.Find(business.Id)!.City = "Charlotte, NC";
+        db.SaveChanges();
+        TestData.AddCharge(db, business, 15, PeriodStart.AddDays(3), serviceTotal: 35, currency: "USD");
+
+        var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
+
+        Assert.Equal((15m, 7m, 8m), (calc.Gross, calc.Commission, calc.Net));
+        Assert.Equal("USD", await Service(db).PayoutCurrencyAsync(business.UserId));
+        Assert.Equal("USD", (await Service(db).PayoutCurrenciesAsync([business.UserId]))[business.UserId]);
+    }
+
+    [Fact]
     public async Task Charges_in_dollars_are_settled_in_pesos_at_the_configured_rate()
     {
         using var database = new TestDatabase();
