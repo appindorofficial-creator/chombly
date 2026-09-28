@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.ProfessionalOnboarding.ApproveOnboarding;
 using WebAppPet.Application.ProfessionalOnboarding.GetPendingOnboardings;
 using WebAppPet.Application.ProfessionalOnboarding.RejectOnboarding;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -46,16 +47,26 @@ public class ProfessionalApprovalsModel : PageModel
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
 
         var result = await _approve.HandleAsync(new ApproveOnboardingCommand(id, _auth.CurrentUserId!.Value));
+        var name = result.Application?.LegalName;
         switch (result.Outcome)
         {
             case ApproveOnboardingOutcome.NotFound:
-                Message = "Not found.";
+                Error = NotFound;
+                break;
+            case ApproveOnboardingOutcome.NotPending:
+                Error = CatalogLocalizer.Loc(
+                    $"La solicitud de {name} ya no está pendiente de revisión.",
+                    $"{name}'s application is no longer pending review.");
                 break;
             case ApproveOnboardingOutcome.NoBusinessProfile:
-                Error = "Applicant has no business profile. Register as business first.";
+                Error = CatalogLocalizer.Loc(
+                    $"{name} no tiene perfil de negocio. Debe registrar su negocio primero.",
+                    $"{name} has no business profile. They must register their business first.");
                 break;
             default:
-                Message = $"Approved {result.Application!.LegalName} ({result.Application.Track}).";
+                Message = CatalogLocalizer.Loc(
+                    $"Solicitud de {name} aprobada ({TrackLabel(result.Application!.Track)}).",
+                    $"{name}'s application approved ({TrackLabel(result.Application!.Track)}).");
                 break;
         }
 
@@ -66,10 +77,24 @@ public class ProfessionalApprovalsModel : PageModel
     public async Task<IActionResult> OnPostRejectAsync(int id)
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
-        var notes = string.IsNullOrWhiteSpace(RejectNotes) ? "Needs more documentation." : RejectNotes.Trim();
+        var notes = string.IsNullOrWhiteSpace(RejectNotes)
+            ? "Falta documentación. Complétala y envía la solicitud de nuevo."
+            : RejectNotes.Trim();
         var app = await _reject.HandleAsync(new RejectOnboardingCommand(id, _auth.CurrentUserId!.Value, notes));
-        Message = app is null ? "Not found." : $"Rejected {app.LegalName}.";
+        if (app is null)
+            Error = NotFound;
+        else
+            Message = CatalogLocalizer.Loc($"Solicitud de {app.LegalName} rechazada.", $"{app.LegalName}'s application rejected.");
         Pending = await _getPending.HandleAsync();
         return Page();
     }
+
+    private static string NotFound => CatalogLocalizer.Loc("No encontramos esa solicitud.", "Application not found.");
+
+    private static string TrackLabel(ProfessionalOnboardingTrack track) => track switch
+    {
+        ProfessionalOnboardingTrack.International => CatalogLocalizer.Loc("Internacional", "International"),
+        ProfessionalOnboardingTrack.Behavior => CatalogLocalizer.Loc("Conducta", "Behavior"),
+        _ => CatalogLocalizer.Loc("Local", "Local")
+    };
 }

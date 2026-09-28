@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;
 using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -100,7 +101,13 @@ public class LocalModel : PageModel
             case SaveOnboardingApplicationOutcome.NoBusinessProfile:
                 return RedirectToPage("/Account/RegisterBusiness");
             case SaveOnboardingApplicationOutcome.MissingRequired:
-                Error = "Legal name and license jurisdiction are required.";
+                Error = CatalogLocalizer.Loc(
+                    IsBehavior
+                        ? "Guardamos tu borrador. Para enviarlo escribe tu nombre legal y la jurisdicción o estado."
+                        : "Guardamos tu borrador. Para enviarlo escribe tu nombre legal y el estado de tu licencia.",
+                    IsBehavior
+                        ? "Your draft was saved. To submit it, enter your legal name and the jurisdiction or state."
+                        : "Your draft was saved. To submit it, enter your legal name and your license state.");
                 return Page();
             default:
                 return RedirectToPage("/Professional/Onboarding/Status");

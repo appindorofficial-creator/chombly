@@ -104,7 +104,9 @@ public class InternationalModel : PageModel
                 Error = CatalogLocalizer.Loc("Elige un país de la lista.", "Pick a country from the list.");
                 break;
             case SaveOnboardingApplicationOutcome.MissingRequired:
-                Error = "Legal name and license jurisdiction are required.";
+                Error = CatalogLocalizer.Loc(
+                    "Guardamos tu borrador. Para enviarlo escribe tu nombre legal.",
+                    "Your draft was saved. To submit it, enter your legal name.");
                 break;
             default:
                 return RedirectToPage("/Professional/Onboarding/Status");
