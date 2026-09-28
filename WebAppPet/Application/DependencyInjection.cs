@@ -14,6 +14,11 @@ using WebAppPet.Application.Bookings.GetBookings;
 using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
+using WebAppPet.Application.Care.ActivateCare;
+using WebAppPet.Application.Care.CancelCare;
+using WebAppPet.Application.Care.GetCarePlan;
+using WebAppPet.Application.Care.GetPetCare;
+using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.BookConsultation;
 using WebAppPet.Application.Consultations.CheckEligibility;
 using WebAppPet.Application.Consultations.ChooseConsultationService;
@@ -170,6 +175,12 @@ public static class DependencyInjection
         services.AddScoped<GetPendingOnboardingsHandler>();
         services.AddScoped<ApproveOnboardingHandler>();
         services.AddScoped<RejectOnboardingHandler>();
+
+        services.AddScoped<ChomblyCareService>();
+        services.AddScoped<GetCarePlanHandler>();
+        services.AddScoped<ActivateCareHandler>();
+        services.AddScoped<CancelCareHandler>();
+        services.AddScoped<GetPetCareHandler>();
 
         services.AddScoped<OpenInboxHandler>();
         services.AddScoped<GetUnreadCountHandler>();

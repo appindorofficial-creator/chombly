@@ -39,7 +39,6 @@ builder.Services.AddScoped<ServiceCatalogService>();
 builder.Services.AddScoped<VcprService>();
 builder.Services.AddScoped<SafetyScreeningService>();
 builder.Services.AddScoped<ConsentService>();
-builder.Services.AddScoped<ChomblyCareService>();
 builder.Services.AddScoped<CountryCatalogService>();
 builder.Services.AddScoped<ReminderEngineService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();

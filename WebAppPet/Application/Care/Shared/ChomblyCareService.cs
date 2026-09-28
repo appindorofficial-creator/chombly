@@ -2,8 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Data;
 using WebAppPet.Models;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Care.Shared;
 
+/// <summary>
+/// The family's Chombly Care membership as other flows see it: the active subscription and its
+/// quick international consults per cycle.
+/// </summary>
 public class ChomblyCareService
 {
     private readonly AppDbContext _db;
@@ -48,36 +52,6 @@ public class ChomblyCareService
     {
         var sub = await GetActiveAsync(userId, ct);
         return sub != null && RemainingQuickConsults(sub) > 0;
-    }
-
-    public async Task<CareSubscription> ActivateAsync(int userId, decimal price, CancellationToken ct = default)
-    {
-        var existing = await _db.CareSubscriptions
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.Status == CareSubscriptionStatus.Active, ct);
-        if (existing != null) return existing;
-
-        var now = DateTime.UtcNow;
-        var sub = new CareSubscription
-        {
-            UserId = userId,
-            Status = CareSubscriptionStatus.Active,
-            PricePerMonth = price,
-            StartedAt = now,
-            CurrentPeriodStart = now,
-            CurrentPeriodEnd = now.AddMonths(1),
-            QuickConsultsPerCycle = 1
-        };
-        _db.CareSubscriptions.Add(sub);
-        await _db.SaveChangesAsync(ct);
-        return sub;
-    }
-
-    public async Task CancelAtPeriodEndAsync(int userId, CancellationToken ct = default)
-    {
-        var sub = await GetActiveAsync(userId, ct);
-        if (sub is null) return;
-        sub.CancelAtPeriodEnd = true;
-        await _db.SaveChangesAsync(ct);
     }
 
     public virtual async Task<bool> TryConsumeQuickConsultAsync(int userId, int consultationId, CancellationToken ct = default)
