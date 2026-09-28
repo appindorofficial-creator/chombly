@@ -63,6 +63,13 @@ using WebAppPet.Application.Pets.GetPet;
 using WebAppPet.Application.Pets.GetPetHistory;
 using WebAppPet.Application.Pets.GetPets;
 using WebAppPet.Application.Pets.SavePet;
+using WebAppPet.Application.ProfessionalOnboarding.ApproveOnboarding;
+using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;
+using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingStatus;
+using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingTracks;
+using WebAppPet.Application.ProfessionalOnboarding.GetPendingOnboardings;
+using WebAppPet.Application.ProfessionalOnboarding.RejectOnboarding;
+using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
@@ -147,6 +154,14 @@ public static class DependencyInjection
         services.AddScoped<GetAdminPayoutsHandler>();
         services.AddScoped<GetAdminPaymentsHandler>();
         services.AddScoped<RefundPaymentHandler>();
+
+        services.AddScoped<GetOnboardingTracksHandler>();
+        services.AddScoped<GetOnboardingStatusHandler>();
+        services.AddScoped<GetOnboardingDraftHandler>();
+        services.AddScoped<SaveOnboardingApplicationHandler>();
+        services.AddScoped<GetPendingOnboardingsHandler>();
+        services.AddScoped<ApproveOnboardingHandler>();
+        services.AddScoped<RejectOnboardingHandler>();
 
         services.AddScoped<GetPetsHandler>();
         services.AddScoped<GetPetHandler>();
