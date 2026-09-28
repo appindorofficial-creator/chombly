@@ -21,6 +21,9 @@ public sealed record ChargeRequest
     public int? ConsultationId { get; init; }
     public int? BehaviorCaseId { get; init; }
     public int? CareSubscriptionId { get; init; }
+
+    /// <summary>Defaults to the currency of the current request's market; set it when there is no request.</summary>
+    public string? Currency { get; init; }
 }
 
 /// <summary>
@@ -53,7 +56,7 @@ public class PaymentService
 
     public async Task<PaymentTransaction> ChargeAsync(ChargeRequest request, CancellationToken ct = default)
     {
-        var currency = AppMoney.Code();
+        var currency = request.Currency ?? AppMoney.Code();
         var description = Truncate(request.Description, 200);
         var result = await _gateway.ChargeAsync(
             new GatewayChargeRequest(request.Amount, currency, request.Card, description), ct);

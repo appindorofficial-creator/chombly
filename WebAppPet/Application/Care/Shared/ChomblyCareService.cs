@@ -22,17 +22,8 @@ public class ChomblyCareService
 
         if (sub is null) return null;
 
-        // Roll period forward if expired (simulated renewal)
-        if (sub.CurrentPeriodEnd < DateTime.UtcNow && !sub.CancelAtPeriodEnd)
-        {
-            while (sub.CurrentPeriodEnd < DateTime.UtcNow)
-            {
-                sub.CurrentPeriodStart = sub.CurrentPeriodEnd;
-                sub.CurrentPeriodEnd = sub.CurrentPeriodEnd.AddMonths(1);
-            }
-            await _db.SaveChangesAsync(ct);
-        }
-        else if (sub.CurrentPeriodEnd < DateTime.UtcNow && sub.CancelAtPeriodEnd)
+        // An ended cycle stays active until RenewDueCareHandler charges the next month or pauses it.
+        if (sub.CurrentPeriodEnd < DateTime.UtcNow && sub.CancelAtPeriodEnd)
         {
             sub.Status = CareSubscriptionStatus.Cancelled;
             await _db.SaveChangesAsync(ct);

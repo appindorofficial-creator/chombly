@@ -19,6 +19,7 @@ using WebAppPet.Application.Care.ActivateCare;
 using WebAppPet.Application.Care.CancelCare;
 using WebAppPet.Application.Care.GetCarePlan;
 using WebAppPet.Application.Care.GetPetCare;
+using WebAppPet.Application.Care.RenewCare;
 using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.BookConsultation;
 using WebAppPet.Application.Consultations.CheckEligibility;
@@ -186,6 +187,7 @@ public static class DependencyInjection
         services.AddScoped<ActivateCareHandler>();
         services.AddScoped<CancelCareHandler>();
         services.AddScoped<GetPetCareHandler>();
+        services.AddScoped<RenewDueCareHandler>();
 
         services.AddScoped<GetFavoritesHandler>();
         services.AddScoped<GetFavoriteIdsHandler>();
