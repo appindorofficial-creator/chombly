@@ -3,7 +3,10 @@ using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Payments.DeletePaymentMethod;
 
-/// <summary>Removes one of the user's cards. Cards of other users are ignored.</summary>
+/// <summary>
+/// Removes one of the user's cards. Cards of other users are ignored. When the default card is removed,
+/// the most recently added remaining card becomes the default.
+/// </summary>
 public class DeletePaymentMethodHandler
 {
     private readonly AppDbContext _db;
@@ -19,6 +22,16 @@ public class DeletePaymentMethodHandler
             return false;
 
         _db.PaymentMethods.Remove(card);
+        if (card.IsDefault)
+        {
+            var next = await _db.PaymentMethods
+                .Where(p => p.UserId == command.UserId && p.Id != card.Id)
+                .OrderByDescending(p => p.Id)
+                .FirstOrDefaultAsync(ct);
+            if (next is not null)
+                next.IsDefault = true;
+        }
+
         await _db.SaveChangesAsync(ct);
         return true;
     }
