@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Domain;
@@ -249,6 +250,46 @@ public class ProviderPayoutServiceTests
         var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodEnd, NextPeriodEnd);
 
         Assert.Equal((0m, 0m), (calc.Refunds, calc.Net));
+    }
+
+    [Fact]
+    public async Task Charges_in_pesos_are_settled_in_dollars_for_a_United_States_business()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        db.Users.Find(business.UserId)!.CountryCode = "US";
+        db.SaveChanges();
+        TestData.AddCharge(db, business, 90_000, PeriodStart.AddDays(3));
+        TestData.AddCharge(db, business, 50, PeriodStart.AddDays(4), currency: "USD");
+
+        var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
+
+        Assert.Equal((72.5m, 14.5m, 58m, 2), (calc.Gross, calc.Commission, calc.Net, calc.Count));
+    }
+
+    [Fact]
+    public async Task Charges_in_dollars_are_settled_in_pesos_at_the_configured_rate()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        TestData.AddCharge(db, business, 10, PeriodStart.AddDays(3), currency: "USD");
+        var service = new ProviderPayoutService(db, new VetAuditService(db),
+            Options.Create(new ExchangeRateOptions { CopPerUsd = 5000 }));
+
+        var calc = await service.CalculatePayoutForPeriodAsync(business.UserId, PeriodStart, PeriodEnd);
+
+        Assert.Equal((50_000m, 10_000m, 40_000m), (calc.Gross, calc.Commission, calc.Net));
+    }
+
+    [Theory]
+    [InlineData(30, "USD", "USD", 30)]
+    [InlineData(30, "USD", "COP", 120_000)]
+    [InlineData(90_000, "COP", "USD", 22.5)]
+    public void Exchange_rate_converts_only_between_different_currencies(double amount, string from, string to, double expected)
+    {
+        Assert.Equal((decimal)expected, new ExchangeRateOptions().Convert((decimal)amount, from, to));
     }
 
     [Fact]
