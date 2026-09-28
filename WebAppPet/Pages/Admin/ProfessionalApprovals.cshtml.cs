@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Application.ProfessionalOnboarding.ApproveOnboarding;
+using WebAppPet.Application.ProfessionalOnboarding.GetPendingOnboardings;
+using WebAppPet.Application.ProfessionalOnboarding.RejectOnboarding;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -8,12 +11,20 @@ namespace WebAppPet.Pages.Admin;
 public class ProfessionalApprovalsModel : PageModel
 {
     private readonly AuthService _auth;
-    private readonly ProfessionalOnboardingService _onboarding;
+    private readonly GetPendingOnboardingsHandler _getPending;
+    private readonly ApproveOnboardingHandler _approve;
+    private readonly RejectOnboardingHandler _reject;
 
-    public ProfessionalApprovalsModel(AuthService auth, ProfessionalOnboardingService onboarding)
+    public ProfessionalApprovalsModel(
+        AuthService auth,
+        GetPendingOnboardingsHandler getPending,
+        ApproveOnboardingHandler approve,
+        RejectOnboardingHandler reject)
     {
         _auth = auth;
-        _onboarding = onboarding;
+        _getPending = getPending;
+        _approve = approve;
+        _reject = reject;
     }
 
     public List<ProfessionalOnboardingApplication> Pending { get; set; } = new();
@@ -26,24 +37,29 @@ public class ProfessionalApprovalsModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
-        Pending = await _onboarding.ListPendingAsync();
+        Pending = await _getPending.HandleAsync();
         return Page();
     }
 
     public async Task<IActionResult> OnPostApproveAsync(int id)
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
-        try
+
+        var result = await _approve.HandleAsync(new ApproveOnboardingCommand(id, _auth.CurrentUserId!.Value));
+        switch (result.Outcome)
         {
-            var app = await _onboarding.ApproveAsync(id, _auth.CurrentUserId!.Value);
-            Message = app is null ? "Not found." : $"Approved {app.LegalName} ({app.Track}).";
-        }
-        catch (Exception ex)
-        {
-            Error = ex.Message;
+            case ApproveOnboardingOutcome.NotFound:
+                Message = "Not found.";
+                break;
+            case ApproveOnboardingOutcome.NoBusinessProfile:
+                Error = "Applicant has no business profile. Register as business first.";
+                break;
+            default:
+                Message = $"Approved {result.Application!.LegalName} ({result.Application.Track}).";
+                break;
         }
 
-        Pending = await _onboarding.ListPendingAsync();
+        Pending = await _getPending.HandleAsync();
         return Page();
     }
 
@@ -51,9 +67,9 @@ public class ProfessionalApprovalsModel : PageModel
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
         var notes = string.IsNullOrWhiteSpace(RejectNotes) ? "Needs more documentation." : RejectNotes.Trim();
-        var app = await _onboarding.RejectAsync(id, _auth.CurrentUserId!.Value, notes);
+        var app = await _reject.HandleAsync(new RejectOnboardingCommand(id, _auth.CurrentUserId!.Value, notes));
         Message = app is null ? "Not found." : $"Rejected {app.LegalName}.";
-        Pending = await _onboarding.ListPendingAsync();
+        Pending = await _getPending.HandleAsync();
         return Page();
     }
 }

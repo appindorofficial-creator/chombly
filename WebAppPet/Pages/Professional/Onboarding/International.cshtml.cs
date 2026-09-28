@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;
+using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
+using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,22 +10,22 @@ namespace WebAppPet.Pages.Professional.Onboarding;
 
 public class InternationalModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ProfessionalOnboardingService _onboarding;
+    private readonly GetOnboardingDraftHandler _getDraft;
+    private readonly SaveOnboardingApplicationHandler _save;
     private readonly CountryCatalogService _countries;
     private readonly IWebHostEnvironment _env;
 
     public InternationalModel(
-        AppDbContext db,
         AuthService auth,
-        ProfessionalOnboardingService onboarding,
+        GetOnboardingDraftHandler getDraft,
+        SaveOnboardingApplicationHandler save,
         CountryCatalogService countries,
         IWebHostEnvironment env)
     {
-        _db = db;
         _auth = auth;
-        _onboarding = onboarding;
+        _getDraft = getDraft;
+        _save = save;
         _countries = countries;
         _env = env;
     }
@@ -46,93 +47,72 @@ public class InternationalModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
-        var profile = await _db.Groomers.AsNoTracking()
-            .FirstOrDefaultAsync(g => g.UserId == _auth.CurrentUserId);
-        var market = BusinessMarketResolver.Resolve(profile);
-        if (string.IsNullOrWhiteSpace(LicenseJurisdiction))
-            LicenseJurisdiction = BusinessMarketResolver.DefaultInternationalIso(market);
+        if (_auth.CurrentUserId is not int userId || (!_auth.IsGroomer && !_auth.IsAdmin))
+            return RedirectToPage("/Account/RegisterBusiness");
 
-        var latest = await _onboarding.GetLatestAsync(_auth.CurrentUserId!.Value);
-        if (latest is
-            {
-                Track: ProfessionalOnboardingTrack.International,
-                Status: ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected
-            })
+        var view = await _getDraft.HandleAsync(new GetOnboardingDraftQuery(userId));
+        if (!view.HasBusinessProfile)
+            return RedirectToPage("/Account/RegisterBusiness");
+
+        var defaultCountry = BusinessMarketResolver.DefaultInternationalIso(view.Market);
+        if (string.IsNullOrWhiteSpace(LicenseJurisdiction))
+            LicenseJurisdiction = defaultCountry;
+
+        if (view.Draft is { Track: ProfessionalOnboardingTrack.International } draft)
         {
-            LegalName = latest.LegalName;
-            ClinicOrPracticeName = latest.ClinicOrPracticeName;
-            LicenseNumber = latest.LicenseNumber;
-            LicenseJurisdiction = string.IsNullOrWhiteSpace(latest.LicenseJurisdiction)
-                ? BusinessMarketResolver.DefaultInternationalIso(market)
-                : latest.LicenseJurisdiction;
-            LicenseExpiry = latest.LicenseExpiry;
-            Languages = latest.Languages;
-            Specialties = latest.Specialties;
-            BreedExpertiseCsv = latest.BreedExpertiseCsv;
-            AcceptsInternationalClients = latest.AcceptsInternationalClients;
-            DocumentsNote = latest.DocumentsNote;
+            LegalName = draft.LegalName;
+            ClinicOrPracticeName = draft.ClinicOrPracticeName;
+            LicenseNumber = draft.LicenseNumber;
+            LicenseJurisdiction = string.IsNullOrWhiteSpace(draft.LicenseJurisdiction) ? defaultCountry : draft.LicenseJurisdiction;
+            LicenseExpiry = draft.LicenseExpiry;
+            Languages = draft.Languages;
+            Specialties = draft.Specialties;
+            BreedExpertiseCsv = draft.BreedExpertiseCsv;
+            AcceptsInternationalClients = draft.AcceptsInternationalClients;
+            DocumentsNote = draft.DocumentsNote;
         }
 
         await SyncCountrySearchAsync();
         return Page();
     }
 
-    public Task<IActionResult> OnPostDraftAsync() => SaveInternalAsync(submit: false);
+    public Task<IActionResult> OnPostDraftAsync() => SaveAsync(submit: false);
 
-    public Task<IActionResult> OnPostSubmitAsync() => SaveInternalAsync(submit: true);
+    public Task<IActionResult> OnPostSubmitAsync() => SaveAsync(submit: true);
 
-    private async Task<IActionResult> SaveInternalAsync(bool submit)
+    private async Task<IActionResult> SaveAsync(bool submit)
     {
-        if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
-        try
+        if (_auth.CurrentUserId is not int userId || (!_auth.IsGroomer && !_auth.IsAdmin))
+            return RedirectToPage("/Account/RegisterBusiness");
+
+        var result = await _save.HandleAsync(new SaveOnboardingApplicationCommand(
+            userId,
+            ProfessionalOnboardingTrack.International,
+            new OnboardingDetails(
+                LegalName, ClinicOrPracticeName, LicenseNumber, LicenseJurisdiction, LicenseExpiry,
+                Languages, Specialties, BreedExpertiseCsv, AcceptsInternationalClients,
+                HasPhysicalClinic: false, VcprCapable: false, DocumentsNote),
+            CountrySearch,
+            Document(userId),
+            submit));
+
+        switch (result.Outcome)
         {
-            var iso = await _countries.ResolveIsoAsync(
-                !string.IsNullOrWhiteSpace(LicenseJurisdiction) ? LicenseJurisdiction : CountrySearch);
-            if (string.IsNullOrWhiteSpace(iso))
-            {
-                Error = Localization.CatalogLocalizer.Loc(
-                    "Elige un país de la lista.",
-                    "Pick a country from the list.");
-                await SyncCountrySearchAsync();
-                return Page();
-            }
-
-            LicenseJurisdiction = iso;
-            await SyncCountrySearchAsync();
-
-            var uploadPath = await SaveUploadAsync();
-            var app = await _onboarding.StartOrUpdateDraftAsync(
-                _auth.CurrentUserId!.Value,
-                ProfessionalOnboardingTrack.International,
-                a =>
-                {
-                    a.LegalName = (LegalName ?? "").Trim();
-                    a.ClinicOrPracticeName = (ClinicOrPracticeName ?? "").Trim();
-                    a.LicenseNumber = (LicenseNumber ?? "").Trim();
-                    a.LicenseJurisdiction = LicenseJurisdiction;
-                    a.LicenseExpiry = LicenseExpiry;
-                    a.Languages = (Languages ?? "").Trim();
-                    a.Specialties = (Specialties ?? "").Trim();
-                    a.BreedExpertiseCsv = (BreedExpertiseCsv ?? "").Trim();
-                    a.AcceptsInternationalClients = AcceptsInternationalClients;
-                    a.HasPhysicalClinic = false;
-                    a.VcprCapable = false;
-                    a.DocumentsNote = string.IsNullOrWhiteSpace(DocumentsNote) ? null : DocumentsNote.Trim();
-                    if (uploadPath != null) a.UploadPath = uploadPath;
-                });
-
-            if (submit)
-                await _onboarding.SubmitAsync(_auth.CurrentUserId.Value, app.Id);
-
-            return RedirectToPage("/Professional/Onboarding/Status");
+            case SaveOnboardingApplicationOutcome.NoBusinessProfile:
+                return RedirectToPage("/Account/RegisterBusiness");
+            case SaveOnboardingApplicationOutcome.CountryNotFound:
+                Error = CatalogLocalizer.Loc("Elige un país de la lista.", "Pick a country from the list.");
+                break;
+            case SaveOnboardingApplicationOutcome.MissingRequired:
+                Error = "Legal name and license jurisdiction are required.";
+                break;
+            default:
+                return RedirectToPage("/Professional/Onboarding/Status");
         }
-        catch (Exception ex)
-        {
-            Error = ex.Message;
-            await SyncCountrySearchAsync();
-            return Page();
-        }
+
+        LicenseJurisdiction = result.LicenseJurisdiction ?? "";
+        await SyncCountrySearchAsync();
+        return Page();
     }
 
     private async Task SyncCountrySearchAsync()
@@ -149,23 +129,8 @@ public class InternationalModel : PageModel
             : CountryCatalogService.DisplayName(entry);
     }
 
-    private async Task<bool> GateAsync()
-    {
-        if (_auth.CurrentUserId is null) return false;
-        if (!_auth.IsGroomer && !_auth.IsAdmin) return false;
-        return await _db.Groomers.AnyAsync(g => g.UserId == _auth.CurrentUserId);
-    }
-
-    private async Task<string?> SaveUploadAsync()
-    {
-        if (DocumentUpload is null || DocumentUpload.Length == 0) return null;
-        var dir = UploadPaths.GetAbsoluteDir(_env, "uploads", "professional");
-        var ext = Path.GetExtension(DocumentUpload.FileName);
-        if (ext.Length > 10) ext = ".bin";
-        var name = $"{_auth.CurrentUserId}_{Guid.NewGuid():N}{ext}";
-        var full = Path.Combine(dir, name);
-        await using var fs = System.IO.File.Create(full);
-        await DocumentUpload.CopyToAsync(fs);
-        return "/uploads/professional/" + name;
-    }
+    private OnboardingDocument? Document(int userId) =>
+        DocumentUpload is { Length: > 0 } file
+            ? new OnboardingDocument(ct => ProfessionalDocumentStorage.SaveAsync(file, userId, _env, ct))
+            : null;
 }

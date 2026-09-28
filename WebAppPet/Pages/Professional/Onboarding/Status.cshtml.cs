@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingStatus;
+using WebAppPet.Application.ProfessionalOnboarding.Shared;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,15 +9,13 @@ namespace WebAppPet.Pages.Professional.Onboarding;
 
 public class StatusModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ProfessionalOnboardingService _onboarding;
+    private readonly GetOnboardingStatusHandler _getStatus;
 
-    public StatusModel(AppDbContext db, AuthService auth, ProfessionalOnboardingService onboarding)
+    public StatusModel(AuthService auth, GetOnboardingStatusHandler getStatus)
     {
-        _db = db;
         _auth = auth;
-        _onboarding = onboarding;
+        _getStatus = getStatus;
     }
 
     public ProfessionalOnboardingApplication? Application { get; set; }
@@ -27,23 +25,23 @@ public class StatusModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
         if (!_auth.IsGroomer && !_auth.IsAdmin)
             return RedirectToPage("/Account/RegisterBusiness");
-        if (!await _db.Groomers.AnyAsync(g => g.UserId == _auth.CurrentUserId))
+
+        var view = await _getStatus.HandleAsync(new GetOnboardingStatusQuery(userId));
+        if (!view.HasBusinessProfile)
             return RedirectToPage("/Account/RegisterBusiness");
 
-        Application = await _onboarding.GetLatestAsync(_auth.CurrentUserId.Value);
+        Application = view.Application;
         ContinueHref = ResolveContinueHref(Application);
         return Page();
     }
 
     private static string? ResolveContinueHref(ProfessionalOnboardingApplication? app)
     {
-        if (app is null) return null;
-        if (app.Status is not (ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected))
-            return null;
+        if (app is null || !app.IsEditable()) return null;
 
         return app.Track switch
         {

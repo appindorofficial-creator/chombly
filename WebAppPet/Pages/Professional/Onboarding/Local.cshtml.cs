@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;
+using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
@@ -9,20 +9,20 @@ namespace WebAppPet.Pages.Professional.Onboarding;
 
 public class LocalModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ProfessionalOnboardingService _onboarding;
+    private readonly GetOnboardingDraftHandler _getDraft;
+    private readonly SaveOnboardingApplicationHandler _save;
     private readonly IWebHostEnvironment _env;
 
     public LocalModel(
-        AppDbContext db,
         AuthService auth,
-        ProfessionalOnboardingService onboarding,
+        GetOnboardingDraftHandler getDraft,
+        SaveOnboardingApplicationHandler save,
         IWebHostEnvironment env)
     {
-        _db = db;
         _auth = auth;
-        _onboarding = onboarding;
+        _getDraft = getDraft;
+        _save = save;
         _env = env;
     }
 
@@ -47,95 +47,68 @@ public class LocalModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
-        var latest = await _onboarding.GetLatestAsync(_auth.CurrentUserId!.Value);
-        if (latest != null
-            && latest.Status is ProfessionalOnboardingStatus.Draft or ProfessionalOnboardingStatus.Rejected
-            && (latest.Track == ProfessionalOnboardingTrack.Local
-                || latest.Track == ProfessionalOnboardingTrack.Behavior))
+        if (_auth.CurrentUserId is not int userId || (!_auth.IsGroomer && !_auth.IsAdmin))
+            return RedirectToPage("/Account/RegisterBusiness");
+
+        var view = await _getDraft.HandleAsync(new GetOnboardingDraftQuery(userId));
+        if (!view.HasBusinessProfile)
+            return RedirectToPage("/Account/RegisterBusiness");
+
+        if (view.Draft is { Track: ProfessionalOnboardingTrack.Local or ProfessionalOnboardingTrack.Behavior } draft)
         {
             // Wrong track query (e.g. Local vs behavior) → open the matching form with draft.
-            if (IsBehavior != (latest.Track == ProfessionalOnboardingTrack.Behavior))
-            {
-                return latest.Track == ProfessionalOnboardingTrack.Behavior
-                    ? RedirectToPage("./Local", new { Track = "behavior" })
-                    : RedirectToPage("./Local");
-            }
+            var draftIsBehavior = draft.Track == ProfessionalOnboardingTrack.Behavior;
+            if (IsBehavior != draftIsBehavior)
+                return draftIsBehavior ? RedirectToPage("./Local", new { Track = "behavior" }) : RedirectToPage("./Local");
 
-            LegalName = latest.LegalName;
-            ClinicOrPracticeName = latest.ClinicOrPracticeName;
-            LicenseNumber = latest.LicenseNumber;
-            LicenseJurisdiction = latest.LicenseJurisdiction;
-            LicenseExpiry = latest.LicenseExpiry;
-            Languages = latest.Languages;
-            Specialties = latest.Specialties;
-            HasPhysicalClinic = latest.HasPhysicalClinic;
-            VcprCapable = latest.VcprCapable;
-            DocumentsNote = latest.DocumentsNote;
-            if (latest.Track == ProfessionalOnboardingTrack.Behavior)
-                Track = "behavior";
+            LegalName = draft.LegalName;
+            ClinicOrPracticeName = draft.ClinicOrPracticeName;
+            LicenseNumber = draft.LicenseNumber;
+            LicenseJurisdiction = draft.LicenseJurisdiction;
+            LicenseExpiry = draft.LicenseExpiry;
+            Languages = draft.Languages;
+            Specialties = draft.Specialties;
+            HasPhysicalClinic = draft.HasPhysicalClinic;
+            VcprCapable = draft.VcprCapable;
+            DocumentsNote = draft.DocumentsNote;
         }
         return Page();
     }
 
-    public Task<IActionResult> OnPostDraftAsync() => SaveInternalAsync(submit: false);
+    public Task<IActionResult> OnPostDraftAsync() => SaveAsync(submit: false);
 
-    public Task<IActionResult> OnPostSubmitAsync() => SaveInternalAsync(submit: true);
+    public Task<IActionResult> OnPostSubmitAsync() => SaveAsync(submit: true);
 
-    private async Task<IActionResult> SaveInternalAsync(bool submit)
+    private async Task<IActionResult> SaveAsync(bool submit)
     {
-        if (!await GateAsync()) return RedirectToPage("/Account/RegisterBusiness");
-        try
+        if (_auth.CurrentUserId is not int userId || (!_auth.IsGroomer && !_auth.IsAdmin))
+            return RedirectToPage("/Account/RegisterBusiness");
+
+        var result = await _save.HandleAsync(new SaveOnboardingApplicationCommand(
+            userId,
+            IsBehavior ? ProfessionalOnboardingTrack.Behavior : ProfessionalOnboardingTrack.Local,
+            new OnboardingDetails(
+                LegalName, ClinicOrPracticeName, LicenseNumber, LicenseJurisdiction, LicenseExpiry,
+                Languages, Specialties, BreedExpertiseCsv: null, AcceptsInternationalClients: false,
+                HasPhysicalClinic, VcprCapable, DocumentsNote),
+            CountrySearch: null,
+            Document(userId),
+            submit));
+
+        switch (result.Outcome)
         {
-            var track = IsBehavior ? ProfessionalOnboardingTrack.Behavior : ProfessionalOnboardingTrack.Local;
-            var uploadPath = await SaveUploadAsync();
-
-            var app = await _onboarding.StartOrUpdateDraftAsync(_auth.CurrentUserId!.Value, track, a =>
-            {
-                a.LegalName = (LegalName ?? "").Trim();
-                a.ClinicOrPracticeName = (ClinicOrPracticeName ?? "").Trim();
-                a.LicenseNumber = (LicenseNumber ?? "").Trim();
-                a.LicenseJurisdiction = (LicenseJurisdiction ?? "").Trim().ToUpperInvariant();
-                a.LicenseExpiry = LicenseExpiry;
-                a.Languages = (Languages ?? "").Trim();
-                a.Specialties = (Specialties ?? "").Trim();
-                a.HasPhysicalClinic = HasPhysicalClinic;
-                a.VcprCapable = VcprCapable;
-                a.DocumentsNote = string.IsNullOrWhiteSpace(DocumentsNote) ? null : DocumentsNote.Trim();
-                a.AcceptsInternationalClients = false;
-                a.BreedExpertiseCsv = "";
-                if (uploadPath != null) a.UploadPath = uploadPath;
-            });
-
-            if (submit)
-                await _onboarding.SubmitAsync(_auth.CurrentUserId.Value, app.Id);
-
-            return RedirectToPage("/Professional/Onboarding/Status");
-        }
-        catch (Exception ex)
-        {
-            Error = ex.Message;
-            return Page();
+            case SaveOnboardingApplicationOutcome.NoBusinessProfile:
+                return RedirectToPage("/Account/RegisterBusiness");
+            case SaveOnboardingApplicationOutcome.MissingRequired:
+                Error = "Legal name and license jurisdiction are required.";
+                return Page();
+            default:
+                return RedirectToPage("/Professional/Onboarding/Status");
         }
     }
 
-    private async Task<bool> GateAsync()
-    {
-        if (_auth.CurrentUserId is null) return false;
-        if (!_auth.IsGroomer && !_auth.IsAdmin) return false;
-        return await _db.Groomers.AnyAsync(g => g.UserId == _auth.CurrentUserId);
-    }
-
-    private async Task<string?> SaveUploadAsync()
-    {
-        if (DocumentUpload is null || DocumentUpload.Length == 0) return null;
-        var dir = UploadPaths.GetAbsoluteDir(_env, "uploads", "professional");
-        var ext = Path.GetExtension(DocumentUpload.FileName);
-        if (ext.Length > 10) ext = ".bin";
-        var name = $"{_auth.CurrentUserId}_{Guid.NewGuid():N}{ext}";
-        var full = Path.Combine(dir, name);
-        await using var fs = System.IO.File.Create(full);
-        await DocumentUpload.CopyToAsync(fs);
-        return "/uploads/professional/" + name;
-    }
+    private OnboardingDocument? Document(int userId) =>
+        DocumentUpload is { Length: > 0 } file
+            ? new OnboardingDocument(ct => ProfessionalDocumentStorage.SaveAsync(file, userId, _env, ct))
+            : null;
 }
