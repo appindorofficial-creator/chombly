@@ -170,7 +170,7 @@
             @if (row.Status == PaymentTransactionStatus.Succeeded)
             {
                 <form method="post" asp-page-handler="Refund" style="margin-top:8px;display:flex;gap:8px"
-                      onsubmit="return confirm('@CatalogLocalizer.Loc("¿Reembolsar este pago?", "Refund this payment?")')">
+                      onsubmit="return confirm('@CatalogLocalizer.Loc("¿Reembolsar este pago? Si paga una cita próxima, se cancela; si es Chombly Care, la membresía termina.", "Refund this payment? An upcoming appointment it paid for is cancelled; a Chombly Care membership ends.")')">
                     <input type="hidden" name="id" value="@row.Id" />
                     <input type="hidden" name="Status" value="@Model.Status" />
                     <input type="hidden" name="Purpose" value="@Model.Purpose" />
