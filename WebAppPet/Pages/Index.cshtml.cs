@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Application.Favorites.GetFavoriteIds;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -14,12 +15,14 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
+    private readonly GetFavoriteIdsHandler _favoriteIds;
 
-    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public IndexModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L, GetFavoriteIdsHandler favoriteIds)
     {
         _db = db;
         _auth = auth;
         _L = L;
+        _favoriteIds = favoriteIds;
     }
 
     /// <summary>Guest browse from Welcome “Explorar”. Without this, anonymous /Index goes to Welcome.</summary>
@@ -95,13 +98,7 @@ public class IndexModel : PageModel
         }
 
         if (_auth.CurrentUserId is int uid)
-        {
-            FavoriteIds = (await _db.Favorites.AsNoTracking()
-                    .Where(f => f.UserId == uid)
-                    .Select(f => f.GroomerId)
-                    .ToListAsync())
-                .ToHashSet();
-        }
+            FavoriteIds = await _favoriteIds.HandleAsync(new GetFavoriteIdsQuery(uid));
 
         var homeServices = await _db.Services
             .Include(s => s.Groomer)
