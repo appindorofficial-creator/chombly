@@ -13,7 +13,7 @@ namespace WebAppPet.Tests.Application.Care;
 
 public class CareMembershipTests : IDisposable
 {
-    private const decimal MonthlyPrice = 20;
+    private const int MonthlyPrice = 20;
 
     private readonly TestDatabase _database = new();
     private readonly AppDbContext _db;
@@ -77,12 +77,30 @@ public class CareMembershipTests : IDisposable
         Assert.Equal(ActivateCareOutcome.Activated, result.Outcome);
         using var verify = _database.CreateContext();
         var subscription = verify.CareSubscriptions.Single();
-        Assert.Equal((_user.Id, CareSubscriptionStatus.Active, MonthlyPrice, 1),
+        Assert.Equal((_user.Id, CareSubscriptionStatus.Active, CarePlan.ColombiaMonthlyPrice, 1),
             (subscription.UserId, subscription.Status, subscription.PricePerMonth, subscription.QuickConsultsPerCycle));
         Assert.Equal(subscription.CurrentPeriodStart.AddMonths(1), subscription.CurrentPeriodEnd);
         var charge = verify.PaymentTransactions.Single();
-        Assert.Equal((PaymentPurpose.CareSubscription, PaymentTransactionStatus.Succeeded, MonthlyPrice, subscription.Id),
+        Assert.Equal((PaymentPurpose.CareSubscription, PaymentTransactionStatus.Succeeded, CarePlan.ColombiaMonthlyPrice, subscription.Id),
             (charge.Purpose, charge.Status, charge.Amount, charge.CareSubscriptionId));
+    }
+
+    [Theory]
+    [InlineData(BusinessMarket.Colombia, 50_000, "COP")]
+    [InlineData(BusinessMarket.UnitedStates, 20, "USD")]
+    public async Task Colombia_pays_the_peso_price_and_the_United_States_the_catalog_price(
+        BusinessMarket market, int expectedPrice, string currency)
+    {
+        AddCatalogPrice();
+        TestData.AddCard(_db, _user);
+
+        using (AppTimeZones.UseMarket(market))
+            await ActivateAs(_user);
+
+        using var verify = _database.CreateContext();
+        var charge = verify.PaymentTransactions.Single();
+        Assert.Equal(((decimal)expectedPrice, currency), (charge.Amount, charge.Currency));
+        Assert.Equal(expectedPrice, verify.CareSubscriptions.Single().PricePerMonth);
     }
 
     [Theory]
@@ -115,11 +133,12 @@ public class CareMembershipTests : IDisposable
     }
 
     [Fact]
-    public async Task Without_a_catalog_price_the_default_monthly_price_is_charged()
+    public async Task Without_a_catalog_price_the_default_monthly_price_is_charged_in_the_United_States()
     {
         TestData.AddCard(_db, _user);
 
-        await ActivateAs(_user);
+        using (AppTimeZones.UseMarket(BusinessMarket.UnitedStates))
+            await ActivateAs(_user);
 
         using var verify = _database.CreateContext();
         Assert.Equal(CarePlan.FallbackMonthlyPrice, verify.PaymentTransactions.Single().Amount);
@@ -188,6 +207,21 @@ public class CareMembershipTests : IDisposable
         Assert.Equal(MonthlyPrice, plan.CatalogItem?.Price);
         Assert.Null(plan.Subscription);
         Assert.Null(plan.Card);
+    }
+
+    [Theory]
+    [InlineData(BusinessMarket.Colombia, 50_000)]
+    [InlineData(BusinessMarket.UnitedStates, 20)]
+    public async Task The_plan_shows_the_monthly_price_of_the_familys_market(BusinessMarket market, int expectedPrice)
+    {
+        AddCatalogPrice();
+
+        using (AppTimeZones.UseMarket(market))
+        {
+            var plan = await GetPlan.HandleAsync(new GetCarePlanQuery(_user.Id));
+
+            Assert.Equal(expectedPrice, plan.MonthlyPrice);
+        }
     }
 
     [Fact]

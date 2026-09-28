@@ -40,7 +40,7 @@ public class ChomblyCareModel : PageModel
     [BindProperty]
     public bool AcceptRenewal { get; set; }
 
-    public ServiceCatalogItem? CatalogItem { get; set; }
+    public decimal MonthlyPrice { get; set; }
     public CareSubscription? Subscription { get; set; }
     public PaymentMethod? Card { get; set; }
     public int RemainingConsults { get; set; }
@@ -114,7 +114,7 @@ public class ChomblyCareModel : PageModel
     private async Task LoadAsync(int? userId, CancellationToken ct)
     {
         var plan = await _getPlan.HandleAsync(new GetCarePlanQuery(userId), ct);
-        CatalogItem = plan.CatalogItem;
+        MonthlyPrice = plan.MonthlyPrice;
         Subscription = plan.Subscription;
         RemainingConsults = plan.RemainingConsults;
         Card = plan.Card;

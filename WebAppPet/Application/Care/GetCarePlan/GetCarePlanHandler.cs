@@ -5,9 +5,11 @@ using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Care.GetCarePlan;
 
+/// <param name="MonthlyPrice">What the family's market is charged per month.</param>
 /// <param name="Card">The card the first month would be charged to; only looked up while not subscribed.</param>
 public sealed record CarePlanView(
     ServiceCatalogItem? CatalogItem,
+    decimal MonthlyPrice,
     CareSubscription? Subscription,
     int RemainingConsults,
     PaymentMethod? Card);
@@ -27,14 +29,14 @@ public class GetCarePlanHandler
 
     public async Task<CarePlanView> HandleAsync(GetCarePlanQuery query, CancellationToken ct = default)
     {
-        var (item, _) = await _catalog.CatalogPriceAsync(ct);
+        var (item, price) = await _catalog.CatalogPriceAsync(ct);
         if (query.UserId is not int userId)
-            return new CarePlanView(item, null, 0, null);
+            return new CarePlanView(item, price, null, 0, null);
 
         var subscription = await _care.GetActiveAsync(userId, ct);
         if (subscription is not null)
-            return new CarePlanView(item, subscription, _care.RemainingQuickConsults(subscription), null);
+            return new CarePlanView(item, price, subscription, _care.RemainingQuickConsults(subscription), null);
 
-        return new CarePlanView(item, null, 0, await _payments.FindCardAsync(userId, null, ct));
+        return new CarePlanView(item, price, null, 0, await _payments.FindCardAsync(userId, null, ct));
     }
 }
