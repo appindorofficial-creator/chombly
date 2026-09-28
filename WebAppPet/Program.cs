@@ -40,7 +40,6 @@ builder.Services.AddScoped<VcprService>();
 builder.Services.AddScoped<SafetyScreeningService>();
 builder.Services.AddScoped<ConsentService>();
 builder.Services.AddScoped<ChomblyCareService>();
-builder.Services.AddScoped<BehaviorFlowService>();
 builder.Services.AddScoped<CountryCatalogService>();
 builder.Services.AddScoped<ProfessionalOnboardingService>();
 builder.Services.AddScoped<ReminderEngineService>();

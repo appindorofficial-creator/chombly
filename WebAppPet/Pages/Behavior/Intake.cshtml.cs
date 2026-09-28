@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.Behavior.GetBehaviorIntake;
+using WebAppPet.Application.Behavior.SubmitBehaviorIntake;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -10,21 +10,15 @@ namespace WebAppPet.Pages.Behavior;
 
 public class IntakeModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly BehaviorFlowService _flow;
-    private readonly VetAuditService _audit;
+    private readonly GetBehaviorIntakeHandler _getIntake;
+    private readonly SubmitBehaviorIntakeHandler _submit;
 
-    public IntakeModel(
-        AppDbContext db,
-        AuthService auth,
-        BehaviorFlowService flow,
-        VetAuditService audit)
+    public IntakeModel(AuthService auth, GetBehaviorIntakeHandler getIntake, SubmitBehaviorIntakeHandler submit)
     {
-        _db = db;
         _auth = auth;
-        _flow = flow;
-        _audit = audit;
+        _getIntake = getIntake;
+        _submit = submit;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -37,7 +31,7 @@ public class IntakeModel : PageModel
     [BindProperty] public bool HasClinicalConcern { get; set; }
 
     public BehaviorCase? Case { get; set; }
-    public List<Models.Pet> Pets { get; set; } = new();
+    public List<Pet> Pets { get; set; } = new();
     public string? ErrorMessage { get; set; }
 
     public static readonly string[] Problems =
@@ -50,13 +44,12 @@ public class IntakeModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Behavior/Intake?caseId={CaseId}" });
 
-        Case = await _flow.GetOwnedAsync(CaseId);
-        if (Case is null) return RedirectToPage("/Care/Services");
-
-        Pets = await LoadDogPetsAsync();
+        var form = await _getIntake.HandleAsync(new GetBehaviorIntakeQuery(userId, CaseId));
+        if (form is null) return RedirectToPage("/Care/Services");
+        Show(form);
 
         // Fresh form every visit — do not preselect pets, problem, or frequency.
         SelectedPetIds = new();
@@ -69,62 +62,35 @@ public class IntakeModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
-        Case = await _flow.GetOwnedAsync(CaseId);
-        if (Case is null) return RedirectToPage("/Care/Services");
+        if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Account/Login");
 
-        Pets = await LoadDogPetsAsync();
+        var result = await _submit.HandleAsync(new SubmitBehaviorIntakeCommand(
+            userId, CaseId, SelectedPetIds, ProblemType, Frequency, ContextNotes, HasClinicalConcern));
 
-        var dogIds = Pets.Select(p => p.Id).ToHashSet();
-        SelectedPetIds = SelectedPetIds.Where(id => dogIds.Contains(id)).Distinct().ToList();
-
-        if (SelectedPetIds.Count == 0)
+        switch (result.Outcome)
         {
-            ErrorMessage = CatalogLocalizer.Loc(
-                "Activa al menos un perro.",
-                "Turn on at least one dog.");
-            return Page();
+            case SubmitBehaviorIntakeOutcome.NotFound:
+                return RedirectToPage("/Care/Services");
+            case SubmitBehaviorIntakeOutcome.ReferredToVet:
+                return RedirectToPage("/Vet/Index");
+            case SubmitBehaviorIntakeOutcome.Completed:
+                return RedirectToPage("/Behavior/Providers", new { caseId = CaseId });
         }
 
-        if (string.IsNullOrWhiteSpace(ProblemType))
+        Show(result.Form!);
+        SelectedPetIds = result.SelectedPetIds;
+        ErrorMessage = result.Outcome switch
         {
-            ErrorMessage = CatalogLocalizer.Loc("Indica el problema principal.", "Choose the main problem.");
-            return Page();
-        }
-
-        if (string.IsNullOrWhiteSpace(Frequency))
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Indica la frecuencia.", "Choose the frequency.");
-            return Page();
-        }
-
-        BehaviorFlowService.SetSelectedPetIds(Case, SelectedPetIds);
-        Case.ProblemType = ProblemType.Trim();
-        Case.Frequency = Frequency.Trim();
-        Case.ContextNotes = ContextNotes?.Trim();
-        Case.ClinicalRedFlag = HasClinicalConcern;
-        Case.VideoUrl = null;
-
-        if (Case.ClinicalRedFlag)
-        {
-            Case.Status = BehaviorCaseStatus.ReferredToVet;
-            await _flow.TouchAsync(Case);
-            await _audit.LogAsync("behavior_referred_vet", _auth.CurrentUserId, "BehaviorCase", Case.Id);
-            return RedirectToPage("/Vet/Index");
-        }
-
-        Case.Status = BehaviorCaseStatus.IntakeComplete;
-        await _flow.TouchAsync(Case);
-        return RedirectToPage("/Behavior/Providers", new { caseId = CaseId });
+            SubmitBehaviorIntakeOutcome.NoDogSelected => CatalogLocalizer.Loc("Activa al menos un perro.", "Turn on at least one dog."),
+            SubmitBehaviorIntakeOutcome.NoProblem => CatalogLocalizer.Loc("Indica el problema principal.", "Choose the main problem."),
+            _ => CatalogLocalizer.Loc("Indica la frecuencia.", "Choose the frequency.")
+        };
+        return Page();
     }
 
-    /// <summary>Comportamiento canino: solo perros (no gatos u otras especies).</summary>
-    private async Task<List<Models.Pet>> LoadDogPetsAsync()
+    private void Show(BehaviorIntakeForm form)
     {
-        return await _db.Pets.AsNoTracking()
-            .Where(p => p.OwnerId == _auth.CurrentUserId
-                        && p.Species == PetSpecies.Dog)
-            .OrderBy(p => p.Name)
-            .ToListAsync();
+        Case = form.Case;
+        Pets = form.Dogs;
     }
 }

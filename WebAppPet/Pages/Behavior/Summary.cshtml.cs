@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using WebAppPet.Data;
+using WebAppPet.Application.Behavior.GetBehaviorSummary;
+using WebAppPet.Application.Behavior.SaveBehaviorFollowUp;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -9,15 +10,15 @@ namespace WebAppPet.Pages.Behavior;
 
 public class SummaryModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly BehaviorFlowService _flow;
+    private readonly GetBehaviorSummaryHandler _getSummary;
+    private readonly SaveBehaviorFollowUpHandler _saveFollowUp;
 
-    public SummaryModel(AppDbContext db, AuthService auth, BehaviorFlowService flow)
+    public SummaryModel(AuthService auth, GetBehaviorSummaryHandler getSummary, SaveBehaviorFollowUpHandler saveFollowUp)
     {
-        _db = db;
         _auth = auth;
-        _flow = flow;
+        _getSummary = getSummary;
+        _saveFollowUp = saveFollowUp;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -31,10 +32,10 @@ public class SummaryModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Behavior/Summary/{Id}" });
 
-        Case = await _flow.GetOwnedAsync(Id);
+        Case = await _getSummary.HandleAsync(new GetBehaviorSummaryQuery(userId, Id));
         if (Case is null) return RedirectToPage("/Care/Services");
 
         FollowUpNotes = Case.FollowUpNotes;
@@ -43,27 +44,10 @@ public class SummaryModel : PageModel
 
     public async Task<IActionResult> OnPostNoteAsync()
     {
-        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+        if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Account/Login");
 
-        Case = await _flow.GetOwnedAsync(Id);
+        Case = await _saveFollowUp.HandleAsync(new SaveBehaviorFollowUpCommand(userId, Id, FollowUpNotes));
         if (Case is null) return RedirectToPage("/Care/Services");
-
-        Case.FollowUpNotes = FollowUpNotes?.Trim();
-        if (Case.Status < BehaviorCaseStatus.PlanActive)
-            Case.Status = BehaviorCaseStatus.PlanActive;
-        await _flow.TouchAsync(Case);
-
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = _auth.CurrentUserId.Value,
-            Title = CatalogLocalizer.Loc("Plan de conducta", "Behavior plan"),
-            Message = CatalogLocalizer.Loc(
-                $"Nota guardada para {Case.Pet?.Name}.",
-                $"Note saved for {Case.Pet?.Name}."),
-            Type = "behavior-plan",
-            CreatedAt = DateTime.UtcNow
-        });
-        await _db.SaveChangesAsync();
 
         Message = CatalogLocalizer.Loc("Nota guardada.", "Note saved.");
         FollowUpNotes = Case.FollowUpNotes;
