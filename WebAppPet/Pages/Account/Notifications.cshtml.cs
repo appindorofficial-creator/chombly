@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using WebAppPet.Data;
+using WebAppPet.Application.Notifications.ClearNotifications;
+using WebAppPet.Application.Notifications.DeleteNotification;
+using WebAppPet.Application.Notifications.OpenInbox;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -12,15 +13,24 @@ namespace WebAppPet.Pages.Account;
 
 public class NotificationsModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly IStringLocalizer<SharedResource> _L;
+    private readonly OpenInboxHandler _openInbox;
+    private readonly DeleteNotificationHandler _deleteNotification;
+    private readonly ClearNotificationsHandler _clearNotifications;
 
-    public NotificationsModel(AppDbContext db, AuthService auth, IStringLocalizer<SharedResource> L)
+    public NotificationsModel(
+        AuthService auth,
+        IStringLocalizer<SharedResource> L,
+        OpenInboxHandler openInbox,
+        DeleteNotificationHandler deleteNotification,
+        ClearNotificationsHandler clearNotifications)
     {
-        _db = db;
         _auth = auth;
         _L = L;
+        _openInbox = openInbox;
+        _deleteNotification = deleteNotification;
+        _clearNotifications = clearNotifications;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -30,73 +40,36 @@ public class NotificationsModel : PageModel
 
     public List<AppNotification> Items { get; set; } = new();
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = BuildLoginReturn() });
 
         BackHref = ResolveBackHref();
-
-        Items = await _db.Notifications
-            .Where(n => n.UserId == userId)
-            .OrderByDescending(n => n.CreatedAt)
-            .ToListAsync();
-
-        // Mark read in DB without mutating the in-memory list, so this visit still shows unread styling.
-        if (Items.Any(x => !x.IsRead))
-        {
-            await _db.Notifications
-                .Where(n => n.UserId == userId && !n.IsRead)
-                .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
-        }
-
+        Items = await _openInbox.HandleAsync(new OpenInboxCommand(userId), ct);
         return Page();
     }
 
-    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    public async Task<IActionResult> OnPostDeleteAsync(int id, CancellationToken ct)
     {
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = BuildLoginReturn() });
 
-        var n = await _db.Notifications.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
-        if (n != null)
-        {
-            await ClearDeliveryLinksAsync(new[] { n.Id });
-            _db.Notifications.Remove(n);
-            await _db.SaveChangesAsync();
+        if (await _deleteNotification.HandleAsync(new DeleteNotificationCommand(userId, id), ct))
             AppFlash.Toast(this, "✓ " + _L["Feedback_Deleted"].Value);
-        }
 
         return RedirectToPage(new { returnUrl = ReturnUrl });
     }
 
-    public async Task<IActionResult> OnPostClearAsync()
+    public async Task<IActionResult> OnPostClearAsync(CancellationToken ct)
     {
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = BuildLoginReturn() });
 
-        var items = await _db.Notifications.Where(n => n.UserId == userId).ToListAsync();
-        if (items.Count > 0)
-        {
-            await ClearDeliveryLinksAsync(items.Select(x => x.Id));
-            _db.Notifications.RemoveRange(items);
-            await _db.SaveChangesAsync();
+        if (await _clearNotifications.HandleAsync(new ClearNotificationsCommand(userId), ct) > 0)
             AppFlash.Toast(this, "✓ " + _L["Feedback_DeletedAll"].Value);
-        }
 
         return RedirectToPage(new { returnUrl = ReturnUrl });
-    }
-
-    private async Task ClearDeliveryLinksAsync(IEnumerable<int> notificationIds)
-    {
-        var ids = notificationIds.ToList();
-        if (ids.Count == 0) return;
-
-        var deliveries = await _db.ReminderDeliveries
-            .Where(d => d.AppNotificationId != null && ids.Contains(d.AppNotificationId.Value))
-            .ToListAsync();
-        foreach (var d in deliveries)
-            d.AppNotificationId = null;
     }
 
     private string BuildLoginReturn()

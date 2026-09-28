@@ -1,8 +1,8 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Application.Reminders.CreateReminder;
+using WebAppPet.Application.Reminders.DeactivateReminder;
+using WebAppPet.Application.Reminders.GetPetReminders;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -11,15 +11,21 @@ namespace WebAppPet.Pages.Pets;
 
 public class RemindersModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ReminderEngineService _reminders;
+    private readonly GetPetRemindersHandler _getReminders;
+    private readonly CreateReminderHandler _createReminder;
+    private readonly DeactivateReminderHandler _deactivateReminder;
 
-    public RemindersModel(AppDbContext db, AuthService auth, ReminderEngineService reminders)
+    public RemindersModel(
+        AuthService auth,
+        GetPetRemindersHandler getReminders,
+        CreateReminderHandler createReminder,
+        DeactivateReminderHandler deactivateReminder)
     {
-        _db = db;
         _auth = auth;
-        _reminders = reminders;
+        _getReminders = getReminders;
+        _createReminder = createReminder;
+        _deactivateReminder = deactivateReminder;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -38,102 +44,58 @@ public class RemindersModel : PageModel
     [BindProperty] public string QuietStart { get; set; } = "";
     [BindProperty] public string QuietEnd { get; set; } = "";
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Pets/Reminders/{Id}" });
-        if (!await LoadPetAsync()) return RedirectToPage("/Pets/Index");
-        Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId.Value, Id);
+        if (!await LoadAsync(userId, ct)) return RedirectToPage("/Pets/Index");
         if (TempData["Flash"] is string flash)
             Message = flash;
         return Page();
     }
 
-    public async Task<IActionResult> OnPostCreateAsync()
+    public async Task<IActionResult> OnPostCreateAsync(CancellationToken ct)
     {
-        if (!await LoadPetAsync()) return RedirectToPage("/Pets/Index");
+        if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Pets/Index");
 
-        if (Type is null)
-        {
-            Error = CatalogLocalizer.Loc("Elige un tipo de recordatorio.", "Choose a reminder type.");
-            Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId!.Value, Id);
-            return Page();
-        }
+        var outcome = await _createReminder.HandleAsync(new CreateReminderCommand(
+            userId, Id, Type, Title, Notes, FrequencyDays, NextDueLocal, QuietStart, QuietEnd), ct);
 
-        if (NextDueLocal is null)
+        Error = outcome switch
         {
-            Error = CatalogLocalizer.Loc("Elige la próxima fecha.", "Choose the next due date.");
-            Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId!.Value, Id);
-            return Page();
-        }
-
-        var today = AppTimeZones.TodayLocalDate();
-        if (NextDueLocal.Value.Date < today)
-        {
-            Error = CatalogLocalizer.Loc(
+            CreateReminderOutcome.NoType => CatalogLocalizer.Loc("Elige un tipo de recordatorio.", "Choose a reminder type."),
+            CreateReminderOutcome.NoDate => CatalogLocalizer.Loc("Elige la próxima fecha.", "Choose the next due date."),
+            CreateReminderOutcome.PastDate => CatalogLocalizer.Loc(
                 "La próxima fecha no puede ser en el pasado.",
-                "The next due date can't be in the past.");
-            Schedules = await _reminders.ListForPetAsync(_auth.CurrentUserId!.Value, Id);
-            return Page();
-        }
+                "The next due date can't be in the past."),
+            _ => null
+        };
 
-        var type = Type.Value;
-        if (string.IsNullOrWhiteSpace(Title))
-        {
-            Title = type switch
-            {
-                ReminderType.Vaccine => "Recordatorio de vacuna",
-                ReminderType.Medication => "Recordatorio de medicamento",
-                ReminderType.Appointment => "Recordatorio de cita",
-                _ => "Recordatorio de cuidado"
-            };
-        }
-
-        TimeSpan? qStart = ParseTime(QuietStart);
-        TimeSpan? qEnd = ParseTime(QuietEnd);
-        var nextUtc = AppTimeZones.LocalDateAndTimeToUtc(NextDueLocal.Value.Date, TimeSpan.FromHours(9));
-
-        await _reminders.CreateScheduleAsync(new ReminderSchedule
-        {
-            UserId = _auth.CurrentUserId!.Value,
-            PetId = Id,
-            Type = type,
-            Title = Title.Trim(),
-            Notes = Notes,
-            FrequencyDays = FrequencyDays is > 0 ? FrequencyDays : null,
-            NextDueUtc = nextUtc,
-            QuietHoursStartLocal = qStart,
-            QuietHoursEndLocal = qEnd,
-            TimeZoneId = "America/New_York",
-            Channel = ReminderChannel.InApp
-        });
+        if (outcome == CreateReminderOutcome.PetNotFound)
+            return RedirectToPage("/Pets/Index");
+        if (Error != null)
+            return await LoadAsync(userId, ct) ? Page() : RedirectToPage("/Pets/Index");
 
         TempData["Flash"] = CatalogLocalizer.Loc("Recordatorio creado.", "Reminder created.");
         return RedirectToPage(new { Id });
     }
 
-    public async Task<IActionResult> OnPostDeactivateAsync(int scheduleId)
+    public async Task<IActionResult> OnPostDeactivateAsync(int scheduleId, CancellationToken ct)
     {
-        if (!await LoadPetAsync()) return RedirectToPage("/Pets/Index");
-        await _reminders.DeactivateAsync(scheduleId, _auth.CurrentUserId!.Value);
+        if (_auth.CurrentUserId is not int userId || !await LoadAsync(userId, ct))
+            return RedirectToPage("/Pets/Index");
+
+        await _deactivateReminder.HandleAsync(new DeactivateReminderCommand(userId, scheduleId), ct);
         TempData["Flash"] = CatalogLocalizer.Loc("Recordatorio desactivado.", "Reminder deactivated.");
         return RedirectToPage(new { Id });
     }
 
-    private async Task<bool> LoadPetAsync()
+    private async Task<bool> LoadAsync(int userId, CancellationToken ct)
     {
-        if (_auth.CurrentUserId is null) return false;
-        Pet = await _db.Pets.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == _auth.CurrentUserId);
-        return Pet != null;
-    }
-
-    private static TimeSpan? ParseTime(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return null;
-        if (TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var ts)) return ts;
-        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
-            return dt.TimeOfDay;
-        return null;
+        var view = await _getReminders.HandleAsync(new GetPetRemindersQuery(userId, Id), ct);
+        if (view is null) return false;
+        Pet = view.Pet;
+        Schedules = view.Schedules;
+        return true;
     }
 }

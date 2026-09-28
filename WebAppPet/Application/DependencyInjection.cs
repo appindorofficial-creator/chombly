@@ -57,6 +57,10 @@ using WebAppPet.Application.Payments.GetPaymentMethods;
 using WebAppPet.Application.Payments.GetProviderPayouts;
 using WebAppPet.Application.Payments.MarkPayoutPaid;
 using WebAppPet.Application.Payments.RefundPayment;
+using WebAppPet.Application.Notifications.ClearNotifications;
+using WebAppPet.Application.Notifications.DeleteNotification;
+using WebAppPet.Application.Notifications.GetUnreadCount;
+using WebAppPet.Application.Notifications.OpenInbox;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Pets.DeletePet;
 using WebAppPet.Application.Pets.GetPet;
@@ -71,6 +75,10 @@ using WebAppPet.Application.ProfessionalOnboarding.GetPendingOnboardings;
 using WebAppPet.Application.ProfessionalOnboarding.RejectOnboarding;
 using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
+using WebAppPet.Application.Reminders.CreateCheckupReminder;
+using WebAppPet.Application.Reminders.CreateReminder;
+using WebAppPet.Application.Reminders.DeactivateReminder;
+using WebAppPet.Application.Reminders.GetPetReminders;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
 using WebAppPet.Application.Reviews.GetReviews;
@@ -162,6 +170,16 @@ public static class DependencyInjection
         services.AddScoped<GetPendingOnboardingsHandler>();
         services.AddScoped<ApproveOnboardingHandler>();
         services.AddScoped<RejectOnboardingHandler>();
+
+        services.AddScoped<OpenInboxHandler>();
+        services.AddScoped<GetUnreadCountHandler>();
+        services.AddScoped<DeleteNotificationHandler>();
+        services.AddScoped<ClearNotificationsHandler>();
+
+        services.AddScoped<GetPetRemindersHandler>();
+        services.AddScoped<CreateReminderHandler>();
+        services.AddScoped<CreateCheckupReminderHandler>();
+        services.AddScoped<DeactivateReminderHandler>();
 
         services.AddScoped<GetPetsHandler>();
         services.AddScoped<GetPetHandler>();

@@ -1,6 +1,6 @@
-@using WebAppPet.Data
+@using WebAppPet.Application.Notifications.GetUnreadCount
 @using WebAppPet.Services
-@inject AppDbContext Db
+@inject GetUnreadCountHandler UnreadCount
 @inject AuthService Auth
 @{
     var backHref = ViewData["OnboardBackHref"] as string;
@@ -14,7 +14,7 @@
     var unreadNotif = 0;
     if (showNotif && Auth.CurrentUserId is int notifUserId)
     {
-        unreadNotif = Db.Notifications.Count(n => n.UserId == notifUserId && !n.IsRead);
+        unreadNotif = await UnreadCount.HandleAsync(new GetUnreadCountQuery(notifUserId));
     }
     var notifLabel = unreadNotif > 0
         ? $"{L["Profile_Notifications"].Value} ({unreadNotif})"

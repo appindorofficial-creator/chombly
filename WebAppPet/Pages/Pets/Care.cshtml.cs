@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Reminders.CreateCheckupReminder;
 using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
@@ -13,14 +14,14 @@ public class CareModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ChomblyCareService _care;
-    private readonly ReminderEngineService _reminders;
+    private readonly CreateCheckupReminderHandler _createCheckupReminder;
 
-    public CareModel(AppDbContext db, AuthService auth, ChomblyCareService care, ReminderEngineService reminders)
+    public CareModel(AppDbContext db, AuthService auth, ChomblyCareService care, CreateCheckupReminderHandler createCheckupReminder)
     {
         _db = db;
         _auth = auth;
         _care = care;
-        _reminders = reminders;
+        _createCheckupReminder = createCheckupReminder;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -65,35 +66,12 @@ public class CareModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostRemindAsync()
+    public async Task<IActionResult> OnPostRemindAsync(CancellationToken ct)
     {
-        if (_auth.CurrentUserId is null) return RedirectToPage("/Account/Login");
+        if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Account/Login");
 
-        Pet = await _db.Pets.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == _auth.CurrentUserId);
-        if (Pet is null) return RedirectToPage("/Pets/Index");
-
-        var nextLocal = AppTimeZones.TodayLocalDate().AddDays(7);
-        var nextUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9));
-
-        await _reminders.CreateScheduleAsync(new ReminderSchedule
-        {
-            UserId = _auth.CurrentUserId.Value,
-            PetId = Id,
-            Type = ReminderType.Vaccine,
-            Title = CatalogLocalizer.Loc(
-                $"Vacunas / chequeo · {Pet.Name}",
-                $"Vaccines / checkup · {Pet.Name}"),
-            Notes = CatalogLocalizer.Loc(
-                "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
-                "Created from Care. Adjust the date or frequency if needed."),
-            FrequencyDays = 365,
-            NextDueUtc = nextUtc,
-            QuietHoursStartLocal = TimeSpan.FromHours(21),
-            QuietHoursEndLocal = TimeSpan.FromHours(8),
-            TimeZoneId = "America/New_York",
-            Channel = ReminderChannel.InApp
-        });
+        if (!await _createCheckupReminder.HandleAsync(new CreateCheckupReminderCommand(userId, Id), ct))
+            return RedirectToPage("/Pets/Index");
 
         TempData["Flash"] = CatalogLocalizer.Loc(
             "Recordatorio de vacunas/chequeo creado.",

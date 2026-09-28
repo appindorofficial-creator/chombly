@@ -15,52 +15,6 @@ public class ReminderEngineService
         _logger = logger;
     }
 
-    public async Task<ReminderSchedule> CreateScheduleAsync(ReminderSchedule schedule, CancellationToken ct = default)
-    {
-        schedule.CreatedUtc = DateTime.UtcNow;
-        schedule.IsActive = true;
-        if (string.IsNullOrWhiteSpace(schedule.TimeZoneId))
-            schedule.TimeZoneId = "America/New_York";
-        _db.ReminderSchedules.Add(schedule);
-        await _db.SaveChangesAsync(ct);
-        return schedule;
-    }
-
-    public async Task<ReminderSchedule?> UpdateScheduleAsync(
-        int scheduleId,
-        int userId,
-        Action<ReminderSchedule> apply,
-        CancellationToken ct = default)
-    {
-        var s = await _db.ReminderSchedules.FirstOrDefaultAsync(x => x.Id == scheduleId && x.UserId == userId, ct);
-        if (s is null) return null;
-        apply(s);
-        await _db.SaveChangesAsync(ct);
-        return s;
-    }
-
-    public async Task<bool> DeactivateAsync(int scheduleId, int userId, CancellationToken ct = default)
-    {
-        var s = await _db.ReminderSchedules.FirstOrDefaultAsync(x => x.Id == scheduleId && x.UserId == userId, ct);
-        if (s is null) return false;
-        s.IsActive = false;
-        await _db.SaveChangesAsync(ct);
-        return true;
-    }
-
-    public Task<List<ReminderSchedule>> ListForPetAsync(int userId, int petId, CancellationToken ct = default) =>
-        _db.ReminderSchedules.AsNoTracking()
-            .Where(r => r.UserId == userId && r.PetId == petId && r.IsActive)
-            .OrderBy(r => r.NextDueUtc)
-            .ToListAsync(ct);
-
-    public Task<List<ReminderSchedule>> ListForUserAsync(int userId, CancellationToken ct = default) =>
-        _db.ReminderSchedules.AsNoTracking()
-            .Include(r => r.Pet)
-            .Where(r => r.UserId == userId && r.IsActive)
-            .OrderBy(r => r.NextDueUtc)
-            .ToListAsync(ct);
-
     /// <summary>
     /// Processes due reminders. If local time is inside quiet hours, schedules delivery for quiet-hours end
     /// (SuppressedQuietHours) without advancing NextDueUtc until actually sent.
