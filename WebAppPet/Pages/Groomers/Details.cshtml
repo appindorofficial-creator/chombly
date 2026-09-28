@@ -1,6 +1,5 @@
 @page "{id:int}"
 @model WebAppPet.Pages.Groomers.DetailsModel
-@using WebAppPet.Services
 @{
     ViewData["Title"] = Model.Groomer?.BusinessName ?? L["Detail_Business"].Value;
     ViewData["LangCompact"] = true;

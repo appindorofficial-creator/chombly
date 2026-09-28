@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Care.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.BookConsultation;
 using WebAppPet.Application.Consultations.EscalateToEmergency;
 using WebAppPet.Application.Consultations.GetConsultationCheckout;
@@ -8,7 +9,6 @@ using WebAppPet.Application.Consultations.SelectLocalVet;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Consultations;

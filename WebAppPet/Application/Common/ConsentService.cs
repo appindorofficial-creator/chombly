@@ -1,7 +1,7 @@
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Common;
 
 public class ConsentService
 {

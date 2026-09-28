@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Infrastructure.Persistence;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Common;
 
 public class VcprService
 {

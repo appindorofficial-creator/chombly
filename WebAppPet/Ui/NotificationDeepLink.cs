@@ -1,7 +1,7 @@
 using WebAppPet.Domain;
 
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Ui;
 
 /// <summary>
 /// Maps in-app notification types to a destination the user can open from the list.

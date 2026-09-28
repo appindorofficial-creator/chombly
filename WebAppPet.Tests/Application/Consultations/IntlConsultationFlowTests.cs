@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.FindIntlVet;
 using WebAppPet.Application.Consultations.GetIntlHome;
 using WebAppPet.Application.Consultations.GetIntlMatches;
@@ -9,7 +11,6 @@ using WebAppPet.Application.Consultations.SelectIntlVet;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
-using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Consultations;
@@ -249,5 +250,5 @@ public class IntlConsultationFlowTests : ConsultationTestBase
         Assert.False(await Db.ConsentRecords.AnyAsync());
     }
 
-    private static List<string> BookingTimeSlots() => WebAppPet.Pages.Shared.BookingTime.DefaultSlots.ToList();
+    private static List<string> BookingTimeSlots() => BookingTime.DefaultSlots.ToList();
 }

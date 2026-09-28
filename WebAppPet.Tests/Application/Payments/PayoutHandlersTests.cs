@@ -1,3 +1,4 @@
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.GeneratePayout;
 using WebAppPet.Application.Payments.GetAdminPayouts;
 using WebAppPet.Application.Payments.GetProviderPayouts;
@@ -5,7 +6,6 @@ using WebAppPet.Application.Payments.MarkPayoutPaid;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Payments;

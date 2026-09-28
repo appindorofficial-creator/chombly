@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Security;
@@ -1698,10 +1699,10 @@ public static class DbInitializer
         {
             var magdalenaHotel = await db.Groomers.FirstOrDefaultAsync(g => g.UserId == mid);
             if (magdalenaHotel != null)
-                await Services.HotelCoreExtras.SyncAsync(
+                await HotelCoreExtras.SyncAsync(
                     db, magdalenaHotel.Id,
-                    Services.HotelCoreExtras.BathDefaultPriceCop,
-                    Services.HotelCoreExtras.MedsDefaultPriceCop,
+                    HotelCoreExtras.BathDefaultPriceCop,
+                    HotelCoreExtras.MedsDefaultPriceCop,
                     "CO");
         }
 
@@ -1796,19 +1797,19 @@ public static class DbInitializer
         var changed = false;
         foreach (var e in extras)
         {
-            if (Services.HotelCoreExtras.MatchesMeds(e.Name))
+            if (HotelCoreExtras.MatchesMeds(e.Name))
             {
-                e.Price = Services.HotelCoreExtras.MedsDefaultPriceCop;
+                e.Price = HotelCoreExtras.MedsDefaultPriceCop;
                 changed = true;
             }
-            else if (Services.HotelCoreExtras.MatchesBath(e.Name))
+            else if (HotelCoreExtras.MatchesBath(e.Name))
             {
-                e.Price = Services.HotelCoreExtras.BathDefaultPriceCop;
+                e.Price = HotelCoreExtras.BathDefaultPriceCop;
                 changed = true;
             }
-            else if (Services.HotelPrivateCameraExtra.Matches(e.Name))
+            else if (HotelPrivateCameraExtra.Matches(e.Name))
             {
-                e.Price = Services.HotelPrivateCameraExtra.DefaultPriceCop;
+                e.Price = HotelPrivateCameraExtra.DefaultPriceCop;
                 changed = true;
             }
         }

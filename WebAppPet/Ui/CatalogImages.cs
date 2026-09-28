@@ -1,4 +1,4 @@
-namespace WebAppPet.Services;
+namespace WebAppPet.Ui;
 
 /// <summary>Resolves category / business thumbnails to the current flat Chombly icons.</summary>
 public static class CatalogImages

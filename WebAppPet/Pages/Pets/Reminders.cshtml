@@ -2,7 +2,6 @@
 @model WebAppPet.Pages.Pets.RemindersModel
 @using WebAppPet.Localization
 @using WebAppPet.Domain
-@using WebAppPet.Services
 @{
     ViewData["Title"] = CatalogLocalizer.Loc($"Recordatorios · {Model.Pet?.Name}", $"Reminders · {Model.Pet?.Name}");
     ViewData["LangCompact"] = true;

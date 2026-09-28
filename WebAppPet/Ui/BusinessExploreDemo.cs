@@ -1,7 +1,7 @@
 using WebAppPet.Domain;
 
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Ui;
 
 public static class BusinessExploreDemo
 {

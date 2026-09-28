@@ -1,6 +1,5 @@
 @page
 @model WebAppPet.Pages.Groomers.IndexModel
-@using WebAppPet.Services
 @{
     var catName = Model.ActiveCategory?.DisplayName();
     ViewData["Title"] = catName ?? L["Search_Title"].Value;

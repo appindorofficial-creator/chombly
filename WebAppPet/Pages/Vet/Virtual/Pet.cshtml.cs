@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.ChooseEmergency;
 using WebAppPet.Application.Consultations.ContinueVirtual;
 using WebAppPet.Application.Consultations.PrepareScreening;
@@ -11,7 +12,6 @@ using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Storage;
 using WebAppPet.Localization;
-using WebAppPet.Services;
 using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Vet.Virtual;

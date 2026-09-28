@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;
 using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
 using WebAppPet.Domain;
@@ -7,7 +8,6 @@ using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Storage;
 using WebAppPet.Localization;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Professional.Onboarding;
 

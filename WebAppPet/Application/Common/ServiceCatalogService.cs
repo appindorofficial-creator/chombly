@@ -4,7 +4,7 @@ using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Common;
 
 public class ServiceCatalogService
 {

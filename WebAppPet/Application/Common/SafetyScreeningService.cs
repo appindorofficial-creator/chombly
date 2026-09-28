@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Common;
 
 public class SafetyScreeningService
 {

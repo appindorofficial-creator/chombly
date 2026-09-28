@@ -1,10 +1,10 @@
 using WebAppPet.Application.Care.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.GetConsultationServices;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Services;
 
 namespace WebAppPet.Application.Consultations.ChooseConsultationService;
 

@@ -3,7 +3,7 @@ using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Application.Common;
 
 /// <summary>
 /// Core hotel booking extras every hotel offers (bath + medication).

@@ -4,9 +4,9 @@ using WebAppPet.Application.Businesses.AddExtra;
 using WebAppPet.Application.Businesses.AddService;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.UpdateBusiness;
+using WebAppPet.Application.Common;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Businesses;

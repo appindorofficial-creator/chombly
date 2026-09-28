@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.GetAdminPayments;
 using WebAppPet.Application.Payments.RefundPayment;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Services;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Payments;

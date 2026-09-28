@@ -1,4 +1,4 @@
-using WebAppPet.Services;
+using WebAppPet.Application.Reminders.Shared;
 
 namespace WebAppPet.Infrastructure.BackgroundJobs;
 

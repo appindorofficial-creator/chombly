@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Email;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Infrastructure.Security;
 using WebAppPet.Localization;
-using WebAppPet.Services;
 
 namespace WebAppPet.Application.Businesses.CreateBusiness;
 
