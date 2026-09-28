@@ -7,4 +7,9 @@ namespace WebAppPet.Application.Payments.GetAdminPayouts;
 public sealed record GetAdminPayoutsQuery(bool RefreshTotals);
 
 /// <param name="Refreshed">How many payouts changed totals; 0 when not refreshed.</param>
-public sealed record AdminPayoutsView(int Refreshed, List<ProviderPayout> Pending, List<ProviderPayout> Recent);
+/// <param name="Currencies">Payout currency per provider user id.</param>
+public sealed record AdminPayoutsView(
+    int Refreshed,
+    List<ProviderPayout> Pending,
+    List<ProviderPayout> Recent,
+    IReadOnlyDictionary<int, string> Currencies);

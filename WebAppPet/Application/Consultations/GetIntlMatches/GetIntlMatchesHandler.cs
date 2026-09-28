@@ -3,6 +3,7 @@ using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
@@ -150,7 +151,7 @@ public class GetIntlMatchesHandler
     }
 
     private static decimal ProviderPrice(GroomerProfile p, decimal catalogFallback)
-        => MarketPrices.ForProvider(p, p.User.CountryCode, catalogFallback);
+        => MarketPrices.ForProvider(p, BusinessMarketResolver.CountryFor(p, p.User.CountryCode), catalogFallback);
 
     private static string LanguagesDisplay(List<string> langs)
         => langs.Count > 0 ? string.Join(", ", langs.Select(l => l.ToUpperInvariant())) : "—";

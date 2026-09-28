@@ -59,7 +59,7 @@
             {
                 <div style="margin-bottom:8px">
                     <strong>@ServiceLabel(r.ServiceType)</strong>
-                    <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @AppMoney.Code()
+                    <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @Model.Currency
                         @if (r.ProviderUserId is null) { <text>· @L["Payout_PlatformDefault"]</text> }
                     </span>
                 </div>
@@ -157,9 +157,9 @@
                         · @p.ConsultationCount @L["Payout_Items"]
                     </span>
                     <span class="muted small" style="display:block">
-                        @CatalogLocalizer.Loc("Bruto", "Gross") @AppMoney.Format(p.GrossAmountUsd) · @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.Format(p.CommissionAmountUsd)
-                        @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@AppMoney.Format(p.RefundDeduction)</text> }
-                        · <strong class="price-tag">@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.Format(p.NetAmountUsd)</strong>
+                        @CatalogLocalizer.Loc("Bruto", "Gross") @AppMoney.FormatCurrency(p.GrossAmountUsd, Model.Currency) · @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.FormatCurrency(p.CommissionAmountUsd, Model.Currency)
+                        @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@AppMoney.FormatCurrency(p.RefundDeduction, Model.Currency)</text> }
+                        · <strong class="price-tag">@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.FormatCurrency(p.NetAmountUsd, Model.Currency)</strong>
                     </span>
                     @if (!string.IsNullOrEmpty(p.ExternalReference))
                     {

@@ -94,10 +94,7 @@ public class ProviderPayoutService
             _ => 20m
         };
 
-        var country = await _db.Users.AsNoTracking()
-            .Where(u => u.Id == providerUserId)
-            .Select(u => u.CountryCode)
-            .FirstOrDefaultAsync(ct);
+        var payoutCurrency = await PayoutCurrencyAsync(providerUserId, ct);
 
         _db.ProviderCompensationRules.Add(new ProviderCompensationRule
         {
@@ -105,7 +102,7 @@ public class ProviderPayoutService
             ServiceType = serviceType,
             CommissionPercent = pct,
             FlatFeeUsd = defaults?.FlatFeeUsd,
-            PayoutCurrency = AppMoney.Code(country),
+            PayoutCurrency = payoutCurrency,
             IsActive = true,
             EffectiveFrom = DateTime.UtcNow,
             Notes = "Activated on professional onboarding approval",
@@ -134,8 +131,8 @@ public class ProviderPayoutService
     /// period (refunded ones drop out). Commission is taken on the full service price, so the business
     /// receives the online amount minus commission and collects the remaining balance in person.
     /// Charges refunded during the period after an earlier summary already paid them out are
-    /// deducted from the net. Amounts are in the currency of the business owner's country; charges
-    /// taken in the other currency are converted at <see cref="ExchangeRateOptions.CopPerUsd"/>.
+    /// deducted from the net. Amounts are in the business's currency (<see cref="BusinessMarketResolver.CountryFor"/>);
+    /// charges taken in the other currency are converted at <see cref="ExchangeRateOptions.CopPerUsd"/>.
     /// </summary>
     public async Task<(decimal Gross, decimal Commission, decimal Net, int Count, decimal Refunds, ProviderCompensationRule? Rule)>
         CalculatePayoutForPeriodAsync(int providerUserId, DateTime periodStart, DateTime periodEnd, CancellationToken ct = default)
@@ -144,10 +141,7 @@ public class ProviderPayoutService
             .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
         var rule = await GetRuleForBusinessAsync(providerUserId, groomer, periodEnd, ct);
         var pct = CommissionPercent(rule);
-        var payoutCurrency = AppMoney.Code(await _db.Users.AsNoTracking()
-            .Where(u => u.Id == providerUserId)
-            .Select(u => u.CountryCode)
-            .FirstOrDefaultAsync(ct));
+        var payoutCurrency = await PayoutCurrencyAsync(providerUserId, groomer, ct);
 
         var charges = groomer is null
             ? []
@@ -174,6 +168,36 @@ public class ProviderPayoutService
             : await RefundsAfterSettlementAsync(providerUserId, groomer.Id, pct, payoutCurrency, periodStart, periodEnd, ct);
         var net = Math.Round(gross - commission - refunds, 2);
         return (gross, commission, net, charges.Count, refunds, rule);
+    }
+
+    /// <summary>Currency the provider's payout amounts are expressed in.</summary>
+    public async Task<string> PayoutCurrencyAsync(int providerUserId, CancellationToken ct = default) =>
+        await PayoutCurrencyAsync(providerUserId,
+            await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g => g.UserId == providerUserId, ct), ct);
+
+    public async Task<Dictionary<int, string>> PayoutCurrenciesAsync(IEnumerable<int> providerUserIds, CancellationToken ct = default)
+    {
+        var ids = providerUserIds.Distinct().ToList();
+        var owners = await _db.Users.AsNoTracking()
+            .Where(u => ids.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.CountryCode, ct);
+        var businesses = (await _db.Groomers.AsNoTracking()
+                .Where(g => ids.Contains(g.UserId))
+                .ToListAsync(ct))
+            .GroupBy(g => g.UserId)
+            .ToDictionary(g => g.Key, g => g.First());
+        return ids.ToDictionary(
+            id => id,
+            id => AppMoney.Code(BusinessMarketResolver.CountryFor(businesses.GetValueOrDefault(id), owners.GetValueOrDefault(id))));
+    }
+
+    private async Task<string> PayoutCurrencyAsync(int providerUserId, GroomerProfile? business, CancellationToken ct)
+    {
+        var ownerCountry = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == providerUserId)
+            .Select(u => u.CountryCode)
+            .FirstOrDefaultAsync(ct);
+        return AppMoney.Code(BusinessMarketResolver.CountryFor(business, ownerCountry));
     }
 
     private async Task<decimal> RefundsAfterSettlementAsync(

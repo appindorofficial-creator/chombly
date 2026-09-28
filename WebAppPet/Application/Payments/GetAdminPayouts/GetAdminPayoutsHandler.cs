@@ -14,9 +14,10 @@ public class GetAdminPayoutsHandler
     public async Task<AdminPayoutsView> HandleAsync(GetAdminPayoutsQuery query, CancellationToken ct = default)
     {
         var refreshed = query.RefreshTotals ? await _payouts.RefreshAllPayoutTotalsAsync(ct) : 0;
-        return new AdminPayoutsView(
-            refreshed,
-            await _payouts.ListPendingAsync(ct),
-            await _payouts.ListAllAsync(RecentShown, ct));
+        var pending = await _payouts.ListPendingAsync(ct);
+        var recent = await _payouts.ListAllAsync(RecentShown, ct);
+        var currencies = await _payouts.PayoutCurrenciesAsync(
+            pending.Concat(recent).Select(p => p.ProviderUserId), ct);
+        return new AdminPayoutsView(refreshed, pending, recent, currencies);
     }
 }

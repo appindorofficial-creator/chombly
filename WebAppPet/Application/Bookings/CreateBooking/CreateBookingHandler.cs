@@ -3,14 +3,15 @@ using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
 namespace WebAppPet.Application.Bookings.CreateBooking;
 
 /// <summary>
-/// Creates a pending booking after charging its deposit to the client's card;
-/// the rest of the price is paid directly at the business.
+/// Creates a pending booking after charging its deposit to the client's card, in the business's
+/// currency; the rest of the price is paid directly at the business.
 /// </summary>
 public class CreateBookingHandler
 {
@@ -68,12 +69,17 @@ public class CreateBookingHandler
                         "Add a payment method to pay the deposit.")
                 };
 
+            var ownerCountry = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == business.UserId)
+                .Select(u => u.CountryCode)
+                .FirstOrDefaultAsync(ct);
             deposit = await _payments.ChargeAsync(new ChargeRequest
             {
                 UserId = command.ClientId,
                 Card = card,
                 Amount = quote.Deposit,
                 ServiceTotal = quote.Total,
+                Currency = AppMoney.Code(BusinessMarketResolver.CountryFor(business, ownerCountry)),
                 Purpose = PaymentPurpose.BookingDeposit,
                 Description = $"Deposit · {business.BusinessName}",
                 ProviderId = business.Id

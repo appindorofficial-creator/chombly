@@ -106,6 +106,22 @@ public class CreateBookingHandlerTests : IDisposable
         Assert.StartsWith("sim_ch_", charge.ExternalReference);
     }
 
+    [Theory]
+    [InlineData("Charlotte, NC", "CO", "USD")]
+    [InlineData("Neiva, Huila", "US", "COP")]
+    [InlineData("", "US", "USD")]
+    public async Task The_deposit_is_charged_in_the_currency_of_where_the_business_is(string city, string ownerCountry, string currency)
+    {
+        _db.Groomers.Find(_business.Id)!.City = city;
+        _db.Users.Find(_business.UserId)!.CountryCode = ownerCountry;
+        _db.SaveChanges();
+
+        await CreateHandler().HandleAsync(Command());
+
+        using var db = _database.CreateContext();
+        Assert.Equal(currency, Assert.Single(db.PaymentTransactions.AsNoTracking()).Currency);
+    }
+
     [Fact]
     public async Task Chosen_card_is_charged_instead_of_the_default()
     {

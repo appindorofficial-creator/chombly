@@ -61,23 +61,44 @@ public static class BusinessMarketResolver
         if (string.IsNullOrWhiteSpace(text)) return BusinessMarket.Unknown;
         var lower = text.Trim().ToLowerInvariant();
 
-        foreach (var hint in ColombiaPlaceHints)
-        {
-            if (lower.Contains(hint, StringComparison.Ordinal))
-                return BusinessMarket.Colombia;
-        }
+        if (ColombiaPlaceHints.Any(hint => ContainsWord(lower, hint)))
+            return BusinessMarket.Colombia;
 
-        foreach (var hint in UsPlaceHints)
-        {
-            if (lower.Contains(hint, StringComparison.Ordinal))
-                return BusinessMarket.UnitedStates;
-        }
+        if (UsPlaceHints.Any(hint => ContainsWord(lower, hint)))
+            return BusinessMarket.UnitedStates;
 
         var usState = GeoHelper.GuessUsStateFromCity(text);
         if (usState is not null and not "Other")
             return BusinessMarket.UnitedStates;
 
         return BusinessMarket.Unknown;
+    }
+
+    /// <summary>Whole-word match, so "cali" doesn't hit "california" nor "usa" hit "usaquén".</summary>
+    private static bool ContainsWord(string text, string word)
+    {
+        for (var i = text.IndexOf(word, StringComparison.Ordinal); i >= 0; i = text.IndexOf(word, i + 1, StringComparison.Ordinal))
+        {
+            var end = i + word.Length;
+            if ((i == 0 || !char.IsLetter(text[i - 1])) && (end == text.Length || !char.IsLetter(text[end])))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Country whose currency the business prices in, charges and is settled in: where it operates,
+    /// except remote international advisors, who price in their own account's currency.
+    /// </summary>
+    public static string? CountryFor(GroomerProfile? business, string? ownerCountryIso)
+    {
+        if (business is not null && business.VetProviderKind != VetProviderKind.InternationalAdvisor)
+        {
+            var market = Resolve(business);
+            if (market != BusinessMarket.Unknown)
+                return MarketCountry.FromMarket(market);
+        }
+        return ownerCountryIso;
     }
 
     public static BusinessMarket FromCoordinates(double lat, double lng)

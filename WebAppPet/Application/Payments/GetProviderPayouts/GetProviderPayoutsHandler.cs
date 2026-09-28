@@ -19,6 +19,7 @@ public class GetProviderPayoutsHandler
         return new ProviderPayoutsView(
             await _payouts.ListRulesForProviderAsync(uid, ct),
             await _payouts.ListForProviderAsync(uid, ct),
-            await _payouts.ListRecentFamilyPaymentsAsync(uid, ct: ct));
+            await _payouts.ListRecentFamilyPaymentsAsync(uid, ct: ct),
+            await _payouts.PayoutCurrencyAsync(uid, ct));
     }
 }

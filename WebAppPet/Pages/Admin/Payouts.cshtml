@@ -5,7 +5,7 @@
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Admin/Payouts";
-    string Money(decimal amount, string? country) => AppMoney.Format(amount, country);
+    string Money(decimal amount, string currency) => AppMoney.FormatCurrency(amount, currency);
     string ProviderName(WebAppPet.Domain.ProviderPayout p) =>
         p.ProviderUser?.FullName ?? string.Format(L["AdminPayout_UnknownProvider"].Value, p.ProviderUserId);
     string StatusLabel(WebAppPet.Domain.ProviderPayoutStatus s) => s switch
@@ -36,7 +36,7 @@
     }
     @foreach (var p in Model.Pending)
     {
-        var country = p.ProviderUser?.CountryCode;
+        var currency = Model.CurrencyOf(p);
         <div class="card card-pad" style="margin-bottom:10px">
             <strong>@ProviderName(p)</strong>
             <span class="muted small" style="display:block">
@@ -44,11 +44,11 @@
                 · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
             </span>
             <span class="muted small" style="display:block">
-                @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
-                · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)
-                @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@Money(p.RefundDeduction, country)</text> }
-                · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, country)</strong>
-                · @AppMoney.Code(country)
+                @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, currency)
+                · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, currency)
+                @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@Money(p.RefundDeduction, currency)</text> }
+                · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, currency)</strong>
+                · @currency
             </span>
             <form method="post" asp-page-handler="MarkPaid" style="margin-top:8px">
                 <input type="hidden" name="id" value="@p.Id" />
@@ -60,14 +60,14 @@
     <h2 class="section-title" style="margin-top:20px">@CatalogLocalizer.Loc("Recientes", "Recent")</h2>
     @foreach (var p in Model.Recent.Where(x => x.Status != WebAppPet.Domain.ProviderPayoutStatus.Pending))
     {
-        var country = p.ProviderUser?.CountryCode;
+        var currency = Model.CurrencyOf(p);
         <div class="card card-pad" style="margin-bottom:8px">
             <strong>@StatusLabel(p.Status)</strong> · @ProviderName(p)
             <span class="muted small" style="display:block">
-                @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
-                · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)
-                @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@Money(p.RefundDeduction, country)</text> }
-                · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, country)</strong>
+                @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, currency)
+                · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, currency)
+                @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@Money(p.RefundDeduction, currency)</text> }
+                · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, currency)</strong>
                 · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
             </span>
             <span class="muted small" style="display:block">
