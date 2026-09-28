@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Care.GetPetCare;
 using WebAppPet.Application.Reminders.CreateCheckupReminder;
-using WebAppPet.Data;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -11,16 +10,14 @@ namespace WebAppPet.Pages.Pets;
 
 public class CareModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
-    private readonly ChomblyCareService _care;
+    private readonly GetPetCareHandler _getPetCare;
     private readonly CreateCheckupReminderHandler _createCheckupReminder;
 
-    public CareModel(AppDbContext db, AuthService auth, ChomblyCareService care, CreateCheckupReminderHandler createCheckupReminder)
+    public CareModel(AuthService auth, GetPetCareHandler getPetCare, CreateCheckupReminderHandler createCheckupReminder)
     {
-        _db = db;
         _auth = auth;
-        _care = care;
+        _getPetCare = getPetCare;
         _createCheckupReminder = createCheckupReminder;
     }
 
@@ -33,36 +30,19 @@ public class CareModel : PageModel
     public List<Consultation> RecentConsults { get; set; } = new();
     public List<Appointment> Upcoming { get; set; } = new();
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = $"/Pets/Care/{Id}" });
 
-        Pet = await _db.Pets.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == Id && p.OwnerId == _auth.CurrentUserId);
-        if (Pet is null) return RedirectToPage("/Pets/Index");
+        var view = await _getPetCare.HandleAsync(new GetPetCareQuery(userId, Id), ct);
+        if (view is null) return RedirectToPage("/Pets/Index");
 
-        Subscription = await _care.GetActiveAsync(_auth.CurrentUserId.Value);
-        if (Subscription != null)
-            RemainingConsults = _care.RemainingQuickConsults(Subscription);
-
-        RecentConsults = await _db.Consultations.AsNoTracking()
-            .Include(c => c.Provider)
-            .Where(c => c.ClientId == _auth.CurrentUserId && c.PetId == Id)
-            .OrderByDescending(c => c.UpdatedAt)
-            .Take(8)
-            .ToListAsync();
-
-        var now = DateTime.UtcNow;
-        Upcoming = await _db.Appointments.AsNoTracking()
-            .Include(a => a.Groomer)
-            .Include(a => a.Service)
-            .Where(a => a.ClientId == _auth.CurrentUserId && a.PetId == Id &&
-                        a.ScheduledAt >= now && a.Status != AppointmentStatus.Cancelled)
-            .OrderBy(a => a.ScheduledAt)
-            .Take(5)
-            .ToListAsync();
-
+        Pet = view.Pet;
+        Subscription = view.Subscription;
+        RemainingConsults = view.RemainingConsults;
+        RecentConsults = view.RecentConsults;
+        Upcoming = view.Upcoming;
         return Page();
     }
 

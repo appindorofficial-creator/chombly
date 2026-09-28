@@ -1,3 +1,4 @@
+using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.GetConsultationServices;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Data;

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.BookConsultation;
 using WebAppPet.Application.Consultations.EscalateToEmergency;
 using WebAppPet.Application.Consultations.GetConsultationCheckout;
