@@ -1,6 +1,6 @@
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Data;
-using WebAppPet.Services;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Consultations.ChooseEmergency;
 

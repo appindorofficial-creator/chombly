@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Favorites.GetFavoriteIds;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages;
 

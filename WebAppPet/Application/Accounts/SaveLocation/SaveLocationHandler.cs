@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Accounts.Shared;
-using WebAppPet.Data;
-using WebAppPet.Services;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Accounts.SaveLocation;
 

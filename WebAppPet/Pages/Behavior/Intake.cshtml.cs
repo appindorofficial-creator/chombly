@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Behavior.GetBehaviorIntake;
 using WebAppPet.Application.Behavior.SubmitBehaviorIntake;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Behavior;
 

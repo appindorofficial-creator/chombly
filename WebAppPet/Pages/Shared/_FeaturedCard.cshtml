@@ -1,4 +1,4 @@
-@model (WebAppPet.Models.GroomerProfile Groomer, bool IsFavorite, string FromPriceLabel, string TypeLabel)
+@model (WebAppPet.Domain.GroomerProfile Groomer, bool IsFavorite, string FromPriceLabel, string TypeLabel)
 @{
     var g = Model.Groomer;
     var thumb = CatalogImages.Business(g.ImageUrl, g.Category?.Slug);

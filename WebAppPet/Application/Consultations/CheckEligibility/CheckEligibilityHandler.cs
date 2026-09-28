@@ -1,7 +1,7 @@
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Consultations.CheckEligibility;
 

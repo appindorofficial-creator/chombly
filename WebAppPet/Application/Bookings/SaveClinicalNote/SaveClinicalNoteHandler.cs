@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Common;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
 namespace WebAppPet.Application.Bookings.SaveClinicalNote;

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Pets.GetPetHistory;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Identity;
 
 namespace WebAppPet.Pages.Pets;
 

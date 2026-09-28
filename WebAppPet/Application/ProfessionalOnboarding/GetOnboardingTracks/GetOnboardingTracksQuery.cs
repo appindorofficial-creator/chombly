@@ -1,5 +1,5 @@
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 
 namespace WebAppPet.Application.ProfessionalOnboarding.GetOnboardingTracks;
 

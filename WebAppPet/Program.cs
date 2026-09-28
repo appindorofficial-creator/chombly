@@ -5,8 +5,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WebAppPet.Application;
-using WebAppPet.Data;
-using WebAppPet.Services;
+using WebAppPet.Application.Common;
+using WebAppPet.Application.Reminders.Shared;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.BackgroundJobs;
+using WebAppPet.Infrastructure.Email;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Maps;
+using WebAppPet.Infrastructure.Persistence;
+using WebAppPet.Infrastructure.Storage;
+using WebAppPet.Infrastructure.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 

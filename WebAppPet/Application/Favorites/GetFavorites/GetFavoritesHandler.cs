@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Favorites.GetFavorites;
 

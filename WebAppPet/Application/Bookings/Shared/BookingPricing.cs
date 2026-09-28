@@ -1,5 +1,5 @@
 using WebAppPet.Application.Promotions.ApplyPromoCode;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Bookings.Shared;
 

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 
 namespace WebAppPet.Application.Bookings.Shared;
 

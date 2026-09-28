@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Businesses.ApproveBusiness;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Businesses;

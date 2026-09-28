@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Groomer;
 

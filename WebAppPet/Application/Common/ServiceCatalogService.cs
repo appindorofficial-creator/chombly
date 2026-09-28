@@ -1,0 +1,41 @@
+using Microsoft.EntityFrameworkCore;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
+using WebAppPet.Localization;
+
+namespace WebAppPet.Application.Common;
+
+public class ServiceCatalogService
+{
+    private readonly AppDbContext _db;
+
+    public ServiceCatalogService(AppDbContext db) => _db = db;
+
+    public async Task<ServiceCatalogItem?> GetAsync(string code, CancellationToken ct = default)
+        => await _db.ServiceCatalog.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Code == code && s.IsActive, ct);
+
+    public async Task<List<ServiceCatalogItem>> ListActiveAsync(CancellationToken ct = default)
+        => await _db.ServiceCatalog.AsNoTracking()
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.Price)
+            .ToListAsync(ct);
+
+    public static string DisplayName(ServiceCatalogItem item)
+        => CatalogLocalizer.IsEnglish() ? item.NameEn : item.NameEs;
+
+    public static string DisplayScope(ServiceCatalogItem item, string? homeCountryIso = null)
+    {
+        var home = homeCountryIso ?? AppTimeZones.CurrentCountryCode;
+        if (string.Equals(item.Code, ServiceCatalogCodes.VetIntl30, StringComparison.OrdinalIgnoreCase)
+            && !MarketCountry.IsUnitedStates(home))
+        {
+            return CatalogLocalizer.Loc(
+                "Orientación general con veterinario licenciado. No sustituye consulta presencial ni emergencia.",
+                "General guidance with a licensed veterinarian. Does not replace an in-person visit or emergency care.");
+        }
+
+        return CatalogLocalizer.IsEnglish() ? item.ScopeEn : item.ScopeEs;
+    }
+}

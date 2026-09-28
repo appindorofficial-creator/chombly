@@ -6,11 +6,12 @@ using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 using WebAppPet.Pages.Shared;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Booking;
 

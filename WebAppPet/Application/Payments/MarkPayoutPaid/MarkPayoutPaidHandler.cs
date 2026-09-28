@@ -1,5 +1,5 @@
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Payments.MarkPayoutPaid;
 

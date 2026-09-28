@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Accounts.Shared;
 using WebAppPet.Application.Accounts.UpdateProfile;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Services;
 using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Account;

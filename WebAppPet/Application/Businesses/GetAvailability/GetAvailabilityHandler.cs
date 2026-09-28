@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Businesses.GetAvailability;
 

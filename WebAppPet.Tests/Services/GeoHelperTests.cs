@@ -1,4 +1,4 @@
-using WebAppPet.Services;
+using WebAppPet.Domain.Markets;
 
 namespace WebAppPet.Tests.Services;
 

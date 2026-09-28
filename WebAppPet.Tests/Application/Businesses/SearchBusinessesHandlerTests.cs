@@ -1,7 +1,7 @@
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Businesses;

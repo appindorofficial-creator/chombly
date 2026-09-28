@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Favorites.ToggleFavorite;
-using WebAppPet.Services;
+using WebAppPet.Infrastructure.Identity;
 
 namespace WebAppPet.Pages.Account;
 

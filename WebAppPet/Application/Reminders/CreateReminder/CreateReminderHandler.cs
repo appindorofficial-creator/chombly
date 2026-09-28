@@ -1,8 +1,8 @@
 using System.Globalization;
 using WebAppPet.Application.Reminders.Shared;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Reminders.CreateReminder;
 

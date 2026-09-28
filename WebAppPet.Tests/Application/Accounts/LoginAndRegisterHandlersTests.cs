@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Accounts.Login;
 using WebAppPet.Application.Accounts.Register;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Infrastructure.Security;
-using WebAppPet.Models;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Accounts;

@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Application.Common;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Payments.Shared;
 

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Data;

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Behavior.StartBehaviorCase;
-using WebAppPet.Services;
+using WebAppPet.Infrastructure.Identity;
 
 namespace WebAppPet.Pages.Care;
 

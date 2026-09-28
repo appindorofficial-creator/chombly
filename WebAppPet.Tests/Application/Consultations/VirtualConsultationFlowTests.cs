@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.CheckEligibility;
 using WebAppPet.Application.Consultations.ChooseConsultationService;
 using WebAppPet.Application.Consultations.ContinueVirtual;
@@ -6,8 +7,7 @@ using WebAppPet.Application.Consultations.PrepareScreening;
 using WebAppPet.Application.Consultations.ScreenConsultation;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Application.Consultations.StartConsultation;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Tests.Application.Consultations;
 

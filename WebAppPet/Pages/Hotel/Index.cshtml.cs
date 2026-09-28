@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Hotel;
 

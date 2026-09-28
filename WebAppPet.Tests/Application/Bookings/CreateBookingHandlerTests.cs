@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Bookings;

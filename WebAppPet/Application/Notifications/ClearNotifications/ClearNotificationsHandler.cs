@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Notifications.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Notifications.ClearNotifications;
 

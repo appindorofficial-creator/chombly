@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Domain;
 using WebAppPet.Localization;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Business.Explore;
 

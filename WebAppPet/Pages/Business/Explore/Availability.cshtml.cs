@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Business.Explore;
 

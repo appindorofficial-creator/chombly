@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
-using WebAppPet.Models;
 
 namespace WebAppPet.Application.Bookings.CancelBooking;
 

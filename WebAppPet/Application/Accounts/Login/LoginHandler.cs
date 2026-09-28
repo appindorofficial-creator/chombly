@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Infrastructure.Security;
 
 namespace WebAppPet.Application.Accounts.Login;

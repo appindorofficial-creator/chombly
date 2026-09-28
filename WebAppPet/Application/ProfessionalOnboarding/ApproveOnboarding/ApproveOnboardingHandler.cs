@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.ProfessionalOnboarding.Shared;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.ProfessionalOnboarding.ApproveOnboarding;
 

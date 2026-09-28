@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
+using WebAppPet.Infrastructure.Storage;
 
 namespace WebAppPet.Application.Pets.GetPets;
 

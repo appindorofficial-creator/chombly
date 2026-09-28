@@ -3,9 +3,10 @@ using WebAppPet.Application.Reminders.CreateCheckupReminder;
 using WebAppPet.Application.Reminders.CreateReminder;
 using WebAppPet.Application.Reminders.DeactivateReminder;
 using WebAppPet.Application.Reminders.GetPetReminders;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Application.Reminders.Shared;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Reminders;

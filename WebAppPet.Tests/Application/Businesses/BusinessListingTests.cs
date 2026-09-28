@@ -1,5 +1,5 @@
 using WebAppPet.Application.Businesses.SearchBusinesses;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Tests.Application.Businesses;
 

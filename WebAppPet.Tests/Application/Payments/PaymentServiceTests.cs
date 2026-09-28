@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Payments;
-using WebAppPet.Models;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Payments;

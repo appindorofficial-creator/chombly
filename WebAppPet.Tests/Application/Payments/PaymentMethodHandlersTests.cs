@@ -2,7 +2,7 @@ using WebAppPet.Application.Payments.AddPaymentMethod;
 using WebAppPet.Application.Payments.DeletePaymentMethod;
 using WebAppPet.Application.Payments.GetPaymentMethods;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Payments;
@@ -13,7 +13,7 @@ public class PaymentMethodHandlersTests
         new AddPaymentMethodHandler(db, new KeyLocalizer())
             .HandleAsync(new AddPaymentMethodCommand(userId, card, "12/35", card.StartsWith("37") ? "1234" : "123", "Ana López", makeDefault));
 
-    private static Task<List<WebAppPet.Models.PaymentMethod>> List(AppDbContext db, int userId) =>
+    private static Task<List<WebAppPet.Domain.PaymentMethod>> List(AppDbContext db, int userId) =>
         new GetPaymentMethodsHandler(db).HandleAsync(new GetPaymentMethodsQuery(userId));
 
     [Fact]

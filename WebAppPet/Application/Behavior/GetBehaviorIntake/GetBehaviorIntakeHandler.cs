@@ -1,5 +1,5 @@
 using WebAppPet.Application.Behavior.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Behavior.GetBehaviorIntake;
 

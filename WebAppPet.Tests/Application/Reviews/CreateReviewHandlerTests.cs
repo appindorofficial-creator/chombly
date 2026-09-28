@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.CreateReview;
 using WebAppPet.Application.Reviews.Shared;
-using WebAppPet.Models;
+using WebAppPet.Domain;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Reviews;

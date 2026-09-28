@@ -1,5 +1,5 @@
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Application.Common;
+using WebAppPet.Domain;
 
 namespace WebAppPet.Application.Care.Shared;
 

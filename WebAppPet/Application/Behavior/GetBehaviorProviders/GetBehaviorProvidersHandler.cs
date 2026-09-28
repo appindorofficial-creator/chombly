@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Behavior.Shared;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Application.Bookings.Shared;
+using WebAppPet.Application.Common;
+using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Pages.Shared;
-using WebAppPet.Services;
 
 namespace WebAppPet.Application.Behavior.GetBehaviorProviders;
 

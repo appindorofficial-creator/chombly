@@ -1,8 +1,8 @@
 using WebAppPet.Application.Care.Shared;
+using WebAppPet.Application.Common;
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Data;
-using WebAppPet.Models;
-using WebAppPet.Services;
+using WebAppPet.Domain;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Consultations;
