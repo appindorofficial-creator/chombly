@@ -69,8 +69,9 @@ public class BookBehaviorSessionHandler
             return Stop(BookBehaviorSessionOutcome.Incomplete);
 
         var behaviorCase = options.Case!;
+        var price = options.UnitPrice;
         var charges = new List<PaymentTransaction>();
-        if (item.Price > 0)
+        if (price > 0)
         {
             var card = await _payments.FindCardAsync(command.ClientId, command.PaymentMethodId, ct);
             if (card is null)
@@ -82,7 +83,7 @@ public class BookBehaviorSessionHandler
                 {
                     UserId = command.ClientId,
                     Card = card,
-                    Amount = item.Price,
+                    Amount = price,
                     Purpose = PaymentPurpose.BehaviorSession,
                     Description = $"Behavior case #{behaviorCase.Id} · {dog.Name}",
                     ProviderId = options.ProviderId,
@@ -112,8 +113,8 @@ public class BookBehaviorSessionHandler
             ServiceId = service.Id,
             ScheduledAt = scheduledAt,
             Status = AppointmentStatus.Pending,
-            TotalPrice = item.Price,
-            DepositPaid = item.Price,
+            TotalPrice = price,
+            DepositPaid = price,
             Notes = AppointmentNotes(behaviorCase, dogs),
             CreatedAt = DateTime.UtcNow
         }).ToList();
@@ -129,7 +130,7 @@ public class BookBehaviorSessionHandler
         }, command.IpAddress, command.UserAgent, ct);
 
         behaviorCase.AppointmentId = appointments[0].Id;
-        behaviorCase.PriceCharged = item.Price * dogs.Count;
+        behaviorCase.PriceCharged = price * dogs.Count;
         behaviorCase.Status = BehaviorCaseStatus.Scheduled;
         behaviorCase.Goals = CatalogLocalizer.Loc(
             $"Reducir: {behaviorCase.ProblemType}",

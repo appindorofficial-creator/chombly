@@ -5,7 +5,7 @@
     ViewData["Title"] = CatalogLocalizer.Loc("Reservar especialista", "Reserve specialist");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Behavior/Intake", new { caseId = Model.CaseId });
-    var unit = Model.CatalogItem?.Price ?? 55m;
+    var unit = Model.UnitPrice;
     var petCount = Math.Max(1, Model.SelectedPets.Count);
     var price = unit * petCount;
     var minDate = AppTimeZones.TodayLocalDate().ToString("yyyy-MM-dd");

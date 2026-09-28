@@ -77,11 +77,11 @@ public class CareMembershipTests : IDisposable
         Assert.Equal(ActivateCareOutcome.Activated, result.Outcome);
         using var verify = _database.CreateContext();
         var subscription = verify.CareSubscriptions.Single();
-        Assert.Equal((_user.Id, CareSubscriptionStatus.Active, CarePlan.ColombiaMonthlyPrice, 1),
+        Assert.Equal((_user.Id, CareSubscriptionStatus.Active, MarketPrices.ColombiaCare, 1),
             (subscription.UserId, subscription.Status, subscription.PricePerMonth, subscription.QuickConsultsPerCycle));
         Assert.Equal(subscription.CurrentPeriodStart.AddMonths(1), subscription.CurrentPeriodEnd);
         var charge = verify.PaymentTransactions.Single();
-        Assert.Equal((PaymentPurpose.CareSubscription, PaymentTransactionStatus.Succeeded, CarePlan.ColombiaMonthlyPrice, subscription.Id),
+        Assert.Equal((PaymentPurpose.CareSubscription, PaymentTransactionStatus.Succeeded, MarketPrices.ColombiaCare, subscription.Id),
             (charge.Purpose, charge.Status, charge.Amount, charge.CareSubscriptionId));
     }
 

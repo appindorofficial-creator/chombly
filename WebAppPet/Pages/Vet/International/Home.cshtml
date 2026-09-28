@@ -6,7 +6,7 @@
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Vet/Index");
     var hasPet = !string.IsNullOrWhiteSpace(Model.PetName) || !string.IsNullOrWhiteSpace(Model.PetBreed);
-    var intlPrice = AppMoney.Format(30m);
+    var intlPrice = AppMoney.Format(MarketPrices.ForCatalog(ServiceCatalogCodes.VetIntl30, 30m));
     var carePrice = AppMoney.Format(CarePlan.MonthlyPrice(CarePlan.FallbackMonthlyPrice));
 }
 <div class="onboard onboard-app">

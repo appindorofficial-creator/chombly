@@ -8,6 +8,7 @@ using WebAppPet.Application.Consultations.GetConsultationSummary;
 using WebAppPet.Application.Consultations.SelectLocalVet;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Domain;
+using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
@@ -18,9 +19,10 @@ public class ConsultationBookingTests : ConsultationTestBase
     private GetConsultationCheckoutHandler Checkout => new(Db, HomeCountry, Catalog, Care, Audit);
     private BookConsultationHandler Book => new(Db, Checkout, Care, new ConsentService(Db), Audit, TestData.Payments(Db));
 
-    private GroomerProfile AddVet(decimal startingPrice = 0, string? licensedIn = null)
+    private GroomerProfile AddVet(decimal startingPrice = 0, string? licensedIn = null, string country = "CO")
     {
         var vet = TestData.AddBusiness(Db);
+        Db.Users.Find(vet.UserId)!.CountryCode = country;
         vet.IsActive = true;
         vet.PublishStatus = BusinessPublishStatus.Approved;
         vet.VetProviderKind = VetProviderKind.LocalVet;
@@ -83,6 +85,24 @@ public class ConsultationBookingTests : ConsultationTestBase
             (charge.Status, charge.Purpose, charge.Amount, charge.ServiceTotal, charge.ProviderId, charge.ConsultationId, charge.AppointmentId));
     }
 
+    [Theory]
+    [InlineData(BusinessMarket.Colombia, "US", 25, 90_000, "COP")]
+    [InlineData(BusinessMarket.UnitedStates, "CO", 70_000, 30, "USD")]
+    [InlineData(BusinessMarket.UnitedStates, "US", 25, 25, "USD")]
+    public async Task A_vets_own_price_is_only_charged_to_families_in_the_vets_market(
+        BusinessMarket market, string vetCountry, int vetPrice, int expected, string currency)
+    {
+        var client = AddClient();
+        AddCard(client);
+        var consultation = ReadyForCheckout(client, AddVet(startingPrice: vetPrice, country: vetCountry));
+
+        using (AppTimeZones.UseMarket(market))
+            await Book.HandleAsync(Command(consultation));
+
+        var charge = await Db.PaymentTransactions.AsNoTracking().SingleAsync();
+        Assert.Equal(((decimal)expected, currency), (charge.Amount, charge.Currency));
+    }
+
     [Fact]
     public async Task A_declined_card_books_nothing_and_records_the_attempt()
     {
@@ -127,7 +147,7 @@ public class ConsultationBookingTests : ConsultationTestBase
 
         Assert.Equal(BookConsultationOutcome.NoPaymentMethod, result.Outcome);
         Assert.False(await Db.Appointments.AnyAsync());
-        Assert.Equal(30m, result.Details!.CatalogPrice);
+        Assert.Equal(MarketPrices.ColombiaIntlConsult, result.Details!.CatalogPrice);
     }
 
     [Fact]

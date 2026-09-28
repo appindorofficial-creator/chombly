@@ -5,9 +5,9 @@
     ViewData["Title"] = CatalogLocalizer.Loc("¿Qué ayuda necesitas?", "What help do you need?");
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
-    var intlPrice = AppMoney.Format(30m);
+    var intlPrice = AppMoney.Format(MarketPrices.ForCatalog(ServiceCatalogCodes.VetIntl30, 30m));
     var carePrice = AppMoney.Format(CarePlan.MonthlyPrice(CarePlan.FallbackMonthlyPrice));
-    var behaviorPrice = AppMoney.Format(55m);
+    var behaviorPrice = AppMoney.Format(MarketPrices.ForCatalog(ServiceCatalogCodes.BehaviorSession, 55m));
 }
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
