@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using WebAppPet.Application.Common;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
@@ -10,11 +11,13 @@ public class ProviderPayoutService
 {
     private readonly AppDbContext _db;
     private readonly VetAuditService _audit;
+    private readonly ExchangeRateOptions _rates;
 
-    public ProviderPayoutService(AppDbContext db, VetAuditService audit)
+    public ProviderPayoutService(AppDbContext db, VetAuditService audit, IOptions<ExchangeRateOptions>? rates = null)
     {
         _db = db;
         _audit = audit;
+        _rates = rates?.Value ?? new ExchangeRateOptions();
     }
 
     public static CompensationServiceType MapFromVetKind(VetProviderKind kind) => kind switch
@@ -131,7 +134,8 @@ public class ProviderPayoutService
     /// period (refunded ones drop out). Commission is taken on the full service price, so the business
     /// receives the online amount minus commission and collects the remaining balance in person.
     /// Charges refunded during the period after an earlier summary already paid them out are
-    /// deducted from the net.
+    /// deducted from the net. Amounts are in the currency of the business owner's country; charges
+    /// taken in the other currency are converted at <see cref="ExchangeRateOptions.CopPerUsd"/>.
     /// </summary>
     public async Task<(decimal Gross, decimal Commission, decimal Net, int Count, decimal Refunds, ProviderCompensationRule? Rule)>
         CalculatePayoutForPeriodAsync(int providerUserId, DateTime periodStart, DateTime periodEnd, CancellationToken ct = default)
@@ -140,16 +144,26 @@ public class ProviderPayoutService
             .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
         var rule = await GetRuleForBusinessAsync(providerUserId, groomer, periodEnd, ct);
         var pct = CommissionPercent(rule);
+        var payoutCurrency = AppMoney.Code(await _db.Users.AsNoTracking()
+            .Where(u => u.Id == providerUserId)
+            .Select(u => u.CountryCode)
+            .FirstOrDefaultAsync(ct));
 
         var charges = groomer is null
             ? []
-            : await _db.PaymentTransactions.AsNoTracking()
+            : (await _db.PaymentTransactions.AsNoTracking()
                 .Where(t => t.ProviderId == groomer.Id
                     && t.Status == PaymentTransactionStatus.Succeeded
                     && t.CreatedAt >= periodStart
                     && t.CreatedAt < periodEnd)
-                .Select(t => new { t.Amount, t.ServiceTotal })
-                .ToListAsync(ct);
+                .Select(t => new { t.Amount, t.ServiceTotal, t.Currency })
+                .ToListAsync(ct))
+                .Select(t => new
+                {
+                    Amount = _rates.Convert(t.Amount, t.Currency, payoutCurrency),
+                    ServiceTotal = _rates.Convert(t.ServiceTotal, t.Currency, payoutCurrency)
+                })
+                .ToList();
 
         var gross = charges.Sum(c => c.Amount);
         var commission = charges.Count == 0
@@ -157,13 +171,14 @@ public class ProviderPayoutService
             : Math.Round(charges.Sum(c => c.ServiceTotal) * (pct / 100m) + (rule?.FlatFeeUsd ?? 0m), 2);
         var refunds = groomer is null
             ? 0m
-            : await RefundsAfterSettlementAsync(providerUserId, groomer.Id, pct, periodStart, periodEnd, ct);
+            : await RefundsAfterSettlementAsync(providerUserId, groomer.Id, pct, payoutCurrency, periodStart, periodEnd, ct);
         var net = Math.Round(gross - commission - refunds, 2);
         return (gross, commission, net, charges.Count, refunds, rule);
     }
 
     private async Task<decimal> RefundsAfterSettlementAsync(
-        int providerUserId, int businessId, decimal pct, DateTime periodStart, DateTime periodEnd, CancellationToken ct)
+        int providerUserId, int businessId, decimal pct, string payoutCurrency,
+        DateTime periodStart, DateTime periodEnd, CancellationToken ct)
     {
         var paidPeriods = await _db.ProviderPayouts.AsNoTracking()
             .Where(p => p.ProviderUserId == providerUserId
@@ -178,13 +193,14 @@ public class ProviderPayoutService
                 && t.Status == PaymentTransactionStatus.Refunded
                 && t.RefundedAt >= periodStart
                 && t.RefundedAt < periodEnd)
-            .Select(t => new { t.Amount, t.ServiceTotal, t.CreatedAt, RefundedAt = t.RefundedAt!.Value })
+            .Select(t => new { t.Amount, t.ServiceTotal, t.Currency, t.CreatedAt, RefundedAt = t.RefundedAt!.Value })
             .ToListAsync(ct);
 
         return refunded
             .Where(t => paidPeriods.Any(p =>
                 p.PeriodStart <= t.CreatedAt && t.CreatedAt < p.PeriodEnd && p.PaidUtc < t.RefundedAt))
-            .Sum(t => Math.Max(0m, t.Amount - Math.Round(t.ServiceTotal * (pct / 100m), 2)));
+            .Sum(t => _rates.Convert(
+                Math.Max(0m, t.Amount - Math.Round(t.ServiceTotal * (pct / 100m), 2)), t.Currency, payoutCurrency));
     }
 
     /// <summary>Recent card charges earned by the business, refunded ones included, for the provider dashboard.</summary>

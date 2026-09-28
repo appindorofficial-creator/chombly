@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WebAppPet.Application;
 using WebAppPet.Application.Common;
+using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Reminders.Shared;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.BackgroundJobs;
@@ -33,6 +34,7 @@ builder.Services.AddSingleton<IConfigureOptions<MvcOptions>, WebAppPet.Localizat
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
 builder.Services.Configure<GoogleMapsOptions>(builder.Configuration.GetSection(GoogleMapsOptions.SectionName));
+builder.Services.Configure<ExchangeRateOptions>(builder.Configuration.GetSection(ExchangeRateOptions.SectionName));
 builder.Services.AddHttpClient("nominatim", client =>
 {
     client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
