@@ -1,4 +1,4 @@
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Web;
 
 /// <summary>
 /// Presentation / explore tour (Welcome or Negocios → Explorar servicios).

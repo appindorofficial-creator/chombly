@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Favorites.GetFavoriteIds;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Services;
 

@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Businesses.ApproveBusiness;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Admin;
 

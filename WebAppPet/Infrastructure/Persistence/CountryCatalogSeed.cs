@@ -1,6 +1,6 @@
 using WebAppPet.Models;
 
-namespace WebAppPet.Data;
+namespace WebAppPet.Infrastructure.Persistence;
 
 /// <summary>MVP country list (priority markets). Expand toward full ISO set over time.</summary>
 public static class CountryCatalogSeed

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Behavior.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Pages.Shared;
 using WebAppPet.Services;

@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Accounts.Login;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Localization;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Account;
 

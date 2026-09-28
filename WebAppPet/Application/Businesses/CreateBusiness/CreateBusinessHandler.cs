@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WebAppPet.Application.Businesses.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Email;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Infrastructure.Security;
 using WebAppPet.Localization;
 using WebAppPet.Models;

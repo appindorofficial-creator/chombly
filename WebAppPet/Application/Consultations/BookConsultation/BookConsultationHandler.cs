@@ -3,7 +3,7 @@ using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.GetConsultationCheckout;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;

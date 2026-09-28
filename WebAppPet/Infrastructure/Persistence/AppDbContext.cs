@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Models;
 
-namespace WebAppPet.Data;
+namespace WebAppPet.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {

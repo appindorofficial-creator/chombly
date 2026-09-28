@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
+using WebAppPet.Services;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Web;
 
 /// <summary>
 /// Loads the signed-in user's persisted <c>CountryCode</c> into HttpContext

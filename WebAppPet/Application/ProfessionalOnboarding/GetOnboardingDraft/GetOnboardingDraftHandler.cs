@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.ProfessionalOnboarding.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.ProfessionalOnboarding.GetOnboardingDraft;

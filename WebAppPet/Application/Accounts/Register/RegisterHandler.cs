@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Accounts.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Infrastructure.Security;
 using WebAppPet.Models;
 using WebAppPet.Services;

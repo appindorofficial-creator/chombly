@@ -5,7 +5,7 @@ using WebAppPet.Application.ProfessionalOnboarding.GetOnboardingTracks;
 using WebAppPet.Application.ProfessionalOnboarding.GetPendingOnboardings;
 using WebAppPet.Application.ProfessionalOnboarding.RejectOnboarding;
 using WebAppPet.Application.ProfessionalOnboarding.SaveOnboardingApplication;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;

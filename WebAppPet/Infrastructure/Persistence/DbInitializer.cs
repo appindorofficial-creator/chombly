@@ -4,7 +4,7 @@ using WebAppPet.Infrastructure.Security;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
-namespace WebAppPet.Data;
+namespace WebAppPet.Infrastructure.Persistence;
 
 /// <summary>
 /// Asegura esquema y catálogo de categorías. No inserta negocios, usuarios ni citas de demo.

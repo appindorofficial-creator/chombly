@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 
 namespace WebAppPet.Application.Payments.GetAdminPayments;

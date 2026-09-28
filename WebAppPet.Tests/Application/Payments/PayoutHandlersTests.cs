@@ -3,7 +3,7 @@ using WebAppPet.Application.Payments.GetAdminPayouts;
 using WebAppPet.Application.Payments.GetProviderPayouts;
 using WebAppPet.Application.Payments.MarkPayoutPaid;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;

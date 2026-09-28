@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Localization;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Groomer;
 

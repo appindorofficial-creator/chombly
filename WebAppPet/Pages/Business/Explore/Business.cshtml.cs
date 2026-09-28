@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Business.Explore;
 

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Storage;
 
 /// <summary>Local uploads for vet consultation media under wwwroot/uploads/vet/.</summary>
 public static class VetMediaStorage

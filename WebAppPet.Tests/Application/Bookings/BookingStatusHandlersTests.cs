@@ -4,7 +4,7 @@ using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Tests.Support;

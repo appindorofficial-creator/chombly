@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Business.Explore;

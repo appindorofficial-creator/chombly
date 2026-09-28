@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Payments.GetAdminPayments;
 using WebAppPet.Application.Payments.RefundPayment;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;

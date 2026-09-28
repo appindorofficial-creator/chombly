@@ -1,4 +1,4 @@
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Maps;
 
 public class GoogleMapsOptions
 {

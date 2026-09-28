@@ -1,5 +1,5 @@
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Services;
 
 namespace WebAppPet.Application.Consultations.ChooseEmergency;

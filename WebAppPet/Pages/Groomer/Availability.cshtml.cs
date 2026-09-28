@@ -4,10 +4,10 @@ using WebAppPet.Application.Businesses.GetAvailability;
 using WebAppPet.Application.Businesses.SaveWeeklySchedule;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Groomer;
 

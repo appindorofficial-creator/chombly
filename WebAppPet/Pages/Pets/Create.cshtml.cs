@@ -4,9 +4,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Pets.GetPet;
 using WebAppPet.Application.Pets.SavePet;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Storage;
 using WebAppPet.Localization;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Pets;
 

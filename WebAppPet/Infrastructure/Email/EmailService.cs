@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Email;
 
 public interface IEmailService
 {

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Application.Pets.DeletePet;
 

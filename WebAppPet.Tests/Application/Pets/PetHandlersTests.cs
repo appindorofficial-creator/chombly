@@ -3,7 +3,7 @@ using WebAppPet.Application.Pets.DeletePet;
 using WebAppPet.Application.Pets.GetPet;
 using WebAppPet.Application.Pets.GetPetHistory;
 using WebAppPet.Application.Pets.GetPets;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Tests.Support;
 

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Storage;
 
 /// <summary>Guarda logo/portada de negocio bajo uploads/business/.</summary>
 public static class BusinessPhotoStorage

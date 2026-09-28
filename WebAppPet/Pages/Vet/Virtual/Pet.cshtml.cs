@@ -6,6 +6,8 @@ using WebAppPet.Application.Consultations.ContinueVirtual;
 using WebAppPet.Application.Consultations.PrepareScreening;
 using WebAppPet.Application.Consultations.ScreenConsultation;
 using WebAppPet.Application.Consultations.Shared;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Storage;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;

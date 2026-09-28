@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Storage;
 
 /// <summary>Professional onboarding proofs (licenses, certificates) under uploads/professional/.</summary>
 public static class ProfessionalDocumentStorage

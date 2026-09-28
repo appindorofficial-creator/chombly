@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Consultations.GetConsultationSummary;
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Services;
+using WebAppPet.Infrastructure.Identity;
 
 namespace WebAppPet.Pages.Vet.Virtual;
 

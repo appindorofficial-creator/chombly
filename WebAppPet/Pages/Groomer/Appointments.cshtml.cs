@@ -4,10 +4,10 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Bookings.GetBookings;
 using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Groomer;
 

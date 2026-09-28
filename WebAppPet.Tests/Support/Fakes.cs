@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
+using WebAppPet.Infrastructure.Email;
 using WebAppPet.Localization;
-using WebAppPet.Services;
 
 namespace WebAppPet.Tests.Support;
 

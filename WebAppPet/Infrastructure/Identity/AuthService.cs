@@ -1,9 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using WebAppPet.Infrastructure.Web;
 using WebAppPet.Models;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Identity;
 
 public class AuthService
 {

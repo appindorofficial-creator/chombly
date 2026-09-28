@@ -2,7 +2,7 @@ using WebAppPet.Application.Notifications.ClearNotifications;
 using WebAppPet.Application.Notifications.DeleteNotification;
 using WebAppPet.Application.Notifications.GetUnreadCount;
 using WebAppPet.Application.Notifications.OpenInbox;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Tests.Support;
 

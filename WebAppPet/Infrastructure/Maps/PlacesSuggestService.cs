@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Maps;
 
 /// <summary>
 /// City/address suggestions when Google Maps BrowserApiKey is not configured (local/dev).

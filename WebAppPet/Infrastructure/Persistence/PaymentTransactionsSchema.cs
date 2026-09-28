@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Models;
 using WebAppPet.Services;
 
-namespace WebAppPet.Data;
+namespace WebAppPet.Infrastructure.Persistence;
 
 /// <summary>
 /// Creates the PaymentTransactions table on databases that predate it and, only in that same run,

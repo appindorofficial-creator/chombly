@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Storage;
 
 /// <summary>
 /// Raíz persistente para uploads. En Azure App Service usa %HOME%/data

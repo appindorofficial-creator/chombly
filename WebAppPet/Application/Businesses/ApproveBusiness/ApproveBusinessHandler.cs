@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Email;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Application.Businesses.ApproveBusiness;
 

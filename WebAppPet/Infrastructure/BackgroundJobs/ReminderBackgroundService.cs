@@ -1,4 +1,6 @@
-namespace WebAppPet.Services;
+using WebAppPet.Services;
+
+namespace WebAppPet.Infrastructure.BackgroundJobs;
 
 /// <summary>Lightweight hosted loop that processes due pet care reminders every few minutes.</summary>
 public class ReminderBackgroundService : BackgroundService

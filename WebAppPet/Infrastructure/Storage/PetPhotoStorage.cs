@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using WebAppPet.Models;
 
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Storage;
 
 /// <summary>Guarda fotos de mascota bajo uploads/pets/ con validación de tipo y tamaño.</summary>
 public static class PetPhotoStorage

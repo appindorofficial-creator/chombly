@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
 namespace WebAppPet.Application.Payments.RefundPayment;

@@ -4,9 +4,9 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Notifications.ClearNotifications;
 using WebAppPet.Application.Notifications.DeleteNotification;
 using WebAppPet.Application.Notifications.OpenInbox;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Localization;
 using WebAppPet.Models;
-using WebAppPet.Services;
 using WebAppPet.Ui;
 
 namespace WebAppPet.Pages.Account;

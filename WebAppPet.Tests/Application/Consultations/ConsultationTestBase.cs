@@ -1,6 +1,6 @@
 using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Consultations.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Models;
 using WebAppPet.Services;
 using WebAppPet.Tests.Support;

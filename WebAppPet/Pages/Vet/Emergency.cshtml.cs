@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Consultations.EscalateToEmergency;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Models;
 using WebAppPet.Services;
 

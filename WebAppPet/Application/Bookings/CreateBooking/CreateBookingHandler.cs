@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 

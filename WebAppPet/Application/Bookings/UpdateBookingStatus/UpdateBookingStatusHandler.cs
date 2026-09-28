@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Models;
 using WebAppPet.Services;

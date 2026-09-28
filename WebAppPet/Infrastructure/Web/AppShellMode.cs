@@ -1,4 +1,4 @@
-namespace WebAppPet.Services;
+namespace WebAppPet.Infrastructure.Web;
 
 /// <summary>
 /// Shell UX for dual-role accounts (owner vs business), Indor-style.

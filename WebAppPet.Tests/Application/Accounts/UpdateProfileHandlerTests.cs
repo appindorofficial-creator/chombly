@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Accounts.UpdateProfile;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Infrastructure.Security;
 using WebAppPet.Models;
 using WebAppPet.Tests.Support;

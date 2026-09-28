@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Care.ActivateCare;
 using WebAppPet.Application.Care.CancelCare;
 using WebAppPet.Application.Care.GetCarePlan;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Localization;
 using WebAppPet.Models;
-using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Plans;
 

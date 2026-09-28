@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebAppPet.Application.Consultations.GetIntlSchedule;
 using WebAppPet.Application.Consultations.ScheduleIntlConsultation;
+using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Models;
 using WebAppPet.Services;
 

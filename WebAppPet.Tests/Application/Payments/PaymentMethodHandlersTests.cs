@@ -2,7 +2,7 @@ using WebAppPet.Application.Payments.AddPaymentMethod;
 using WebAppPet.Application.Payments.DeletePaymentMethod;
 using WebAppPet.Application.Payments.GetPaymentMethods;
 using WebAppPet.Application.Payments.Shared;
-using WebAppPet.Data;
+using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Tests.Support;
 
 namespace WebAppPet.Tests.Application.Payments;
