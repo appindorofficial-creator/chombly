@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebAppPet.Domain;
 
@@ -66,6 +67,10 @@ public class ProviderPayout
     public decimal GrossAmountUsd { get; set; }
     public decimal CommissionAmountUsd { get; set; }
     public decimal NetAmountUsd { get; set; }
+
+    /// <summary>Clawed back for charges refunded after an earlier summary already paid them out.</summary>
+    [NotMapped]
+    public decimal RefundDeduction => Math.Max(0m, GrossAmountUsd - CommissionAmountUsd - NetAmountUsd);
 
     public ProviderPayoutStatus Status { get; set; } = ProviderPayoutStatus.Pending;
 

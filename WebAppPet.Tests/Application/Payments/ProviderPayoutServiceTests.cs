@@ -190,6 +190,67 @@ public class ProviderPayoutServiceTests
         Assert.Equal(80m, check.ProviderPayouts.Single(p => p.Id == pending.Id).GrossAmountUsd);
     }
 
+    private static readonly DateTime NextPeriodEnd = PeriodEnd.AddMonths(1);
+
+    private static async Task<PaymentTransaction> ChargeSettledThenRefunded(
+        AppDbContext db, GroomerProfile business, DateTime paidAt, DateTime refundedAt)
+    {
+        var charge = TestData.AddCharge(db, business, 50, PeriodStart.AddDays(3), serviceTotal: 100);
+        var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodStart, PeriodEnd);
+        await Service(db).MarkPaidAsync(payout.Id);
+        payout.PaidUtc = paidAt;
+        charge.Status = PaymentTransactionStatus.Refunded;
+        charge.RefundedAt = refundedAt;
+        db.SaveChanges();
+        return charge;
+    }
+
+    [Fact]
+    public async Task A_refund_after_settlement_is_deducted_from_the_period_it_happens_in()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        await ChargeSettledThenRefunded(db, business, PeriodEnd.AddDays(1), PeriodEnd.AddDays(5));
+        TestData.AddCharge(db, business, 80, PeriodEnd.AddDays(6));
+
+        var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodEnd, NextPeriodEnd);
+
+        Assert.Equal((80m, 16m, 34m, 1), (payout.GrossAmountUsd, payout.CommissionAmountUsd, payout.NetAmountUsd, payout.ConsultationCount));
+        Assert.Equal(30m, payout.RefundDeduction);
+        using var check = database.CreateContext();
+        Assert.Equal(30m, check.ProviderPayouts.Single(p => p.PeriodStart == PeriodStart).NetAmountUsd);
+    }
+
+    [Fact]
+    public async Task A_period_with_only_a_refund_deduction_is_not_an_empty_summary()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        await ChargeSettledThenRefunded(db, business, PeriodEnd.AddDays(1), PeriodEnd.AddDays(5));
+
+        var payout = await Service(db).CreatePendingPayoutAsync(business.UserId, PeriodEnd, NextPeriodEnd);
+
+        Assert.Equal((0m, -30m, 30m), (payout.GrossAmountUsd, payout.NetAmountUsd, payout.RefundDeduction));
+        Assert.Null(payout.Notes);
+        await Assert.ThrowsAsync<PayoutPeriodOverlapException>(() =>
+            Service(db).CreatePendingPayoutAsync(business.UserId, PeriodEnd, NextPeriodEnd));
+    }
+
+    [Fact]
+    public async Task A_refund_before_the_summary_was_paid_is_not_deducted_again()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var business = TestData.AddBusiness(db);
+        await ChargeSettledThenRefunded(db, business, PeriodEnd.AddDays(10), PeriodEnd.AddDays(5));
+
+        var calc = await Service(db).CalculatePayoutForPeriodAsync(business.UserId, PeriodEnd, NextPeriodEnd);
+
+        Assert.Equal((0m, 0m), (calc.Refunds, calc.Net));
+    }
+
     [Fact]
     public async Task Provider_rule_on_onboarding_copies_the_default_in_the_local_currency()
     {
