@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Data;
-using WebAppPet.Models;
+using WebAppPet.Application.Favorites.ToggleFavorite;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Account;
@@ -10,19 +8,19 @@ namespace WebAppPet.Pages.Account;
 [IgnoreAntiforgeryToken]
 public class ToggleFavoriteModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly ToggleFavoriteHandler _toggleFavorite;
 
-    public ToggleFavoriteModel(AppDbContext db, AuthService auth)
+    public ToggleFavoriteModel(AuthService auth, ToggleFavoriteHandler toggleFavorite)
     {
-        _db = db;
         _auth = auth;
+        _toggleFavorite = toggleFavorite;
     }
 
     public IActionResult OnGet(int? groomerId, string? returnUrl = null)
         => Redirect(SafeReturn(returnUrl, groomerId));
 
-    public async Task<IActionResult> OnPostAsync(int groomerId, string? returnUrl = null)
+    public async Task<IActionResult> OnPostAsync(int groomerId, CancellationToken ct, string? returnUrl = null)
     {
         var wantsJson = string.Equals(Request.Headers.Accept, "application/json", StringComparison.OrdinalIgnoreCase)
             || string.Equals(Request.Query["format"], "json", StringComparison.OrdinalIgnoreCase)
@@ -37,31 +35,16 @@ public class ToggleFavoriteModel : PageModel
             return RedirectToPage("/Account/Login", new { returnUrl = loginReturn });
         }
 
-        var exists = await _db.Groomers.AnyAsync(g => g.Id == groomerId && g.IsActive);
-        if (!exists)
+        var outcome = await _toggleFavorite.HandleAsync(new ToggleFavoriteCommand(userId, groomerId), ct);
+        if (outcome == ToggleFavoriteOutcome.NotFound)
         {
             if (wantsJson)
                 return new JsonResult(new { ok = false, error = "notfound" }) { StatusCode = 404 };
             return Redirect(SafeReturn(returnUrl, groomerId));
         }
 
-        var fav = await _db.Favorites.FirstOrDefaultAsync(f => f.UserId == userId && f.GroomerId == groomerId);
-        var isFavorite = false;
-        if (fav == null)
-        {
-            _db.Favorites.Add(new Favorite { UserId = userId, GroomerId = groomerId });
-            isFavorite = true;
-        }
-        else
-        {
-            _db.Favorites.Remove(fav);
-            isFavorite = false;
-        }
-
-        await _db.SaveChangesAsync();
-
         if (wantsJson)
-            return new JsonResult(new { ok = true, isFavorite, groomerId });
+            return new JsonResult(new { ok = true, isFavorite = outcome == ToggleFavoriteOutcome.Added, groomerId });
 
         return Redirect(SafeReturn(returnUrl, groomerId));
     }

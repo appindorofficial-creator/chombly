@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Favorites.GetFavoriteIds;
 using WebAppPet.Application.Reviews.CanReview;
 using WebAppPet.Application.Reviews.GetReviews;
 using WebAppPet.Application.Reviews.Shared;
@@ -18,19 +19,22 @@ public class DetailsModel : PageModel
     private readonly GetReviewsHandler _getReviews;
     private readonly CanReviewHandler _canReview;
     private readonly RatingCalculator _rating;
+    private readonly GetFavoriteIdsHandler _favoriteIds;
 
     public DetailsModel(
         AppDbContext db,
         AuthService auth,
         GetReviewsHandler getReviews,
         CanReviewHandler canReview,
-        RatingCalculator rating)
+        RatingCalculator rating,
+        GetFavoriteIdsHandler favoriteIds)
     {
         _db = db;
         _auth = auth;
         _getReviews = getReviews;
         _canReview = canReview;
         _rating = rating;
+        _favoriteIds = favoriteIds;
     }
 
     public GroomerProfile? Groomer { get; set; }
@@ -82,7 +86,7 @@ public class DetailsModel : PageModel
 
         if (_auth.CurrentUserId is int userId)
         {
-            IsFavorite = await _db.Favorites.AnyAsync(f => f.UserId == userId && f.GroomerId == id);
+            IsFavorite = (await _favoriteIds.HandleAsync(new GetFavoriteIdsQuery(userId))).Contains(id);
             CanWriteReview = (await _canReview.HandleAsync(new CanReviewQuery(userId, id))).CanReview;
         }
 

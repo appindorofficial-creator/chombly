@@ -1,5 +1,6 @@
 using WebAppPet.Application.Accounts.Login;
 using WebAppPet.Application.Accounts.Register;
+using WebAppPet.Application.Accounts.SaveLocation;
 using WebAppPet.Application.Accounts.UpdateProfile;
 using WebAppPet.Application.Behavior.BookBehaviorSession;
 using WebAppPet.Application.Behavior.GetBehaviorIntake;
@@ -62,6 +63,9 @@ using WebAppPet.Application.Payments.GetPaymentMethods;
 using WebAppPet.Application.Payments.GetProviderPayouts;
 using WebAppPet.Application.Payments.MarkPayoutPaid;
 using WebAppPet.Application.Payments.RefundPayment;
+using WebAppPet.Application.Favorites.GetFavoriteIds;
+using WebAppPet.Application.Favorites.GetFavorites;
+using WebAppPet.Application.Favorites.ToggleFavorite;
 using WebAppPet.Application.Notifications.ClearNotifications;
 using WebAppPet.Application.Notifications.DeleteNotification;
 using WebAppPet.Application.Notifications.GetUnreadCount;
@@ -99,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<LoginHandler>();
         services.AddScoped<RegisterHandler>();
         services.AddScoped<UpdateProfileHandler>();
+        services.AddScoped<SaveLocationHandler>();
 
         services.AddScoped<ApplyPromoCodeHandler>();
 
@@ -181,6 +186,10 @@ public static class DependencyInjection
         services.AddScoped<ActivateCareHandler>();
         services.AddScoped<CancelCareHandler>();
         services.AddScoped<GetPetCareHandler>();
+
+        services.AddScoped<GetFavoritesHandler>();
+        services.AddScoped<GetFavoriteIdsHandler>();
+        services.AddScoped<ToggleFavoriteHandler>();
 
         services.AddScoped<OpenInboxHandler>();
         services.AddScoped<GetUnreadCountHandler>();

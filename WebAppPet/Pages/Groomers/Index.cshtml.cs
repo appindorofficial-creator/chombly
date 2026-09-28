@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
+using WebAppPet.Application.Favorites.GetFavoriteIds;
 using WebAppPet.Data;
 using WebAppPet.Models;
 using WebAppPet.Services;
@@ -14,12 +15,14 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
+    private readonly GetFavoriteIdsHandler _favoriteIds;
 
-    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability)
+    public IndexModel(AppDbContext db, AuthService auth, AvailabilityService availability, GetFavoriteIdsHandler favoriteIds)
     {
         _db = db;
         _auth = auth;
         _availability = availability;
+        _favoriteIds = favoriteIds;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -79,11 +82,7 @@ public class IndexModel : PageModel
                 HasUserLocation = true;
             }
 
-            FavoriteIds = (await _db.Favorites.AsNoTracking()
-                    .Where(f => f.UserId == uid)
-                    .Select(f => f.GroomerId)
-                    .ToListAsync())
-                .ToHashSet();
+            FavoriteIds = await _favoriteIds.HandleAsync(new GetFavoriteIdsQuery(uid));
         }
 
         var query = _db.Groomers
