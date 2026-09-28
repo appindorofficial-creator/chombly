@@ -72,6 +72,45 @@ public class FavoritesTests : IDisposable
     }
 
     [Fact]
+    public async Task A_business_pending_approval_cannot_be_favorited()
+    {
+        var business = AddVisibleBusiness();
+        business.PublishStatus = BusinessPublishStatus.PendingReview;
+        _db.SaveChanges();
+
+        Assert.Equal(ToggleFavoriteOutcome.NotFound, await Toggle(business.Id));
+    }
+
+    [Fact]
+    public async Task A_favorite_can_still_be_removed_after_the_business_is_deactivated()
+    {
+        var business = AddVisibleBusiness();
+        await Toggle(business.Id);
+        business.IsActive = false;
+        _db.SaveChanges();
+
+        Assert.Equal(ToggleFavoriteOutcome.Removed, await Toggle(business.Id));
+        Assert.Empty(await FavoriteIds());
+    }
+
+    [Fact]
+    public async Task The_favorites_page_hides_unpublished_businesses_and_shows_the_newest_first()
+    {
+        var first = AddVisibleBusiness();
+        var deactivated = AddVisibleBusiness();
+        var latest = AddVisibleBusiness();
+        await Toggle(first.Id);
+        await Toggle(deactivated.Id);
+        await Toggle(latest.Id);
+        deactivated.IsActive = false;
+        _db.SaveChanges();
+
+        var favorites = await new GetFavoritesHandler(_db).HandleAsync(new GetFavoritesQuery(_user.Id));
+
+        Assert.Equal([latest.Id, first.Id], favorites.Select(g => g.Id));
+    }
+
+    [Fact]
     public async Task Favorites_belong_to_each_user()
     {
         var business = AddVisibleBusiness();
