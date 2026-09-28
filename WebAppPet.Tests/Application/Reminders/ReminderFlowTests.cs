@@ -200,6 +200,39 @@ public class ReminderFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task Reminders_use_the_family_market_time_zone()
+    {
+        await Create(Command(title: "Colombia"));
+        using (AppTimeZones.UseMarket(BusinessMarket.UnitedStates))
+            await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
+
+        using var verify = _database.CreateContext();
+        Assert.Equal(AppTimeZones.ZoneFor(BusinessMarket.Colombia).Id, verify.ReminderSchedules.Single(r => r.Title == "Colombia").TimeZoneId);
+        Assert.Equal(AppTimeZones.ZoneFor(BusinessMarket.UnitedStates).Id, verify.ReminderSchedules.Single(r => r.Title != "Colombia").TimeZoneId);
+    }
+
+    [Fact]
+    public async Task A_colombian_reminder_due_during_bogota_quiet_hours_is_held_back()
+    {
+        var bogotaNow = AppTimeZones.NowLocal(BusinessMarket.Colombia).TimeOfDay;
+        static string At(TimeSpan t) =>
+            TimeSpan.FromMinutes(((int)t.TotalMinutes % 1440 + 1440) % 1440).ToString(@"hh\:mm");
+        await Create(Command(
+            nextDue: AppTimeZones.TodayLocalDate(),
+            quietStart: At(bogotaNow - TimeSpan.FromMinutes(20)),
+            quietEnd: At(bogotaNow + TimeSpan.FromMinutes(20))));
+        var schedule = _db.ReminderSchedules.Single();
+        schedule.NextDueUtc = DateTime.UtcNow.AddMinutes(-1);
+        _db.SaveChanges();
+
+        await new ReminderEngineService(_db, NullLogger<ReminderEngineService>.Instance).ProcessDueRemindersAsync();
+
+        using var verify = _database.CreateContext();
+        Assert.Empty(verify.Notifications);
+        Assert.Equal(ReminderDeliveryStatus.SuppressedQuietHours, verify.ReminderDeliveries.Single().Status);
+    }
+
+    [Fact]
     public async Task A_due_reminder_becomes_a_linked_notification_and_repeats()
     {
         await Create(Command(nextDue: AppTimeZones.TodayLocalDate()));

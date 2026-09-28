@@ -39,7 +39,6 @@ public class CreateCheckupReminderHandler
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9)),
             QuietHoursStartLocal = TimeSpan.FromHours(21),
             QuietHoursEndLocal = TimeSpan.FromHours(8),
-            TimeZoneId = ReminderSchedules.DefaultTimeZoneId,
             Channel = ReminderChannel.InApp
         }, ct);
 

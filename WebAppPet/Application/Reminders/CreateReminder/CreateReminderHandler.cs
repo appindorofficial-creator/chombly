@@ -45,7 +45,6 @@ public class CreateReminderHandler
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextDueLocal.Date, TimeSpan.FromHours(9)),
             QuietHoursStartLocal = ParseTime(command.QuietStart),
             QuietHoursEndLocal = ParseTime(command.QuietEnd),
-            TimeZoneId = ReminderSchedules.DefaultTimeZoneId,
             Channel = ReminderChannel.InApp
         }, ct);
 
