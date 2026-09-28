@@ -46,6 +46,7 @@
             <span class="muted small" style="display:block">
                 @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
                 · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)
+                @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@Money(p.RefundDeduction, country)</text> }
                 · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, country)</strong>
                 · @AppMoney.Code(country)
             </span>
@@ -65,6 +66,7 @@
             <span class="muted small" style="display:block">
                 @CatalogLocalizer.Loc("Bruto", "Gross") @Money(p.GrossAmountUsd, country)
                 · @CatalogLocalizer.Loc("Comisión", "Commission") @Money(p.CommissionAmountUsd, country)
+                @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@Money(p.RefundDeduction, country)</text> }
                 · <strong>@CatalogLocalizer.Loc("Neto", "Net") @Money(p.NetAmountUsd, country)</strong>
                 · @p.ConsultationCount @CatalogLocalizer.Loc("ítems", "items")
             </span>

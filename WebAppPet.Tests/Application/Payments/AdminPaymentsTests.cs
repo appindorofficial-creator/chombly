@@ -86,4 +86,79 @@ public class AdminPaymentsTests : IDisposable
         Assert.Equal((PaymentTransactionStatus.Refunded, "duplicate"), (saved.Status, saved.RefundReason));
         Assert.Equal(admin.Id, db.AuditLogs.AsNoTracking().Single(a => a.Action == "payment_refunded").ActorUserId);
     }
+
+    private Task<Result> Refund(PaymentTransaction charge) =>
+        new RefundPaymentHandler(_db, TestData.Payments(_db)).HandleAsync(new RefundPaymentCommand(charge.Id, null, ""));
+
+    [Theory]
+    [InlineData(AppointmentStatus.Pending)]
+    [InlineData(AppointmentStatus.Confirmed)]
+    public async Task Refunding_an_upcoming_appointment_cancels_it_and_tells_the_family_and_the_business(AppointmentStatus status)
+    {
+        var client = TestData.AddUser(_db);
+        var business = TestData.AddBusiness(_db);
+        var appointment = TestData.AddAppointment(_db, client, business, status, DateTime.UtcNow.AddDays(2));
+        var charge = TestData.AddCharge(_db, business, 40m, Day, appointment: appointment);
+
+        await Refund(charge);
+
+        using var db = _database.CreateContext();
+        Assert.Equal(AppointmentStatus.Cancelled, db.Appointments.AsNoTracking().Single().Status);
+        Assert.Equal(
+            [(client.Id, "appointment"), (business.UserId, "appointment")],
+            db.Notifications.AsNoTracking().OrderBy(n => n.UserId).Select(n => new { n.UserId, n.Type }).AsEnumerable()
+                .Select(n => (n.UserId, n.Type)));
+    }
+
+    [Fact]
+    public async Task Refunding_a_completed_appointment_keeps_it_and_only_tells_the_family()
+    {
+        var client = TestData.AddUser(_db);
+        var business = TestData.AddBusiness(_db);
+        var appointment = TestData.AddAppointment(_db, client, business, AppointmentStatus.Completed, DateTime.UtcNow.AddDays(-2));
+        var charge = TestData.AddCharge(_db, business, 40m, Day, appointment: appointment);
+
+        await Refund(charge);
+
+        using var db = _database.CreateContext();
+        Assert.Equal(AppointmentStatus.Completed, db.Appointments.AsNoTracking().Single().Status);
+        Assert.Equal(client.Id, db.Notifications.AsNoTracking().Single().UserId);
+    }
+
+    [Fact]
+    public async Task Refunding_a_care_charge_ends_the_membership()
+    {
+        var client = TestData.AddUser(_db);
+        var subscription = new CareSubscription { UserId = client.Id };
+        _db.CareSubscriptions.Add(subscription);
+        _db.SaveChanges();
+        var charge = TestData.AddCharge(_db, null, 50_000m, Day, purpose: PaymentPurpose.CareSubscription);
+        charge.UserId = client.Id;
+        charge.CareSubscriptionId = subscription.Id;
+        _db.SaveChanges();
+
+        await Refund(charge);
+
+        using var db = _database.CreateContext();
+        Assert.Equal(CareSubscriptionStatus.Cancelled, db.CareSubscriptions.AsNoTracking().Single().Status);
+        var notice = db.Notifications.AsNoTracking().Single();
+        Assert.Equal((client.Id, "care"), (notice.UserId, notice.Type));
+        Assert.Contains("$50.000", notice.Message);
+    }
+
+    [Fact]
+    public async Task A_failed_refund_leaves_the_appointment_alone()
+    {
+        var client = TestData.AddUser(_db);
+        var business = TestData.AddBusiness(_db);
+        var appointment = TestData.AddAppointment(_db, client, business, AppointmentStatus.Confirmed, DateTime.UtcNow.AddDays(2));
+        var charge = TestData.AddCharge(_db, business, 40m, Day, status: PaymentTransactionStatus.Failed, appointment: appointment);
+
+        var result = await Refund(charge);
+
+        Assert.False(result.Success);
+        using var db = _database.CreateContext();
+        Assert.Equal(AppointmentStatus.Confirmed, db.Appointments.AsNoTracking().Single().Status);
+        Assert.Empty(db.Notifications.AsNoTracking());
+    }
 }

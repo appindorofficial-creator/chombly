@@ -158,6 +158,7 @@
                     </span>
                     <span class="muted small" style="display:block">
                         @CatalogLocalizer.Loc("Bruto", "Gross") @AppMoney.Format(p.GrossAmountUsd) · @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.Format(p.CommissionAmountUsd)
+                        @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@AppMoney.Format(p.RefundDeduction)</text> }
                         · <strong class="price-tag">@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.Format(p.NetAmountUsd)</strong>
                     </span>
                     @if (!string.IsNullOrEmpty(p.ExternalReference))

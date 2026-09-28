@@ -27,6 +27,7 @@ public static class NotificationDeepLink
             "vet-consultation" or "vet-followup" => businessShell ? "/Groomer/Appointments" : "/Appointments",
             "behavior-plan" => businessShell ? "/Groomer/Appointments" : "/Pets",
             "payout" or "payment" => "/Professional/Payouts",
+            "care" => "/Plans/ChomblyCare",
             "info" => businessShell ? "/Groomer/Dashboard" : "/Account/Profile",
             _ => businessShell ? "/Groomer/Dashboard" : "/Account/Profile"
         };

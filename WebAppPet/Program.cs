@@ -50,6 +50,7 @@ builder.Services.AddScoped<ConsentService>();
 builder.Services.AddScoped<CountryCatalogService>();
 builder.Services.AddScoped<ReminderEngineService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();
+builder.Services.AddHostedService<CareRenewalBackgroundService>();
 builder.Services.AddApplication();
 
 var supportedCultures = new[] { new CultureInfo("es"), new CultureInfo("en") };

@@ -130,13 +130,16 @@ public class ProviderPayoutService
     /// Settles what was actually collected online: successful charges earned by the business in the
     /// period (refunded ones drop out). Commission is taken on the full service price, so the business
     /// receives the online amount minus commission and collects the remaining balance in person.
+    /// Charges refunded during the period after an earlier summary already paid them out are
+    /// deducted from the net.
     /// </summary>
-    public async Task<(decimal Gross, decimal Commission, decimal Net, int Count, ProviderCompensationRule? Rule)>
+    public async Task<(decimal Gross, decimal Commission, decimal Net, int Count, decimal Refunds, ProviderCompensationRule? Rule)>
         CalculatePayoutForPeriodAsync(int providerUserId, DateTime periodStart, DateTime periodEnd, CancellationToken ct = default)
     {
         var groomer = await _db.Groomers.AsNoTracking()
             .FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
         var rule = await GetRuleForBusinessAsync(providerUserId, groomer, periodEnd, ct);
+        var pct = CommissionPercent(rule);
 
         var charges = groomer is null
             ? []
@@ -151,9 +154,37 @@ public class ProviderPayoutService
         var gross = charges.Sum(c => c.Amount);
         var commission = charges.Count == 0
             ? 0m
-            : Math.Round(charges.Sum(c => c.ServiceTotal) * (CommissionPercent(rule) / 100m) + (rule?.FlatFeeUsd ?? 0m), 2);
-        var net = Math.Round(gross - commission, 2);
-        return (gross, commission, net, charges.Count, rule);
+            : Math.Round(charges.Sum(c => c.ServiceTotal) * (pct / 100m) + (rule?.FlatFeeUsd ?? 0m), 2);
+        var refunds = groomer is null
+            ? 0m
+            : await RefundsAfterSettlementAsync(providerUserId, groomer.Id, pct, periodStart, periodEnd, ct);
+        var net = Math.Round(gross - commission - refunds, 2);
+        return (gross, commission, net, charges.Count, refunds, rule);
+    }
+
+    private async Task<decimal> RefundsAfterSettlementAsync(
+        int providerUserId, int businessId, decimal pct, DateTime periodStart, DateTime periodEnd, CancellationToken ct)
+    {
+        var paidPeriods = await _db.ProviderPayouts.AsNoTracking()
+            .Where(p => p.ProviderUserId == providerUserId
+                && p.Status == ProviderPayoutStatus.Paid
+                && p.PaidUtc != null)
+            .Select(p => new { p.PeriodStart, p.PeriodEnd, PaidUtc = p.PaidUtc!.Value })
+            .ToListAsync(ct);
+        if (paidPeriods.Count == 0) return 0m;
+
+        var refunded = await _db.PaymentTransactions.AsNoTracking()
+            .Where(t => t.ProviderId == businessId
+                && t.Status == PaymentTransactionStatus.Refunded
+                && t.RefundedAt >= periodStart
+                && t.RefundedAt < periodEnd)
+            .Select(t => new { t.Amount, t.ServiceTotal, t.CreatedAt, RefundedAt = t.RefundedAt!.Value })
+            .ToListAsync(ct);
+
+        return refunded
+            .Where(t => paidPeriods.Any(p =>
+                p.PeriodStart <= t.CreatedAt && t.CreatedAt < p.PeriodEnd && p.PaidUtc < t.RefundedAt))
+            .Sum(t => Math.Max(0m, t.Amount - Math.Round(t.ServiceTotal * (pct / 100m), 2)));
     }
 
     /// <summary>Recent card charges earned by the business, refunded ones included, for the provider dashboard.</summary>
@@ -255,10 +286,10 @@ public class ProviderPayoutService
                         p.PeriodStart < periodEnd &&
                         p.PeriodEnd > periodStart)
             .ToListAsync(ct);
-        if (overlap.Any(p => p.ConsultationCount > 0 || p.GrossAmountUsd > 0))
+        if (overlap.Any(p => !IsEmpty(p)))
             throw new PayoutPeriodOverlapException();
 
-        foreach (var empty in overlap.Where(p => p.ConsultationCount == 0 && p.GrossAmountUsd == 0))
+        foreach (var empty in overlap.Where(IsEmpty))
         {
             // Drop empty stubs so a corrected summary can be created for the same window.
             if (empty.Status == ProviderPayoutStatus.Pending)
@@ -280,7 +311,7 @@ public class ProviderPayoutService
             CompensationRuleId = calc.Rule?.Id,
             Status = ProviderPayoutStatus.Pending,
             CreatedUtc = DateTime.UtcNow,
-            Notes = calc.Count == 0 ? "No completed billable items in period (simulated summary)." : null
+            Notes = calc.Count == 0 && calc.Refunds == 0 ? "No completed billable items in period (simulated summary)." : null
         };
 
         _db.ProviderPayouts.Add(payout);
@@ -368,12 +399,15 @@ public class ProviderPayoutService
         payout.ConsultationCount = calc.Count;
         if (calc.Rule is not null)
             payout.CompensationRuleId = calc.Rule.Id;
-        if (calc.Count > 0
+        if ((calc.Count > 0 || calc.Refunds > 0)
             && payout.Notes is not null
             && payout.Notes.Contains("No completed", StringComparison.OrdinalIgnoreCase))
             payout.Notes = null;
         return true;
     }
+
+    private static bool IsEmpty(ProviderPayout p) =>
+        p.ConsultationCount == 0 && p.GrossAmountUsd == 0 && p.NetAmountUsd == 0;
 
     public Task<List<ProviderPayout>> ListForProviderAsync(int providerUserId, CancellationToken ct = default) =>
         _db.ProviderPayouts.AsNoTracking()

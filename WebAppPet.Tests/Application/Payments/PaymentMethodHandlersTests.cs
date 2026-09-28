@@ -89,4 +89,37 @@ public class PaymentMethodHandlersTests
         Assert.True(await delete.HandleAsync(new DeletePaymentMethodCommand(owner.Id, cardId)));
         Assert.Empty(await List(db, owner.Id));
     }
+
+    [Fact]
+    public async Task Deleting_the_default_card_makes_the_newest_remaining_card_the_default()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var user = TestData.AddUser(db);
+        await Add(db, user.Id);
+        await Add(db, user.Id, "5500000000000004");
+        await Add(db, user.Id, "378282246310005");
+        var defaultCard = Assert.Single(await List(db, user.Id), c => c.IsDefault);
+
+        await new DeletePaymentMethodHandler(db).HandleAsync(new DeletePaymentMethodCommand(user.Id, defaultCard.Id));
+
+        using var verify = database.CreateContext();
+        Assert.Equal("Amex", Assert.Single(await List(verify, user.Id), c => c.IsDefault).Brand);
+    }
+
+    [Fact]
+    public async Task Deleting_another_card_keeps_the_default()
+    {
+        using var database = new TestDatabase();
+        using var db = database.CreateContext();
+        var user = TestData.AddUser(db);
+        await Add(db, user.Id);
+        await Add(db, user.Id, "5500000000000004");
+        var other = Assert.Single(await List(db, user.Id), c => !c.IsDefault);
+
+        await new DeletePaymentMethodHandler(db).HandleAsync(new DeletePaymentMethodCommand(user.Id, other.Id));
+
+        using var verify = database.CreateContext();
+        Assert.Equal("Visa", Assert.Single(await List(verify, user.Id), c => c.IsDefault).Brand);
+    }
 }
