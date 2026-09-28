@@ -1,6 +1,13 @@
 using WebAppPet.Application.Accounts.Login;
 using WebAppPet.Application.Accounts.Register;
 using WebAppPet.Application.Accounts.UpdateProfile;
+using WebAppPet.Application.Behavior.BookBehaviorSession;
+using WebAppPet.Application.Behavior.GetBehaviorIntake;
+using WebAppPet.Application.Behavior.GetBehaviorProviders;
+using WebAppPet.Application.Behavior.GetBehaviorSummary;
+using WebAppPet.Application.Behavior.SaveBehaviorFollowUp;
+using WebAppPet.Application.Behavior.StartBehaviorCase;
+using WebAppPet.Application.Behavior.SubmitBehaviorIntake;
 using WebAppPet.Application.Bookings.CancelBooking;
 using WebAppPet.Application.Bookings.CreateBooking;
 using WebAppPet.Application.Bookings.GetBookings;
@@ -105,6 +112,14 @@ public static class DependencyInjection
         services.AddScoped<SelectIntlVetHandler>();
         services.AddScoped<GetIntlScheduleHandler>();
         services.AddScoped<ScheduleIntlConsultationHandler>();
+
+        services.AddScoped<StartBehaviorCaseHandler>();
+        services.AddScoped<GetBehaviorIntakeHandler>();
+        services.AddScoped<SubmitBehaviorIntakeHandler>();
+        services.AddScoped<GetBehaviorProvidersHandler>();
+        services.AddScoped<BookBehaviorSessionHandler>();
+        services.AddScoped<GetBehaviorSummaryHandler>();
+        services.AddScoped<SaveBehaviorFollowUpHandler>();
 
         services.AddScoped<AvailabilityService>();
         services.AddScoped<ApproveBusinessHandler>();

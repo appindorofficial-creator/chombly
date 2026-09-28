@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using WebAppPet.Application.Behavior.StartBehaviorCase;
 using WebAppPet.Services;
 
 namespace WebAppPet.Pages.Care;
@@ -7,22 +8,22 @@ namespace WebAppPet.Pages.Care;
 public class ServicesModel : PageModel
 {
     private readonly AuthService _auth;
-    private readonly BehaviorFlowService _behavior;
+    private readonly StartBehaviorCaseHandler _startBehavior;
 
-    public ServicesModel(AuthService auth, BehaviorFlowService behavior)
+    public ServicesModel(AuthService auth, StartBehaviorCaseHandler startBehavior)
     {
         _auth = auth;
-        _behavior = behavior;
+        _startBehavior = startBehavior;
     }
 
     public void OnGet() { }
 
     public async Task<IActionResult> OnPostStartBehaviorAsync()
     {
-        if (_auth.CurrentUserId is null)
+        if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login", new { returnUrl = "/Care/Services" });
 
-        var c = await _behavior.StartAsync();
-        return RedirectToPage("/Behavior/Intake", new { caseId = c.Id });
+        var caseId = await _startBehavior.HandleAsync(new StartBehaviorCaseCommand(userId));
+        return RedirectToPage("/Behavior/Intake", new { caseId });
     }
 }
