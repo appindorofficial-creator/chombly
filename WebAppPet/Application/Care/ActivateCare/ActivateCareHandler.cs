@@ -75,6 +75,7 @@ public class ActivateCareHandler
                 UserId = command.UserId,
                 Status = CareSubscriptionStatus.Active,
                 PricePerMonth = price,
+                Currency = charge.Currency,
                 StartedAt = now,
                 CurrentPeriodStart = now,
                 CurrentPeriodEnd = now.AddMonths(1),

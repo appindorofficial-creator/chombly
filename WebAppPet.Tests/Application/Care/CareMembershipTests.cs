@@ -84,6 +84,21 @@ public class CareMembershipTests : IDisposable
             (charge.Purpose, charge.Status, charge.Amount, charge.CareSubscriptionId));
     }
 
+    [Theory]
+    [InlineData(BusinessMarket.Colombia, "COP")]
+    [InlineData(BusinessMarket.UnitedStates, "USD")]
+    public async Task The_membership_is_recorded_in_the_currency_it_was_charged_in(BusinessMarket market, string currency)
+    {
+        TestData.AddCard(_db, _user);
+
+        using (AppTimeZones.UseMarket(market))
+            await ActivateAs(_user);
+
+        using var verify = _database.CreateContext();
+        Assert.Equal(currency, verify.PaymentTransactions.Single().Currency);
+        Assert.Equal(currency, verify.CareSubscriptions.Single().Currency);
+    }
+
     [Fact]
     public async Task Activating_records_both_consents_and_an_audit_entry()
     {
