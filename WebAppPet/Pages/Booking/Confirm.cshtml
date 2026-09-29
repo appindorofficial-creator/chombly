@@ -34,8 +34,8 @@
                 <p><strong>@CatalogLocalizer.Loc("Servicio", "Service"):</strong> @CatalogLocalizer.Text(a.Service.Name)</p>
                 @if (a.Nights > 0 && a.EndAt.HasValue)
                 {
-                    <p><strong>@CatalogLocalizer.Loc("Check-in", "Check-in"):</strong> @a.ScheduledAt.ToString("ddd d MMM yyyy")</p>
-                    <p><strong>@CatalogLocalizer.Loc("Check-out", "Check-out"):</strong> @a.EndAt.Value.ToString("ddd d MMM yyyy")</p>
+                    <p><strong>@L["Book_CheckIn"]:</strong> @a.ScheduledAt.ToString("ddd d MMM yyyy")</p>
+                    <p><strong>@L["Book_CheckOut"]:</strong> @a.EndAt.Value.ToString("ddd d MMM yyyy")</p>
                     <p><strong>@CatalogLocalizer.Loc("Noches", "Nights"):</strong> @a.Nights</p>
                 }
                 else

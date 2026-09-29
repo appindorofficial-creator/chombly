@@ -1815,7 +1815,7 @@
           var btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'trust-banner-dot' + (i === index ? ' is-active' : '');
-          btn.setAttribute('aria-label', 'Trust ' + (i + 1));
+          btn.setAttribute('aria-label', uiText('Ver mensaje ', 'Show message ') + (i + 1));
           btn.addEventListener('click', function () {
             show(i, true);
           });

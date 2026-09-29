@@ -344,7 +344,7 @@
   <data name="Booking_SelectService" xml:space="preserve"><value>Selecciona un servicio.</value></data>
   <data name="Booking_SelectDateTime" xml:space="preserve"><value>Selecciona fecha y hora.</value></data>
   <data name="Booking_SelectPet" xml:space="preserve"><value>Selecciona una mascota.</value></data>
-  <data name="Booking_CheckDates" xml:space="preserve"><value>Revisa check-in y check-out.</value></data>
+  <data name="Booking_CheckDates" xml:space="preserve"><value>Revisa las fechas de entrada y salida.</value></data>
   <data name="Booking_InvalidDates" xml:space="preserve"><value>Fechas inválidas.</value></data>
   <data name="Booking_InvalidDateTime" xml:space="preserve"><value>Fecha u hora inválida.</value></data>
   <data name="Booking_DateNotPast" xml:space="preserve"><value>No puedes elegir una fecha u hora en el pasado.</value></data>
@@ -374,8 +374,8 @@
   <data name="Book_SelectService" xml:space="preserve"><value>Elige un servicio</value></data>
   <data name="Book_SelectDate" xml:space="preserve"><value>Elige fecha</value></data>
   <data name="Book_SelectTime" xml:space="preserve"><value>Elige hora</value></data>
-  <data name="Book_CheckIn" xml:space="preserve"><value>Check-in</value></data>
-  <data name="Book_CheckOut" xml:space="preserve"><value>Check-out</value></data>
+  <data name="Book_CheckIn" xml:space="preserve"><value>Entrada</value></data>
+  <data name="Book_CheckOut" xml:space="preserve"><value>Salida</value></data>
   <data name="Book_ConfirmTitle" xml:space="preserve"><value>Confirmar reserva</value></data>
   <data name="Book_Success" xml:space="preserve"><value>¡Reserva creada!</value></data>
   <data name="Book_Nights" xml:space="preserve"><value>noches</value></data>
