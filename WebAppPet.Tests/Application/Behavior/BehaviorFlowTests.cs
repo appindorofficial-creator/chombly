@@ -282,6 +282,7 @@ public class BehaviorFlowTests : IDisposable
         Assert.Equal(80_000, options.PriceOf(options.Providers.Single(p => p.Id == ownPrice.Id)));
         Assert.Equal(MarketPrices.ColombiaBehaviorSession, options.PriceOf(options.Providers.Single(p => p.Id == marketPrice.Id)));
         Assert.Equal(MarketPrices.ColombiaBehaviorSession, options.UnitPrice);
+        Assert.True(options.PriceVaries);
 
         var result = await Book.HandleAsync(BookCommand(client, behaviorCase, ownPrice, cardId: card.Id));
 
@@ -289,6 +290,20 @@ public class BehaviorFlowTests : IDisposable
         Assert.Equal(80_000, _db.PaymentTransactions.Single(t => t.BehaviorCaseId == behaviorCase.Id).Amount);
         Assert.Equal(80_000, _db.Appointments.Single(a => a.GroomerId == ownPrice.Id).TotalPrice);
         Assert.Equal(80_000, Reload(behaviorCase.Id).PriceCharged);
+    }
+
+    [Fact]
+    public async Task Before_choosing_the_price_shown_is_the_only_specialists_own_price()
+    {
+        var client = TestData.AddUser(_db);
+        var behaviorCase = AddCase(client, BehaviorCaseStatus.IntakeComplete, TestData.AddPet(_db, client));
+        AddSpecialist().StartingPrice = 75_000;
+        _db.SaveChanges();
+
+        var options = await Providers.HandleAsync(new GetBehaviorProvidersQuery(client.Id, behaviorCase.Id, 0, null, null, null));
+
+        Assert.Equal(75_000, options.UnitPrice);
+        Assert.False(options.PriceVaries);
     }
 
     [Fact]

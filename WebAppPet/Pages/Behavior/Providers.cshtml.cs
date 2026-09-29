@@ -47,6 +47,7 @@ public class ProvidersModel : PageModel
     public BehaviorCase? Case { get; set; }
     public List<Pet> SelectedPets { get; set; } = new();
     public decimal UnitPrice { get; set; }
+    public bool PriceVaries { get; set; }
     public Dictionary<int, decimal> ProviderPrices { get; set; } = new();
     public List<GroomerProfile> Providers { get; set; } = new();
     public List<PaymentMethod> Payments { get; set; } = new();
@@ -117,6 +118,7 @@ public class ProvidersModel : PageModel
         Case = options.Case;
         SelectedPets = options.SelectedDogs;
         UnitPrice = options.UnitPrice;
+        PriceVaries = options.PriceVaries;
         ProviderPrices = options.Providers.ToDictionary(p => p.Id, options.PriceOf);
         Providers = options.Providers;
         Payments = options.Payments;
