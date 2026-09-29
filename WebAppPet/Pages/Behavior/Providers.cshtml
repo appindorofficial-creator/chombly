@@ -102,7 +102,7 @@
                                 {
                                     <div class="muted small">@p.City</div>
                                 }
-                                <div class="price">@AppMoney.Format(unit) <span class="muted small">/ @CatalogLocalizer.Loc("sesión", "session")</span></div>
+                                <div class="price">@AppMoney.Format(Model.ProviderPrices.GetValueOrDefault(p.Id, unit)) <span class="muted small">/ @CatalogLocalizer.Loc("sesión", "session")</span></div>
                             </div>
                         </div>
                         @{

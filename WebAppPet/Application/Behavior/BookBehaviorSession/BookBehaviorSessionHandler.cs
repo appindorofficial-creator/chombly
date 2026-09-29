@@ -103,7 +103,7 @@ public class BookBehaviorSessionHandler
 
         behaviorCase.ProviderId = options.ProviderId;
         behaviorCase.ScheduledAt = scheduledAt;
-        var service = await ProviderServiceAsync(options.ProviderId, item, ct);
+        var service = await ProviderServiceAsync(options.ProviderId, item, price, ct);
 
         var appointments = dogs.Select(dog => new Appointment
         {
@@ -166,8 +166,8 @@ public class BookBehaviorSessionHandler
         return notes;
     }
 
-    /// <summary>The specialist's first service, created from the catalog item when it has none.</summary>
-    private async Task<GroomerService> ProviderServiceAsync(int providerId, ServiceCatalogItem item, CancellationToken ct)
+    /// <summary>The specialist's first service, created from the catalog item at the session price when it has none.</summary>
+    private async Task<GroomerService> ProviderServiceAsync(int providerId, ServiceCatalogItem item, decimal price, CancellationToken ct)
     {
         var service = await _db.Services.FirstOrDefaultAsync(s => s.GroomerId == providerId, ct);
         if (service is not null)
@@ -179,10 +179,10 @@ public class BookBehaviorSessionHandler
             Name = item.NameEs,
             Description = item.ScopeEs,
             DurationMinutes = item.DurationMinutes,
-            PriceSmall = item.Price,
-            PriceMedium = item.Price,
-            PriceLarge = item.Price,
-            PriceGiant = item.Price
+            PriceSmall = price,
+            PriceMedium = price,
+            PriceLarge = price,
+            PriceGiant = price
         };
         _db.Services.Add(service);
         await _db.SaveChangesAsync(ct);

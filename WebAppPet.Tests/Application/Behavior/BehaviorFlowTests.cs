@@ -267,6 +267,31 @@ public class BehaviorFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task Each_specialist_is_offered_and_charged_at_their_own_price()
+    {
+        var client = TestData.AddUser(_db);
+        var card = TestData.AddCard(_db, client);
+        var behaviorCase = AddCase(client, BehaviorCaseStatus.IntakeComplete, TestData.AddPet(_db, client));
+        var ownPrice = AddSpecialist();
+        ownPrice.StartingPrice = 80_000;
+        var marketPrice = AddSpecialist();
+        _db.SaveChanges();
+
+        var options = await Providers.HandleAsync(new GetBehaviorProvidersQuery(client.Id, behaviorCase.Id, 0, null, null, null));
+
+        Assert.Equal(80_000, options.PriceOf(options.Providers.Single(p => p.Id == ownPrice.Id)));
+        Assert.Equal(MarketPrices.ColombiaBehaviorSession, options.PriceOf(options.Providers.Single(p => p.Id == marketPrice.Id)));
+        Assert.Equal(MarketPrices.ColombiaBehaviorSession, options.UnitPrice);
+
+        var result = await Book.HandleAsync(BookCommand(client, behaviorCase, ownPrice, cardId: card.Id));
+
+        Assert.Equal(BookBehaviorSessionOutcome.Booked, result.Outcome);
+        Assert.Equal(80_000, _db.PaymentTransactions.Single(t => t.BehaviorCaseId == behaviorCase.Id).Amount);
+        Assert.Equal(80_000, _db.Appointments.Single(a => a.GroomerId == ownPrice.Id).TotalPrice);
+        Assert.Equal(80_000, Reload(behaviorCase.Id).PriceCharged);
+    }
+
+    [Fact]
     public async Task A_declined_card_books_nothing()
     {
         var client = TestData.AddUser(_db);
