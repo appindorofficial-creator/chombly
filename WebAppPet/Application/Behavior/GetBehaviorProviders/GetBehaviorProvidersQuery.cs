@@ -34,8 +34,15 @@ public sealed record BehaviorProviderOptions(
         "9:00 AM", "10:00 AM", "10:30 AM", "1:00 PM", "2:00 PM", "3:00 PM", "5:00 PM"
     ];
 
-    /// <summary>Price per dog with the chosen specialist, or the market price while none is chosen.</summary>
-    public decimal UnitPrice => PriceOf(Providers.FirstOrDefault(p => p.Id == ProviderId));
+    /// <summary>Price per dog with the chosen specialist, or the lowest offered while none is chosen.</summary>
+    public decimal UnitPrice => Providers.FirstOrDefault(p => p.Id == ProviderId) is GroomerProfile chosen
+        ? PriceOf(chosen)
+        : LowestPrice;
+
+    public decimal LowestPrice => Providers.Count == 0 ? PriceOf(null) : Providers.Min(PriceOf);
+
+    /// <summary>No specialist is chosen yet and they charge different prices.</summary>
+    public bool PriceVaries => ProviderId <= 0 && Providers.Select(PriceOf).Distinct().Count() > 1;
 
     /// <summary>Price per dog with <paramref name="provider"/> in the family's market: the specialist's own price when they set one.</summary>
     public decimal PriceOf(GroomerProfile? provider)
