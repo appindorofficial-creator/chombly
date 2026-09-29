@@ -6,8 +6,8 @@ using WebAppPet.Infrastructure.Persistence;
 namespace WebAppPet.Infrastructure.Web;
 
 /// <summary>
-/// Loads the signed-in user's persisted <c>CountryCode</c> into HttpContext
-/// so <see cref="AppTimeZones"/> and later filters share one home-market flag.
+/// Makes the signed-in user's persisted <c>CountryCode</c> the market of the rest of the request,
+/// so <see cref="AppTimeZones"/> and everything after it share one home-market flag.
 /// </summary>
 public sealed class AppMarketMiddleware
 {
@@ -34,8 +34,7 @@ public sealed class AppMarketMiddleware
             }
         }
 
-        context.Items[MarketCountry.HttpItemKey] = country;
-        context.Items[AppTimeZones.HttpItemKey] = market;
-        await _next(context);
+        using (AppTimeZones.UseRequest(market, country))
+            await _next(context);
     }
 }

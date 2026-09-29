@@ -8,7 +8,6 @@ using WebAppPet.Application;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Application.Reminders.Shared;
-using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.BackgroundJobs;
 using WebAppPet.Infrastructure.Email;
 using WebAppPet.Infrastructure.Identity;
@@ -150,7 +149,6 @@ app.UseRequestLocalization();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-AppTimeZones.Initialize(app.Services.GetRequiredService<IHttpContextAccessor>());
 app.UseMiddleware<AppMarketMiddleware>();
 
 // Entrada pública: invitados ven la presentación; usuarios logueados van al marketplace.
