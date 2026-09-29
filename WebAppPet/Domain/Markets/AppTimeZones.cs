@@ -5,10 +5,11 @@ namespace WebAppPet.Domain.Markets;
 /// <summary>
 /// Converts UTC timestamps (stored as datetime2 / Kind Unspecified) to the active market zone:
 /// Colombia → America/Bogota (UTC−5), United States → America/New_York (Eastern).
+/// The active market is the one forced with <see cref="UseMarket"/>, else the signed-in user's
+/// (set for the whole request with <see cref="UseRequest"/>), else Colombia.
 /// </summary>
 public static class AppTimeZones
 {
-    public const string HttpItemKey = "AppMarket";
     public const string BogotaId = "America/Bogota";
     public const string NewYorkId = "America/New_York";
 
@@ -16,10 +17,9 @@ public static class AppTimeZones
     private static readonly TimeZoneInfo NewYork = ResolveZone(NewYorkId, "Eastern Standard Time");
 
     private static readonly AsyncLocal<BusinessMarket?> OverrideMarket = new();
-    private static IHttpContextAccessor? _http;
+    private static readonly AsyncLocal<RequestMarket?> Request = new();
 
-    /// <summary>Wire once at startup so Razor/static helpers can read the request market.</summary>
-    public static void Initialize(IHttpContextAccessor http) => _http = http;
+    private sealed record RequestMarket(BusinessMarket Market, string CountryIso);
 
     public static string TimeZoneId => ZoneFor(CurrentMarket).Id;
 
@@ -27,17 +27,28 @@ public static class AppTimeZones
     {
         get
         {
-            if (OverrideMarket.Value is BusinessMarket o && o != BusinessMarket.Unknown)
+            if (OverrideMarket.Value is BusinessMarket o)
                 return o;
 
-            if (_http?.HttpContext?.Items[HttpItemKey] is BusinessMarket m && m != BusinessMarket.Unknown)
+            if (Request.Value is { Market: var m } && m != BusinessMarket.Unknown)
                 return m;
 
             return BusinessMarket.Colombia;
         }
     }
 
-    /// <summary>Temporarily use a market (e.g. consultation ContextCountry) for scheduling.</summary>
+    /// <summary>The signed-in user's market and home country for the rest of the request.</summary>
+    public static IDisposable UseRequest(BusinessMarket market, string countryIso)
+    {
+        var previous = Request.Value;
+        Request.Value = new RequestMarket(market, countryIso);
+        return new OverrideScope(() => Request.Value = previous);
+    }
+
+    /// <summary>
+    /// Temporarily use a market (e.g. consultation ContextCountry, a subscription's currency);
+    /// <see cref="CurrentCountryCode"/> follows it.
+    /// </summary>
     public static IDisposable UseMarket(BusinessMarket market)
     {
         var previous = OverrideMarket.Value;
@@ -56,8 +67,9 @@ public static class AppTimeZones
     {
         get
         {
-            if (_http?.HttpContext?.Items[MarketCountry.HttpItemKey] is string iso
-                && !string.IsNullOrWhiteSpace(iso))
+            if (OverrideMarket.Value is BusinessMarket forced)
+                return MarketCountry.FromMarket(forced);
+            if (Request.Value is { CountryIso: var iso } && !string.IsNullOrWhiteSpace(iso))
                 return MarketCountry.Normalize(iso);
             return MarketCountry.FromMarket(CurrentMarket);
         }

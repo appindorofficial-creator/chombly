@@ -7,7 +7,6 @@ namespace WebAppPet.Domain.Markets;
 public static class MarketCountry
 {
     public const string DefaultIso = "CO";
-    public const string HttpItemKey = "AppCountryCode";
 
     /// <summary>Launch markets only (expand when opening new countries).</summary>
     public static readonly HashSet<string> LaunchIsos = new(StringComparer.OrdinalIgnoreCase)
