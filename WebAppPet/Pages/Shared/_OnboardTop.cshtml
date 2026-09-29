@@ -10,6 +10,7 @@
     var ctaPage = ViewData["OnboardCtaPage"] as string;
     var ctaText = ViewData["OnboardCtaText"] as string;
     var ctaHref = ViewData["OnboardCtaHref"] as string;
+    var backLabel = CatalogLocalizer.Loc("Volver", "Back");
     var unreadNotif = 0;
     if (showNotif && Auth.CurrentUserId is int notifUserId)
     {
@@ -24,11 +25,11 @@
     {
         if (backReplace)
         {
-            <a class="onboard-top-back" href="@backHref" aria-label="Back" data-nav-replace>←</a>
+            <a class="onboard-top-back" href="@backHref" aria-label="@backLabel" data-nav-replace>←</a>
         }
         else
         {
-            <a class="onboard-top-back" href="@backHref" aria-label="Back">←</a>
+            <a class="onboard-top-back" href="@backHref" aria-label="@backLabel">←</a>
         }
     }
     <div class="onboard-brand">
