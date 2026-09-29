@@ -2,7 +2,7 @@
 @model WebAppPet.Pages.Admin.ProfessionalApprovalsModel
 @using WebAppPet.Domain
 @{
-    ViewData["Title"] = "Aprobaciones profesionales";
+    ViewData["Title"] = CatalogLocalizer.Loc("Aprobaciones profesionales", "Professional approvals");
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Admin/ProfessionalApprovals";
@@ -26,7 +26,7 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body">
-    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Registro profesional", "Professional onboarding")</h1>
     <p class="muted small">@CatalogLocalizer.Loc("Solicitudes Local / Internacional / Conducta.", "Local / International / Behavior applications.")</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))

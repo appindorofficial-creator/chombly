@@ -81,7 +81,7 @@ public class ApproveOnboardingHandler
         _db.Notifications.Add(new AppNotification
         {
             UserId = application.UserId,
-            Title = "Onboarding profesional aprobado",
+            Title = "Registro profesional aprobado",
             Message = "Tu solicitud profesional fue aprobada. Ya puedes atender en Chombly.",
             Type = "professional",
             CreatedAt = DateTime.UtcNow

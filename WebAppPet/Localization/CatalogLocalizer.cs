@@ -125,6 +125,28 @@ public static class CatalogLocalizer
         ["Paquete 8 sesiones"] = "8-session pack",
         ["Recomendado"] = "Recommended",
         ["Cerrado ahora"] = "Closed now",
+        ["Abierto"] = "Open",
+        ["Cerrado (horario semanal)"] = "Closed (weekly hours)",
+        ["Domingo"] = "Sunday",
+        ["Lunes"] = "Monday",
+        ["Martes"] = "Tuesday",
+        ["Miércoles"] = "Wednesday",
+        ["Jueves"] = "Thursday",
+        ["Viernes"] = "Friday",
+        ["Sábado"] = "Saturday",
+        ["No emite recetas de EE.UU."] = "Does not issue U.S. prescriptions.",
+        ["Atención de emergencia presencial"] = "In-person emergency care",
+        ["Baño, corte y uñas"] = "Bath, haircut, and nails",
+        ["Servicio de Paseadores"] = "Dog walking service",
+        ["Servicio de Peluquería"] = "Grooming service",
+        ["Teleconsulta clínica local"] = "Local clinical teleconsult",
+        ["Paseo individual o grupal"] = "Solo or group walk",
+        ["Obediencia y conducta"] = "Obedience and behavior",
+        ["Hotel para perros y gatos"] = "Hotel for dogs and cats",
+        ["Guardería diurna"] = "Daytime daycare",
+        ["Evaluación y plan de conducta"] = "Assessment and behavior plan",
+        ["Estética y cuidado diario"] = "Grooming and daily care",
+        ["Consulta veterinaria"] = "Vet consultation",
         ["Desde"] = "From",
         ["Total estimado"] = "Estimated total",
         ["sesiones"] = "sessions",
@@ -534,6 +556,7 @@ public static class CatalogLocalizer
     {
         var parts = text.Split(' ', StringSplitOptions.None);
         var changed = false;
+        var spanishLeft = false;
         for (var i = 0; i < parts.Length; i++)
         {
             var raw = parts[i];
@@ -543,12 +566,26 @@ public static class CatalogLocalizer
             var core = raw.TrimEnd('.', ',', ';', ':', '!', '?', '…');
             var suffix = raw[core.Length..];
             if (core.Length == 0) continue;
-            if (!Words.TryGetValue(core, out var en)) continue;
+            if (!Words.TryGetValue(core, out var en))
+            {
+                spanishLeft |= LooksSpanish(core);
+                continue;
+            }
             parts[i] = MatchCase(core, en) + suffix;
             changed = true;
         }
-        return changed ? string.Join(' ', parts) : text;
+        // Half-translated sentences read worse than the original wording.
+        return changed && !spanishLeft ? string.Join(' ', parts) : text;
     }
+
+    private static readonly HashSet<string> SpanishFunctionWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "el", "la", "los", "las", "un", "una", "unos", "unas", "de", "del", "al", "por", "para",
+        "con", "sin", "y", "e", "o", "u", "en", "que", "su", "sus", "tu", "tus", "mi", "mis", "muy", "más",
+    };
+
+    private static bool LooksSpanish(string word) =>
+        SpanishFunctionWords.Contains(word) || word.IndexOfAny("áéíóúñÁÉÍÓÚÑ¿¡".ToCharArray()) >= 0;
 
     private static string MatchCase(string original, string replacement)
     {
@@ -567,9 +604,11 @@ public static class CatalogLocalizer
         // Pet is shown separately on Confirm/Details — drop redundant "Mascotas:/Pets:" segments.
         notes = StripPetRosterSegments(notes);
         if (string.IsNullOrWhiteSpace(notes)) return "";
-        if (!IsEnglish()) return notes;
 
         var parts = notes.Split(" · ", StringSplitOptions.None);
+        if (BehaviorNotes(parts) is { } behavior) return behavior;
+        if (!IsEnglish()) return notes;
+
         for (var i = 0; i < parts.Length; i++)
             parts[i] = LocalizeNotePart(parts[i]);
         return string.Join(" · ", parts);
@@ -624,6 +663,34 @@ public static class CatalogLocalizer
                 && !p.StartsWith("Mascotas:", StringComparison.OrdinalIgnoreCase)
                 && !p.StartsWith("Pets:", StringComparison.OrdinalIgnoreCase));
         return string.Join(" · ", kept);
+    }
+
+    private const string BehaviorNotePrefix = "Behavior case #";
+
+    /// <summary>
+    /// Notes written by behavior bookings: "Behavior case #N: {problem} · {frequency}. {free text}".
+    /// Catalog labels are localized; the family's free text is left as typed.
+    /// </summary>
+    private static string? BehaviorNotes(string[] parts)
+    {
+        var head = parts[0].Trim();
+        if (!head.StartsWith(BehaviorNotePrefix, StringComparison.Ordinal)) return null;
+        var colon = head.IndexOf(':', BehaviorNotePrefix.Length);
+        if (colon < 0) return null;
+
+        var caseId = head[BehaviorNotePrefix.Length..colon];
+        var localized = new List<string>(parts.Length)
+        {
+            $"{Loc("Caso de comportamiento", "Behavior case")} #{caseId}: {LabelThenFreeText(head[(colon + 1)..].Trim())}"
+        };
+        localized.AddRange(parts.Skip(1).Select(p => LabelThenFreeText(p.Trim())));
+        return string.Join(" · ", localized);
+    }
+
+    private static string LabelThenFreeText(string part)
+    {
+        var dot = part.IndexOf(". ", StringComparison.Ordinal);
+        return dot < 0 ? Text(part) : Text(part[..dot]) + part[dot..];
     }
 
     private static string LocalizeNotePart(string part)

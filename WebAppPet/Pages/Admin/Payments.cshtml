@@ -137,7 +137,7 @@
                         @StatusLabel(row.Status)
                         @if (row.Status == PaymentTransactionStatus.Failed && row.FailureCode is not null)
                         {
-                            <text>· @row.FailureCode</text>
+                            <text>· @PaymentTexts.FailureCode(row.FailureCode)</text>
                         }
                     </span>
                     <span class="muted small" style="display:block">
@@ -172,7 +172,7 @@
             }
             @if (!string.IsNullOrEmpty(row.Description))
             {
-                <span class="muted small" style="display:block">@row.Description</span>
+                <span class="muted small" style="display:block">@PaymentTexts.Description(row.Description)</span>
             }
             <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Ref:", "Ref:") @row.Reference</span>
             @if (row.Status == PaymentTransactionStatus.Refunded)
@@ -180,7 +180,7 @@
                 <span class="muted small" style="display:block">
                     @CatalogLocalizer.Loc("Reembolsado", "Refunded")
                     @if (row.RefundedAt is DateTime r) { <text>@AppTimeZones.FormatShort(r)</text> }
-                    @if (!string.IsNullOrEmpty(row.RefundReason)) { <text>· @row.RefundReason</text> }
+                    @if (!string.IsNullOrEmpty(row.RefundReason)) { <text>· @PaymentTexts.RefundReason(row.RefundReason)</text> }
                 </span>
             }
             @if (row.Status == PaymentTransactionStatus.Succeeded)

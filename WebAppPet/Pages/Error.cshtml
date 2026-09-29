@@ -1,7 +1,7 @@
 @page
 @model ErrorModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = CatalogLocalizer.Loc("Error", "Error");
     ViewData["HideNav"] = true;
     ViewData["LangCompact"] = true;
     ViewData["OnboardBackHref"] = Url.Page("/Index");
@@ -9,19 +9,16 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body no-nav">
-        <h1 class="app-page-heading text-danger">Error</h1>
-        <p class="muted">An error occurred while processing your request.</p>
+        <h1 class="app-page-heading text-danger">@CatalogLocalizer.Loc("Algo salió mal", "Something went wrong")</h1>
+        <p class="muted">@CatalogLocalizer.Loc(
+            "Ocurrió un error al procesar tu solicitud. Vuelve a intentarlo en unos minutos.",
+            "An error occurred while processing your request. Please try again in a few minutes.")</p>
 
         @if (Model.ShowRequestId)
         {
-            <p>
-                <strong>Request ID:</strong> <code>@Model.RequestId</code>
+            <p class="muted small">
+                <strong>@CatalogLocalizer.Loc("Código de referencia", "Reference code"):</strong> <code>@Model.RequestId</code>
             </p>
         }
-
-        <h3>Development Mode</h3>
-        <p class="muted small">
-            Swapping to the <strong>Development</strong> environment displays detailed information about the error that occurred.
-        </p>
     </div>
 </div>

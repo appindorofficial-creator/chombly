@@ -45,4 +45,24 @@ public class CatalogLocalizerTests
         Assert.Equal("Basic bath", In("en", () => CatalogLocalizer.Text("Baño básico")));
         Assert.Equal("Basic bath", In("en", () => CatalogLocalizer.Text("Basic bath")));
     }
+
+    [Fact]
+    public void English_does_not_half_translate_a_sentence()
+    {
+        const string about = "Paseos diarios por el parque con fotos";
+        Assert.Equal(about, In("en", () => CatalogLocalizer.Text(about)));
+    }
+
+    [Fact]
+    public void Behavior_booking_notes_follow_the_interface_language()
+    {
+        const string notes = "Behavior case #1: Ladridos excesivos · Diario. Ladra cuando sale la familia";
+
+        Assert.Equal(
+            "Caso de comportamiento #1: Ladridos excesivos · Diario. Ladra cuando sale la familia",
+            In("es", () => CatalogLocalizer.Notes(notes)));
+        Assert.Equal(
+            "Behavior case #1: Excessive barking · Daily. Ladra cuando sale la familia",
+            In("en", () => CatalogLocalizer.Notes(notes)));
+    }
 }

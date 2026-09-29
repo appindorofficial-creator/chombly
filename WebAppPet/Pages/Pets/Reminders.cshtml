@@ -103,7 +103,7 @@
                 <label>@CatalogLocalizer.Loc("Fin horas silenciosas", "Quiet hours end")</label>
                 <input class="form-control" type="time" asp-for="QuietEnd" />
             </div>
-            <p class="muted small">@CatalogLocalizer.Loc("Si el recordatorio cae en horas silenciosas, se pospone hasta el fin de esa ventana (zona America/New_York).", "If due during quiet hours, delivery is deferred until that window ends (America/New_York).")</p>
+            <p class="muted small">@CatalogLocalizer.Loc("Si el recordatorio cae en horas silenciosas, se pospone hasta el fin de esa ventana (en tu hora local).", "If due during quiet hours, delivery is deferred until that window ends (in your local time).")</p>
             <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Crear", "Create")</button>
         </form>
     </section>

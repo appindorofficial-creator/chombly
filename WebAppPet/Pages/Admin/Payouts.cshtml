@@ -21,7 +21,7 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body">
-    <h1 class="app-page-heading">Payouts</h1>
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Liquidaciones", "Payouts")</h1>
     <p class="muted small">@CatalogLocalizer.Loc("Liquidaciones a proveedores (simulado · sin Stripe Connect real).", "Provider settlements (simulated · no live Stripe Connect).")</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
@@ -32,7 +32,7 @@
     <h2 class="section-title">@CatalogLocalizer.Loc("Pendientes", "Pending")</h2>
     @if (!Model.Pending.Any())
     {
-        <div class="empty">@CatalogLocalizer.Loc("No hay payouts pendientes.", "No pending payouts.")</div>
+        <div class="empty">@CatalogLocalizer.Loc("No hay liquidaciones pendientes.", "No pending payouts.")</div>
     }
     @foreach (var p in Model.Pending)
     {

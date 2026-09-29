@@ -28,6 +28,8 @@ public static class NotificationLocalizer
         ["Cita cancelada"] = "Appointment cancelled",
         ["Prueba eliminar"] = "Delete test",
         ["Tienes una actualización de tu reserva"] = "You have a booking update",
+        ["Registro profesional aprobado"] = "Professional onboarding approved",
+        ["Registro profesional no aprobado"] = "Professional onboarding not approved",
         ["Onboarding profesional aprobado"] = "Professional onboarding approved",
         ["Onboarding profesional no aprobado"] = "Professional onboarding not approved",
         ["Negocio reenviado a revisión"] = "Business resubmitted for review",
@@ -211,6 +213,8 @@ public static class NotificationLocalizer
 
         // Spanish UI: reverse exact / light reverse of English stored via Loc
         if (ExactEnToEs.TryGetValue(raw, out var esExact)) return esExact;
+        if (ExactEsToEn.TryGetValue(raw, out var enForStored) && ExactEnToEs.TryGetValue(enForStored, out var esCurrent))
+            return esCurrent;
         return ReverseEnglishStored(raw);
     }
 

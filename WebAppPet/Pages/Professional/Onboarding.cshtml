@@ -2,7 +2,7 @@
 @model WebAppPet.Pages.Professional.OnboardingModel
 @using WebAppPet.Localization
 @{
-    ViewData["Title"] = CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding");
+    ViewData["Title"] = CatalogLocalizer.Loc("Registro profesional", "Professional onboarding");
     ViewData["GroomerTab"] = "onboarding";
     ViewData["LangCompact"] = true;
     string lead;
@@ -32,7 +32,7 @@
     <partial name="_OnboardTop" />
     <div class="home-body">
     <partial name="/Pages/Groomer/_GroomerNav.cshtml" />
-    <h1 class="page-title">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
+    <h1 class="page-title">@CatalogLocalizer.Loc("Registro profesional", "Professional onboarding")</h1>
     <p class="muted small">@lead</p>
     @if (!string.IsNullOrEmpty(Model.MarketLabel))
     {
