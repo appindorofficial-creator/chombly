@@ -5,6 +5,7 @@ namespace WebAppPet.Localization;
 
 /// <summary>
 /// Traduce textos de catálogo guardados en español en la BD (servicios, amenities, unidades).
+/// Los que un negocio guardó en inglés con el nombre exacto del catálogo se muestran en español.
 /// El valor original se mantiene para búsqueda/filtros; solo cambia la UI.
 /// </summary>
 public static class CatalogLocalizer
@@ -48,6 +49,7 @@ public static class CatalogLocalizer
         ["Paseo 90 min"] = "90-min walk",
         ["Paseo 120 min"] = "120-min walk",
         ["Obediencia básica"] = "Basic obedience",
+        ["Sesión avanzada"] = "Advanced session",
         ["Cachorros"] = "Puppies",
         ["Modificación de conducta"] = "Behavior modification",
         ["Corrección de comportamiento"] = "Behavior correction",
@@ -429,10 +431,34 @@ public static class CatalogLocalizer
         ("Lugar:", "Place:"),
     ];
 
+    /// <summary>Several Spanish names share one English label; these pick the Spanish one to show.</summary>
+    private static readonly Dictionary<string, string> PreferredSpanish = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Haircut"] = "Corte de pelo",
+        ["session"] = "sesión",
+        ["day"] = "día",
+        ["half-day"] = "medio día",
+    };
+
+    private static readonly Dictionary<string, string> SpanishFor = BuildSpanishFor();
+
+    private static Dictionary<string, string> BuildSpanishFor()
+    {
+        var spanish = new Dictionary<string, string>(PreferredSpanish, StringComparer.OrdinalIgnoreCase);
+        foreach (var (es, en) in Map)
+        {
+            // Labels that are also Spanish catalog text (e.g. "Hotel") must stay as typed.
+            if (string.Equals(es, en, StringComparison.OrdinalIgnoreCase) || Map.ContainsKey(en)) continue;
+            spanish.TryAdd(en, es);
+        }
+        return spanish;
+    }
+
     public static string Text(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return text ?? "";
-        if (!IsEnglish()) return text;
+        if (!IsEnglish())
+            return SpanishFor.TryGetValue(text.Trim(), out var es) ? MatchCase(text.Trim(), es) : text;
         var key = text.Trim();
         if (Map.TryGetValue(key, out var en)) return en;
 
@@ -529,7 +555,9 @@ public static class CatalogLocalizer
         if (original.Length == 0 || replacement.Length == 0) return replacement;
         if (char.IsUpper(original[0]))
             return char.ToUpperInvariant(replacement[0]) + replacement[1..];
-        return char.ToLowerInvariant(replacement[0]) + replacement[1..];
+        if (char.IsLower(original[0]))
+            return char.ToLowerInvariant(replacement[0]) + replacement[1..];
+        return replacement;
     }
 
     /// <summary>Localiza notas de cita compuestas (p. ej. "Horario: Medio día · Pago: Visa").</summary>
