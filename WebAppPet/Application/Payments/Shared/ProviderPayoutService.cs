@@ -276,6 +276,7 @@ public class ProviderPayoutService
                 t.Amount,
                 t.ServiceTotal,
                 Math.Max(0m, t.ServiceTotal - t.Amount),
+                pct,
                 commission,
                 refunded ? 0m : Math.Round(t.Amount - commission, 2));
         }).ToList();
@@ -296,6 +297,7 @@ public class ProviderPayoutService
         decimal ChargedOnline,
         decimal ServiceTotal,
         decimal BalanceAtBusiness,
+        decimal CommissionPercent,
         decimal Commission,
         decimal Net);
 
@@ -309,6 +311,14 @@ public class ProviderPayoutService
 
     public async Task<decimal> CommissionPercentAsync(GroomerProfile business, CancellationToken ct = default) =>
         CommissionPercent(await GetRuleForBusinessAsync(business.UserId, business, null, ct));
+
+    /// <summary>The rule that sets the provider's commission today, and its percentage (the platform fallback when there is none).</summary>
+    public async Task<(ProviderCompensationRule? Rule, decimal Percent)> ApplicableRuleAsync(int providerUserId, CancellationToken ct = default)
+    {
+        var business = await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g => g.UserId == providerUserId, ct);
+        var rule = await GetRuleForBusinessAsync(providerUserId, business, null, ct);
+        return (rule, CommissionPercent(rule));
+    }
 
     private static decimal CommissionPercent(ProviderCompensationRule? rule) => rule?.CommissionPercent ?? 20m;
 

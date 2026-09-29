@@ -50,6 +50,21 @@ public class AdminPaymentsTests : IDisposable
     }
 
     [Fact]
+    public async Task Each_held_business_charge_shows_its_commission_and_the_rest_do_not()
+    {
+        var business = TestData.AddBusiness(_db);
+        var held = TestData.AddCharge(_db, business, 35m, Day, serviceTotal: 100m);
+        var refunded = TestData.AddCharge(_db, business, 14m, Day, serviceTotal: 40m, status: PaymentTransactionStatus.Refunded);
+        var care = TestData.AddCharge(_db, null, 14.99m, Day, purpose: PaymentPurpose.CareSubscription);
+
+        var rows = (await Handler().HandleAsync(new GetAdminPaymentsQuery())).Rows.ToDictionary(r => r.Id);
+
+        Assert.Equal((20m, 20m), (rows[held.Id].CommissionPercent, rows[held.Id].Commission));
+        Assert.Equal((20m, (decimal?)null), (rows[refunded.Id].CommissionPercent, rows[refunded.Id].Commission));
+        Assert.Equal(((decimal?)null, (decimal?)null), (rows[care.Id].CommissionPercent, rows[care.Id].Commission));
+    }
+
+    [Fact]
     public async Task Filters_by_status_purpose_and_date_range()
     {
         var business = TestData.AddBusiness(_db);

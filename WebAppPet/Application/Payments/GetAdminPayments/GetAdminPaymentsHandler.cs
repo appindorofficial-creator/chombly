@@ -43,6 +43,8 @@ public class GetAdminPaymentsHandler
         foreach (var business in businesses.Values)
             commissionPercent[business.Id] = await _payouts.CommissionPercentAsync(business, ct);
 
+        decimal PercentFor(int businessId) => commissionPercent.GetValueOrDefault(businessId, 20m);
+
         var totals = summary
             .GroupBy(t => t.Currency)
             .OrderBy(g => g.Key)
@@ -56,7 +58,7 @@ public class GetAdminPaymentsHandler
                     g.Count(t => t.Status == PaymentTransactionStatus.Failed),
                     Math.Round(held
                         .Where(t => t.ProviderId.HasValue)
-                        .Sum(t => t.ServiceTotal * commissionPercent.GetValueOrDefault(t.ProviderId!.Value, 20m) / 100m), 2),
+                        .Sum(t => t.ServiceTotal * PercentFor(t.ProviderId!.Value) / 100m), 2),
                     held.Where(t => t.ProviderId is null).Sum(t => t.Amount));
             })
             .ToList();
@@ -72,24 +74,33 @@ public class GetAdminPaymentsHandler
             .Where(u => clientIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
 
-        var rows = page.Select(t => new AdminPaymentRow(
-            t.Id,
-            t.CreatedAt,
-            t.Status,
-            t.Purpose,
-            t.Currency,
-            t.Amount,
-            t.ServiceTotal,
-            clients.GetValueOrDefault(t.UserId) ?? $"#{t.UserId}",
-            t.ProviderId is int pid ? businesses.GetValueOrDefault(pid)?.BusinessName ?? $"#{pid}" : null,
-            t.CardBrand,
-            t.CardLast4,
-            t.Gateway,
-            t.ExternalReference,
-            t.FailureCode,
-            t.Description,
-            t.RefundedAt,
-            t.RefundReason)).ToList();
+        var rows = page.Select(t =>
+        {
+            decimal? percent = t.ProviderId is int businessId ? PercentFor(businessId) : null;
+            decimal? commission = percent is decimal pct && t.Status == PaymentTransactionStatus.Succeeded
+                ? Math.Round(t.ServiceTotal * pct / 100m, 2)
+                : null;
+            return new AdminPaymentRow(
+                t.Id,
+                t.CreatedAt,
+                t.Status,
+                t.Purpose,
+                t.Currency,
+                t.Amount,
+                t.ServiceTotal,
+                clients.GetValueOrDefault(t.UserId) ?? $"#{t.UserId}",
+                t.ProviderId is int pid ? businesses.GetValueOrDefault(pid)?.BusinessName ?? $"#{pid}" : null,
+                t.CardBrand,
+                t.CardLast4,
+                t.Gateway,
+                t.ExternalReference,
+                t.FailureCode,
+                t.Description,
+                t.RefundedAt,
+                t.RefundReason,
+                percent,
+                commission);
+        }).ToList();
 
         return new AdminPaymentsView(rows, totals, summary.Count);
     }

@@ -3,7 +3,7 @@ using WebAppPet.Application.Payments.Shared;
 namespace WebAppPet.Application.Payments.GetProviderPayouts;
 
 /// <summary>
-/// The provider's commission rules, payout history and recent paid bookings.
+/// The commission that applies to the provider, payout history and recent paid bookings.
 /// Recomputes the provider's payout totals first so they include the latest bookings.
 /// </summary>
 public class GetProviderPayoutsHandler
@@ -16,8 +16,10 @@ public class GetProviderPayoutsHandler
     {
         var uid = query.ProviderUserId;
         await _payouts.RefreshPayoutTotalsAsync(uid, ct);
+        var (rule, percent) = await _payouts.ApplicableRuleAsync(uid, ct);
         return new ProviderPayoutsView(
-            await _payouts.ListRulesForProviderAsync(uid, ct),
+            rule,
+            percent,
             await _payouts.ListForProviderAsync(uid, ct),
             await _payouts.ListRecentFamilyPaymentsAsync(uid, ct: ct),
             await _payouts.PayoutCurrencyAsync(uid, ct));

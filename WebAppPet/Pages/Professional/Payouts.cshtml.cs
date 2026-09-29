@@ -35,7 +35,8 @@ public class PayoutsModel : PageModel
         _L = L;
     }
 
-    public List<ProviderCompensationRule> Rules { get; set; } = new();
+    public ProviderCompensationRule? Rule { get; set; }
+    public decimal CommissionPercent { get; set; }
     public List<ProviderPayout> History { get; set; } = new();
     public List<ProviderPayoutService.ProviderPaymentRow> RecentPayments { get; set; } = new();
     public string Currency { get; set; } = "USD";
@@ -85,7 +86,8 @@ public class PayoutsModel : PageModel
     private async Task LoadAsync()
     {
         var view = await _getPayouts.HandleAsync(new GetProviderPayoutsQuery(_auth.CurrentUserId!.Value));
-        Rules = view.Rules;
+        Rule = view.Rule;
+        CommissionPercent = view.CommissionPercent;
         History = view.History;
         RecentPayments = view.RecentPayments;
         Currency = view.Currency;

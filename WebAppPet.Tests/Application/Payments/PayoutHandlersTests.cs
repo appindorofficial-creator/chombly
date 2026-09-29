@@ -101,7 +101,7 @@ public class PayoutHandlersTests
     }
 
     [Fact]
-    public async Task The_provider_view_includes_rules_history_and_recent_bookings()
+    public async Task The_provider_view_includes_its_commission_history_and_recent_bookings()
     {
         using var database = new TestDatabase();
         using var db = database.CreateContext();
@@ -113,7 +113,8 @@ public class PayoutHandlersTests
         var view = await new GetProviderPayoutsHandler(Service(db))
             .HandleAsync(new GetProviderPayoutsQuery(business.UserId));
 
-        Assert.Equal(3, view.Rules.Count);
+        Assert.Equal(CompensationServiceType.LocalVet, view.Rule!.ServiceType);
+        Assert.Equal(20m, view.CommissionPercent);
         Assert.Single(view.History);
         Assert.Single(view.RecentPayments);
     }

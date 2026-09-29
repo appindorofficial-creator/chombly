@@ -45,6 +45,11 @@
             "Todos los cobros con tarjeta de la plataforma. Pasarela simulada: se registran como pagos reales, pero no se mueve dinero. Los registros \"Histórico\" se crearon a partir de reservas anteriores a los cobros.",
             "Every card charge on the platform. Simulated gateway: recorded like real payments, but no money moves. \"Legacy\" rows were created from bookings made before charging existed.")
     </p>
+    <p class="muted small">
+        @CatalogLocalizer.Loc(
+            "La comisión de Chombly es el porcentaje de la regla de cada negocio sobre el total del servicio. Se descuenta de lo cobrado en línea antes de liquidarle al negocio. Chombly Care es ingreso propio y no se liquida a nadie.",
+            "Chombly's commission is each business's rule percentage of the service total. It is deducted from the online charge before the business is paid out. Chombly Care is own revenue and is not paid out to anyone.")
+    </p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
@@ -153,6 +158,17 @@
                     @CatalogLocalizer.Loc("Total del servicio", "Service total") @Money(row.ServiceTotal, row.Currency)
                     · @CatalogLocalizer.Loc("Saldo en el negocio", "Balance at business") @Money(row.ServiceTotal - row.Amount, row.Currency)
                 </span>
+            }
+            @if (row.Commission is decimal commission)
+            {
+                <span class="muted small" style="display:block">
+                    @CatalogLocalizer.Loc($"Comisión Chombly ({row.CommissionPercent:0.##}%)", $"Chombly commission ({row.CommissionPercent:0.##}%)") @Money(commission, row.Currency)
+                    · <strong>@CatalogLocalizer.Loc("Neto al negocio", "Net to business") @Money(row.Amount - commission, row.Currency)</strong>
+                </span>
+            }
+            else if (row.BusinessName is null && row.Status == PaymentTransactionStatus.Succeeded)
+            {
+                <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Ingreso propio de Chombly: sin comisión ni liquidación.", "Chombly's own revenue: no commission or payout.")</span>
             }
             @if (!string.IsNullOrEmpty(row.Description))
             {
