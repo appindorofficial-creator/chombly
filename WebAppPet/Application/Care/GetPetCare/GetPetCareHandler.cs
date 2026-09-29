@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Care.Shared;
+using WebAppPet.Application.Reminders.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
 
@@ -10,11 +11,13 @@ public sealed record PetCareView(
     CareSubscription? Subscription,
     int RemainingConsults,
     List<Consultation> RecentConsults,
-    List<Appointment> Upcoming);
+    List<Appointment> Upcoming,
+    ReminderSchedule? CheckupReminder);
 
 /// <summary>
-/// The pet's Care page: the family's membership, the pet's latest consultations and its next
-/// appointments that are not cancelled. Null when the pet is not the user's.
+/// The pet's Care page: the family's membership, the pet's latest consultations, its next
+/// appointments that are not cancelled and its active vaccines/checkup reminder.
+/// Null when the pet is not the user's.
 /// </summary>
 public class GetPetCareHandler
 {
@@ -61,6 +64,7 @@ public class GetPetCareHandler
             subscription,
             subscription is null ? 0 : _care.RemainingQuickConsults(subscription),
             recentConsults,
-            upcoming);
+            upcoming,
+            await _db.ActiveCheckupAsync(query.UserId, pet.Id, ct));
     }
 }

@@ -11,6 +11,10 @@
     <div class="home-body @(HideNav ? "no-nav" : "")">
     <h1 class="app-page-heading">@CatalogLocalizer.Loc($"Control de {Model.Pet?.Name}", $"Care for {Model.Pet?.Name}")</h1>
     <p class="muted small">@CatalogLocalizer.Loc("Historial, plan y próximas tareas", "History, plan, and upcoming tasks")</p>
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info" role="status">@Model.Message</div>
+    }
     <div class="card card-pad" style="margin-bottom:14px">
         <strong>@Model.Pet?.Name</strong>
         @if (Model.Pet is { } pet)
@@ -91,12 +95,28 @@
         <a class="btn btn-outline btn-block" asp-page="/Pets/History" asp-route-id="@Model.Id" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))">
             @CatalogLocalizer.Loc("Ver historial de servicios", "View service history")
         </a>
-        <form method="post" asp-page-handler="Remind">
-            <input type="hidden" name="Id" value="@Model.Id" />
-            <button type="submit" class="btn btn-primary btn-block">
-                @CatalogLocalizer.Loc("Crear aviso de vacunas/chequeo", "Create vaccine/checkup reminder")
-            </button>
-        </form>
+        @if (Model.CheckupReminder is { } checkup)
+        {
+            <div class="card card-pad">
+                <strong>@CatalogLocalizer.Loc("Aviso de vacunas/chequeo activo", "Vaccine/checkup reminder active")</strong>
+                <span class="muted small" style="display:block">
+                    @CatalogLocalizer.Loc("Próximo", "Next"): @AppTimeZones.FormatShort(checkup.NextDueUtc)
+                    @if (checkup.FrequencyDays is int d) { <text>· @CatalogLocalizer.Loc($"cada {d} días", $"every {d} days")</text> }
+                </span>
+            </div>
+            <a class="btn btn-primary btn-block" asp-page="/Pets/Reminders" asp-route-id="@Model.Id">
+                @CatalogLocalizer.Loc("Ver aviso", "View reminder")
+            </a>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="Remind">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <button type="submit" class="btn btn-primary btn-block">
+                    @CatalogLocalizer.Loc("Crear aviso de vacunas/chequeo", "Create vaccine/checkup reminder")
+                </button>
+            </form>
+        }
     </div>
     </div>
     @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }

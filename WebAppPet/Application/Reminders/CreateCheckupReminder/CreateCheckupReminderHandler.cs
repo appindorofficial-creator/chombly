@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Reminders.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
@@ -19,9 +18,6 @@ public enum CreateCheckupReminderOutcome
 /// </summary>
 public class CreateCheckupReminderHandler
 {
-    private const string TitlePrefixEs = "Vacunas / chequeo ·";
-    private const string TitlePrefixEn = "Vaccines / checkup ·";
-
     private readonly AppDbContext _db;
 
     public CreateCheckupReminderHandler(AppDbContext db) => _db = db;
@@ -32,14 +28,7 @@ public class CreateCheckupReminderHandler
         if (pet is null)
             return CreateCheckupReminderOutcome.PetNotFound;
 
-        // Older rows were saved in English when the screen was in English.
-        var alreadyActive = await _db.ReminderSchedules.AnyAsync(r =>
-            r.UserId == command.UserId &&
-            r.PetId == pet.Id &&
-            r.IsActive &&
-            r.Type == ReminderType.Vaccine &&
-            (r.Title.StartsWith(TitlePrefixEs) || r.Title.StartsWith(TitlePrefixEn)), ct);
-        if (alreadyActive)
+        if (await _db.ActiveCheckupAsync(command.UserId, pet.Id, ct) is not null)
             return CreateCheckupReminderOutcome.AlreadyActive;
 
         var nextLocal = AppTimeZones.TodayLocalDate().AddDays(7);
@@ -49,8 +38,8 @@ public class CreateCheckupReminderHandler
             UserId = command.UserId,
             PetId = pet.Id,
             Type = ReminderType.Vaccine,
-            Title = $"{TitlePrefixEs} {pet.Name}",
-            Notes = "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
+            Title = $"{ReminderSchedules.CheckupTitlePrefix} {pet.Name}",
+            Notes = "Aviso creado desde Control.",
             FrequencyDays = 365,
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9)),
             QuietHoursStartLocal = TimeSpan.FromHours(21),

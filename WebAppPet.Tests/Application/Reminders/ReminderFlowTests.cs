@@ -281,7 +281,7 @@ public class ReminderFlowTests : IDisposable
 
         var schedule = SingleSchedule();
         Assert.Equal($"Vacunas / chequeo · {_pet.Name}", schedule.Title);
-        Assert.Equal("Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.", schedule.Notes);
+        Assert.Equal("Aviso creado desde Control.", schedule.Notes);
     }
 
     [Fact]

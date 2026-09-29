@@ -29,6 +29,8 @@ public class CareModel : PageModel
     public int RemainingConsults { get; set; }
     public List<Consultation> RecentConsults { get; set; } = new();
     public List<Appointment> Upcoming { get; set; } = new();
+    public ReminderSchedule? CheckupReminder { get; set; }
+    public string? Message { get; set; }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
@@ -43,6 +45,9 @@ public class CareModel : PageModel
         RemainingConsults = view.RemainingConsults;
         RecentConsults = view.RecentConsults;
         Upcoming = view.Upcoming;
+        CheckupReminder = view.CheckupReminder;
+        if (TempData["Flash"] is string flash)
+            Message = flash;
         return Page();
     }
 
@@ -61,6 +66,6 @@ public class CareModel : PageModel
             : CatalogLocalizer.Loc(
                 "Recordatorio de vacunas/chequeo creado.",
                 "Vaccine/checkup reminder created.");
-        return RedirectToPage("/Pets/Reminders", new { id = Id });
+        return RedirectToPage(new { id = Id });
     }
 }

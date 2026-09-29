@@ -23,6 +23,17 @@ public class NotificationLocalizerTests
     }
 
     [Theory]
+    [InlineData("Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.")]
+    [InlineData("Created from Care. Adjust the date or frequency if needed.")]
+    public void The_retired_care_note_no_longer_offers_editing(string stored)
+    {
+        Assert.Equal("Aviso creado desde Control.", In("es", () => NotificationLocalizer.Message(stored)));
+        Assert.Equal("Created from Care.", In("en", () => NotificationLocalizer.Message(stored)));
+        Assert.Equal("Aviso creado desde Control.", In("es", () => NotificationLocalizer.Reminder(stored)));
+        Assert.Equal("Created from Care.", In("en", () => NotificationLocalizer.Reminder(stored)));
+    }
+
+    [Theory]
     [InlineData("Onboarding profesional aprobado")]
     [InlineData("Registro profesional aprobado")]
     public void Onboarding_titles_show_in_english(string stored)
@@ -44,9 +55,7 @@ public class NotificationLocalizerTests
     }
 
     [Theory]
-    [InlineData(
-        "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
-        "Created from Care. Adjust the date or frequency if needed.")]
+    [InlineData("Aviso creado desde Control.", "Created from Care.")]
     [InlineData(
         "Guau Spa no pudo aceptar tu cita (25/9/2026 9:03). Te reembolsamos el anticipo.",
         "Guau Spa could not accept your booking (25/9/2026 9:03). Your deposit was refunded.")]
