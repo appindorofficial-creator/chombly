@@ -94,10 +94,7 @@ public class IndexModel : PageModel
     public List<GroomerService> Services { get; set; } = new();
     public List<ServiceExtra> Extras { get; set; } = new();
     public List<Pet> Pets { get; set; } = new();
-    public List<string> TimeSlots { get; } = new()
-    {
-        "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
-    };
+    public List<string> TimeSlots { get; private set; } = BookingTime.StandardDaySlots.ToList();
 
     public HashSet<string> PastSlots { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> OccupiedSlots { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
@@ -545,6 +542,10 @@ public class IndexModel : PageModel
                 HoursLabel = $"{week.OpenLabel}–{week.CloseLabel}";
         }
 
+        TimeSlots = week is { IsOpen: true }
+            ? BookingTime.OpenWindowSlots(week.OpenMinutes, week.CloseMinutes)
+            : BookingTime.StandardDaySlots.ToList();
+
         if (!DayIsOpen)
         {
             Time = "";
@@ -580,9 +581,7 @@ public class IndexModel : PageModel
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(Time)
-            || !BookableTimeSlots.Contains(Time, StringComparer.OrdinalIgnoreCase))
-            Time = BookableTimeSlots[0];
+        Time = BookingTime.MatchSlot(Time, BookableTimeSlots) ?? BookableTimeSlots[0];
     }
 
     private async Task LoadOccupiedSlotsAsync(DateTime day)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Localization;
 
@@ -61,6 +62,36 @@ public static class BookingTime
     {
         "9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
     };
+
+    /// <summary>Hourly chips for a regular business day when no opening hours constrain it.</summary>
+    public static readonly string[] StandardDaySlots =
+    {
+        "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"
+    };
+
+    /// <summary>
+    /// Hourly start times from opening until the last start before closing.
+    /// 24-hour days (open == close) and windows crossing midnight keep <see cref="StandardDaySlots"/>.
+    /// </summary>
+    public static List<string> OpenWindowSlots(int openMinutes, int closeMinutes)
+    {
+        openMinutes = Math.Clamp(openMinutes, 0, 24 * 60);
+        closeMinutes = Math.Clamp(closeMinutes, 0, 24 * 60);
+        if (closeMinutes <= openMinutes)
+            return StandardDaySlots.ToList();
+
+        var slots = new List<string>();
+        for (var minutes = openMinutes; minutes < closeMinutes; minutes += 60)
+            slots.Add(DateTime.MinValue.AddMinutes(minutes).ToString("h:mm tt", CultureInfo.InvariantCulture));
+        return slots;
+    }
+
+    /// <summary>The slot label with the same time of day as <paramref name="time"/> (e.g. "17:00" → "5:00 PM").</summary>
+    public static string? MatchSlot(string? time, IEnumerable<string> slots)
+    {
+        if (!AppTimeZones.TryParseSlotToTimeSpan(time, out var wanted)) return null;
+        return slots.FirstOrDefault(s => AppTimeZones.TryParseSlotToTimeSpan(s, out var tod) && tod == wanted);
+    }
 
     public static HashSet<string> MarkPastSlots(IEnumerable<string> slots, DateTime day, BusinessMarket? market = null)
     {
