@@ -1883,7 +1883,7 @@ input.form-control[type="number"] {
   mix-blend-mode: multiply;
 }
 .hero-photo .actions {
-  position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 2;
+  position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; z-index: 2;
 }
 
 .fav-btn {
