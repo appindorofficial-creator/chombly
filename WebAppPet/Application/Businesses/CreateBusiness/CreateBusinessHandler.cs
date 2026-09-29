@@ -91,9 +91,7 @@ public class CreateBusinessHandler
             CoverUrl = coverUrl,
             ImageUrl = coverUrl ?? $"/images/categories/cat-{category.Slug}-v2.png",
             StartingPrice = firstPrice,
-            PriceUnit = category.IsOvernight
-                ? CatalogLocalizer.Loc("/ noche", "/ night")
-                : CatalogLocalizer.Loc("/ sesión", "/ session"),
+            PriceUnit = category.IsOvernight ? "/ noche" : "/ sesión",
             AcceptedSpecies = PetSpecies.DefaultAcceptedList,
             AcceptsSeniorPets = true,
             AcceptsAnxiousPets = true,
@@ -171,7 +169,7 @@ public class CreateBusinessHandler
         int businessId, ServiceCategory category, List<string> names, List<decimal> prices, decimal firstPrice, string? countryCode)
     {
         var step = HotelCoreExtras.SizeStepFor(countryCode);
-        var description = $"{CatalogLocalizer.Loc("Servicio de", "Service:")} {category.DisplayName()}";
+        var description = $"Servicio de {category.Name}";
         for (var i = 0; i < names.Count; i++)
         {
             var price = i < prices.Count ? prices[i] : firstPrice;

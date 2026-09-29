@@ -1,26 +1,46 @@
+using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Reminders.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Localization;
 
 namespace WebAppPet.Application.Reminders.CreateCheckupReminder;
 
+public enum CreateCheckupReminderOutcome
+{
+    Created,
+    AlreadyActive,
+    PetNotFound
+}
+
 /// <summary>
 /// One-tap yearly vaccines/checkup reminder from the pet's Care page: first one in a week at 9:00,
-/// held back between 21:00 and 8:00. False when the pet is not the user's.
+/// held back between 21:00 and 8:00. Only one active per pet, so repeated taps do not stack alerts.
 /// </summary>
 public class CreateCheckupReminderHandler
 {
+    private const string TitlePrefixEs = "Vacunas / chequeo ·";
+    private const string TitlePrefixEn = "Vaccines / checkup ·";
+
     private readonly AppDbContext _db;
 
     public CreateCheckupReminderHandler(AppDbContext db) => _db = db;
 
-    public async Task<bool> HandleAsync(CreateCheckupReminderCommand command, CancellationToken ct = default)
+    public async Task<CreateCheckupReminderOutcome> HandleAsync(CreateCheckupReminderCommand command, CancellationToken ct = default)
     {
         var pet = await _db.OwnedPetAsync(command.UserId, command.PetId, ct);
         if (pet is null)
-            return false;
+            return CreateCheckupReminderOutcome.PetNotFound;
+
+        // Older rows were saved in English when the screen was in English.
+        var alreadyActive = await _db.ReminderSchedules.AnyAsync(r =>
+            r.UserId == command.UserId &&
+            r.PetId == pet.Id &&
+            r.IsActive &&
+            r.Type == ReminderType.Vaccine &&
+            (r.Title.StartsWith(TitlePrefixEs) || r.Title.StartsWith(TitlePrefixEn)), ct);
+        if (alreadyActive)
+            return CreateCheckupReminderOutcome.AlreadyActive;
 
         var nextLocal = AppTimeZones.TodayLocalDate().AddDays(7);
 
@@ -29,12 +49,8 @@ public class CreateCheckupReminderHandler
             UserId = command.UserId,
             PetId = pet.Id,
             Type = ReminderType.Vaccine,
-            Title = CatalogLocalizer.Loc(
-                $"Vacunas / chequeo · {pet.Name}",
-                $"Vaccines / checkup · {pet.Name}"),
-            Notes = CatalogLocalizer.Loc(
-                "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
-                "Created from Care. Adjust the date or frequency if needed."),
+            Title = $"{TitlePrefixEs} {pet.Name}",
+            Notes = "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
             FrequencyDays = 365,
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9)),
             QuietHoursStartLocal = TimeSpan.FromHours(21),
@@ -42,6 +58,6 @@ public class CreateCheckupReminderHandler
             Channel = ReminderChannel.InApp
         }, ct);
 
-        return true;
+        return CreateCheckupReminderOutcome.Created;
     }
 }

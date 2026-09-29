@@ -1,7 +1,7 @@
 @page
 @model WebAppPet.Pages.Admin.ApprovalsModel
 @{
-    ViewData["Title"] = "Aprobar negocios";
+    ViewData["Title"] = CatalogLocalizer.Loc("Aprobar negocios", "Approve businesses");
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Admin/Approvals";
@@ -29,7 +29,7 @@
             <p class="muted small" style="margin:0">@g.User.FullName · @g.User.Email · @g.Phone</p>
             <p class="muted small">@g.Address · @g.City</p>
             <p class="muted small">@(g.Latitude), @(g.Longitude)</p>
-            <p class="muted small">Servicios: @g.Services.Count · Días abiertos/sem: @g.WeeklyHours.Count(h => h.IsOpen)</p>
+            <p class="muted small">@CatalogLocalizer.Loc("Servicios", "Services"): @g.Services.Count · @CatalogLocalizer.Loc("Días abiertos/sem", "Open days/week"): @g.WeeklyHours.Count(h => h.IsOpen)</p>
             <p style="margin:8px 0">@CatalogLocalizer.Text(g.About)</p>
             <div style="display:flex;gap:8px">
                 <form method="post" asp-page-handler="Approve" style="flex:1">

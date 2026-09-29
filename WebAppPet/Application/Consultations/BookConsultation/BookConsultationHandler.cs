@@ -6,8 +6,6 @@ using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Application.Payments.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Localization;
-
 namespace WebAppPet.Application.Consultations.BookConsultation;
 
 /// <summary>
@@ -126,10 +124,8 @@ public class BookConsultationHandler
         _db.Notifications.Add(new AppNotification
         {
             UserId = command.ClientId,
-            Title = CatalogLocalizer.Loc("Consulta reservada", "Consultation booked"),
-            Message = CatalogLocalizer.Loc(
-                $"Tu consulta ({item.Code}) quedó pendiente de confirmación.",
-                $"Your consultation ({item.Code}) is pending confirmation."),
+            Title = "Consulta reservada",
+            Message = $"Tu consulta ({item.Code}) quedó pendiente de confirmación.",
             Type = "vet-consultation",
             CreatedAt = DateTime.UtcNow
         });

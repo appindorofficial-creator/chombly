@@ -7,7 +7,7 @@
     var returnUrl = Context.Request.Path + Context.Request.QueryString;
     var compact = ViewData["LangCompact"] as bool? == true;
 }
-<div class="lang-switch @(compact ? "lang-switch-compact" : "")" role="group" aria-label="Language">
+<div class="lang-switch @(compact ? "lang-switch-compact" : "")" role="group" aria-label="@CatalogLocalizer.Loc("Idioma", "Language")">
     <a class="lang-opt @(!isEn ? "active" : "")"
        asp-page="/Account/SetLanguage"
        asp-route-culture="es"

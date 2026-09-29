@@ -167,7 +167,7 @@ public class IndexModel : PageModel
         ResolveDates(out var cin, out var cout);
         if (cout <= cin)
         {
-            ErrorMessage = "Revisa las fechas de check-in y check-out.";
+            ErrorMessage = CatalogLocalizer.Loc("Revisa las fechas de check-in y check-out.", "Check the check-in and check-out dates.");
             Pay = true;
             return Page();
         }
@@ -592,7 +592,7 @@ public class IndexModel : PageModel
     private static double ParseMiles(string? label)
     {
         if (string.IsNullOrEmpty(label)) return double.MaxValue;
-        var part = label.Replace("A ", "").Replace(" km de ti", "").Replace(" mi de ti", "").Trim();
+        var part = label.Replace("A ", "").Replace(" km de ti", "").Replace(" mi de ti", "").Replace(" km away", "").Trim();
         return double.TryParse(part, System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture, out var m) ? m : double.MaxValue;
     }

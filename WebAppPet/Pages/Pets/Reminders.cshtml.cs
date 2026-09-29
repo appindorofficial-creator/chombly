@@ -68,6 +68,12 @@ public class RemindersModel : PageModel
             CreateReminderOutcome.PastDate => CatalogLocalizer.Loc(
                 "La próxima fecha no puede ser en el pasado.",
                 "The next due date can't be in the past."),
+            CreateReminderOutcome.IncompleteQuietHours => CatalogLocalizer.Loc(
+                "Para usar \"No molestar\" indica las dos horas: desde y hasta. Si no lo necesitas, deja ambas vacías.",
+                "To use \"Do not disturb\", enter both times: from and until. If you don't need it, leave both empty."),
+            CreateReminderOutcome.SameQuietHours => CatalogLocalizer.Loc(
+                "En \"No molestar\" la hora desde y la hora hasta no pueden ser iguales.",
+                "In \"Do not disturb\", the from and until times can't be the same."),
             _ => null
         };
 

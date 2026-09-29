@@ -116,8 +116,17 @@ public static class PetCatalog
         && species != PetSpecies.Other
         && Breeds.ContainsKey(species);
 
+    /// <summary>Stored values that are English breed names but have a usual Spanish name.</summary>
+    private static readonly IReadOnlyDictionary<string, string> SpanishLabels =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["French Bulldog"] = "Bulldog francés",
+            ["Russian Blue"] = "Azul ruso",
+            ["Lionhead"] = "Cabeza de león",
+        };
+
     public static string Display(string value, string labelEn) =>
-        IsEnglish() ? labelEn : value;
+        IsEnglish() ? labelEn : SpanishLabels.GetValueOrDefault(value, value);
 
     public static string DisplayTemperament(string? value)
     {

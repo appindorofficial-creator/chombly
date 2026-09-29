@@ -42,11 +42,11 @@
                 <article class="agenda-day-card @(day.IsOpen ? "is-open" : "is-closed")">
                     <div class="agenda-day-toggle">
                         <span class="agenda-day-meta">
-                            <strong>@day.Label</strong>
+                            <strong>@CatalogLocalizer.Text(day.Label)</strong>
                             <span class="agenda-day-status">@(day.IsOpen ? openLabel : closedLabel)</span>
                         </span>
                         <span class="agenda-switch">
-                            <input type="checkbox" checked="@(day.IsOpen ? "checked" : null)" disabled aria-label="@day.Label" />
+                            <input type="checkbox" checked="@(day.IsOpen ? "checked" : null)" disabled aria-label="@CatalogLocalizer.Text(day.Label)" />
                             <span class="agenda-switch-track" aria-hidden="true"></span>
                         </span>
                     </div>

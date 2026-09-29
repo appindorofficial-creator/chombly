@@ -183,11 +183,11 @@ public class BookingStatusHandlersTests : IDisposable
     }
 
     [Theory]
-    [InlineData(BookingStatusAction.Accept, AppointmentStatus.Pending, AppointmentStatus.Confirmed, "¡Cita confirmada!", "Booking confirmed!")]
-    [InlineData(BookingStatusAction.Reject, AppointmentStatus.Pending, AppointmentStatus.Cancelled, "Cita rechazada", "Booking declined")]
-    [InlineData(BookingStatusAction.Complete, AppointmentStatus.Confirmed, AppointmentStatus.Completed, "Servicio completado", "Service completed")]
+    [InlineData(BookingStatusAction.Accept, AppointmentStatus.Pending, AppointmentStatus.Confirmed, "¡Cita confirmada!")]
+    [InlineData(BookingStatusAction.Reject, AppointmentStatus.Pending, AppointmentStatus.Cancelled, "Cita rechazada")]
+    [InlineData(BookingStatusAction.Complete, AppointmentStatus.Confirmed, AppointmentStatus.Completed, "Servicio completado")]
     public async Task Business_transitions_notify_the_client(
-        BookingStatusAction action, AppointmentStatus from, AppointmentStatus to, string titleEs, string titleEn)
+        BookingStatusAction action, AppointmentStatus from, AppointmentStatus to, string title)
     {
         var appt = AddAppointment(from);
 
@@ -197,8 +197,28 @@ public class BookingStatusHandlersTests : IDisposable
         Assert.Equal(to, Reload(appt.Id).Status);
         var notice = Assert.Single(Notifications());
         Assert.Equal(_client.Id, notice.UserId);
-        Assert.Equal(CatalogLocalizer.Loc(titleEs, titleEn), notice.Title);
+        Assert.Equal(title, notice.Title);
         Assert.StartsWith(_business.BusinessName, notice.Message);
+    }
+
+    [Fact]
+    public async Task A_business_using_english_still_saves_the_client_notice_in_spanish()
+    {
+        var appt = AddAppointment(AppointmentStatus.Pending);
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en");
+        try
+        {
+            await UpdateHandler().HandleAsync(new UpdateBookingStatusCommand(_business.Id, appt.Id, BookingStatusAction.Accept));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = previous;
+        }
+
+        var notice = Assert.Single(Notifications());
+        Assert.Equal("¡Cita confirmada!", notice.Title);
+        Assert.Contains("confirmó tu cita", notice.Message);
     }
 
     [Theory]
@@ -247,7 +267,7 @@ public class BookingStatusHandlersTests : IDisposable
             _business.Id, appt.Id, BookingStatusAction.Complete, "  Vacuna al día  "));
 
         Assert.Equal(
-            "Mascotas: Thor, Luna · " + CatalogLocalizer.Loc("Nota clínica: Vacuna al día", "Clinical note: Vacuna al día"),
+            "Mascotas: Thor, Luna · Nota clínica: Vacuna al día",
             Reload(appt.Id).Notes);
         using var db = _database.CreateContext();
         var saved = db.Consultations.AsNoTracking().Single();
@@ -284,7 +304,7 @@ public class BookingStatusHandlersTests : IDisposable
 
         Assert.True(result.Success);
         Assert.Equal(
-            "Paseo 60 min · " + CatalogLocalizer.Loc("Nota clínica: Todo bien", "Clinical note: Todo bien"),
+            "Paseo 60 min · Nota clínica: Todo bien",
             Reload(appt.Id).Notes);
         Assert.Equal("vet-followup", Assert.Single(Notifications()).Type);
     }

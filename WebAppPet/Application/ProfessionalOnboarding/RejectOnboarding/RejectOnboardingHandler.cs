@@ -33,7 +33,7 @@ public class RejectOnboardingHandler
         _db.Notifications.Add(new AppNotification
         {
             UserId = application.UserId,
-            Title = "Onboarding profesional no aprobado",
+            Title = "Registro profesional no aprobado",
             Message = string.IsNullOrWhiteSpace(command.Notes)
                 ? "Tu solicitud necesita correcciones. Revisa las notas del revisor."
                 : command.Notes,

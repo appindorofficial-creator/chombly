@@ -1,8 +1,6 @@
 using WebAppPet.Application.Behavior.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Localization;
-
 namespace WebAppPet.Application.Behavior.SaveBehaviorFollowUp;
 
 /// <summary>
@@ -28,10 +26,8 @@ public class SaveBehaviorFollowUpHandler
         _db.Notifications.Add(new AppNotification
         {
             UserId = command.ClientId,
-            Title = CatalogLocalizer.Loc("Plan de conducta", "Behavior plan"),
-            Message = CatalogLocalizer.Loc(
-                $"Nota guardada para {behaviorCase.Pet?.Name}.",
-                $"Note saved for {behaviorCase.Pet?.Name}."),
+            Title = "Plan de conducta",
+            Message = $"Nota guardada para {behaviorCase.Pet?.Name}.",
             Type = "behavior-plan",
             CreatedAt = DateTime.UtcNow
         });

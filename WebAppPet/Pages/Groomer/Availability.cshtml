@@ -79,14 +79,14 @@
                         <input type="hidden" name="WeekEdit[@i].Label" value="@day.Label" />
                         <label class="agenda-day-toggle">
                             <span class="agenda-day-meta">
-                                <strong>@day.Label</strong>
+                                <strong>@CatalogLocalizer.Text(day.Label)</strong>
                                 <span class="agenda-day-status">@(day.IsOpen ? openLabel : closedLabel)</span>
                             </span>
                             <span class="agenda-switch">
                                 <input type="checkbox" name="WeekEdit[@i].IsOpen" value="true"
                                        @(day.IsOpen ? "checked" : null)
                                        data-agenda-switch
-                                       aria-label="@CatalogLocalizer.Loc($"{day.Label} abierto", $"{day.Label} open")" />
+                                       aria-label="@CatalogLocalizer.Loc($"{CatalogLocalizer.Text(day.Label)} abierto", $"{CatalogLocalizer.Text(day.Label)} open")" />
                                 <span class="agenda-switch-track" aria-hidden="true"></span>
                             </span>
                             @* The unchecked fallback must follow the checkbox: model binding keeps the first posted value. *@

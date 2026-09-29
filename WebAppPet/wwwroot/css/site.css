@@ -1153,6 +1153,16 @@ input.form-control[type="number"] {
   /* Prevent iOS intrinsic min-width from expanding parent cards past the viewport. */
   -webkit-min-logical-width: 0;
 }
+/* iOS Safari collapses an empty date/time value to zero height, leaving a thin bar. */
+input.form-control[type="date"],
+input.form-control[type="time"],
+input.form-control[type="datetime-local"] {
+  line-height: 1.25;
+  min-height: calc(1.25em + 27px);
+}
+input.form-control::-webkit-date-and-time-value {
+  min-height: 1.25em;
+}
 .form-group {
   margin-bottom: 14px;
   max-width: 100%;
@@ -1883,7 +1893,7 @@ input.form-control[type="number"] {
   mix-blend-mode: multiply;
 }
 .hero-photo .actions {
-  position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 2;
+  position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; z-index: 2;
 }
 
 .fav-btn {
@@ -9852,3 +9862,41 @@ html.ch-route-pending .onboard-stage {
     opacity: .55;
   }
 }
+
+.reminder-dnd {
+  margin: 4px 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 61, 47, 0.10);
+  background: #f7f8f7;
+  padding: 12px 14px;
+}
+.reminder-dnd summary {
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 750;
+  color: var(--forest);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.reminder-dnd summary::-webkit-details-marker { display: none; }
+.reminder-dnd summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform var(--motion-fast) var(--ease-standard);
+  flex-shrink: 0;
+}
+.reminder-dnd[open] summary::after { transform: rotate(-135deg); }
+.reminder-dnd[open] summary { margin-bottom: 8px; }
+.reminder-dnd-times {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.reminder-dnd-times .form-group { margin-bottom: 0; }

@@ -99,12 +99,16 @@ public static class GeoHelper
         return miles is null ? null : miles.Value * 1.609344;
     }
 
-    /// <summary>Etiqueta de distancia en km (p. ej. "A 12,3 km de ti").</summary>
+    /// <summary>Etiqueta de distancia en km en el idioma de la interfaz (p. ej. "A 12.3 km de ti" / "12.3 km away").</summary>
     public static string? FormatMilesAway(double? miles) =>
-        miles is null ? null : $"A {miles.Value * 1.609344:0.0} km de ti";
+        miles is null ? null : FormatKmAway(miles.Value * 1.609344);
 
-    public static string? FormatKmAway(double? km) =>
-        km is null ? null : $"A {km.Value:0.0} km de ti";
+    public static string? FormatKmAway(double? km)
+    {
+        if (km is not double d) return null;
+        var english = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
+        return english ? $"{d:0.0} km away" : $"A {d:0.0} km de ti";
+    }
 
     /// <summary>Within this radius we show km; beyond that we show city/country text.</summary>
     public const double LocalDistanceKmMax = 80;

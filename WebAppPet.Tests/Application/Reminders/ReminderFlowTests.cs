@@ -94,13 +94,44 @@ public class ReminderFlowTests : IDisposable
     }
 
     [Fact]
-    public async Task Quiet_hours_accept_twelve_hour_times_and_ignore_garbage()
+    public async Task Do_not_disturb_accepts_twelve_hour_times()
     {
-        await Create(Command(quietStart: "9:30 PM", quietEnd: "later"));
+        await Create(Command(quietStart: "9:30 PM", quietEnd: "7:00 AM"));
 
         var schedule = SingleSchedule();
         Assert.Equal(new TimeSpan(21, 30, 0), schedule.QuietHoursStartLocal);
-        Assert.Null(schedule.QuietHoursEndLocal);
+        Assert.Equal(new TimeSpan(7, 0, 0), schedule.QuietHoursEndLocal);
+    }
+
+    [Fact]
+    public async Task Do_not_disturb_is_optional()
+    {
+        var outcome = await Create(Command(quietStart: " ", quietEnd: ""));
+
+        Assert.Equal(CreateReminderOutcome.Created, outcome);
+        Assert.Null(SingleSchedule().QuietHoursStartLocal);
+        Assert.Null(SingleSchedule().QuietHoursEndLocal);
+    }
+
+    [Theory]
+    [InlineData("22:00", null)]
+    [InlineData(null, "07:00")]
+    [InlineData("22:00", "later")]
+    public async Task Do_not_disturb_needs_both_times(string? start, string? end)
+    {
+        var outcome = await Create(Command(quietStart: start, quietEnd: end));
+
+        Assert.Equal(CreateReminderOutcome.IncompleteQuietHours, outcome);
+        using var verify = _database.CreateContext();
+        Assert.Empty(verify.ReminderSchedules);
+    }
+
+    [Fact]
+    public async Task Do_not_disturb_rejects_the_same_start_and_end()
+    {
+        var outcome = await Create(Command(quietStart: "22:00", quietEnd: "10:00 PM"));
+
+        Assert.Equal(CreateReminderOutcome.SameQuietHours, outcome);
     }
 
     [Fact]
@@ -177,7 +208,7 @@ public class ReminderFlowTests : IDisposable
     {
         var created = await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
 
-        Assert.True(created);
+        Assert.Equal(CreateCheckupReminderOutcome.Created, created);
         var schedule = SingleSchedule();
         Assert.Equal(ReminderType.Vaccine, schedule.Type);
         Assert.Contains(_pet.Name, schedule.Title);
@@ -189,13 +220,77 @@ public class ReminderFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task The_care_page_shortcut_saves_spanish_even_when_the_screen_is_in_english()
+    {
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en");
+        try
+        {
+            await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = previous;
+        }
+
+        var schedule = SingleSchedule();
+        Assert.Equal($"Vacunas / chequeo · {_pet.Name}", schedule.Title);
+        Assert.Equal("Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.", schedule.Notes);
+    }
+
+    [Fact]
+    public async Task Tapping_the_care_page_shortcut_again_does_not_stack_reminders()
+    {
+        var handler = new CreateCheckupReminderHandler(_db);
+
+        Assert.Equal(CreateCheckupReminderOutcome.Created,
+            await handler.HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id)));
+        Assert.Equal(CreateCheckupReminderOutcome.AlreadyActive,
+            await handler.HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id)));
+
+        SingleSchedule();
+    }
+
+    [Fact]
+    public async Task An_old_english_checkup_reminder_also_counts_as_already_active()
+    {
+        _db.ReminderSchedules.Add(new ReminderSchedule
+        {
+            UserId = _user.Id,
+            PetId = _pet.Id,
+            Type = ReminderType.Vaccine,
+            Title = $"Vaccines / checkup · {_pet.Name}",
+            FrequencyDays = 365,
+            NextDueUtc = DateTime.UtcNow.AddDays(30)
+        });
+        _db.SaveChanges();
+
+        var outcome = await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
+
+        Assert.Equal(CreateCheckupReminderOutcome.AlreadyActive, outcome);
+    }
+
+    [Fact]
+    public async Task A_deactivated_checkup_reminder_can_be_created_again()
+    {
+        var handler = new CreateCheckupReminderHandler(_db);
+        await handler.HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
+        _db.ReminderSchedules.Single().IsActive = false;
+        _db.SaveChanges();
+
+        var outcome = await handler.HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
+
+        Assert.Equal(CreateCheckupReminderOutcome.Created, outcome);
+    }
+
+    [Fact]
     public async Task The_care_page_shortcut_refuses_someone_elses_pet()
     {
         var otherPet = TestData.AddPet(_db, TestData.AddUser(_db));
 
         var created = await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, otherPet.Id));
 
-        Assert.False(created);
+        Assert.Equal(CreateCheckupReminderOutcome.PetNotFound, created);
         using var verify = _database.CreateContext();
         Assert.Empty(verify.ReminderSchedules);
     }
@@ -252,5 +347,21 @@ public class ReminderFlowTests : IDisposable
         var sent = verify.ReminderSchedules.Single();
         Assert.True(sent.IsActive);
         Assert.True(sent.NextDueUtc > DateTime.UtcNow.AddDays(29));
+    }
+
+    [Fact]
+    public async Task A_repeating_reminder_keeps_its_planned_time_when_the_job_runs_late()
+    {
+        await Create(Command(nextDue: AppTimeZones.TodayLocalDate()));
+        var schedule = _db.ReminderSchedules.Single();
+        var planned = DateTime.SpecifyKind(DateTime.UtcNow.AddMinutes(-3), DateTimeKind.Utc);
+        planned = planned.AddTicks(-(planned.Ticks % TimeSpan.TicksPerMinute));
+        schedule.NextDueUtc = planned;
+        _db.SaveChanges();
+
+        await new ReminderEngineService(_db, NullLogger<ReminderEngineService>.Instance).ProcessDueRemindersAsync();
+
+        using var verify = _database.CreateContext();
+        Assert.Equal(planned.AddDays(30), verify.ReminderSchedules.Single().NextDueUtc);
     }
 }

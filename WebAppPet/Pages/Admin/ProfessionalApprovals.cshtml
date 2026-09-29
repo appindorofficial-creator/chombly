@@ -2,7 +2,7 @@
 @model WebAppPet.Pages.Admin.ProfessionalApprovalsModel
 @using WebAppPet.Domain
 @{
-    ViewData["Title"] = "Aprobaciones profesionales";
+    ViewData["Title"] = CatalogLocalizer.Loc("Aprobaciones profesionales", "Professional approvals");
     ViewData["LangCompact"] = true;
     ViewData["OnboardShowNotif"] = true;
     ViewData["OnboardNotifReturn"] = "/Admin/ProfessionalApprovals";
@@ -26,7 +26,7 @@
 <div class="onboard onboard-app">
     <partial name="_OnboardTop" />
     <div class="home-body">
-    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Onboarding profesional", "Professional onboarding")</h1>
+    <h1 class="app-page-heading">@CatalogLocalizer.Loc("Registro profesional", "Professional onboarding")</h1>
     <p class="muted small">@CatalogLocalizer.Loc("Solicitudes Local / Internacional / Conducta.", "Local / International / Behavior applications.")</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
@@ -51,23 +51,23 @@
             <p class="muted small">@a.ClinicOrPracticeName · @a.LicenseJurisdiction · @a.LicenseNumber</p>
             @if (!string.IsNullOrWhiteSpace(a.Languages))
             {
-                <p class="muted small">Idiomas: @a.Languages</p>
+                <p class="muted small">@CatalogLocalizer.Loc("Idiomas", "Languages"): @a.Languages</p>
             }
             @if (!string.IsNullOrWhiteSpace(a.BreedExpertiseCsv))
             {
-                <p class="muted small">Razas: @a.BreedExpertiseCsv</p>
+                <p class="muted small">@CatalogLocalizer.Loc("Razas", "Breeds"): @a.BreedExpertiseCsv</p>
             }
             @if (!string.IsNullOrWhiteSpace(a.DocumentsNote))
             {
-                <p class="muted small">Docs: @a.DocumentsNote</p>
+                <p class="muted small">@CatalogLocalizer.Loc("Documentos", "Documents"): @a.DocumentsNote</p>
             }
             @if (!string.IsNullOrWhiteSpace(a.UploadPath))
             {
-                <p class="muted small"><a href="@a.UploadPath" target="_blank">Ver archivo</a></p>
+                <p class="muted small"><a href="@a.UploadPath" target="_blank">@CatalogLocalizer.Loc("Ver archivo", "View file")</a></p>
             }
             @if (a.SubmittedUtc is DateTime sub)
             {
-                <p class="muted small">Enviado: @AppTimeZones.FormatShort(sub)</p>
+                <p class="muted small">@CatalogLocalizer.Loc("Enviado", "Submitted"): @AppTimeZones.FormatShort(sub)</p>
             }
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <form method="post" asp-page-handler="Approve" style="flex:1;min-width:120px">

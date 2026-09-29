@@ -13,7 +13,10 @@
     <p class="muted small">@CatalogLocalizer.Loc("Historial, plan y próximas tareas", "History, plan, and upcoming tasks")</p>
     <div class="card card-pad" style="margin-bottom:14px">
         <strong>@Model.Pet?.Name</strong>
-        <p class="muted small mb-0">@Model.Pet?.Species · @Model.Pet?.Breed · @Model.Pet?.AgeYears @CatalogLocalizer.Loc("años", "yrs")</p>
+        @if (Model.Pet is { } pet)
+        {
+            <p class="muted small mb-0">@PetSpecies.Label(pet.Species) · @PetCatalog.DisplayBreed(pet.Species, pet.Breed) · @pet.AgeYears @L["Pets_Years"]</p>
+        }
     </div>
 
     <div class="card card-pad @(Model.Subscription != null ? "vet-vcpr-ok" : "vet-vcpr-missing care-upsell")" style="margin-bottom:14px">
@@ -50,7 +53,7 @@
             {
                 <a class="card card-pad" asp-page="/Appointments/Details" asp-route-id="@a.Id" asp-route-returnUrl="@(Url.Page("/Pets/Care", new { id = Model.Id }))" style="display:block;margin-bottom:8px;text-decoration:none;color:inherit">
                     <strong>@a.Groomer.BusinessName</strong>
-                    <span class="muted small" style="display:block">@AppTimeZones.FormatShort(a.ScheduledAt) · @a.Service.Name</span>
+                    <span class="muted small" style="display:block">@AppTimeZones.FormatShort(a.ScheduledAt) · @CatalogLocalizer.Text(a.Service.Name)</span>
                 </a>
             }
         }
