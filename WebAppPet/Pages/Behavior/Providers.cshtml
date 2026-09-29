@@ -199,7 +199,9 @@
 
             <button type="submit" class="btn btn-primary btn-block" data-terms-submit
                     disabled="@((!canConfirm || !Model.AcceptTerms) ? "disabled" : null)">
-                @CatalogLocalizer.Loc($"Confirmar · {AppMoney.Format(price)}", $"Confirm · {AppMoney.Format(price)}")
+                @(Model.HasProvider
+                    ? CatalogLocalizer.Loc($"Confirmar · {AppMoney.Format(price)}", $"Confirm · {AppMoney.Format(price)}")
+                    : CatalogLocalizer.Loc("Confirmar", "Confirm"))
             </button>
             <p class="muted small center">@CatalogLocalizer.Loc("Pago simulado · sin cargo real", "Simulated payment · no real charge")</p>
         </form>
