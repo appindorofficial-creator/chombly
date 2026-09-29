@@ -109,6 +109,22 @@ public class NotificationLocalizerTests
     }
 
     [Theory]
+    [InlineData("Prueba hora", "en", "Prueba hora")]
+    [InlineData("Antipulgas · Rocky", "en", "Antipulgas · Rocky")]
+    [InlineData("Con comida", "en", "Con comida")]
+    [InlineData("Recordatorio de vacuna", "en", "Vaccine reminder")]
+    [InlineData("Recordatorio de medicamento · Rocky", "en", "Medication reminder · Rocky")]
+    [InlineData("Vacuna antirrábica", "en", "Rabies vaccine")]
+    [InlineData("Vacunas / chequeo · Rocky", "en", "Vaccines / checkup · Rocky")]
+    [InlineData("Vaccine reminder", "es", "Recordatorio de vacuna")]
+    [InlineData("Heart pill", "es", "Heart pill")]
+    [InlineData("Prueba hora", "es", "Prueba hora")]
+    public void Reminder_text_typed_by_the_family_is_shown_as_written(string stored, string culture, string expected)
+    {
+        Assert.Equal(expected, In(culture, () => NotificationLocalizer.Reminder(stored)));
+    }
+
+    [Theory]
     [InlineData("Clinical note: Tomar agua", "es", "Nota clínica: Tomar agua")]
     [InlineData("Nota clínica: Rest two days", "en", "Clinical note: Rest two days")]
     [InlineData("Paseo 60 min · Follow-up: revisar", "es", "Paseo 60 min · Seguimiento: revisar")]
