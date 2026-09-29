@@ -6,13 +6,6 @@
     ViewData["Title"] = L["Groomer_Payouts"].Value;
     ViewData["GroomerTab"] = "payouts";
     ViewData["LangCompact"] = true;
-    string ServiceLabel(CompensationServiceType t) => t switch
-    {
-        CompensationServiceType.LocalVet => L["Payout_Service_LocalVet"].Value,
-        CompensationServiceType.InternationalVet => L["Payout_Service_InternationalVet"].Value,
-        CompensationServiceType.Behavior => L["Payout_Service_Behavior"].Value,
-        _ => t.ToString()
-    };
     string StatusLabel(ProviderPayoutStatus s) => s switch
     {
         ProviderPayoutStatus.Pending => L["Payout_Status_Pending"].Value,
@@ -49,22 +42,21 @@
 
     <section class="card card-pad vet-vcpr-ok" style="margin-bottom:14px">
         <h2 class="section-title" style="margin-top:0">@L["Payout_CommissionRules"]</h2>
-        @if (Model.Rules.Count == 0)
-        {
-            <p class="muted small mb-0">@L["Payout_NoRules"]</p>
-        }
-        else
-        {
-            @foreach (var r in Model.Rules)
+        <p style="margin-bottom:6px">
+            <strong>@CatalogLocalizer.Loc($"{Model.CommissionPercent:0.##}% del total de cada servicio", $"{Model.CommissionPercent:0.##}% of each service total")</strong>
+            @if (Model.Rule?.FlatFeeUsd is decimal fee && fee > 0)
             {
-                <div style="margin-bottom:8px">
-                    <strong>@ServiceLabel(r.ServiceType)</strong>
-                    <span class="muted small"> · @r.CommissionPercent.ToString("0.##")% · @Model.Currency
-                        @if (r.ProviderUserId is null) { <text>· @L["Payout_PlatformDefault"]</text> }
-                    </span>
-                </div>
+                <text> + @AppMoney.FormatCurrency(fee, Model.Currency) @CatalogLocalizer.Loc("por liquidación", "per payout")</text>
             }
-        }
+            <span class="muted small">· @Model.Currency
+                @if (Model.Rule?.ProviderUserId is null) { <text>· @L["Payout_PlatformDefault"]</text> }
+            </span>
+        </p>
+        <p class="muted small mb-0">
+            @CatalogLocalizer.Loc(
+                "Chombly descuenta esta comisión de lo que tus clientes pagan en línea antes de liquidarte.",
+                "Chombly deducts this commission from what your customers pay online before paying you out.")
+        </p>
     </section>
 
     <section style="margin-bottom:18px">
@@ -112,10 +104,14 @@
                             <text>· @CatalogLocalizer.Loc("Saldo a cobrar en el negocio", "Balance to collect in person") @AppMoney.FormatCurrency(pay.BalanceAtBusiness, pay.Currency)</text>
                         }
                     </span>
-                    @if (!refunded)
+                    @if (refunded)
+                    {
+                        <span class="muted small" style="display:block">@CatalogLocalizer.Loc("Sin comisión: el pago se reembolsó.", "No commission: the payment was refunded.")</span>
+                    }
+                    else
                     {
                         <span class="muted small" style="display:block">
-                            @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.FormatCurrency(pay.Commission, pay.Currency)
+                            @CatalogLocalizer.Loc($"Comisión Chombly ({pay.CommissionPercent:0.##}%)", $"Chombly commission ({pay.CommissionPercent:0.##}%)") @AppMoney.FormatCurrency(pay.Commission, pay.Currency)
                             · <strong>@CatalogLocalizer.Loc("Neto a liquidar", "Net payout") @AppMoney.FormatCurrency(pay.Net, pay.Currency)</strong>
                         </span>
                     }
@@ -157,7 +153,7 @@
                         · @p.ConsultationCount @L["Payout_Items"]
                     </span>
                     <span class="muted small" style="display:block">
-                        @CatalogLocalizer.Loc("Bruto", "Gross") @AppMoney.FormatCurrency(p.GrossAmountUsd, Model.Currency) · @CatalogLocalizer.Loc("Comisión", "Comm") @AppMoney.FormatCurrency(p.CommissionAmountUsd, Model.Currency)
+                        @CatalogLocalizer.Loc("Bruto", "Gross") @AppMoney.FormatCurrency(p.GrossAmountUsd, Model.Currency) · @CatalogLocalizer.Loc("Comisión Chombly", "Chombly commission") @AppMoney.FormatCurrency(p.CommissionAmountUsd, Model.Currency)
                         @if (p.RefundDeduction > 0) { <text>· @CatalogLocalizer.Loc("Reembolsos ya pagados", "Refunds already paid out") −@AppMoney.FormatCurrency(p.RefundDeduction, Model.Currency)</text> }
                         · <strong class="price-tag">@CatalogLocalizer.Loc("Neto", "Net") @AppMoney.FormatCurrency(p.NetAmountUsd, Model.Currency)</strong>
                     </span>

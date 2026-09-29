@@ -638,12 +638,8 @@
   <data name="Onboard_UploadOptional" xml:space="preserve"><value>Subir documento (opcional)</value></data>
 
   <data name="Payout_Lead" xml:space="preserve"><value>Comisiones y resúmenes de período (simulado, sin Stripe real).</value></data>
-  <data name="Payout_CommissionRules" xml:space="preserve"><value>Reglas de comisión</value></data>
-  <data name="Payout_NoRules" xml:space="preserve"><value>Aún no hay reglas. Completa el onboarding profesional.</value></data>
-  <data name="Payout_PlatformDefault" xml:space="preserve"><value>default plataforma</value></data>
-  <data name="Payout_Service_LocalVet" xml:space="preserve"><value>Vet local</value></data>
-  <data name="Payout_Service_InternationalVet" xml:space="preserve"><value>Vet internacional</value></data>
-  <data name="Payout_Service_Behavior" xml:space="preserve"><value>Conducta</value></data>
+  <data name="Payout_CommissionRules" xml:space="preserve"><value>Tu comisión</value></data>
+  <data name="Payout_PlatformDefault" xml:space="preserve"><value>tarifa estándar de la plataforma</value></data>
   <data name="Payout_GenerateTitle" xml:space="preserve"><value>Generar resumen de período</value></data>
   <data name="Payout_From" xml:space="preserve"><value>Desde</value></data>
   <data name="Payout_To" xml:space="preserve"><value>Hasta</value></data>

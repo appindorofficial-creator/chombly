@@ -13,6 +13,8 @@ public sealed record GetAdminPaymentsQuery(
 
 public sealed record AdminPaymentsView(List<AdminPaymentRow> Rows, List<AdminPaymentTotals> Totals, int MatchingCount);
 
+/// <param name="CommissionPercent">The business's commission rule; null for Chombly's own products.</param>
+/// <param name="Commission">Chombly's commission on a charge it still holds; null when refunded, declined or not a business charge.</param>
 public sealed record AdminPaymentRow(
     int Id,
     DateTime CreatedAt,
@@ -30,7 +32,9 @@ public sealed record AdminPaymentRow(
     string? FailureCode,
     string? Description,
     DateTime? RefundedAt,
-    string? RefundReason);
+    string? RefundReason,
+    decimal? CommissionPercent,
+    decimal? Commission);
 
 /// <param name="Collected">Charges that are still held (succeeded, not refunded).</param>
 /// <param name="Commission">Chombly's commission on business charges, per each business's active rule.</param>

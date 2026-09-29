@@ -348,6 +348,7 @@ public class ProviderPayoutServiceTests
         Assert.Equal(15.94m, deposit.ChargedOnline);
         Assert.Equal(45.55m, deposit.ServiceTotal);
         Assert.Equal(29.61m, deposit.BalanceAtBusiness);
+        Assert.Equal(20m, deposit.CommissionPercent);
         Assert.Equal(9.11m, deposit.Commission);
         Assert.Equal(6.83m, deposit.Net);
         Assert.Equal("Thor", deposit.PetName);
