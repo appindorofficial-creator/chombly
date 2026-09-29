@@ -4,6 +4,7 @@ using WebAppPet.Application.Care.GetCarePlan;
 using WebAppPet.Application.Care.GetPetCare;
 using WebAppPet.Application.Care.Shared;
 using WebAppPet.Application.Common;
+using WebAppPet.Application.Reminders.CreateCheckupReminder;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
@@ -308,6 +309,27 @@ public class CareMembershipTests : IDisposable
         Assert.Single(view.RecentConsults);
         Assert.NotNull(view.Subscription);
         Assert.Equal(1, view.RemainingConsults);
+    }
+
+    [Fact]
+    public async Task The_care_page_shows_the_active_checkup_reminder_only()
+    {
+        var pet = TestData.AddPet(_db, _user);
+        _db.ReminderSchedules.AddRange(
+            new ReminderSchedule { UserId = _user.Id, PetId = pet.Id, Type = ReminderType.Vaccine, Title = "Antirrábica", NextDueUtc = DateTime.UtcNow.AddDays(3), IsActive = true, TimeZoneId = "UTC" },
+            new ReminderSchedule { UserId = _user.Id, PetId = pet.Id, Type = ReminderType.Vaccine, Title = $"Vacunas / chequeo · {pet.Name}", NextDueUtc = DateTime.UtcNow.AddDays(1), IsActive = false, TimeZoneId = "UTC" });
+        _db.SaveChanges();
+        var handler = new GetPetCareHandler(_db, Care);
+
+        Assert.Null((await handler.HandleAsync(new GetPetCareQuery(_user.Id, pet.Id)))!.CheckupReminder);
+
+        await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, pet.Id));
+        var checkup = (await handler.HandleAsync(new GetPetCareQuery(_user.Id, pet.Id)))!.CheckupReminder;
+
+        Assert.NotNull(checkup);
+        Assert.True(checkup.IsActive);
+        Assert.Equal($"Vacunas / chequeo · {pet.Name}", checkup.Title);
+        Assert.Equal(365, checkup.FrequencyDays);
     }
 
     [Fact]
