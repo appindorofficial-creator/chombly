@@ -28,12 +28,16 @@
     });
   }
 
-  function passwordToggleLabels() {
+  function uiText(es, en) {
     var lang = (document.documentElement.lang || 'es').toLowerCase();
-    if (lang.indexOf('en') === 0) {
-      return { show: 'Show password', hide: 'Hide password' };
-    }
-    return { show: 'Mostrar contraseña', hide: 'Ocultar contraseña' };
+    return lang.indexOf('en') === 0 ? en : es;
+  }
+
+  function passwordToggleLabels() {
+    return {
+      show: uiText('Mostrar contraseña', 'Show password'),
+      hide: uiText('Ocultar contraseña', 'Hide password')
+    };
   }
 
   function bindPasswordToggles(root) {
@@ -231,8 +235,8 @@
     overlay.classList.remove('ch-confirm-overlay--apple');
     overlay.querySelector('#ch-confirm-title').textContent = opts.title || '';
     overlay.querySelector('#ch-confirm-msg').textContent = opts.message || '';
-    overlay.querySelector('[data-ch-confirm="no"]').textContent = opts.cancelLabel || 'No';
-    overlay.querySelector('[data-ch-confirm="yes"]').textContent = opts.okLabel || 'OK';
+    overlay.querySelector('[data-ch-confirm="no"]').textContent = opts.cancelLabel || uiText('No', 'No');
+    overlay.querySelector('[data-ch-confirm="yes"]').textContent = opts.okLabel || uiText('Sí', 'OK');
     confirmState.previouslyFocused = document.activeElement;
     confirmState.onResult = opts.onResult || null;
     document.body.classList.add('ch-confirm-open');
@@ -396,8 +400,8 @@
         openConfirm({
           title: form.getAttribute('data-confirm-title') || '',
           message: form.getAttribute('data-confirm-message') || form.getAttribute('data-confirm') || '',
-          cancelLabel: form.getAttribute('data-confirm-cancel') || 'No',
-          okLabel: form.getAttribute('data-confirm-ok') || 'OK',
+          cancelLabel: form.getAttribute('data-confirm-cancel') || uiText('No', 'No'),
+          okLabel: form.getAttribute('data-confirm-ok') || uiText('Sí', 'OK'),
           onResult: function (ok) {
             if (!ok) return;
             animateThenSubmit(form);
@@ -743,8 +747,8 @@
           btn.classList.toggle('is-on', on);
           btn.setAttribute('aria-pressed', on ? 'true' : 'false');
           var label = on
-            ? (btn.getAttribute('data-label-remove') || 'Remove')
-            : (btn.getAttribute('data-label-add') || 'Save');
+            ? (btn.getAttribute('data-label-remove') || uiText('Quitar de favoritos', 'Remove from favorites'))
+            : (btn.getAttribute('data-label-add') || uiText('Guardar en favoritos', 'Save to favorites'));
           btn.setAttribute('aria-label', label);
           btn.setAttribute('title', label);
           if (btn.getAttribute('data-remove-card') === '1' && !on) {
@@ -811,7 +815,7 @@
       btn.classList.add('is-success', 'app-btn');
       btn.disabled = true;
       btn.innerHTML = '<span class="app-btn-check" aria-hidden="true">✓</span><span class="app-btn-label"></span>';
-      btn.querySelector('.app-btn-label').textContent = labels.done || 'Listo';
+      btn.querySelector('.app-btn-label').textContent = labels.done || uiText('Listo', 'Done');
       return;
     }
     btn.classList.remove('is-loading', 'is-success');
@@ -847,8 +851,8 @@
       el.addEventListener('click', function (e) {
         e.preventDefault();
         var text = el.getAttribute('data-copy') || '';
-        var okMsg = el.getAttribute('data-copy-ok') || '✓ Copiado';
-        var failMsg = el.getAttribute('data-copy-fail') || 'No se pudo copiar';
+        var okMsg = el.getAttribute('data-copy-ok') || uiText('✓ Copiado', '✓ Copied');
+        var failMsg = el.getAttribute('data-copy-fail') || uiText('No se pudo copiar', 'Could not copy');
         function ok() {
           showAppToast(okMsg, { kind: 'success' });
           el.classList.add('is-copied');
@@ -884,7 +888,7 @@
         barHost.className = 'app-download-bar';
         if (!barHost.parentNode) el.appendChild(barHost);
         barHost.style.width = '8%';
-        showAppToast(el.getAttribute('data-download-loading') || 'Descargando…', { kind: 'info', duration: 1600 });
+        showAppToast(el.getAttribute('data-download-loading') || uiText('Descargando…', 'Downloading…'), { kind: 'info', duration: 1600 });
         var prog = 8;
         var tick = setInterval(function () {
           prog = Math.min(90, prog + 12);
@@ -905,12 +909,12 @@
         }).then(function () {
           clearInterval(tick);
           barHost.style.width = '100%';
-          showAppToast(el.getAttribute('data-download-done') || '✓ Descarga lista', { kind: 'success' });
+          showAppToast(el.getAttribute('data-download-done') || uiText('✓ Descarga lista', '✓ Download ready'), { kind: 'success' });
           setTimeout(function () { barHost.style.width = '0%'; }, 600);
         }).catch(function () {
           clearInterval(tick);
           barHost.style.width = '0%';
-          showAppToast(el.getAttribute('data-download-fail') || 'Error al descargar', { kind: 'error' });
+          showAppToast(el.getAttribute('data-download-fail') || uiText('Error al descargar', 'Download failed'), { kind: 'error' });
         });
       });
     });

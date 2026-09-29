@@ -37,6 +37,9 @@ public static class CatalogLocalizer
         ["Recordatorio de vacuna"] = "Vaccine reminder",
         ["Recordatorio de medicamento"] = "Medication reminder",
         ["Recordatorio de cita"] = "Appointment reminder",
+        ["Recordatorio de cuidado"] = "Care reminder",
+        ["Falta documentación. Complétala y envía la solicitud de nuevo."] =
+            "Documents are missing. Complete them and submit the application again.",
         ["Urgencias"] = "Emergencies",
         ["Sesión de comportamiento"] = "Behavior session",
         ["Orientación internacional 30 min"] = "International orientation 30 min",

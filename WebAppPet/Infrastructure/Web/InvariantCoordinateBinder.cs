@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using WebAppPet.Application.Accounts.Shared;
+using WebAppPet.Localization;
 
 namespace WebAppPet.Infrastructure.Web;
 
@@ -21,7 +22,8 @@ public sealed class InvariantCoordinateBinder : IModelBinder
         if (Coordinates.TryParse(raw, out var parsed))
             bindingContext.Result = ModelBindingResult.Success(parsed);
         else
-            bindingContext.ModelState.TryAddModelError(bindingContext.ModelName, $"Invalid coordinate '{raw}'.");
+            bindingContext.ModelState.TryAddModelError(bindingContext.ModelName, CatalogLocalizer.Loc(
+                $"Coordenada no válida: '{raw}'.", $"Invalid coordinate '{raw}'."));
         return Task.CompletedTask;
     }
 }

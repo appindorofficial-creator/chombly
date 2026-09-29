@@ -171,7 +171,7 @@ public class IndexModel : PageModel
         ResolveWindow(day, out var start, out var end);
         if (end <= start)
         {
-            ErrorMessage = "Revisa el horario personalizado.";
+            ErrorMessage = CatalogLocalizer.Loc("Revisa el horario personalizado.", "Check the custom schedule.");
             Pay = true;
             return Page();
         }

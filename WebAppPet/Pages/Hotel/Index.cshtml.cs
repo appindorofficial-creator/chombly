@@ -167,7 +167,7 @@ public class IndexModel : PageModel
         ResolveDates(out var cin, out var cout);
         if (cout <= cin)
         {
-            ErrorMessage = "Revisa las fechas de check-in y check-out.";
+            ErrorMessage = CatalogLocalizer.Loc("Revisa las fechas de check-in y check-out.", "Check the check-in and check-out dates.");
             Pay = true;
             return Page();
         }

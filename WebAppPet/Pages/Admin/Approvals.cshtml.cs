@@ -5,6 +5,7 @@ using WebAppPet.Application.Businesses.GetPendingBusinesses;
 using WebAppPet.Application.Businesses.RejectBusiness;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
+using WebAppPet.Localization;
 
 namespace WebAppPet.Pages.Admin;
 
@@ -41,7 +42,7 @@ public class ApprovalsModel : PageModel
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
         if (await _approve.HandleAsync(new ApproveBusinessCommand(id)) is { } name)
-            Message = $"{name} aprobado y publicado.";
+            Message = CatalogLocalizer.Loc($"{name} aprobado y publicado.", $"{name} approved and published.");
         Pending = await _getPending.HandleAsync();
         return Page();
     }
@@ -50,7 +51,7 @@ public class ApprovalsModel : PageModel
     {
         if (!_auth.IsAdmin) return RedirectToPage("/Account/Login");
         if (await _reject.HandleAsync(new RejectBusinessCommand(id)) is { } name)
-            Message = $"{name} rechazado.";
+            Message = CatalogLocalizer.Loc($"{name} rechazado.", $"{name} rejected.");
         Pending = await _getPending.HandleAsync();
         return Page();
     }
