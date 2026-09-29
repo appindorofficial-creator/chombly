@@ -50,8 +50,7 @@ public static class NotificationLocalizer
         ["Tu solicitud necesita correcciones. Revisa las notas del revisor."] =
             "Your application needs corrections. Review the reviewer's notes.",
         ["Nota clínica disponible"] = "Clinical note available",
-        ["Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas."] =
-            "Created from Care. Adjust the date or frequency if needed.",
+        ["Aviso creado desde Control."] = "Created from Care.",
         ["Reembolso de tu cita"] = "Appointment refund",
         ["Reembolso"] = "Refund",
         ["Chombly Care cancelado"] = "Chombly Care cancelled",
@@ -241,6 +240,13 @@ public static class NotificationLocalizer
         ["quedó"] = "looks", ["quedo"] = "looks", ["cuéntanos"] = "tell us", ["cuentanos"] = "tell us",
     };
 
+    /// <summary>Old app wording already saved in the database, shown as the current Spanish phrase.</summary>
+    private static readonly Dictionary<string, string> RetiredWording = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas."] = "Aviso creado desde Control.",
+        ["Created from Care. Adjust the date or frequency if needed."] = "Aviso creado desde Control.",
+    };
+
     private static readonly Dictionary<string, string> ExactEnToEs;
     private static readonly (string En, string Es)[] PhrasesEnToEs;
 
@@ -266,10 +272,6 @@ public static class NotificationLocalizer
     public static string Message(string? message) => Localize(message, isTitle: false);
 
     /// <summary>
-    /// Only the fixed app sentences (exact or with a name inside), in the current UI language;
-    /// null for free text so callers can fall back to their own handling.
-    /// </summary>
-    /// <summary>
     /// Reminder titles and notes are typed by the family: only the app's fixed phrases are
     /// translated, piece by piece around " · ", and everything else is shown as written.
     /// </summary>
@@ -280,10 +282,14 @@ public static class NotificationLocalizer
             text.Split(" · ").Select(part => Known(part) ?? CatalogLocalizer.Phrase(part)));
     }
 
+    /// <summary>
+    /// Only the fixed app sentences (exact or with a name inside), in the current UI language;
+    /// null for free text so callers can fall back to their own handling.
+    /// </summary>
     public static string? Known(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        var raw = text.Trim();
+        var raw = Current(text.Trim());
         var en = CatalogLocalizer.IsEnglish();
         if (TryNamedSentence(raw, en, out var named)) return named;
         if (en)
@@ -321,10 +327,13 @@ public static class NotificationLocalizer
         return false;
     }
 
+    private static string Current(string raw) =>
+        RetiredWording.TryGetValue(raw, out var current) ? current : raw;
+
     private static string Localize(string? text, bool isTitle)
     {
         if (string.IsNullOrWhiteSpace(text)) return "";
-        var raw = text.Trim();
+        var raw = Current(text.Trim());
         var en = CatalogLocalizer.IsEnglish();
 
         if (TryNamedSentence(raw, en, out var named)) return named;

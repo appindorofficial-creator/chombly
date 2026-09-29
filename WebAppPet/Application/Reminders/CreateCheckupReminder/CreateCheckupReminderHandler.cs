@@ -39,7 +39,7 @@ public class CreateCheckupReminderHandler
             PetId = pet.Id,
             Type = ReminderType.Vaccine,
             Title = $"{ReminderSchedules.CheckupTitlePrefix} {pet.Name}",
-            Notes = "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
+            Notes = "Aviso creado desde Control.",
             FrequencyDays = 365,
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9)),
             QuietHoursStartLocal = TimeSpan.FromHours(21),
