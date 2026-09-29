@@ -561,6 +561,19 @@ public static class CatalogLocalizer
         return TranslateWords(key);
     }
 
+    /// <summary>
+    /// Only whole catalog phrases, in the current UI language. Text typed by people
+    /// stays as written instead of being swapped word by word.
+    /// </summary>
+    public static string Phrase(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return text ?? "";
+        var key = text.Trim();
+        if (!IsEnglish())
+            return SpanishFor.TryGetValue(key, out var es) ? MatchCase(key, es) : text;
+        return Map.TryGetValue(key, out var en) ? en : text;
+    }
+
     private static List<string> SplitSentences(string text)
     {
         var list = new List<string>();

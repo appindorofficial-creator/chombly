@@ -43,6 +43,7 @@
         @foreach (var n in Model.Items)
         {
             var href = NotificationDeepLink.Resolve(n, businessShell, isAdmin)!;
+            var isReminder = n.Type.StartsWith("reminder-", StringComparison.Ordinal);
             <div class="notif-swipe" style="--i:@i">
                 <div class="notif-swipe-bg" aria-hidden="true">
                     <span>🗑️</span>
@@ -51,8 +52,8 @@
                 <div class="notif-item @(n.IsRead ? "" : "unread") is-openable" data-notif-swipe>
                     <a class="notif-item-open" href="@href">
                         <span class="notif-item-body">
-                            <strong>@NotificationLocalizer.Title(n.Title)</strong>
-                            <span class="muted small notif-item-msg">@NotificationLocalizer.Message(n.Message)</span>
+                            <strong>@(isReminder ? NotificationLocalizer.Reminder(n.Title) : NotificationLocalizer.Title(n.Title))</strong>
+                            <span class="muted small notif-item-msg">@(isReminder ? NotificationLocalizer.Reminder(n.Message) : NotificationLocalizer.Message(n.Message))</span>
                             <span class="muted small notif-item-time">@AppTimeZones.FormatShort(n.CreatedAt)</span>
                         </span>
                         <span class="notif-item-chev" aria-hidden="true">›</span>

@@ -269,6 +269,17 @@ public static class NotificationLocalizer
     /// Only the fixed app sentences (exact or with a name inside), in the current UI language;
     /// null for free text so callers can fall back to their own handling.
     /// </summary>
+    /// <summary>
+    /// Reminder titles and notes are typed by the family: only the app's fixed phrases are
+    /// translated, piece by piece around " · ", and everything else is shown as written.
+    /// </summary>
+    public static string Reminder(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return text ?? "";
+        return Known(text) ?? string.Join(" · ",
+            text.Split(" · ").Select(part => Known(part) ?? CatalogLocalizer.Phrase(part)));
+    }
+
     public static string? Known(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
