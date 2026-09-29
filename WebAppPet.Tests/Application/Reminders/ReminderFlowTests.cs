@@ -94,13 +94,44 @@ public class ReminderFlowTests : IDisposable
     }
 
     [Fact]
-    public async Task Quiet_hours_accept_twelve_hour_times_and_ignore_garbage()
+    public async Task Do_not_disturb_accepts_twelve_hour_times()
     {
-        await Create(Command(quietStart: "9:30 PM", quietEnd: "later"));
+        await Create(Command(quietStart: "9:30 PM", quietEnd: "7:00 AM"));
 
         var schedule = SingleSchedule();
         Assert.Equal(new TimeSpan(21, 30, 0), schedule.QuietHoursStartLocal);
-        Assert.Null(schedule.QuietHoursEndLocal);
+        Assert.Equal(new TimeSpan(7, 0, 0), schedule.QuietHoursEndLocal);
+    }
+
+    [Fact]
+    public async Task Do_not_disturb_is_optional()
+    {
+        var outcome = await Create(Command(quietStart: " ", quietEnd: ""));
+
+        Assert.Equal(CreateReminderOutcome.Created, outcome);
+        Assert.Null(SingleSchedule().QuietHoursStartLocal);
+        Assert.Null(SingleSchedule().QuietHoursEndLocal);
+    }
+
+    [Theory]
+    [InlineData("22:00", null)]
+    [InlineData(null, "07:00")]
+    [InlineData("22:00", "later")]
+    public async Task Do_not_disturb_needs_both_times(string? start, string? end)
+    {
+        var outcome = await Create(Command(quietStart: start, quietEnd: end));
+
+        Assert.Equal(CreateReminderOutcome.IncompleteQuietHours, outcome);
+        using var verify = _database.CreateContext();
+        Assert.Empty(verify.ReminderSchedules);
+    }
+
+    [Fact]
+    public async Task Do_not_disturb_rejects_the_same_start_and_end()
+    {
+        var outcome = await Create(Command(quietStart: "22:00", quietEnd: "10:00 PM"));
+
+        Assert.Equal(CreateReminderOutcome.SameQuietHours, outcome);
     }
 
     [Fact]

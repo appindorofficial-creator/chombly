@@ -20,7 +20,7 @@
     <partial name="_OnboardTop" />
     <div class="home-body @(HideNav ? "no-nav" : "")">
     <h1 class="app-page-heading">@CatalogLocalizer.Loc("Recordatorios", "Reminders")</h1>
-    <p class="muted small">@Model.Pet?.Name · @CatalogLocalizer.Loc("vacunas, medicinas, horas silenciosas", "vaccines, meds, quiet hours")</p>
+    <p class="muted small">@Model.Pet?.Name · @CatalogLocalizer.Loc("vacunas, medicinas y citas", "vaccines, meds, and appointments")</p>
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-info">@Model.Message</div>
@@ -46,7 +46,7 @@
                     @if (s.QuietHoursStartLocal is TimeSpan qs && s.QuietHoursEndLocal is TimeSpan qe)
                     {
                         <span class="muted small" style="display:block">
-                            @CatalogLocalizer.Loc("Horas silenciosas", "Quiet hours"): @qs.ToString(@"hh\:mm")–@qe.ToString(@"hh\:mm")
+                            @CatalogLocalizer.Loc("No molestar", "Do not disturb"): @qs.ToString(@"hh\:mm")–@qe.ToString(@"hh\:mm")
                         </span>
                     }
                     <form method="post" asp-page-handler="Deactivate" style="margin-top:8px">
@@ -95,17 +95,38 @@
                 <label>@CatalogLocalizer.Loc("Próxima fecha", "Next due date")</label>
                 <input class="form-control" type="date" asp-for="NextDueLocal" required min="@minDueDate" />
             </div>
-            <div class="form-group">
-                <label>@CatalogLocalizer.Loc("Inicio horas silenciosas", "Quiet hours start")</label>
-                <input class="form-control" type="time" asp-for="QuietStart" />
-            </div>
-            <div class="form-group">
-                <label>@CatalogLocalizer.Loc("Fin horas silenciosas", "Quiet hours end")</label>
-                <input class="form-control" type="time" asp-for="QuietEnd" />
-            </div>
-            <p class="muted small">@CatalogLocalizer.Loc("Si el recordatorio cae en horas silenciosas, se pospone hasta el fin de esa ventana (en tu hora local).", "If due during quiet hours, delivery is deferred until that window ends (in your local time).")</p>
+            <details class="reminder-dnd" id="reminder-dnd" @(string.IsNullOrWhiteSpace(Model.QuietStart) && string.IsNullOrWhiteSpace(Model.QuietEnd) ? null : "open")>
+                <summary>@CatalogLocalizer.Loc("Opcional: no molestar", "Optional: do not disturb")</summary>
+                <p class="muted small">@CatalogLocalizer.Loc(
+                    "No te enviamos avisos entre estas dos horas. Si el recordatorio cae en ese horario, te avisamos cuando termine (en tu hora local).",
+                    "We won't send alerts between these two times. If the reminder falls in that window, we'll notify you when it ends (in your local time).")</p>
+                <div class="reminder-dnd-times">
+                    <div class="form-group">
+                        <label for="QuietStart">@CatalogLocalizer.Loc("Desde", "From")</label>
+                        <input class="form-control" type="time" asp-for="QuietStart" data-dnd-time
+                               data-msg-required="@CatalogLocalizer.Loc("Indica también la hora desde.", "Also enter the from time.")" />
+                    </div>
+                    <div class="form-group">
+                        <label for="QuietEnd">@CatalogLocalizer.Loc("Hasta", "Until")</label>
+                        <input class="form-control" type="time" asp-for="QuietEnd" data-dnd-time
+                               data-msg-required="@CatalogLocalizer.Loc("Indica también la hora hasta.", "Also enter the until time.")" />
+                    </div>
+                </div>
+            </details>
             <button class="btn btn-primary btn-block" type="submit">@CatalogLocalizer.Loc("Crear", "Create")</button>
         </form>
+        <script>
+          (function () {
+            var times = document.querySelectorAll('#reminder-dnd [data-dnd-time]');
+            if (times.length !== 2) return;
+            function sync() {
+              var any = times[0].value !== '' || times[1].value !== '';
+              times.forEach(function (t) { t.required = any; });
+            }
+            times.forEach(function (t) { t.addEventListener('input', sync); t.addEventListener('change', sync); });
+            sync();
+          })();
+        </script>
     </section>
     </div>
     @if (!HideNav) { <div class="bottom-nav-clearance" aria-hidden="true"></div> }

@@ -12,6 +12,10 @@ public enum CreateReminderOutcome
     NoType,
     NoDate,
     PastDate,
+    /// <summary>Only one of the two do-not-disturb times was given (or one couldn't be read).</summary>
+    IncompleteQuietHours,
+    /// <summary>Do-not-disturb start and end are the same time, so the window would never apply.</summary>
+    SameQuietHours,
     Created
 }
 
@@ -32,6 +36,18 @@ public class CreateReminderHandler
         if (nextDueLocal.Date < AppTimeZones.TodayLocalDate())
             return CreateReminderOutcome.PastDate;
 
+        var quietStart = ParseTime(command.QuietStart);
+        var quietEnd = ParseTime(command.QuietEnd);
+        var hasStart = !string.IsNullOrWhiteSpace(command.QuietStart);
+        var hasEnd = !string.IsNullOrWhiteSpace(command.QuietEnd);
+        if (hasStart || hasEnd)
+        {
+            if (quietStart is null || quietEnd is null)
+                return CreateReminderOutcome.IncompleteQuietHours;
+            if (quietStart == quietEnd)
+                return CreateReminderOutcome.SameQuietHours;
+        }
+
         var title = string.IsNullOrWhiteSpace(command.Title) ? DefaultTitle(type) : command.Title.Trim();
 
         await _db.AddScheduleAsync(new ReminderSchedule
@@ -43,8 +59,8 @@ public class CreateReminderHandler
             Notes = command.Notes,
             FrequencyDays = command.FrequencyDays is > 0 ? command.FrequencyDays : null,
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextDueLocal.Date, TimeSpan.FromHours(9)),
-            QuietHoursStartLocal = ParseTime(command.QuietStart),
-            QuietHoursEndLocal = ParseTime(command.QuietEnd),
+            QuietHoursStartLocal = quietStart,
+            QuietHoursEndLocal = quietEnd,
             Channel = ReminderChannel.InApp
         }, ct);
 
