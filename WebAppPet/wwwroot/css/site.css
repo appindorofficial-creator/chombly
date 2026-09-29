@@ -9900,3 +9900,8 @@ html.ch-route-pending .onboard-stage {
   gap: 10px;
 }
 .reminder-dnd-times .form-group { margin-bottom: 0; }
+.reminder-when {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}

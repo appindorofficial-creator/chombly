@@ -39,8 +39,9 @@ public class ReminderFlowTests : IDisposable
         int? frequencyDays = 30,
         string? quietStart = null,
         string? quietEnd = null,
-        int? petId = null) =>
-        new(_user.Id, petId ?? _pet.Id, type, title, "Con comida", frequencyDays, nextDue ?? _nextWeek, quietStart, quietEnd);
+        int? petId = null,
+        string? dueTime = null) =>
+        new(_user.Id, petId ?? _pet.Id, type, title, "Con comida", frequencyDays, nextDue ?? _nextWeek, quietStart, quietEnd, dueTime);
 
     private Task<CreateReminderOutcome> Create(CreateReminderCommand command) =>
         new CreateReminderHandler(_db).HandleAsync(command);
@@ -69,6 +70,49 @@ public class ReminderFlowTests : IDisposable
         Assert.Equal(new TimeSpan(7, 30, 0), schedule.QuietHoursEndLocal);
         Assert.Equal(ReminderChannel.InApp, schedule.Channel);
         Assert.True(schedule.IsActive);
+    }
+
+    [Theory]
+    [InlineData("16:00", 16, 0)]
+    [InlineData("4:00 PM", 16, 0)]
+    [InlineData("07:45", 7, 45)]
+    public async Task Fires_at_the_chosen_time(string dueTime, int hours, int minutes)
+    {
+        var outcome = await Create(Command(dueTime: dueTime, quietStart: "21:00", quietEnd: "07:00"));
+
+        Assert.Equal(CreateReminderOutcome.Created, outcome);
+        Assert.Equal(
+            AppTimeZones.LocalDateAndTimeToUtc(_nextWeek, new TimeSpan(hours, minutes, 0)),
+            SingleSchedule().NextDueUtc);
+    }
+
+    [Fact]
+    public async Task Rejects_a_time_that_cannot_be_read()
+    {
+        var outcome = await Create(Command(dueTime: "25:99"));
+
+        Assert.Equal(CreateReminderOutcome.InvalidTime, outcome);
+        Assert.Empty(_db.ReminderSchedules);
+    }
+
+    [Fact]
+    public async Task Rejects_a_time_that_already_passed_today()
+    {
+        var outcome = await Create(Command(nextDue: AppTimeZones.TodayLocalDate(), dueTime: "00:00"));
+
+        Assert.Equal(CreateReminderOutcome.PastTime, outcome);
+        Assert.Empty(_db.ReminderSchedules);
+    }
+
+    [Fact]
+    public async Task Midnight_is_fine_on_a_later_day()
+    {
+        var tomorrow = AppTimeZones.TodayLocalDate().AddDays(1);
+
+        var outcome = await Create(Command(nextDue: tomorrow, dueTime: "00:00"));
+
+        Assert.Equal(CreateReminderOutcome.Created, outcome);
+        Assert.Equal(AppTimeZones.LocalDateAndTimeToUtc(tomorrow, TimeSpan.Zero), SingleSchedule().NextDueUtc);
     }
 
     [Theory]
@@ -135,9 +179,11 @@ public class ReminderFlowTests : IDisposable
     }
 
     [Fact]
-    public async Task Today_is_still_a_valid_date()
+    public async Task Today_is_still_a_valid_date_for_a_later_time()
     {
-        var outcome = await Create(Command(nextDue: AppTimeZones.TodayLocalDate()));
+        var later = AppTimeZones.NowLocal().AddMinutes(5);
+
+        var outcome = await Create(Command(nextDue: later.Date, dueTime: later.ToString("HH:mm")));
 
         Assert.Equal(CreateReminderOutcome.Created, outcome);
     }
@@ -314,7 +360,6 @@ public class ReminderFlowTests : IDisposable
         static string At(TimeSpan t) =>
             TimeSpan.FromMinutes(((int)t.TotalMinutes % 1440 + 1440) % 1440).ToString(@"hh\:mm");
         await Create(Command(
-            nextDue: AppTimeZones.TodayLocalDate(),
             quietStart: At(bogotaNow - TimeSpan.FromMinutes(20)),
             quietEnd: At(bogotaNow + TimeSpan.FromMinutes(20))));
         var schedule = _db.ReminderSchedules.Single();
@@ -331,7 +376,7 @@ public class ReminderFlowTests : IDisposable
     [Fact]
     public async Task A_due_reminder_becomes_a_linked_notification_and_repeats()
     {
-        await Create(Command(nextDue: AppTimeZones.TodayLocalDate()));
+        await Create(Command());
         var schedule = _db.ReminderSchedules.Single();
         schedule.NextDueUtc = DateTime.UtcNow.AddMinutes(-1);
         _db.SaveChanges();
@@ -352,7 +397,7 @@ public class ReminderFlowTests : IDisposable
     [Fact]
     public async Task A_repeating_reminder_keeps_its_planned_time_when_the_job_runs_late()
     {
-        await Create(Command(nextDue: AppTimeZones.TodayLocalDate()));
+        await Create(Command());
         var schedule = _db.ReminderSchedules.Single();
         var planned = DateTime.SpecifyKind(DateTime.UtcNow.AddMinutes(-3), DateTimeKind.Utc);
         planned = planned.AddTicks(-(planned.Ticks % TimeSpan.TicksPerMinute));
