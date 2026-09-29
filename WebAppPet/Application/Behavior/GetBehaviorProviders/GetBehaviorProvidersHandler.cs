@@ -34,6 +34,7 @@ public class GetBehaviorProvidersHandler
 
         var providers = BusinessMarketResolver.FilterHomeMarket(
                 await _db.Groomers.AsNoTracking()
+                    .Include(g => g.User)
                     .Where(g => g.IsActive
                                 && g.PublishStatus == BusinessPublishStatus.Approved
                                 && g.VetProviderKind == VetProviderKind.BehaviorSpecialist)

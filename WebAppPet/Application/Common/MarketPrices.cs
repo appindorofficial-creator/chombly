@@ -30,8 +30,9 @@ public static class MarketPrices
     }
 
     /// <summary>
-    /// Providers set their starting price in the currency of their account's country (not where they are
-    /// licensed), so it only applies to families in that country; anyone else pays the market price.
+    /// Providers set their starting price in the currency of <paramref name="providerCountry"/> (see
+    /// <see cref="BusinessMarketResolver.CountryFor"/>), so it only applies to families in that country;
+    /// anyone else pays the market price.
     /// </summary>
     public static decimal ForProvider(GroomerProfile? provider, string? providerCountry, decimal marketPrice, string? countryIso = null)
     {
