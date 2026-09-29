@@ -120,7 +120,13 @@ public class ReminderEngineService
 
         schedule.LastSentUtc = DateTime.UtcNow;
         if (schedule.FrequencyDays is int days && days > 0)
-            schedule.NextDueUtc = nowUtc.AddDays(days);
+        {
+            // Step from the planned time (not from when the job ran) so 9:00 stays 9:00.
+            var next = schedule.NextDueUtc.AddDays(days);
+            while (next <= nowUtc)
+                next = next.AddDays(days);
+            schedule.NextDueUtc = next;
+        }
         else
             schedule.IsActive = false;
 

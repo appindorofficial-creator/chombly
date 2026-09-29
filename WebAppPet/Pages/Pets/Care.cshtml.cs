@@ -50,12 +50,17 @@ public class CareModel : PageModel
     {
         if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Account/Login");
 
-        if (!await _createCheckupReminder.HandleAsync(new CreateCheckupReminderCommand(userId, Id), ct))
+        var outcome = await _createCheckupReminder.HandleAsync(new CreateCheckupReminderCommand(userId, Id), ct);
+        if (outcome == CreateCheckupReminderOutcome.PetNotFound)
             return RedirectToPage("/Pets/Index");
 
-        TempData["Flash"] = CatalogLocalizer.Loc(
-            "Recordatorio de vacunas/chequeo creado.",
-            "Vaccine/checkup reminder created.");
+        TempData["Flash"] = outcome == CreateCheckupReminderOutcome.AlreadyActive
+            ? CatalogLocalizer.Loc(
+                "Ya tienes un aviso de vacunas/chequeo activo para esta mascota.",
+                "You already have an active vaccine/checkup reminder for this pet.")
+            : CatalogLocalizer.Loc(
+                "Recordatorio de vacunas/chequeo creado.",
+                "Vaccine/checkup reminder created.");
         return RedirectToPage("/Pets/Reminders", new { id = Id });
     }
 }
