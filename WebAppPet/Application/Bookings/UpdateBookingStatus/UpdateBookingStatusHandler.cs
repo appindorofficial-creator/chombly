@@ -48,9 +48,7 @@ public class UpdateBookingStatusHandler
             refunded = await _payments.RefundAppointmentAsync(appt.Id, "business_rejected", appt.Groomer.UserId, ct);
         }
 
-        var refundNote = refunded > 0
-            ? CatalogLocalizer.Loc(" Te reembolsamos el anticipo.", " Your deposit was refunded.")
-            : "";
+        var refundNote = refunded > 0 ? " Te reembolsamos el anticipo." : "";
         _db.Notifications.Add(new AppNotification
         {
             UserId = appt.ClientId,
@@ -66,16 +64,11 @@ public class UpdateBookingStatusHandler
         BookingStatusAction action) => action switch
     {
         BookingStatusAction.Accept => (AppointmentStatus.Pending, AppointmentStatus.Confirmed,
-            CatalogLocalizer.Loc("¡Cita confirmada!", "Booking confirmed!"),
-            CatalogLocalizer.Loc("confirmó tu cita", "confirmed your booking")),
+            "¡Cita confirmada!", "confirmó tu cita"),
         BookingStatusAction.Reject => (AppointmentStatus.Pending, AppointmentStatus.Cancelled,
-            CatalogLocalizer.Loc("Cita rechazada", "Booking declined"),
-            CatalogLocalizer.Loc("no pudo aceptar tu cita", "could not accept your booking")),
+            "Cita rechazada", "no pudo aceptar tu cita"),
         BookingStatusAction.Complete => (AppointmentStatus.Confirmed, AppointmentStatus.Completed,
-            CatalogLocalizer.Loc("Servicio completado", "Service completed"),
-            CatalogLocalizer.Loc(
-                "completó el servicio. ¡Cuéntanos cómo quedó tu mascota!",
-                "completed the service. Tell us how your pet looks!")),
+            "Servicio completado", "completó el servicio. ¡Cuéntanos cómo quedó tu mascota!"),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
 }

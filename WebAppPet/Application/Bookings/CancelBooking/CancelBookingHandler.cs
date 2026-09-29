@@ -35,14 +35,10 @@ public class CancelBookingHandler
         _db.Notifications.Add(new AppNotification
         {
             UserId = command.ClientId,
-            Title = CatalogLocalizer.Loc("Cita cancelada", "Appointment cancelled"),
+            Title = "Cita cancelada",
             Message = refunded > 0
-                ? CatalogLocalizer.Loc(
-                    $"Cancelaste tu cita en {appt.Groomer.BusinessName}. Te reembolsamos el anticipo.",
-                    $"You cancelled your appointment at {appt.Groomer.BusinessName}. Your deposit was refunded.")
-                : CatalogLocalizer.Loc(
-                    $"Cancelaste tu cita en {appt.Groomer.BusinessName}.",
-                    $"You cancelled your appointment at {appt.Groomer.BusinessName}."),
+                ? $"Cancelaste tu cita en {appt.Groomer.BusinessName}. Te reembolsamos el anticipo."
+                : $"Cancelaste tu cita en {appt.Groomer.BusinessName}.",
             Type = "appointment"
         });
         await _db.SaveChangesAsync(ct);

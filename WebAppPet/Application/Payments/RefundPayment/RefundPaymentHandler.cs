@@ -58,36 +58,26 @@ public class RefundPaymentHandler
             {
                 appointment.Status = AppointmentStatus.Cancelled;
                 Notify(appointment.Groomer.UserId, "appointment",
-                    CatalogLocalizer.Loc("Cita cancelada", "Appointment cancelled"),
-                    CatalogLocalizer.Loc(
-                        $"Chombly canceló la cita del {when} y reembolsó el pago a la familia.",
-                        $"Chombly cancelled the {when} appointment and refunded the family."));
+                    "Cita cancelada",
+                    $"Chombly canceló la cita del {when} y reembolsó el pago a la familia.");
             }
 
             Notify(transaction.UserId, "appointment",
-                CatalogLocalizer.Loc("Reembolso de tu cita", "Appointment refund"),
+                "Reembolso de tu cita",
                 cancel
-                    ? CatalogLocalizer.Loc(
-                        $"Cancelamos tu cita en {business} ({when}) y te reembolsamos {amount}.",
-                        $"We cancelled your appointment at {business} ({when}) and refunded {amount}.")
-                    : CatalogLocalizer.Loc(
-                        $"Te reembolsamos {amount} de tu cita en {business} ({when}).",
-                        $"We refunded {amount} for your appointment at {business} ({when})."));
+                    ? $"Cancelamos tu cita en {business} ({when}) y te reembolsamos {amount}."
+                    : $"Te reembolsamos {amount} de tu cita en {business} ({when}).");
         }
         else if (subscription is not null)
         {
             subscription.Status = CareSubscriptionStatus.Cancelled;
             Notify(transaction.UserId, "care",
-                CatalogLocalizer.Loc("Chombly Care cancelado", "Chombly Care cancelled"),
-                CatalogLocalizer.Loc(
-                    $"Te reembolsamos {amount} y tu membresía Care terminó.",
-                    $"We refunded {amount} and your Care membership has ended."));
+                "Chombly Care cancelado",
+                $"Te reembolsamos {amount} y tu membresía Care terminó.");
         }
         else
         {
-            Notify(transaction.UserId, "info",
-                CatalogLocalizer.Loc("Reembolso", "Refund"),
-                CatalogLocalizer.Loc($"Te reembolsamos {amount}.", $"We refunded {amount}."));
+            Notify(transaction.UserId, "info", "Reembolso", $"Te reembolsamos {amount}.");
         }
 
         await _db.SaveChangesAsync(ct);

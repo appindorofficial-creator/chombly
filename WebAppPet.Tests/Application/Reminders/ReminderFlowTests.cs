@@ -220,6 +220,25 @@ public class ReminderFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task The_care_page_shortcut_saves_spanish_even_when_the_screen_is_in_english()
+    {
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en");
+        try
+        {
+            await new CreateCheckupReminderHandler(_db).HandleAsync(new CreateCheckupReminderCommand(_user.Id, _pet.Id));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = previous;
+        }
+
+        var schedule = SingleSchedule();
+        Assert.Equal($"Vacunas / chequeo · {_pet.Name}", schedule.Title);
+        Assert.Equal("Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.", schedule.Notes);
+    }
+
+    [Fact]
     public async Task The_care_page_shortcut_refuses_someone_elses_pet()
     {
         var otherPet = TestData.AddPet(_db, TestData.AddUser(_db));

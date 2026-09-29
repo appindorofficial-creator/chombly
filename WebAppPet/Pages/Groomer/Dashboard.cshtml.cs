@@ -82,10 +82,8 @@ public class DashboardModel : GroomerPageModel
                 Db.Notifications.Add(new AppNotification
                 {
                     UserId = adminId,
-                    Title = CatalogLocalizer.Loc("Negocio reenviado a revisión", "Business resubmitted for review"),
-                    Message = CatalogLocalizer.Loc(
-                        $"{g.BusinessName} vuelve a solicitar publicación.",
-                        $"{g.BusinessName} is requesting publication again."),
+                    Title = "Negocio reenviado a revisión",
+                    Message = $"{g.BusinessName} vuelve a solicitar publicación.",
                     Type = "business"
                 });
             }

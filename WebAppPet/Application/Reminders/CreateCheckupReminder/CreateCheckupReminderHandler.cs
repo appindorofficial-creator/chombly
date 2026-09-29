@@ -2,7 +2,6 @@ using WebAppPet.Application.Reminders.Shared;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Localization;
 
 namespace WebAppPet.Application.Reminders.CreateCheckupReminder;
 
@@ -29,12 +28,8 @@ public class CreateCheckupReminderHandler
             UserId = command.UserId,
             PetId = pet.Id,
             Type = ReminderType.Vaccine,
-            Title = CatalogLocalizer.Loc(
-                $"Vacunas / chequeo · {pet.Name}",
-                $"Vaccines / checkup · {pet.Name}"),
-            Notes = CatalogLocalizer.Loc(
-                "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
-                "Created from Care. Adjust the date or frequency if needed."),
+            Title = $"Vacunas / chequeo · {pet.Name}",
+            Notes = "Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas.",
             FrequencyDays = 365,
             NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextLocal, TimeSpan.FromHours(9)),
             QuietHoursStartLocal = TimeSpan.FromHours(21),

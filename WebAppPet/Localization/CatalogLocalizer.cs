@@ -142,6 +142,10 @@ public static class CatalogLocalizer
         ["Baño, corte y uñas"] = "Bath, haircut, and nails",
         ["Servicio de Paseadores"] = "Dog walking service",
         ["Servicio de Peluquería"] = "Grooming service",
+        ["Servicio de Hotel"] = "Hotel service",
+        ["Servicio de Veterinario"] = "Veterinary service",
+        ["Servicio de Guardería"] = "Daycare service",
+        ["Servicio de Entrenadores"] = "Training service",
         ["Teleconsulta clínica local"] = "Local clinical teleconsult",
         ["Paseo individual o grupal"] = "Solo or group walk",
         ["Obediencia y conducta"] = "Obedience and behavior",
@@ -456,6 +460,27 @@ public static class CatalogLocalizer
         ("Lugar:", "Place:"),
     ];
 
+    /// <summary>Labels followed by text a person typed: only the label changes language.</summary>
+    private static readonly (string Es, string En)[] FreeTextLabels =
+    [
+        ("Nota clínica:", "Clinical note:"),
+        ("Seguimiento:", "Follow-up:"),
+    ];
+
+    private static string? FreeTextLabel(string part)
+    {
+        var t = part.Trim();
+        foreach (var (es, en) in FreeTextLabels)
+        {
+            var label = t.StartsWith(es, StringComparison.OrdinalIgnoreCase) ? es
+                : t.StartsWith(en, StringComparison.OrdinalIgnoreCase) ? en
+                : null;
+            if (label is null) continue;
+            return $"{Loc(es, en)} {t[label.Length..].TrimStart()}".TrimEnd();
+        }
+        return null;
+    }
+
     /// <summary>Several Spanish names share one English label; these pick the Spanish one to show.</summary>
     private static readonly Dictionary<string, string> PreferredSpanish = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -610,7 +635,8 @@ public static class CatalogLocalizer
 
         var parts = notes.Split(" · ", StringSplitOptions.None);
         if (BehaviorNotes(parts) is { } behavior) return behavior;
-        if (!IsEnglish()) return notes;
+        if (!IsEnglish())
+            return string.Join(" · ", parts.Select(p => FreeTextLabel(p) ?? p));
 
         for (var i = 0; i < parts.Length; i++)
             parts[i] = LocalizeNotePart(parts[i]);
@@ -701,6 +727,7 @@ public static class CatalogLocalizer
         var t = part.Trim();
         if (t.Length == 0) return t;
         if (Map.TryGetValue(t, out var full)) return full;
+        if (FreeTextLabel(t) is { } labeled) return labeled;
 
         foreach (var (es, en) in NotePrefixes)
         {

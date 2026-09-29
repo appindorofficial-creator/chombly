@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Persistence;
-using WebAppPet.Localization;
-
 namespace WebAppPet.Application.Bookings.Shared;
 
 /// <summary>Clinical notes written by vets on an appointment, mirrored to the linked consultation.</summary>
@@ -28,10 +26,8 @@ public class ClinicalNotes
         _db.Notifications.Add(new AppNotification
         {
             UserId = appt.ClientId,
-            Title = CatalogLocalizer.Loc("Nota clínica disponible", "Clinical note available"),
-            Message = CatalogLocalizer.Loc(
-                $"{businessName} guardó una nota en el historial de tu mascota.",
-                $"{businessName} saved a note to your pet’s history."),
+            Title = "Nota clínica disponible",
+            Message = $"{businessName} guardó una nota en el historial de tu mascota.",
             Type = "vet-followup",
             CreatedAt = DateTime.UtcNow
         });
@@ -61,7 +57,7 @@ public class ClinicalNotes
                 && !p.StartsWith("Follow-up:", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        kept.Add(CatalogLocalizer.Loc($"Nota clínica: {clinical}", $"Clinical note: {clinical}"));
+        kept.Add($"Nota clínica: {clinical}");
         return string.Join(" · ", kept);
     }
 

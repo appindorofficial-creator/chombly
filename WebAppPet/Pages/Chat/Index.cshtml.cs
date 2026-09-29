@@ -87,7 +87,7 @@ public class IndexModel : PageModel
         _db.Notifications.Add(new AppNotification
         {
             UserId = recipientId,
-            Title = CatalogLocalizer.Loc("Nuevo mensaje", "New message"),
+            Title = "Nuevo mensaje",
             Message = text.Length > 80 ? text[..80] + "…" : text,
             Type = "chat"
         });

@@ -37,7 +37,7 @@
             @foreach (var s in Model.Schedules)
             {
                 <div class="card card-pad" style="margin-bottom:8px">
-                    <strong>@CatalogLocalizer.Text(s.Title)</strong>
+                    <strong>@(NotificationLocalizer.Known(s.Title) ?? CatalogLocalizer.Text(s.Title))</strong>
                     <span class="badge badge-green" style="margin-left:6px">@ReminderTypeLabel(s.Type)</span>
                     <span class="muted small" style="display:block">
                         @CatalogLocalizer.Loc("Próximo", "Next"): @AppTimeZones.FormatShort(s.NextDueUtc)

@@ -45,10 +45,8 @@ public class RenewDueCareHandler
             {
                 subscription.Status = CareSubscriptionStatus.Cancelled;
                 Notify(subscription.UserId,
-                    CatalogLocalizer.Loc("Chombly Care terminó", "Chombly Care ended"),
-                    CatalogLocalizer.Loc(
-                        "Tu membresía terminó como lo pediste. Puedes volver a activarla cuando quieras.",
-                        "Your membership ended as requested. You can reactivate it anytime."));
+                    "Chombly Care terminó",
+                    "Tu membresía terminó como lo pediste. Puedes volver a activarla cuando quieras.");
             }
             else
             {
@@ -68,9 +66,8 @@ public class RenewDueCareHandler
         var card = await _payments.FindCardAsync(subscription.UserId, null, ct);
         if (card is null)
         {
-            MarkPastDue(subscription, CatalogLocalizer.Loc(
-                "No encontramos una tarjeta para renovar tu membresía. Agrega una y actívala de nuevo.",
-                "We couldn't find a card to renew your membership. Add one and reactivate it."));
+            MarkPastDue(subscription,
+                "No encontramos una tarjeta para renovar tu membresía. Agrega una y actívala de nuevo.");
             await _audit.LogAsync("care_renewal_failed", subscription.UserId, "CareSubscription", subscription.Id,
                 new { reason = "no_card" }, ct);
             return;
@@ -89,9 +86,8 @@ public class RenewDueCareHandler
 
         if (charge.Status != PaymentTransactionStatus.Succeeded)
         {
-            MarkPastDue(subscription, CatalogLocalizer.Loc(
-                $"No pudimos cobrar la renovación a tu tarjeta •••• {card.Last4}. {PaymentFailureCodes.Message(charge.FailureCode)} Luego activa la membresía de nuevo.",
-                $"We couldn't charge the renewal to your card •••• {card.Last4}. {PaymentFailureCodes.Message(charge.FailureCode)} Then reactivate the membership."));
+            MarkPastDue(subscription,
+                $"No pudimos cobrar la renovación a tu tarjeta •••• {card.Last4}. {PaymentFailureCodes.SpanishMessage(charge.FailureCode)} Luego activa la membresía de nuevo.");
             await _audit.LogAsync("care_renewal_failed", subscription.UserId, "CareSubscription", subscription.Id,
                 new { charge.FailureCode }, ct);
             return;
@@ -105,10 +101,8 @@ public class RenewDueCareHandler
         var amount = AppMoney.FormatCurrency(price, charge.Currency);
         var next = AppTimeZones.FormatDate(subscription.CurrentPeriodEnd);
         Notify(subscription.UserId,
-            CatalogLocalizer.Loc("Chombly Care renovado", "Chombly Care renewed"),
-            CatalogLocalizer.Loc(
-                $"Cobramos {amount} a tu tarjeta •••• {card.Last4}. Tu próximo cobro es el {next}.",
-                $"We charged {amount} to your card •••• {card.Last4}. Your next charge is on {next}."));
+            "Chombly Care renovado",
+            $"Cobramos {amount} a tu tarjeta •••• {card.Last4}. Tu próximo cobro es el {next}.");
         await _audit.LogAsync("care_renewed", subscription.UserId, "CareSubscription", subscription.Id,
             new { price, charge.Currency, chargeId = charge.Id }, ct);
     }
@@ -116,7 +110,7 @@ public class RenewDueCareHandler
     private void MarkPastDue(CareSubscription subscription, string message)
     {
         subscription.Status = CareSubscriptionStatus.PastDue;
-        Notify(subscription.UserId, CatalogLocalizer.Loc("Chombly Care pausado", "Chombly Care paused"), message);
+        Notify(subscription.UserId, "Chombly Care pausado", message);
     }
 
     private void Notify(int userId, string title, string message) =>

@@ -49,7 +49,77 @@ public static class NotificationLocalizer
             "Your professional application was approved. You can now serve on Chombly.",
         ["Tu solicitud necesita correcciones. Revisa las notas del revisor."] =
             "Your application needs corrections. Review the reviewer's notes.",
+        ["Nota clínica disponible"] = "Clinical note available",
+        ["Aviso creado desde Control. Ajusta fecha o frecuencia si lo necesitas."] =
+            "Created from Care. Adjust the date or frequency if needed.",
+        ["Reembolso de tu cita"] = "Appointment refund",
+        ["Reembolso"] = "Refund",
+        ["Chombly Care cancelado"] = "Chombly Care cancelled",
+        ["Chombly Care terminó"] = "Chombly Care ended",
+        ["Chombly Care renovado"] = "Chombly Care renewed",
+        ["Chombly Care pausado"] = "Chombly Care paused",
+        ["Tu membresía terminó como lo pediste. Puedes volver a activarla cuando quieras."] =
+            "Your membership ended as requested. You can reactivate it anytime.",
+        ["No encontramos una tarjeta para renovar tu membresía. Agrega una y actívala de nuevo."] =
+            "We couldn't find a card to renew your membership. Add one and reactivate it.",
+        ["Pago rechazado: fondos insuficientes. Prueba con otra tarjeta."] =
+            "Payment declined: insufficient funds. Try another card.",
+        ["Pago rechazado: la tarjeta está vencida. Actualízala o usa otra."] =
+            "Payment declined: the card has expired. Update it or use another one.",
+        ["No pudimos procesar el pago. Intenta de nuevo en unos minutos."] =
+            "We couldn't process the payment. Try again in a few minutes.",
+        ["Pago rechazado por el banco. Prueba con otra tarjeta."] =
+            "Payment declined by the bank. Try another card.",
     };
+
+    /// <summary>
+    /// Fixed sentences around a name/code, both directions. Captures stay verbatim (pet or business
+    /// names must not be translated word by word) unless the capture is itself an exact phrase.
+    /// Checked before the looser templates; more specific sentences first.
+    /// </summary>
+    private static readonly (Regex Es, string EnFmt, Regex En, string EsFmt)[] NamedSentences =
+    [
+        (Rx(@"^(.+) no pudo aceptar tu cita \((.+)\)\. Te reembolsamos el anticipo\.?$"), "{0} could not accept your booking ({1}). Your deposit was refunded.",
+            Rx(@"^(.+) could not accept your booking \((.+)\)\. Your deposit was refunded\.?$"), "{0} no pudo aceptar tu cita ({1}). Te reembolsamos el anticipo."),
+        (Rx(@"^(.+) no pudo aceptar tu cita \((.+)\)\.?$"), "{0} could not accept your booking ({1}).",
+            Rx(@"^(.+) could not accept your booking \((.+)\)\.?$"), "{0} no pudo aceptar tu cita ({1})."),
+        (Rx(@"^(.+) confirmó tu cita \((.+)\)\.?$"), "{0} confirmed your booking ({1}).",
+            Rx(@"^(.+) confirmed your booking \((.+)\)\.?$"), "{0} confirmó tu cita ({1})."),
+        (Rx(@"^(.+) completó el servicio\. ¡Cuéntanos cómo quedó tu mascota! \((.+)\)\.?$"), "{0} completed the service. Tell us how your pet looks! ({1}).",
+            Rx(@"^(.+) completed the service\. Tell us how your pet looks! \((.+)\)\.?$"), "{0} completó el servicio. ¡Cuéntanos cómo quedó tu mascota! ({1})."),
+        (Rx(@"^Chombly canceló la cita del (.+) y reembolsó el pago a la familia\.?$"), "Chombly cancelled the {0} appointment and refunded the family.",
+            Rx(@"^Chombly cancelled the (.+) appointment and refunded the family\.?$"), "Chombly canceló la cita del {0} y reembolsó el pago a la familia."),
+        (Rx(@"^Cancelamos tu cita en (.+) \((.+)\) y te reembolsamos (.+?)\.?$"), "We cancelled your appointment at {0} ({1}) and refunded {2}.",
+            Rx(@"^We cancelled your appointment at (.+) \((.+)\) and refunded (.+?)\.?$"), "Cancelamos tu cita en {0} ({1}) y te reembolsamos {2}."),
+        (Rx(@"^Te reembolsamos (.+) de tu cita en (.+) \((.+)\)\.?$"), "We refunded {0} for your appointment at {1} ({2}).",
+            Rx(@"^We refunded (.+) for your appointment at (.+) \((.+)\)\.?$"), "Te reembolsamos {0} de tu cita en {1} ({2})."),
+        (Rx(@"^Te reembolsamos (.+) y tu membresía Care terminó\.?$"), "We refunded {0} and your Care membership has ended.",
+            Rx(@"^We refunded (.+) and your Care membership has ended\.?$"), "Te reembolsamos {0} y tu membresía Care terminó."),
+        (Rx(@"^Te reembolsamos (.+?)\.?$"), "We refunded {0}.",
+            Rx(@"^We refunded (.+?)\.?$"), "Te reembolsamos {0}."),
+        (Rx(@"^No pudimos cobrar la renovación a tu tarjeta •••• (\S+)\. (.+) Luego activa la membresía de nuevo\.?$"),
+            "We couldn't charge the renewal to your card •••• {0}. {1} Then reactivate the membership.",
+            Rx(@"^We couldn't charge the renewal to your card •••• (\S+)\. (.+) Then reactivate the membership\.?$"),
+            "No pudimos cobrar la renovación a tu tarjeta •••• {0}. {1} Luego activa la membresía de nuevo."),
+        (Rx(@"^Cobramos (.+) a tu tarjeta •••• (\S+)\. Tu próximo cobro es el (.+?)\.?$"),
+            "We charged {0} to your card •••• {1}. Your next charge is on {2}.",
+            Rx(@"^We charged (.+) to your card •••• (\S+)\. Your next charge is on (.+?)\.?$"),
+            "Cobramos {0} a tu tarjeta •••• {1}. Tu próximo cobro es el {2}."),
+        (Rx(@"^Vacunas / chequeo · (.+)$"), "Vaccines / checkup · {0}",
+            Rx(@"^Vaccines / checkup · (.+)$"), "Vacunas / chequeo · {0}"),
+        (Rx(@"^(.+) vuelve a solicitar publicación\.?$"), "{0} is requesting publication again.",
+            Rx(@"^(.+) is requesting publication again\.?$"), "{0} vuelve a solicitar publicación."),
+        (Rx(@"^Tu consulta \((.+)\) quedó pendiente de confirmación\.?$"), "Your consultation ({0}) is pending confirmation.",
+            Rx(@"^Your consultation \((.+)\) is pending confirmation\.?$"), "Tu consulta ({0}) quedó pendiente de confirmación."),
+        (Rx(@"^(.+) guardó una nota en el historial de tu mascota\.?$"), "{0} saved a note to your pet’s history.",
+            Rx(@"^(.+) saved a note to your pet[’']s history\.?$"), "{0} guardó una nota en el historial de tu mascota."),
+        (Rx(@"^Nota guardada para (.+?)\.?$"), "Note saved for {0}.",
+            Rx(@"^Note saved for (.+?)\.?$"), "Nota guardada para {0}."),
+        (Rx(@"^Cancelaste tu cita en (.+)\. Te reembolsamos el anticipo\.?$"), "You cancelled your appointment at {0}. Your deposit was refunded.",
+            Rx(@"^You cancelled your appointment at (.+)\. Your deposit was refunded\.?$"), "Cancelaste tu cita en {0}. Te reembolsamos el anticipo."),
+        (Rx(@"^Cancelaste tu cita en (.+?)\.?$"), "You cancelled your appointment at {0}.",
+            Rx(@"^You cancelled your appointment at (.+?)\.?$"), "Cancelaste tu cita en {0}."),
+    ];
 
     /// <summary>Templates: Spanish regex → English format with {0},{1}… (captures localized).</summary>
     private static readonly (Regex Es, string EnFmt)[] TitleTemplates =
@@ -195,11 +265,58 @@ public static class NotificationLocalizer
 
     public static string Message(string? message) => Localize(message, isTitle: false);
 
+    /// <summary>
+    /// Only the fixed app sentences (exact or with a name inside), in the current UI language;
+    /// null for free text so callers can fall back to their own handling.
+    /// </summary>
+    public static string? Known(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        var raw = text.Trim();
+        var en = CatalogLocalizer.IsEnglish();
+        if (TryNamedSentence(raw, en, out var named)) return named;
+        if (en)
+            return ExactEsToEn.TryGetValue(raw, out var toEn) ? toEn
+                : ExactEnToEs.ContainsKey(raw) ? raw : null;
+        return ExactEnToEs.TryGetValue(raw, out var toEs) ? toEs
+            : ExactEsToEn.ContainsKey(raw) ? raw : null;
+    }
+
+    private static bool TryNamedSentence(string raw, bool toEnglish, out string result)
+    {
+        foreach (var (es, enFmt, en, esFmt) in NamedSentences)
+        {
+            var m = (toEnglish ? es : en).Match(raw);
+            if (!m.Success)
+            {
+                if ((toEnglish ? en : es).IsMatch(raw))
+                {
+                    result = raw;
+                    return true;
+                }
+                continue;
+            }
+            var exact = toEnglish ? ExactEsToEn : ExactEnToEs;
+            var args = new object[m.Groups.Count - 1];
+            for (var i = 1; i < m.Groups.Count; i++)
+            {
+                var g = m.Groups[i].Value.Trim();
+                args[i - 1] = exact.TryGetValue(g, out var phrase) ? phrase : g;
+            }
+            result = string.Format(CultureInfo.InvariantCulture, toEnglish ? enFmt : esFmt, args);
+            return true;
+        }
+        result = "";
+        return false;
+    }
+
     private static string Localize(string? text, bool isTitle)
     {
         if (string.IsNullOrWhiteSpace(text)) return "";
         var raw = text.Trim();
         var en = CatalogLocalizer.IsEnglish();
+
+        if (TryNamedSentence(raw, en, out var named)) return named;
 
         if (en)
         {
