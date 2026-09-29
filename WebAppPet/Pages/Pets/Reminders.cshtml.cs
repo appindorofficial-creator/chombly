@@ -41,6 +41,7 @@ public class RemindersModel : PageModel
     [BindProperty] public string? Notes { get; set; }
     [BindProperty] public int? FrequencyDays { get; set; }
     [BindProperty] public DateTime? NextDueLocal { get; set; }
+    [BindProperty] public string DueTime { get; set; } = "09:00";
     [BindProperty] public string QuietStart { get; set; } = "";
     [BindProperty] public string QuietEnd { get; set; } = "";
 
@@ -59,7 +60,7 @@ public class RemindersModel : PageModel
         if (_auth.CurrentUserId is not int userId) return RedirectToPage("/Pets/Index");
 
         var outcome = await _createReminder.HandleAsync(new CreateReminderCommand(
-            userId, Id, Type, Title, Notes, FrequencyDays, NextDueLocal, QuietStart, QuietEnd), ct);
+            userId, Id, Type, Title, Notes, FrequencyDays, NextDueLocal, QuietStart, QuietEnd, DueTime), ct);
 
         Error = outcome switch
         {
@@ -68,6 +69,12 @@ public class RemindersModel : PageModel
             CreateReminderOutcome.PastDate => CatalogLocalizer.Loc(
                 "La próxima fecha no puede ser en el pasado.",
                 "The next due date can't be in the past."),
+            CreateReminderOutcome.InvalidTime => CatalogLocalizer.Loc(
+                "Revisa la hora del aviso.",
+                "Check the reminder time."),
+            CreateReminderOutcome.PastTime => CatalogLocalizer.Loc(
+                "Esa hora ya pasó hoy. Elige una hora más tarde u otra fecha.",
+                "That time has already passed today. Pick a later time or another date."),
             CreateReminderOutcome.IncompleteQuietHours => CatalogLocalizer.Loc(
                 "Para usar \"No molestar\" indica las dos horas: desde y hasta. Si no lo necesitas, deja ambas vacías.",
                 "To use \"Do not disturb\", enter both times: from and until. If you don't need it, leave both empty."),

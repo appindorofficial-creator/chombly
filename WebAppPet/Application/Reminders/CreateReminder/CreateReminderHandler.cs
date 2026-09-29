@@ -12,6 +12,10 @@ public enum CreateReminderOutcome
     NoType,
     NoDate,
     PastDate,
+    /// <summary>The reminder time could not be read.</summary>
+    InvalidTime,
+    /// <summary>The date is today and the chosen time already passed.</summary>
+    PastTime,
     /// <summary>Only one of the two do-not-disturb times was given (or one couldn't be read).</summary>
     IncompleteQuietHours,
     /// <summary>Do-not-disturb start and end are the same time, so the window would never apply.</summary>
@@ -36,6 +40,17 @@ public class CreateReminderHandler
         if (nextDueLocal.Date < AppTimeZones.TodayLocalDate())
             return CreateReminderOutcome.PastDate;
 
+        var dueTime = TimeSpan.FromHours(9);
+        if (!string.IsNullOrWhiteSpace(command.DueTime))
+        {
+            if (ParseTime(command.DueTime) is not TimeSpan chosen)
+                return CreateReminderOutcome.InvalidTime;
+            dueTime = chosen;
+        }
+        var nowLocal = AppTimeZones.NowLocal();
+        if (nextDueLocal.Date == nowLocal.Date && dueTime <= nowLocal.TimeOfDay)
+            return CreateReminderOutcome.PastTime;
+
         var quietStart = ParseTime(command.QuietStart);
         var quietEnd = ParseTime(command.QuietEnd);
         var hasStart = !string.IsNullOrWhiteSpace(command.QuietStart);
@@ -58,7 +73,7 @@ public class CreateReminderHandler
             Title = title,
             Notes = command.Notes,
             FrequencyDays = command.FrequencyDays is > 0 ? command.FrequencyDays : null,
-            NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextDueLocal.Date, TimeSpan.FromHours(9)),
+            NextDueUtc = AppTimeZones.LocalDateAndTimeToUtc(nextDueLocal.Date, dueTime),
             QuietHoursStartLocal = quietStart,
             QuietHoursEndLocal = quietEnd,
             Channel = ReminderChannel.InApp
