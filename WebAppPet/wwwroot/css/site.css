@@ -3850,6 +3850,14 @@ body.chat-layout .chat-page {
   background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.92) 22%, #fff 42%);
   pointer-events: none;
 }
+/* Pages without the bottom nav (booking): anchor the bar to the screen edge. */
+.hotel-flow.no-nav.has-checkout-sticky {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+}
+.hotel-flow.no-nav .checkout-sticky {
+  bottom: 0;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
 .checkout-sticky-inner {
   pointer-events: auto;
   display: flex;
