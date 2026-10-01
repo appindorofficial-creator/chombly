@@ -72,6 +72,41 @@ public class LoginAndRegisterHandlersTests : IDisposable
     }
 
     [Fact]
+    public async Task Signing_in_with_an_old_hash_upgrades_it_to_pbkdf2()
+    {
+        var user = TestData.AddUser(_db);
+        user.Email = "vieja@test.local";
+        user.PasswordHash = "71B6822175808E2BCCD340218EF0EB319FC11A62368447891D0744862737F4E6";
+        _db.SaveChanges();
+
+        var result = await new LoginHandler(_database.CreateContext())
+            .HandleAsync(new LoginCommand("vieja@test.local", "123456", "es"));
+
+        Assert.True(result.Success);
+        using var db = _database.CreateContext();
+        var stored = db.Users.AsNoTracking().Single(u => u.Id == user.Id).PasswordHash;
+        Assert.StartsWith("v2$", stored);
+        Assert.Equal(PasswordCheck.Success, PasswordHasher.Check("123456", stored));
+    }
+
+    [Fact]
+    public async Task A_wrong_password_leaves_the_old_hash_untouched()
+    {
+        const string legacy = "71B6822175808E2BCCD340218EF0EB319FC11A62368447891D0744862737F4E6";
+        var user = TestData.AddUser(_db);
+        user.Email = "vieja@test.local";
+        user.PasswordHash = legacy;
+        _db.SaveChanges();
+
+        var result = await new LoginHandler(_database.CreateContext())
+            .HandleAsync(new LoginCommand("vieja@test.local", "654321", "es"));
+
+        Assert.False(result.Success);
+        using var db = _database.CreateContext();
+        Assert.Equal(legacy, db.Users.AsNoTracking().Single(u => u.Id == user.Id).PasswordHash);
+    }
+
+    [Fact]
     public async Task Register_creates_normalized_client_with_welcome_notification()
     {
         var result = await Register(ValidRegistration());
