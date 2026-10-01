@@ -1,21 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Conversations.OpenConversation;
+using WebAppPet.Application.Conversations.SendMessage;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
 namespace WebAppPet.Pages.Chat;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly OpenConversationHandler _open;
+    private readonly SendMessageHandler _send;
     private readonly AuthService _auth;
 
-    public IndexModel(AppDbContext db, AuthService auth)
+    public IndexModel(OpenConversationHandler open, SendMessageHandler send, AuthService auth)
     {
-        _db = db;
+        _open = open;
+        _send = send;
         _auth = auth;
     }
 
@@ -62,37 +64,17 @@ public class IndexModel : PageModel
 
         CurrentUserId = userId;
         ResolveBackNavigation();
-        if (!await LoadAsync(userId) || Conversation == null || Groomer == null)
+        if (!await LoadAsync(userId) || Conversation == null)
             return RedirectToPage("/Chat/Inbox");
 
-        var text = (Body ?? "").Trim();
-        if (string.IsNullOrEmpty(text))
+        var outcome = await _send.HandleAsync(new SendMessageCommand(userId, Conversation.Id, Body));
+        if (outcome == SendMessageOutcome.NotFound)
+            return RedirectToPage("/Chat/Inbox");
+        if (outcome == SendMessageOutcome.EmptyMessage)
         {
             ErrorMessage = CatalogLocalizer.Loc("Escribe un mensaje.", "Write a message.");
             return Page();
         }
-
-        if (text.Length > 2000) text = text[..2000];
-
-        _db.ChatMessages.Add(new ChatMessage
-        {
-            ConversationId = Conversation.Id,
-            SenderUserId = userId,
-            Body = text,
-            SentAt = DateTime.UtcNow
-        });
-        Conversation.LastMessageAt = DateTime.UtcNow;
-
-        var recipientId = userId == Conversation.ClientId ? Groomer.UserId : Conversation.ClientId;
-        _db.Notifications.Add(new AppNotification
-        {
-            UserId = recipientId,
-            Title = "Nuevo mensaje",
-            Message = text.Length > 80 ? text[..80] + "…" : text,
-            Type = "chat"
-        });
-
-        await _db.SaveChangesAsync();
 
         // Stick a concrete returnUrl so post-redirect does not treat Chat as Referer.
         var stickyReturn = SafeLocalUrl(ReturnUrl)
@@ -184,66 +166,13 @@ public class IndexModel : PageModel
 
     private async Task<bool> LoadAsync(int userId)
     {
-        Groomer = await _db.Groomers.Include(g => g.Category).FirstOrDefaultAsync(g => g.Id == GroomerId);
-        if (Groomer == null) return false;
+        var thread = await _open.HandleAsync(new OpenConversationCommand(userId, GroomerId, ConversationId, AppointmentId));
+        if (thread is null) return false;
 
-        var isProvider = Groomer.UserId == userId;
-
-        if (ConversationId.HasValue)
-        {
-            Conversation = await _db.Conversations.FirstOrDefaultAsync(c =>
-                c.Id == ConversationId.Value &&
-                c.GroomerId == GroomerId &&
-                (c.ClientId == userId || isProvider));
-        }
-        else if (!isProvider)
-        {
-            // Clients (and groomers messaging another business) can start or resume a thread.
-            Conversation = await _db.Conversations
-                .FirstOrDefaultAsync(c => c.GroomerId == GroomerId && c.ClientId == userId);
-
-            if (Conversation == null)
-            {
-                Conversation = new Conversation
-                {
-                    ClientId = userId,
-                    GroomerId = GroomerId,
-                    AppointmentId = AppointmentId,
-                    CreatedAt = DateTime.UtcNow,
-                    LastMessageAt = DateTime.UtcNow
-                };
-                _db.Conversations.Add(Conversation);
-                await _db.SaveChangesAsync();
-            }
-            else if (AppointmentId.HasValue && Conversation.AppointmentId == null)
-            {
-                Conversation.AppointmentId = AppointmentId;
-                await _db.SaveChangesAsync();
-            }
-        }
-        else
-        {
-            // Provider must open a specific conversation (from inbox).
-            return false;
-        }
-
-        if (Conversation == null) return false;
-
+        Groomer = thread.Groomer;
+        Conversation = thread.Conversation;
+        Messages = thread.Messages;
         ConversationId = Conversation.Id;
-
-        Messages = await _db.ChatMessages
-            .Include(m => m.Sender)
-            .Where(m => m.ConversationId == Conversation.Id)
-            .OrderBy(m => m.SentAt)
-            .ToListAsync();
-
-        var unread = Messages.Where(m => m.SenderUserId != userId && !m.IsRead).ToList();
-        if (unread.Count > 0)
-        {
-            foreach (var m in unread) m.IsRead = true;
-            await _db.SaveChangesAsync();
-        }
-
         return true;
     }
 }

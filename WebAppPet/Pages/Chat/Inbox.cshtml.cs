@@ -1,20 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Conversations.GetInbox;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Pages.Chat;
 
 public class InboxModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly GetInboxHandler _inbox;
     private readonly AuthService _auth;
 
-    public InboxModel(AppDbContext db, AuthService auth)
+    public InboxModel(GetInboxHandler inbox, AuthService auth)
     {
-        _db = db;
+        _inbox = inbox;
         _auth = auth;
     }
 
@@ -28,32 +27,10 @@ public class InboxModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        var groomer = await _db.Groomers.AsNoTracking().FirstOrDefaultAsync(g => g.UserId == userId);
-        MyGroomerId = groomer?.Id;
-
-        Items = await _db.Conversations
-            .Include(c => c.Groomer)
-            .Include(c => c.Client)
-            .Where(c => c.ClientId == userId || (groomer != null && c.GroomerId == groomer.Id))
-            .OrderByDescending(c => c.LastMessageAt)
-            .ToListAsync();
-
-        if (Items.Count > 0)
-        {
-            var ids = Items.Select(c => c.Id).ToList();
-            var messages = await _db.ChatMessages
-                .AsNoTracking()
-                .Where(m => ids.Contains(m.ConversationId))
-                .OrderByDescending(m => m.SentAt)
-                .ToListAsync();
-
-            foreach (var m in messages)
-            {
-                if (LastPreview.ContainsKey(m.ConversationId)) continue;
-                LastPreview[m.ConversationId] = m.Body.Length > 80 ? m.Body[..80] + "…" : m.Body;
-            }
-        }
-
+        var view = await _inbox.HandleAsync(new GetInboxQuery(userId));
+        MyGroomerId = view.MyGroomerId;
+        Items = view.Items;
+        LastPreview = view.LastPreview;
         return Page();
     }
 }
