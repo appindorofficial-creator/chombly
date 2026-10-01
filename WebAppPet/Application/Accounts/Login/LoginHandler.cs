@@ -4,7 +4,10 @@ using WebAppPet.Infrastructure.Security;
 
 namespace WebAppPet.Application.Accounts.Login;
 
-/// <summary>Checks the credentials and stores the chosen language. The page issues the auth cookie.</summary>
+/// <summary>
+/// Checks the credentials and stores the chosen language. A password saved in an older format is
+/// re-hashed on a successful sign-in. The page issues the auth cookie.
+/// </summary>
 public class LoginHandler
 {
     private readonly AppDbContext _db;
@@ -14,8 +17,17 @@ public class LoginHandler
     public async Task<LoginResult> HandleAsync(LoginCommand command, CancellationToken ct = default)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == command.Email, ct);
-        if (user is null || !PasswordHasher.Verify(command.Password, user.PasswordHash))
+        if (user is null)
+        {
+            PasswordHasher.SimulateCheck(command.Password);
             return new LoginResult(null);
+        }
+
+        var check = PasswordHasher.Check(command.Password, user.PasswordHash);
+        if (check == PasswordCheck.Failed)
+            return new LoginResult(null);
+        if (check == PasswordCheck.SuccessRehashNeeded)
+            user.PasswordHash = PasswordHasher.Hash(command.Password);
 
         user.PreferredLanguage = command.Culture;
         await _db.SaveChangesAsync(ct);

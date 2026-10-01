@@ -196,7 +196,8 @@ WHEN NOT MATCHED THEN
   INSERT (Slug, Name, Subtitle, Icon, Emoji, IsOvernight, SortOrder, IsActive)
   VALUES (s.Slug, s.Name, s.Subtitle, s.Icon, s.Emoji, s.IsOvernight, s.SortOrder, s.IsActive);
 
--- Hash SHA256 UTF-8/ASCII de "pawcare:123456" (igual que PasswordHasher de la app)
+-- Hash SHA256 UTF-8/ASCII de "pawcare:123456": formato antiguo que PasswordHasher sigue aceptando
+-- y que la app cambia a PBKDF2 la primera vez que el usuario inicia sesión.
 DECLARE @PwdHash nvarchar(64) =
   CONVERT(nvarchar(64), HASHBYTES(N'SHA2_256', CONVERT(varchar(100), 'pawcare:123456')), 2);
 
