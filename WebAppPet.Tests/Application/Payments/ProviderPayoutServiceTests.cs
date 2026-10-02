@@ -14,13 +14,22 @@ public class ProviderPayoutServiceTests
 
     private static ProviderPayoutService Service(AppDbContext db) => new(db, new VetAuditService(db));
 
+    /// <summary>The seeded defaults start today; the period is fixed, so they must already apply at its end.</summary>
+    private static async Task SeedDefaultRulesBeforeThePeriodAsync(AppDbContext db)
+    {
+        await Service(db).SeedDefaultRulesAsync();
+        foreach (var rule in db.ProviderCompensationRules)
+            rule.EffectiveFrom = PeriodStart.AddDays(-1);
+        db.SaveChanges();
+    }
+
     [Fact]
     public async Task Settles_deposits_collected_in_the_period_with_commission_on_the_service_total()
     {
         using var database = new TestDatabase();
         using var db = database.CreateContext();
         var business = TestData.AddBusiness(db);
-        await Service(db).SeedDefaultRulesAsync();
+        await SeedDefaultRulesBeforeThePeriodAsync(db);
         TestData.AddCharge(db, business, 15, PeriodStart.AddDays(3), serviceTotal: 40);
         TestData.AddCharge(db, business, 21, PeriodStart.AddDays(10), serviceTotal: 60);
         TestData.AddCharge(db, business, 175, PeriodStart.AddDays(5), serviceTotal: 500, status: PaymentTransactionStatus.Refunded);
