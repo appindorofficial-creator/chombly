@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.GetActiveExtras;
+using WebAppPet.Application.Bookings.GetBookableProvider;
+using WebAppPet.Application.Bookings.GetCategoryBookingContext;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Pages.Shared;
 
@@ -16,24 +17,30 @@ namespace WebAppPet.Pages.Daycare;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly SearchBusinessesHandler _search;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
+    private readonly GetCategoryBookingContextHandler _context;
+    private readonly GetBookableProviderHandler _provider;
+    private readonly GetActiveExtrasHandler _extras;
 
     public IndexModel(
-        AppDbContext db,
         AuthService auth,
         SearchBusinessesHandler search,
         ApplyPromoCodeHandler promo,
-        CreateBookingHandler createBooking)
+        CreateBookingHandler createBooking,
+        GetCategoryBookingContextHandler context,
+        GetBookableProviderHandler provider,
+        GetActiveExtrasHandler extras)
     {
-        _db = db;
         _auth = auth;
         _search = search;
         _promo = promo;
         _createBooking = createBooking;
+        _context = context;
+        _provider = provider;
+        _extras = extras;
     }
 
     public static readonly (string Key, string Label, string Hint)[] ScheduleOptions =
@@ -246,7 +253,8 @@ public class IndexModel : PageModel
 
     private async Task LoadAsync()
     {
-        Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "daycare" && c.IsActive);
+        var context = await _context.HandleAsync(new GetCategoryBookingContextQuery("daycare", _auth.CurrentUserId));
+        Category = context.Category;
         (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
         ResolveDate(out var day);
         DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
@@ -259,14 +267,11 @@ public class IndexModel : PageModel
             _ => null
         };
 
-        double? userLat = null, userLng = null;
-        if (_auth.CurrentUserId is int userId)
+        var userLat = context.ClientLatitude;
+        var userLng = context.ClientLongitude;
+        if (_auth.CurrentUserId is int)
         {
-            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-            userLat = user?.Latitude;
-            userLng = user?.Longitude;
-
-            Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
+            Pets = context.Pets;
             PetIds ??= new();
             var pid = PetId;
             BookingPetSelection.Normalize(Pets, PetIds, ref pid, out var selected);
@@ -274,8 +279,7 @@ public class IndexModel : PageModel
             SelectedPets = selected;
             SelectedPet = selected.FirstOrDefault();
 
-            Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
-                .OrderByDescending(p => p.IsDefault).ToListAsync();
+            Payments = context.Payments;
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
@@ -343,18 +347,14 @@ public class IndexModel : PageModel
 
         if (GroomerId.HasValue)
         {
-            SelectedDaycare = await _db.Groomers
-                .Include(g => g.Services)
-                .Include(g => g.Amenities)
-                .FirstOrDefaultAsync(g => g.Id == GroomerId && g.IsActive);
+            SelectedDaycare = await _provider.HandleAsync(new GetBookableProviderQuery(GroomerId.Value));
 
             if (SelectedDaycare != null)
             {
                 SelectedService = PickService(SelectedDaycare.Services);
-                Extras = await _db.ServiceExtras
-                    .Where(e => e.GroomerId == SelectedDaycare.Id && e.IsActive)
+                Extras = (await _extras.HandleAsync(new GetActiveExtrasQuery(new[] { SelectedDaycare.Id })))
                     .OrderBy(e => e.Price)
-                    .ToListAsync();
+                    .ToList();
 
                 if (SelectedService != null && SelectedPets.Count > 0)
                 {

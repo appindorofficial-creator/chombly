@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.GetBookableProvider;
+using WebAppPet.Application.Bookings.GetCategoryBookingContext;
+using WebAppPet.Application.Bookings.GetOccupiedSlots;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Pages.Shared;
 
@@ -16,24 +17,30 @@ namespace WebAppPet.Pages.Walkers;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly SearchBusinessesHandler _search;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
+    private readonly GetCategoryBookingContextHandler _context;
+    private readonly GetBookableProviderHandler _provider;
+    private readonly GetOccupiedSlotsHandler _occupiedSlots;
 
     public IndexModel(
-        AppDbContext db,
         AuthService auth,
         SearchBusinessesHandler search,
         ApplyPromoCodeHandler promo,
-        CreateBookingHandler createBooking)
+        CreateBookingHandler createBooking,
+        GetCategoryBookingContextHandler context,
+        GetBookableProviderHandler provider,
+        GetOccupiedSlotsHandler occupiedSlots)
     {
-        _db = db;
         _auth = auth;
         _search = search;
         _promo = promo;
         _createBooking = createBooking;
+        _context = context;
+        _provider = provider;
+        _occupiedSlots = occupiedSlots;
     }
 
     public static readonly string[] TimeSlots = BookingTime.DefaultSlots;
@@ -256,14 +263,15 @@ public class IndexModel : PageModel
     {
         if (Duration != 0 && !DurationOptions.Contains(Duration)) Duration = 0;
 
-        Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "walkers" && c.IsActive);
+        var context = await _context.HandleAsync(new GetCategoryBookingContextQuery("walkers", _auth.CurrentUserId));
+        Category = context.Category;
         (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
         Slot = BookingTime.MapLegacySlot(Slot) ?? "";
         ResolveDate(out var day);
         PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
         OccupiedSlots.Clear();
         if (GroomerId is int walkerId && HasDate)
-            await LoadOccupiedSlotsAsync(walkerId, day);
+            OccupiedSlots = await _occupiedSlots.HandleAsync(new GetOccupiedSlotsQuery(walkerId, day, TimeSlots));
 
         if (!string.IsNullOrWhiteSpace(Slot) &&
             (PastSlots.Contains(Slot) || OccupiedSlots.Contains(Slot) ||
@@ -273,14 +281,11 @@ public class IndexModel : PageModel
         DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
         TimeLabel = HasSlot ? Slot : null;
 
-        double? userLat = null, userLng = null;
-        if (_auth.CurrentUserId is int userId)
+        var userLat = context.ClientLatitude;
+        var userLng = context.ClientLongitude;
+        if (_auth.CurrentUserId is int)
         {
-            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-            userLat = user?.Latitude;
-            userLng = user?.Longitude;
-
-            Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
+            Pets = context.Pets;
             PetIds ??= new();
             var pid = PetId;
             BookingPetSelection.Normalize(Pets, PetIds, ref pid, out var selected, allowedSpecies: new[] { PetSpecies.Dog });
@@ -288,8 +293,7 @@ public class IndexModel : PageModel
             SelectedPets = selected;
             SelectedPet = selected.FirstOrDefault();
 
-            Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
-                .OrderByDescending(p => p.IsDefault).ToListAsync();
+            Payments = context.Payments;
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
@@ -355,10 +359,7 @@ public class IndexModel : PageModel
 
         if (GroomerId.HasValue)
         {
-            SelectedWalker = await _db.Groomers
-                .Include(g => g.Services)
-                .Include(g => g.Amenities)
-                .FirstOrDefaultAsync(g => g.Id == GroomerId && g.IsActive);
+            SelectedWalker = await _provider.HandleAsync(new GetBookableProviderQuery(GroomerId.Value));
 
             if (SelectedWalker != null)
             {
@@ -419,31 +420,6 @@ public class IndexModel : PageModel
         if (BookingDate.TryParseSelected(Date, out day))
             return;
         day = AppTimeZones.TodayLocalDate();
-    }
-
-    private async Task LoadOccupiedSlotsAsync(int groomerId, DateTime day)
-    {
-        OccupiedSlots.Clear();
-        var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
-        var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
-        var taken = await _db.Appointments.AsNoTracking()
-            .Where(a => a.GroomerId == groomerId
-                        && a.Status != AppointmentStatus.Cancelled
-                        && a.ScheduledAt >= from
-                        && a.ScheduledAt < to)
-            .Select(a => a.ScheduledAt)
-            .ToListAsync();
-
-        foreach (var utc in taken)
-        {
-            var local = AppTimeZones.ToAppLocal(utc);
-            foreach (var label in TimeSlots)
-            {
-                if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var slotTod)) continue;
-                if (slotTod == local.TimeOfDay)
-                    OccupiedSlots.Add(label);
-            }
-        }
     }
 
     public class WalkerCardVm

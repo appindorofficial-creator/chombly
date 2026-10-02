@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.FindNextFreeStart;
+using WebAppPet.Application.Bookings.GetBookableProvider;
+using WebAppPet.Application.Bookings.GetCategoryBookingContext;
+using WebAppPet.Application.Bookings.GetOccupiedSlots;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Pages.Shared;
 
@@ -16,24 +18,33 @@ namespace WebAppPet.Pages.Trainers;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly SearchBusinessesHandler _search;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
+    private readonly GetCategoryBookingContextHandler _context;
+    private readonly GetBookableProviderHandler _provider;
+    private readonly GetOccupiedSlotsHandler _occupiedSlots;
+    private readonly FindNextFreeStartHandler _nextFreeStart;
 
     public IndexModel(
-        AppDbContext db,
         AuthService auth,
         SearchBusinessesHandler search,
         ApplyPromoCodeHandler promo,
-        CreateBookingHandler createBooking)
+        CreateBookingHandler createBooking,
+        GetCategoryBookingContextHandler context,
+        GetBookableProviderHandler provider,
+        GetOccupiedSlotsHandler occupiedSlots,
+        FindNextFreeStartHandler nextFreeStart)
     {
-        _db = db;
         _auth = auth;
         _search = search;
         _promo = promo;
         _createBooking = createBooking;
+        _context = context;
+        _provider = provider;
+        _occupiedSlots = occupiedSlots;
+        _nextFreeStart = nextFreeStart;
     }
 
     public static readonly (string Key, string Label)[] TrainingTypes =
@@ -205,7 +216,8 @@ public class IndexModel : PageModel
 
         if (Sessions is not (1 or 4 or 8)) Sessions = 1;
 
-        if (!TryResolveSchedule(SelectedTrainer.Id, out var start, out var scheduleError))
+        var (scheduled, start, scheduleError) = await ResolveScheduleAsync(SelectedTrainer.Id);
+        if (!scheduled)
         {
             ErrorMessage = scheduleError;
             Pay = true;
@@ -286,7 +298,8 @@ public class IndexModel : PageModel
     {
         if (Sessions is not (0 or 1 or 4 or 8)) Sessions = 0;
 
-        Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "trainers" && c.IsActive);
+        var context = await _context.HandleAsync(new GetCategoryBookingContextQuery("trainers", _auth.CurrentUserId));
+        Category = context.Category;
         (When, Date) = BookingDate.NormalizeFromLegacy(When, Date);
         if (!string.IsNullOrWhiteSpace(Slot) && !TimeSlots.Contains(Slot, StringComparer.OrdinalIgnoreCase))
             Slot = "";
@@ -294,7 +307,7 @@ public class IndexModel : PageModel
         var day = ResolveDay();
         MarkPastSlots(day);
         if (GroomerId is int bookedGroomerId && HasDate)
-            await LoadOccupiedSlotsAsync(bookedGroomerId, day);
+            OccupiedSlots = await _occupiedSlots.HandleAsync(new GetOccupiedSlotsQuery(bookedGroomerId, day, TimeSlots));
 
         if (!string.IsNullOrWhiteSpace(Slot) && (OccupiedSlots.Contains(Slot) || PastSlots.Contains(Slot)))
         {
@@ -302,19 +315,18 @@ public class IndexModel : PageModel
             Slot = free ?? "";
         }
 
-        if (HasSlot && HasDate && TryResolveSchedule(GroomerId, out var start, out _))
-            DateLabel = $"{BookingDate.FormatLabel(day)} · {start:h:mm tt}";
-        else
-            DateLabel = HasDate ? BookingDate.FormatLabel(day) : null;
+        var (scheduled, start, _) = HasSlot && HasDate
+            ? await ResolveScheduleAsync(GroomerId)
+            : (false, default, null);
+        DateLabel = scheduled
+            ? $"{BookingDate.FormatLabel(day)} · {start:h:mm tt}"
+            : HasDate ? BookingDate.FormatLabel(day) : null;
 
-        double? userLat = null, userLng = null;
-        if (_auth.CurrentUserId is int userId)
+        var userLat = context.ClientLatitude;
+        var userLng = context.ClientLongitude;
+        if (_auth.CurrentUserId is int)
         {
-            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-            userLat = user?.Latitude;
-            userLng = user?.Longitude;
-
-            Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
+            Pets = context.Pets;
             PetIds ??= new();
             var pid = PetId;
             BookingPetSelection.Normalize(Pets, PetIds, ref pid, out var selected);
@@ -322,8 +334,7 @@ public class IndexModel : PageModel
             SelectedPets = selected;
             SelectedPet = selected.FirstOrDefault();
 
-            Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
-                .OrderByDescending(p => p.IsDefault).ToListAsync();
+            Payments = context.Payments;
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
@@ -387,10 +398,7 @@ public class IndexModel : PageModel
 
         if (GroomerId.HasValue)
         {
-            SelectedTrainer = await _db.Groomers
-                .Include(g => g.Services)
-                .Include(g => g.Amenities)
-                .FirstOrDefaultAsync(g => g.Id == GroomerId && g.IsActive);
+            SelectedTrainer = await _provider.HandleAsync(new GetBookableProviderQuery(GroomerId.Value));
 
             if (SelectedTrainer != null)
             {
@@ -484,90 +492,40 @@ public class IndexModel : PageModel
         PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
     }
 
-    private async Task LoadOccupiedSlotsAsync(int groomerId, DateTime day)
+    /// <summary>
+    /// Start of the session for the chosen day and slot. With a trainer, moves to the next free slot
+    /// (updating <see cref="Slot"/> and <see cref="Date"/>) when the chosen one is taken.
+    /// </summary>
+    private async Task<(bool Ok, DateTime StartUtc, string? Error)> ResolveScheduleAsync(int? groomerId)
     {
-        OccupiedSlots.Clear();
-        var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
-        var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
-        var taken = await _db.Appointments.AsNoTracking()
-            .Where(a => a.GroomerId == groomerId
-                        && a.Status != AppointmentStatus.Cancelled
-                        && a.ScheduledAt >= from
-                        && a.ScheduledAt < to)
-            .Select(a => a.ScheduledAt)
-            .ToListAsync();
-
-        foreach (var utc in taken)
-        {
-            var local = AppTimeZones.ToAppLocal(utc);
-            foreach (var label in TimeSlots)
-            {
-                if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var slotTod)) continue;
-                if (slotTod == local.TimeOfDay)
-                    OccupiedSlots.Add(label);
-            }
-        }
-    }
-
-    private bool TryResolveSchedule(int? groomerId, out DateTime startUtc, out string? error)
-    {
-        error = null;
         var day = ResolveDay();
         if (!AppTimeZones.TryParseSlotToTimeSpan(Slot, out var tod))
-        {
-            error = CatalogLocalizer.Loc("Elige un horario.", "Choose a time slot.");
-            startUtc = default;
-            return false;
-        }
+            return (false, default, CatalogLocalizer.Loc("Elige un horario.", "Choose a time slot."));
 
-        startUtc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
+        var startUtc = AppTimeZones.LocalDateAndTimeToUtc(day, tod);
         if (startUtc <= DateTime.UtcNow)
         {
-            error = CatalogLocalizer.Loc(
+            return (false, startUtc, CatalogLocalizer.Loc(
                 "No puedes elegir una fecha u hora en el pasado.",
-                "You can't select a past date or time.");
-            return false;
+                "You can't select a past date or time."));
         }
 
         if (groomerId is not int gid)
-            return true;
+            return (true, startUtc, null);
 
-        var preferredIndex = Array.FindIndex(TimeSlots, t => string.Equals(t, Slot, StringComparison.OrdinalIgnoreCase));
-        if (preferredIndex < 0) preferredIndex = 0;
-        var nowUtc = DateTime.UtcNow;
-
-        for (var dayOffset = 0; dayOffset < 14; dayOffset++)
+        var free = await _nextFreeStart.HandleAsync(
+            new FindNextFreeStartQuery(gid, day, Slot, TimeSlots, DateTime.UtcNow));
+        if (free == null)
         {
-            var tryDay = day.AddDays(dayOffset);
-            if (tryDay.DayOfWeek == DayOfWeek.Sunday) continue;
-
-            var ordered = dayOffset == 0
-                ? TimeSlots.Skip(preferredIndex).ToArray()
-                : TimeSlots;
-
-            foreach (var t in ordered)
-            {
-                if (!AppTimeZones.TryParseSlotToTimeSpan(t, out var slotTod)) continue;
-                var candidate = AppTimeZones.LocalDateAndTimeToUtc(tryDay, slotTod);
-                if (candidate <= nowUtc) continue;
-                var busy = _db.Appointments.AsNoTracking().Any(a =>
-                    a.GroomerId == gid
-                    && a.Status != AppointmentStatus.Cancelled
-                    && a.ScheduledAt == candidate);
-                if (busy) continue;
-
-                startUtc = candidate;
-                Slot = t;
-                Date = tryDay.ToString("yyyy-MM-dd");
-                When = "";
-                return true;
-            }
+            return (false, startUtc, CatalogLocalizer.Loc(
+                "Ese horario ya no está disponible. Elige otro día u hora.",
+                "That time is no longer available. Choose another day or time."));
         }
 
-        error = CatalogLocalizer.Loc(
-            "Ese horario ya no está disponible. Elige otro día u hora.",
-            "That time is no longer available. Choose another day or time.");
-        return false;
+        Slot = free.Slot;
+        Date = free.Day.ToString("yyyy-MM-dd");
+        When = "";
+        return (true, free.StartUtc, null);
     }
 
     public class TrainerCardVm
