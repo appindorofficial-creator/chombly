@@ -1,39 +1,54 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.GetActiveExtras;
+using WebAppPet.Application.Bookings.GetBookableProvider;
+using WebAppPet.Application.Bookings.GetCategoryBookingContext;
+using WebAppPet.Application.Businesses.EnsureHotelCoreExtras;
 using WebAppPet.Application.Businesses.SearchBusinesses;
+using WebAppPet.Application.Businesses.SearchHotels;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Common;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 
 namespace WebAppPet.Pages.Hotel;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly AvailabilityService _availability;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
+    private readonly GetCategoryBookingContextHandler _context;
+    private readonly SearchHotelsHandler _searchHotels;
+    private readonly GetBookableProviderHandler _provider;
+    private readonly GetActiveExtrasHandler _extras;
+    private readonly EnsureHotelCoreExtrasHandler _ensureCoreExtras;
 
     public IndexModel(
-        AppDbContext db,
         AuthService auth,
         AvailabilityService availability,
         ApplyPromoCodeHandler promo,
-        CreateBookingHandler createBooking)
+        CreateBookingHandler createBooking,
+        GetCategoryBookingContextHandler context,
+        SearchHotelsHandler searchHotels,
+        GetBookableProviderHandler provider,
+        GetActiveExtrasHandler extras,
+        EnsureHotelCoreExtrasHandler ensureCoreExtras)
     {
-        _db = db;
         _auth = auth;
         _availability = availability;
         _promo = promo;
         _createBooking = createBooking;
+        _context = context;
+        _searchHotels = searchHotels;
+        _provider = provider;
+        _extras = extras;
+        _ensureCoreExtras = ensureCoreExtras;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -270,24 +285,22 @@ public class IndexModel : PageModel
         ExtraIds ??= new List<int>();
         MedsPetIds ??= new List<int>();
 
-        Category = await _db.Categories.FirstOrDefaultAsync(c => c.Slug == "hotel" && c.IsActive);
+        var context = await _context.HandleAsync(new GetCategoryBookingContextQuery("hotel", _auth.CurrentUserId));
+        Category = context.Category;
 
         ResolveDates(out var cin, out var cout);
         CheckIn = cin.ToString("yyyy-MM-dd");
         CheckOut = cout.ToString("yyyy-MM-dd");
         Nights = Math.Max(1, (int)(cout.Date - cin.Date).TotalDays);
 
-        double? userLat = null, userLng = null;
-        if (_auth.CurrentUserId is int userId)
+        var userLat = context.ClientLatitude;
+        var userLng = context.ClientLongitude;
+        if (_auth.CurrentUserId is int)
         {
-            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-            userLat = user?.Latitude;
-            userLng = user?.Longitude;
-
-            Pets = await _db.Pets.Where(p => p.OwnerId == userId).OrderBy(p => p.Name).ToListAsync();
+            Pets = context.Pets;
             NormalizeSelectedPets();
 
-            Payments = await _db.PaymentMethods.Where(p => p.UserId == userId).OrderByDescending(p => p.IsDefault).ToListAsync();
+            Payments = context.Payments;
             DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
             if (PaymentMethodId == null && DefaultPayment != null)
                 PaymentMethodId = DefaultPayment.Id;
@@ -305,23 +318,7 @@ public class IndexModel : PageModel
         if (GroomerId.HasValue && !CanSelectHotel)
             GroomerId = null;
 
-        var hotelsQuery = _db.Groomers
-            .Include(g => g.Category)
-            .Include(g => g.Amenities)
-            .Include(g => g.Services)
-            .Where(g => g.IsActive && g.PublishStatus == BusinessPublishStatus.Approved);
-
-        var hotels = await hotelsQuery
-            .OrderByDescending(g => g.IsFeatured)
-            .ThenByDescending(g => g.Rating)
-            .ToListAsync();
-
-        if (Category is not null)
-            hotels = hotels.Where(h => h.OffersCategory(Category.Id)).ToList();
-        else
-            hotels = hotels.Where(h => h.Category != null && h.Category.Slug == "hotel").ToList();
-
-        hotels = BusinessMarketResolver.FilterHomeMarket(hotels, AppTimeZones.CurrentCountryCode).ToList();
+        var hotels = await _searchHotels.HandleAsync(new SearchHotelsQuery(Category?.Id, AppTimeZones.CurrentCountryCode));
 
         // Results must accept every selected pet species.
         if (SelectedPets.Count > 0)
@@ -386,18 +383,14 @@ public class IndexModel : PageModel
 
         if (GroomerId.HasValue)
         {
-            SelectedHotel = await _db.Groomers
-                .Include(g => g.Amenities)
-                .Include(g => g.Services)
-                .FirstOrDefaultAsync(g => g.Id == GroomerId && g.IsActive);
+            SelectedHotel = await _provider.HandleAsync(new GetBookableProviderQuery(GroomerId.Value));
             if (SelectedHotel != null)
             {
                 SelectedService = SelectedHotel.Services.OrderBy(s => s.PriceSmall).FirstOrDefault();
-                await HotelCoreExtras.EnsureMissingAsync(_db, new[] { SelectedHotel.Id });
-                Extras = await _db.ServiceExtras
-                    .Where(e => e.GroomerId == SelectedHotel.Id && e.IsActive)
+                await _ensureCoreExtras.HandleAsync(new EnsureHotelCoreExtrasCommand(new[] { SelectedHotel.Id }));
+                Extras = (await _extras.HandleAsync(new GetActiveExtrasQuery(new[] { SelectedHotel.Id })))
                     .OrderBy(e => e.Price)
-                    .ToListAsync();
+                    .ToList();
 
                 // Drop selections that this hotel does not offer.
                 var offeredIds = Extras.Select(e => e.Id).ToHashSet();
@@ -430,7 +423,7 @@ public class IndexModel : PageModel
         var catalogIds = Results.Select(r => r.Hotel.Id).ToList();
         if (SelectedHotel != null && !catalogIds.Contains(SelectedHotel.Id))
             catalogIds.Add(SelectedHotel.Id);
-        await HotelCoreExtras.EnsureMissingAsync(_db, catalogIds);
+        await _ensureCoreExtras.HandleAsync(new EnsureHotelCoreExtrasCommand(catalogIds));
         await BuildExtraOptionsAsync(catalogIds);
     }
 
@@ -439,10 +432,7 @@ public class IndexModel : PageModel
         ExtraOptions = new List<HotelExtraOptionVm>();
         if (hotelIds.Count == 0) return;
 
-        var raw = await _db.ServiceExtras
-            .AsNoTracking()
-            .Where(e => hotelIds.Contains(e.GroomerId) && e.IsActive)
-            .ToListAsync();
+        var raw = await _extras.HandleAsync(new GetActiveExtrasQuery(hotelIds));
         if (raw.Count == 0) return;
 
         var byName = raw
