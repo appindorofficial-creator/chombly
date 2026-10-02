@@ -42,6 +42,9 @@ using WebAppPet.Application.Consultations.SelectIntlVet;
 using WebAppPet.Application.Consultations.SelectLocalVet;
 using WebAppPet.Application.Consultations.Shared;
 using WebAppPet.Application.Consultations.StartConsultation;
+using WebAppPet.Application.Conversations.GetInbox;
+using WebAppPet.Application.Conversations.OpenConversation;
+using WebAppPet.Application.Conversations.SendMessage;
 using WebAppPet.Application.Businesses.AddAmenity;
 using WebAppPet.Application.Businesses.AddExtra;
 using WebAppPet.Application.Businesses.AddService;
@@ -197,6 +200,10 @@ public static class DependencyInjection
         services.AddScoped<GetUnreadCountHandler>();
         services.AddScoped<DeleteNotificationHandler>();
         services.AddScoped<ClearNotificationsHandler>();
+
+        services.AddScoped<GetInboxHandler>();
+        services.AddScoped<OpenConversationHandler>();
+        services.AddScoped<SendMessageHandler>();
 
         services.AddScoped<GetPetRemindersHandler>();
         services.AddScoped<CreateReminderHandler>();
