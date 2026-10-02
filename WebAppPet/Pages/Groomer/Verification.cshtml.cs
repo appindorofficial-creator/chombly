@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebAppPet.Domain;
+using WebAppPet.Application.Businesses.MarkVerificationItem;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
@@ -9,7 +9,12 @@ namespace WebAppPet.Pages.Groomer;
 
 public class VerificationModel : GroomerPageModel
 {
-    public VerificationModel(AppDbContext db, AuthService auth) : base(db, auth) { }
+    private readonly MarkVerificationItemHandler _markItem;
+
+    public VerificationModel(AppDbContext db, AuthService auth, MarkVerificationItemHandler markItem) : base(db, auth)
+    {
+        _markItem = markItem;
+    }
 
     public int DoneCount { get; set; }
     public int TotalCount { get; } = 6;
@@ -26,15 +31,7 @@ public class VerificationModel : GroomerPageModel
     public async Task<IActionResult> OnPostMarkAsync(string item)
     {
         if (await LoadGroomerAsync() is IActionResult r) return r;
-        var g = Profile!;
-        switch (item)
-        {
-            case "identity": g.VerifiedIdentity = true; break;
-            case "license": g.VerifiedLicense = true; break;
-            case "insurance": g.VerifiedInsurance = true; break;
-            case "bank": g.VerifiedBank = true; break;
-        }
-        await Db.SaveChangesAsync();
+        await _markItem.HandleAsync(new MarkVerificationItemCommand(Profile!.Id, item));
         Message = CatalogLocalizer.Loc(
             "Marcado como completado. El equipo de Chombly puede revisarlo.",
             "Marked as done. The Chombly team can review it.");

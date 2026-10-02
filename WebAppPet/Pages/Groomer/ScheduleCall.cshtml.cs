@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebAppPet.Domain;
+using WebAppPet.Application.Businesses.ScheduleSupportCall;
 using WebAppPet.Domain.Markets;
-using WebAppPet.Infrastructure.Email;
 using WebAppPet.Infrastructure.Identity;
 using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
@@ -11,12 +9,12 @@ namespace WebAppPet.Pages.Groomer;
 
 public class ScheduleCallModel : GroomerPageModel
 {
-    private readonly IEmailService _email;
+    private readonly ScheduleSupportCallHandler _scheduleCall;
 
-    public ScheduleCallModel(AppDbContext db, AuthService auth, IEmailService email)
+    public ScheduleCallModel(AppDbContext db, AuthService auth, ScheduleSupportCallHandler scheduleCall)
         : base(db, auth)
     {
-        _email = email;
+        _scheduleCall = scheduleCall;
     }
 
     public List<DateTime> Days { get; set; } = new();
@@ -43,32 +41,20 @@ public class ScheduleCallModel : GroomerPageModel
         if (await LoadGroomerAsync() is IActionResult r) return r;
         BuildDays();
 
-        if (!DateTime.TryParse(Day, out var day))
+        var result = await _scheduleCall.HandleAsync(new ScheduleSupportCallCommand(Profile!.Id, Day, Slot));
+        switch (result.Error)
         {
-            ErrorMessage = CatalogLocalizer.Loc("Elige un día.", "Pick a day.");
-            return Page();
+            case ScheduleSupportCallError.InvalidDay:
+                ErrorMessage = CatalogLocalizer.Loc("Elige un día.", "Pick a day.");
+                return Page();
+            case ScheduleSupportCallError.InvalidSlot:
+                ErrorMessage = CatalogLocalizer.Loc("Horario inválido.", "Invalid time slot.");
+                return Page();
+            case ScheduleSupportCallError.NotFound:
+                return RedirectToPage("/Account/RegisterBusiness");
         }
-        if (!DateTime.TryParse($"{day:yyyy-MM-dd} {Slot}", out var when))
-        {
-            ErrorMessage = CatalogLocalizer.Loc("Horario inválido.", "Invalid time slot.");
-            return Page();
-        }
 
-        Profile!.SupportCallAt = when;
-        await Db.SaveChangesAsync();
-
-        await _email.SendAsync(
-            Profile.User?.Email ?? "",
-            CatalogLocalizer.Loc("Chombly: llamada agendada", "Chombly: call scheduled"),
-            CatalogLocalizer.Loc(
-                $"<p>Hola {Profile.User?.FullName},</p><p>Tu llamada de soporte quedó para <strong>{when:ddd d MMM · h:mm tt}</strong>.</p><p>— Equipo Chombly</p>",
-                $"<p>Hi {Profile.User?.FullName},</p><p>Your support call is set for <strong>{when:ddd d MMM · h:mm tt}</strong>.</p><p>— Chombly team</p>"));
-
-        // Avisar admin
-        var adminEmail = "appindorofficial@gmail.com";
-        await _email.SendAsync(adminEmail, $"Llamada soporte — {Profile.BusinessName}",
-            $"<p>{Profile.BusinessName} agendó llamada: {when:g}</p><p>{Profile.User?.Email} · {Profile.Phone}</p>");
-
+        var when = result.When!.Value;
         Message = CatalogLocalizer.Loc(
             $"Llamada confirmada: {when:ddd d MMM · h:mm tt}",
             $"Call confirmed: {when:ddd d MMM · h:mm tt}");

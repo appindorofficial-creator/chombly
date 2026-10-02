@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Businesses.ResubmitBusiness;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
@@ -10,7 +11,12 @@ namespace WebAppPet.Pages.Groomer;
 
 public class DashboardModel : GroomerPageModel
 {
-    public DashboardModel(AppDbContext db, AuthService auth) : base(db, auth) { }
+    private readonly ResubmitBusinessHandler _resubmit;
+
+    public DashboardModel(AppDbContext db, AuthService auth, ResubmitBusinessHandler resubmit) : base(db, auth)
+    {
+        _resubmit = resubmit;
+    }
 
     public decimal TodayIncome { get; set; }
     public int TodayCompleted { get; set; }
@@ -70,24 +76,8 @@ public class DashboardModel : GroomerPageModel
     public async Task<IActionResult> OnPostResubmitAsync()
     {
         if (await LoadGroomerAsync() is IActionResult redirect) return redirect;
-        var g = Profile!;
-        if (g.PublishStatus is BusinessPublishStatus.Rejected or BusinessPublishStatus.Draft)
+        if (await _resubmit.HandleAsync(new ResubmitBusinessCommand(Profile!.Id)))
         {
-            g.PublishStatus = BusinessPublishStatus.PendingReview;
-            g.IsActive = false;
-            g.IsVerified = false;
-            var admins = await Db.Users.Where(u => u.Role == UserRole.Admin).Select(u => u.Id).ToListAsync();
-            foreach (var adminId in admins)
-            {
-                Db.Notifications.Add(new AppNotification
-                {
-                    UserId = adminId,
-                    Title = "Negocio reenviado a revisión",
-                    Message = $"{g.BusinessName} vuelve a solicitar publicación.",
-                    Type = "business"
-                });
-            }
-            await Db.SaveChangesAsync();
             TempData["Flash"] = CatalogLocalizer.Loc(
                 "Solicitud reenviada. Te avisaremos al publicar.",
                 "Request resubmitted. We'll notify you when you're published.");
