@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Businesses.AddAmenity;
 using WebAppPet.Application.Businesses.AddExtra;
 using WebAppPet.Application.Businesses.AddService;
+using WebAppPet.Application.Businesses.RepairCoordinates;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.UpdateBusiness;
 using WebAppPet.Application.Common;
@@ -22,6 +23,7 @@ public class BusinessModel : GroomerPageModel
     private readonly AddAmenityHandler _addAmenity;
     private readonly AddExtraHandler _addExtra;
     private readonly AddServiceHandler _addService;
+    private readonly RepairCoordinatesHandler _repairCoordinates;
     private readonly IStringLocalizer<SharedResource> _L;
 
     public BusinessModel(
@@ -31,6 +33,7 @@ public class BusinessModel : GroomerPageModel
         AddAmenityHandler addAmenity,
         AddExtraHandler addExtra,
         AddServiceHandler addService,
+        RepairCoordinatesHandler repairCoordinates,
         IStringLocalizer<SharedResource> L)
         : base(db, auth)
     {
@@ -38,6 +41,7 @@ public class BusinessModel : GroomerPageModel
         _addAmenity = addAmenity;
         _addExtra = addExtra;
         _addService = addService;
+        _repairCoordinates = repairCoordinates;
         _L = L;
     }
 
@@ -154,6 +158,7 @@ public class BusinessModel : GroomerPageModel
     private async Task FillAsync()
     {
         Categories = await Db.Categories.Where(c => c.IsActive).OrderBy(c => c.SortOrder).ToListAsync();
+        await _repairCoordinates.HandleAsync(new RepairCoordinatesCommand(Profile!.Id));
         Profile = await Db.Groomers.Include(g => g.Category).Include(g => g.User).FirstAsync(g => g.Id == Profile!.Id);
         await LoadOfferedCategoriesAsync();
         var g = Profile;
@@ -162,14 +167,6 @@ public class BusinessModel : GroomerPageModel
         CategoryIds = g.GetOfferedCategoryIds().ToList();
         Address = g.Address;
         City = g.City;
-        var lat = g.Latitude;
-        var lng = g.Longitude;
-        if (GeoHelper.TryRepairCoordinates(ref lat, ref lng))
-        {
-            g.Latitude = lat;
-            g.Longitude = lng;
-            await Db.SaveChangesAsync();
-        }
         Latitude = g.Latitude;
         Longitude = g.Longitude;
         About = g.About;

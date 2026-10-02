@@ -52,8 +52,12 @@ using WebAppPet.Application.Businesses.ApproveBusiness;
 using WebAppPet.Application.Businesses.CreateBusiness;
 using WebAppPet.Application.Businesses.GetAvailability;
 using WebAppPet.Application.Businesses.GetPendingBusinesses;
+using WebAppPet.Application.Businesses.MarkVerificationItem;
 using WebAppPet.Application.Businesses.RejectBusiness;
+using WebAppPet.Application.Businesses.RepairCoordinates;
+using WebAppPet.Application.Businesses.ResubmitBusiness;
 using WebAppPet.Application.Businesses.SaveWeeklySchedule;
+using WebAppPet.Application.Businesses.ScheduleSupportCall;
 using WebAppPet.Application.Businesses.SearchBusinesses;
 using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Businesses.ToggleAvailabilityDay;
@@ -163,6 +167,10 @@ public static class DependencyInjection
         services.AddScoped<SaveWeeklyScheduleHandler>();
         services.AddScoped<ToggleAvailabilityDayHandler>();
         services.AddScoped<SearchBusinessesHandler>();
+        services.AddScoped<MarkVerificationItemHandler>();
+        services.AddScoped<ScheduleSupportCallHandler>();
+        services.AddScoped<ResubmitBusinessHandler>();
+        services.AddScoped<RepairCoordinatesHandler>();
 
         services.AddScoped<IPaymentGateway, SimulatedPaymentGateway>();
         services.AddScoped<PaymentService>();
