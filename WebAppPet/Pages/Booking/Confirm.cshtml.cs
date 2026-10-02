@@ -1,20 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using WebAppPet.Application.Bookings.GetBookingConfirmation;
 using WebAppPet.Domain;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 
 namespace WebAppPet.Pages.Booking;
 
 public class ConfirmModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly GetBookingConfirmationHandler _confirmation;
     private readonly AuthService _auth;
 
-    public ConfirmModel(AppDbContext db, AuthService auth)
+    public ConfirmModel(GetBookingConfirmationHandler confirmation, AuthService auth)
     {
-        _db = db;
+        _confirmation = confirmation;
         _auth = auth;
     }
 
@@ -26,20 +25,12 @@ public class ConfirmModel : PageModel
         if (_auth.CurrentUserId is not int userId)
             return RedirectToPage("/Account/Login");
 
-        Appointment = await _db.Appointments
-            .Include(a => a.Groomer).ThenInclude(g => g.Category)
-            .Include(a => a.Service)
-            .Include(a => a.Pet)
-            .Include(a => a.Extras)
-            .FirstOrDefaultAsync(a => a.Id == id && a.ClientId == userId);
-
-        if (Appointment == null)
+        var confirmation = await _confirmation.HandleAsync(new GetBookingConfirmationQuery(id, userId));
+        if (confirmation == null)
             return RedirectToPage("/Appointments/Index");
 
-        Payment = await _db.PaymentTransactions.AsNoTracking()
-            .Where(t => t.AppointmentId == id && t.Status != PaymentTransactionStatus.Failed)
-            .OrderByDescending(t => t.CreatedAt)
-            .FirstOrDefaultAsync();
+        Appointment = confirmation.Appointment;
+        Payment = confirmation.Payment;
         return Page();
     }
 }

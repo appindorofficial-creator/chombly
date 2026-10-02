@@ -11,7 +11,10 @@ using WebAppPet.Application.Behavior.StartBehaviorCase;
 using WebAppPet.Application.Behavior.SubmitBehaviorIntake;
 using WebAppPet.Application.Bookings.CancelBooking;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.GetBookingConfirmation;
+using WebAppPet.Application.Bookings.GetBookingForm;
 using WebAppPet.Application.Bookings.GetBookings;
+using WebAppPet.Application.Bookings.GetDaySlots;
 using WebAppPet.Application.Bookings.SaveClinicalNote;
 using WebAppPet.Application.Bookings.Shared;
 using WebAppPet.Application.Bookings.UpdateBookingStatus;
@@ -122,6 +125,9 @@ public static class DependencyInjection
         services.AddScoped<SaveClinicalNoteHandler>();
         services.AddScoped<GetClientBookingsHandler>();
         services.AddScoped<GetBusinessBookingsHandler>();
+        services.AddScoped<GetBookingFormHandler>();
+        services.AddScoped<GetDaySlotsHandler>();
+        services.AddScoped<GetBookingConfirmationHandler>();
 
         services.AddScoped<ClientHomeCountry>();
         services.AddScoped<ConsultationRouter>();
