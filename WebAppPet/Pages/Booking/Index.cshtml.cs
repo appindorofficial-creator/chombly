@@ -1,15 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using WebAppPet.Application.Bookings.CreateBooking;
+using WebAppPet.Application.Bookings.GetBookingForm;
+using WebAppPet.Application.Bookings.GetDaySlots;
 using WebAppPet.Application.Bookings.Shared;
-using WebAppPet.Application.Businesses.Shared;
 using WebAppPet.Application.Promotions.ApplyPromoCode;
 using WebAppPet.Domain;
 using WebAppPet.Domain.Markets;
 using WebAppPet.Infrastructure.Identity;
-using WebAppPet.Infrastructure.Persistence;
 using WebAppPet.Localization;
 using WebAppPet.Pages.Shared;
 
@@ -17,26 +16,26 @@ namespace WebAppPet.Pages.Booking;
 
 public class IndexModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly AuthService _auth;
     private readonly ApplyPromoCodeHandler _promo;
     private readonly CreateBookingHandler _createBooking;
-    private readonly AvailabilityService _availability;
+    private readonly GetBookingFormHandler _bookingForm;
+    private readonly GetDaySlotsHandler _daySlots;
     private readonly IStringLocalizer<SharedResource> _L;
 
     public IndexModel(
-        AppDbContext db,
         AuthService auth,
         ApplyPromoCodeHandler promo,
         CreateBookingHandler createBooking,
-        AvailabilityService availability,
+        GetBookingFormHandler bookingForm,
+        GetDaySlotsHandler daySlots,
         IStringLocalizer<SharedResource> L)
     {
-        _db = db;
         _auth = auth;
         _promo = promo;
         _createBooking = createBooking;
-        _availability = availability;
+        _bookingForm = bookingForm;
+        _daySlots = daySlots;
         _L = L;
     }
 
@@ -165,7 +164,7 @@ public class IndexModel : PageModel
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
         await PrepareConfirmAsync(applyPromo: false);
-        await LoadPaymentsAsync();
+        SelectDefaultPayment();
         EvaluateCanShowSummary();
         if (Pay && !CanShowSummary)
             Pay = false;
@@ -187,7 +186,7 @@ public class IndexModel : PageModel
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
         await PrepareConfirmAsync(applyPromo: true);
-        await LoadPaymentsAsync();
+        SelectDefaultPayment();
 
         if (!AcceptTerms)
         {
@@ -326,7 +325,7 @@ public class IndexModel : PageModel
         EnsureDateDefaults();
         await LoadDayAvailabilityAsync();
         await PrepareConfirmAsync(applyPromo: true);
-        await LoadPaymentsAsync();
+        SelectDefaultPayment();
         EvaluateCanShowSummary();
         Pay = true;
         return Page();
@@ -379,28 +378,19 @@ public class IndexModel : PageModel
 
     private async Task LoadAsync()
     {
-        Groomer = await _db.Groomers
-            .Include(g => g.Category)
-            .FirstOrDefaultAsync(g => g.Id == GroomerId && g.IsActive);
-
-        IsOvernight = Groomer?.Category?.IsOvernight == true
-            || string.Equals(Groomer?.Category?.Slug, "hotel", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(Groomer?.Category?.Slug, "daycare", StringComparison.OrdinalIgnoreCase);
-
-        Services = await _db.Services.Where(s => s.GroomerId == GroomerId).ToListAsync();
-        Extras = await _db.ServiceExtras.Where(e => e.GroomerId == GroomerId && e.IsActive).ToListAsync();
-
-        if (_auth.CurrentUserId is int userId)
-            Pets = await _db.Pets.Where(p => p.OwnerId == userId).ToListAsync();
+        var form = await _bookingForm.HandleAsync(new GetBookingFormQuery(GroomerId, _auth.CurrentUserId));
+        Groomer = form?.Business;
+        IsOvernight = form?.IsOvernight == true;
+        Services = form?.Services ?? new();
+        Extras = form?.Extras ?? new();
+        Pets = form?.Pets ?? new();
+        Payments = form?.Payments ?? new();
 
         ServiceLocked = ServiceId > 0 && Services.Any(s => s.Id == ServiceId);
     }
 
-    private async Task LoadPaymentsAsync()
+    private void SelectDefaultPayment()
     {
-        if (_auth.CurrentUserId is not int userId) return;
-        Payments = await _db.PaymentMethods.Where(p => p.UserId == userId)
-            .OrderByDescending(p => p.IsDefault).ThenBy(p => p.Id).ToListAsync();
         DefaultPayment = Payments.FirstOrDefault(p => p.IsDefault) ?? Payments.FirstOrDefault();
         if (PaymentMethodId == null && DefaultPayment != null)
             PaymentMethodId = DefaultPayment.Id;
@@ -408,8 +398,7 @@ public class IndexModel : PageModel
 
     private async Task PrepareConfirmAsync(bool applyPromo)
     {
-        SelectedService = SelectedServices.FirstOrDefault()
-            ?? await _db.Services.FirstOrDefaultAsync(s => s.Id == ServiceId);
+        SelectedService = SelectedServices.FirstOrDefault();
         // SelectedPets already normalized from owned pets; keep SelectedPet as primary.
         SelectedPet = SelectedPets.FirstOrDefault();
         SelectedExtras = Extras.Where(e => SelectedExtraIds.Contains(e.Id)).ToList();
@@ -521,92 +510,24 @@ public class IndexModel : PageModel
 
         if (!DateTime.TryParse(Date, out var dayParsed))
             dayParsed = AppTimeZones.TodayLocalDate();
-        var day = dayParsed.Date;
 
-        if (Groomer.OffersEmergency24x7)
-        {
-            DayIsOpen = true;
-            HoursLabel = CatalogLocalizer.Loc("24 horas", "24 hours");
-        }
-        else
-        {
-            DayIsOpen = await _availability.IsAvailableOnAsync(GroomerId, day);
-        }
+        var slots = await _daySlots.HandleAsync(
+            new GetDaySlotsQuery(GroomerId, Groomer.OffersEmergency24x7, dayParsed.Date));
+        DayIsOpen = slots.IsOpen;
+        HoursLabel = Groomer.OffersEmergency24x7 ? CatalogLocalizer.Loc("24 horas", "24 hours") : slots.HoursLabel;
+        TimeSlots = slots.TimeSlots;
+        PastSlots = slots.Past;
+        OccupiedSlots = slots.Occupied;
+        OutsideHoursSlots = slots.OutsideHours;
+        BookableTimeSlots = slots.Bookable;
 
-        BusinessWeeklyHour? week = null;
-        if (!Groomer.OffersEmergency24x7)
-        {
-            week = await _db.WeeklyHours.AsNoTracking()
-                .FirstOrDefaultAsync(h => h.GroomerId == GroomerId && h.DayOfWeek == (int)day.DayOfWeek);
-            if (week != null && week.IsOpen)
-                HoursLabel = $"{week.OpenLabel}–{week.CloseLabel}";
-        }
-
-        TimeSlots = week is { IsOpen: true }
-            ? BookingTime.OpenWindowSlots(week.OpenMinutes, week.CloseMinutes)
-            : BookingTime.StandardDaySlots.ToList();
-
-        if (!DayIsOpen)
-        {
-            Time = "";
-            return;
-        }
-
-        PastSlots = BookingTime.MarkPastSlots(TimeSlots, day);
-        await LoadOccupiedSlotsAsync(day);
-
-        foreach (var label in TimeSlots)
-        {
-            if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var tod)) continue;
-            var minutes = (int)tod.TotalMinutes;
-
-            if (!Groomer.OffersEmergency24x7
-                && week != null
-                && week.IsOpen
-                && !AvailabilityService.IsWithinOpenWindow(minutes, week.OpenMinutes, week.CloseMinutes))
-            {
-                OutsideHoursSlots.Add(label);
-                continue;
-            }
-
-            if (PastSlots.Contains(label) || OccupiedSlots.Contains(label))
-                continue;
-
-            BookableTimeSlots.Add(label);
-        }
-
-        if (BookableTimeSlots.Count == 0)
+        if (!DayIsOpen || BookableTimeSlots.Count == 0)
         {
             Time = "";
             return;
         }
 
         Time = BookingTime.MatchSlot(Time, BookableTimeSlots) ?? BookableTimeSlots[0];
-    }
-
-    private async Task LoadOccupiedSlotsAsync(DateTime day)
-    {
-        OccupiedSlots.Clear();
-        var from = AppTimeZones.LocalDateAndTimeToUtc(day, TimeSpan.Zero);
-        var to = AppTimeZones.LocalDateAndTimeToUtc(day.AddDays(1), TimeSpan.Zero);
-        var taken = await _db.Appointments.AsNoTracking()
-            .Where(a => a.GroomerId == GroomerId
-                        && a.Status != AppointmentStatus.Cancelled
-                        && a.ScheduledAt >= from
-                        && a.ScheduledAt < to)
-            .Select(a => a.ScheduledAt)
-            .ToListAsync();
-
-        foreach (var utc in taken)
-        {
-            var local = AppTimeZones.ToAppLocal(utc);
-            foreach (var label in TimeSlots)
-            {
-                if (!AppTimeZones.TryParseSlotToTimeSpan(label, out var slotTod)) continue;
-                if (slotTod == local.TimeOfDay)
-                    OccupiedSlots.Add(label);
-            }
-        }
     }
 
     private bool TryResolveDayServiceStartUtc(out DateTime startUtc, out string? error)
